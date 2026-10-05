@@ -37,6 +37,7 @@ from levanter.trainer import TrainerConfig
 from levanter.utils.mesh import MeshConfig
 
 from marin.evaluation.evaluation_config import EvalTaskConfig, convert_to_levanter_task_config
+from marin.execution.artifact import is_mutable_version
 from marin.execution.build_context import resolve_version
 from marin.execution.lazy import ArtifactStep, StepContext
 from marin.execution.remote import remote
@@ -156,6 +157,9 @@ def train_lm(
     :mod:`marin.experiment.cli`.
     """
     version = resolve_version(name, version)
+    # A mutable run gets a fresh output path per invocation (marin.experiment.cli.run_version);
+    # suffix its tracker ID the same way so reruns do not log into the previous W&B run.
+    tracker_id = f"{run_id}-{version}" if run_id is not None and is_mutable_version(version) else run_id
     if (num_train_steps is None) == (num_train_epochs is None):
         raise ValueError("Exactly one of num_train_steps or num_train_epochs must be set.")
     if num_train_epochs is not None:
@@ -196,10 +200,10 @@ def train_lm(
         inner = TrainLmConfig(
             data=mixture(ctx, datasets, validation=validation),
             trainer=TrainerConfig(
-                id=run_id,
+                id=tracker_id,
                 tracker=WandbConfig(
                     project=wandb_project,
-                    name=run_id,
+                    name=tracker_id,
                     tags=[*tags],
                     group=wandb_group,
                     # Mirror metrics next to the run's output so they outlive the job.

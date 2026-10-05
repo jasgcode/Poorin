@@ -274,3 +274,28 @@ def test_dev_checkpoints_are_per_user_while_datasets_stay_shared(tmp_path, monke
     # is reused across users rather than re-tokenized per person.
     tc = _assemble(alice, str(tmp_path)).train_config
     assert tc.data.train_weights == {"corpus": 1.0}
+
+
+def test_mutable_versions_give_each_run_its_own_tracker_id(tmp_path):
+    # Regression: two dev runs with the same run_id logged into one W&B run.
+    corpus = _corpus()
+
+    def trainer_id(version: str) -> str:
+        step = train_lm(
+            name="checkpoints/unit",
+            model=_MODEL,
+            optimizer=_OPTIMIZER,
+            datasets={corpus: 1.0},
+            batch_size=8,
+            seq_len=128,
+            num_train_steps=50,
+            z_loss_weight=1e-4,
+            evals=None,
+            resources=_RESOURCES,
+            run_id="unit",
+            version=version,
+        )
+        return _assemble(step, str(tmp_path)).train_config.trainer.id
+
+    assert trainer_id("20261005-091500-a1b2-dev") == "unit-20261005-091500-a1b2-dev"
+    assert trainer_id(_V) == "unit"

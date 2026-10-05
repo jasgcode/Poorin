@@ -16,7 +16,8 @@ This module makes that a one-liner while wiring up the deferred-version machiner
 
 ``--version`` is required — there is no silent ``dev`` default, because a deferred *dataset* at a
 mutable version rebuilds its (often multi-TB) cache on every run and, unlike a training checkpoint,
-is not namespaced per user. To iterate, pass ``--version dev`` explicitly; the printed plan flags
+is not namespaced per user. To iterate, pass ``--version dev``: each invocation gets a fresh,
+suffixed version, and ``--resume <version>`` continues an earlier one. The printed plan flags
 every artifact that resolved to a mutable version and will rebuild.
 
 An experiment with its own options composes with :func:`build_options` by stacking it *below* the
@@ -37,7 +38,9 @@ invocations keeps its first resolved version.
 """
 
 import functools
+import secrets
 from collections.abc import Callable, Mapping
+from datetime import datetime
 from typing import Any
 
 import click
@@ -50,12 +53,29 @@ BuildResult = ArtifactStep | Mapping[str, ArtifactStep] | list[ArtifactStep] | t
 BuildRunner = Callable[[list[ArtifactStep], int], None]
 
 
-def _version_callback(ctx: click.Context, param: click.Parameter, value: str) -> str:
+def _version_callback(ctx: click.Context, param: click.Parameter, value: str | None) -> str | None:
     """Reject a malformed ``--version`` at parse time, as a Click error rather than a traceback."""
+    if value is None:
+        return None
     try:
         validate_version(value)
     except ValueError as e:
         raise click.BadParameter(str(e), ctx=ctx, param=param) from e
+    return value
+
+
+def _resume_callback(ctx: click.Context, param: click.Parameter, value: str | None) -> str | None:
+    """Accept only a mutable version: calendar versions are stable and need no resume."""
+    if value is None:
+        return None
+    try:
+        validate_version(value)
+    except ValueError as e:
+        raise click.BadParameter(str(e), ctx=ctx, param=param) from e
+    if not is_mutable_version(value):
+        raise click.BadParameter(
+            f"{value!r} is a calendar version; --resume continues a '-dev' run", ctx=ctx, param=param
+        )
     return value
 
 
@@ -74,6 +94,23 @@ def _override_callback(ctx: click.Context, param: click.Parameter, value: tuple[
             raise click.BadParameter(f"override {name!r}: {e}", ctx=ctx, param=param) from e
         overrides[name] = version
     return overrides
+
+
+def run_version(version: str, *, now: datetime, token: str) -> str:
+    """The version a run uses for ``--version``.
+
+    A mutable version (``dev`` or ``<label>-dev``) gets a run suffix so each invocation writes to
+    a fresh output path: ``dev`` becomes ``20261005-091500-a1b2-dev`` and ``probe-dev`` becomes
+    ``probe-20261005-091500-a1b2-dev``. Without the suffix, a rerun lands on the previous run's
+    ``{name}/dev`` path and Levanter's checkpointer resumes from its last checkpoint instead of
+    training from scratch. A calendar version is returned unchanged. ``--resume`` reuses a
+    suffixed version to continue that run.
+    """
+    if not is_mutable_version(version):
+        return version
+    label = version.removesuffix("dev").rstrip("-")
+    stamped = f"{now:%Y%m%d-%H%M%S}-{token}"
+    return f"{label}-{stamped}-dev" if label else f"{stamped}-dev"
 
 
 def _as_handles(result: BuildResult) -> list[ArtifactStep]:
@@ -131,10 +168,18 @@ def build_options_with_runner(fn: Callable[..., BuildResult], runner: BuildRunne
     @click.option(
         "--version",
         "default_version",
-        required=True,
+        default=None,
         callback=_version_callback,
-        help="Run-wide default version for artifacts that defer (omit version=). "
-        "A calendar version YYYY.MM.DD, or 'dev' to iterate.",
+        help="Run-wide default version for artifacts that defer (omit version=). A calendar "
+        "version YYYY.MM.DD, or 'dev' / '<label>-dev' for a fresh run with a unique suffix.",
+    )
+    @click.option(
+        "--resume",
+        "resume_version",
+        default=None,
+        callback=_resume_callback,
+        metavar="VERSION",
+        help="Continue an earlier dev run by reusing its exact version, as printed when it started.",
     )
     @click.option(
         "--override",
@@ -148,9 +193,24 @@ def build_options_with_runner(fn: Callable[..., BuildResult], runner: BuildRunne
     @click.option("--max-concurrent", type=int, default=8, show_default=True, help="Max steps built concurrently.")
     @functools.wraps(fn)
     def wrapper(
-        *args: Any, default_version: str, overrides: dict[str, str], do_run: bool, max_concurrent: int, **kwargs: Any
+        *args: Any,
+        default_version: str | None,
+        resume_version: str | None,
+        overrides: dict[str, str],
+        do_run: bool,
+        max_concurrent: int,
+        **kwargs: Any,
     ) -> None:
-        codex = VersionCodex(default=default_version, overrides=overrides)
+        if (default_version is None) == (resume_version is None):
+            raise click.UsageError("pass exactly one of --version or --resume")
+        if resume_version is not None:
+            version = resume_version
+        else:
+            assert default_version is not None
+            version = run_version(default_version, now=datetime.now(), token=secrets.token_hex(2))
+        if is_mutable_version(version):
+            click.echo(f"Run version: {version} (continue this run with --resume {version})")
+        codex = VersionCodex(default=version, overrides=overrides)
         with build_context(BuildContext(versions=codex)):
             handles = _as_handles(fn(*args, **kwargs))
         unused = codex.unused_overrides()

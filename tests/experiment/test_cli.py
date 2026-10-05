@@ -9,11 +9,12 @@ re-test Click's option parsing.
 """
 
 import os
+from datetime import datetime
 
 import pytest
 from click.testing import CliRunner
 from marin.execution.lazy import OUT, apply
-from marin.experiment.cli import experiment_main
+from marin.experiment.cli import experiment_main, run_version
 
 
 def _noop(**_kwargs):
@@ -81,18 +82,59 @@ def _write_marker(out):
         f.write("built")
 
 
+def test_run_version_gives_mutable_versions_a_unique_suffix_and_keeps_calendar_versions():
+    now = datetime(2026, 10, 5, 9, 15, 0)
+    assert run_version("dev", now=now, token="a1b2") == "20261005-091500-a1b2-dev"
+    assert run_version("probe-dev", now=now, token="a1b2") == "probe-20261005-091500-a1b2-dev"
+    assert run_version("2026.07.16", now=now, token="a1b2") == "2026.07.16"
+
+
+def _resolved_model_version(output: str) -> str:
+    resolved = output.split("Resolved versions:", 1)[1]
+    (line,) = [line for line in resolved.splitlines() if line.strip().startswith("models/toy@")]
+    return line.strip().split("@", 1)[1].split()[0]
+
+
+def test_each_dev_invocation_resolves_to_a_different_mutable_version(runner):
+    first = runner.invoke(experiment_main(_build_two), ["--version", "dev"])
+    second = runner.invoke(experiment_main(_build_two), ["--version", "dev"])
+    assert first.exit_code == 0, first.output
+    assert second.exit_code == 0, second.output
+    v1, v2 = _resolved_model_version(first.output), _resolved_model_version(second.output)
+    assert v1 != v2
+    assert v1.endswith("-dev") and v2.endswith("-dev")
+
+
+def test_resume_reuses_the_given_version_verbatim(runner):
+    result = runner.invoke(experiment_main(_build_two), ["--resume", "20261005-091500-a1b2-dev"])
+    assert result.exit_code == 0, result.output
+    assert _resolved_model_version(result.output) == "20261005-091500-a1b2-dev"
+
+
+def test_resume_rejects_a_calendar_version(runner):
+    result = runner.invoke(experiment_main(_build_two), ["--resume", "2026.07.16"])
+    assert result.exit_code != 0
+    assert "--resume" in result.output
+
+
+def test_version_and_resume_are_mutually_exclusive(runner):
+    result = runner.invoke(experiment_main(_build_two), ["--version", "dev", "--resume", "x-20261005-091500-a1b2-dev"])
+    assert result.exit_code != 0
+
+
 def test_run_executes_the_build_and_plan_does_not(runner, tmp_path, monkeypatch):
     monkeypatch.setenv("MARIN_PREFIX", str(tmp_path))
 
     def build():
         return apply("scratch/marker", _write_marker, out=OUT)
 
-    marker = tmp_path / "scratch" / "marker" / "dev" / "done"
+    def markers():
+        return list((tmp_path / "scratch" / "marker").glob("*-dev/done"))
 
     plan = runner.invoke(experiment_main(build), ["--version", "dev"])
     assert plan.exit_code == 0, plan.output
-    assert not marker.exists()
+    assert markers() == []
 
     built = runner.invoke(experiment_main(build), ["--version", "dev", "--run"])
     assert built.exit_code == 0, built.output
-    assert marker.exists()
+    assert len(markers()) == 1
