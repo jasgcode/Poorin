@@ -229,3 +229,60 @@ def test_xla_flash_attention_broadcasts_shared_segment_ids_across_the_batch():
     shared = jnp.where(jnp.arange(q.shape[1]) < 40, 0, 1)[None, :]  # one row of segment ids for a batch of 2
     mask = AttentionMask.causal(sliding_window=20).with_segment_ids(shared)
     _assert_matches_reference(q, k, v, mask, block_size=16)
+
+
+_GPU_ONLY = pytest.mark.skipif(jax.default_backend() != "gpu", reason="the FA4 default applies on GPU")
+
+
+def _causal_inputs(*, dtype=jnp.bfloat16, head_dim=64, seq=256):
+    keys = jax.random.split(jax.random.key(0), 3)
+    q = jax.random.normal(keys[0], (2, seq, 4, head_dim), dtype=dtype)
+    k = jax.random.normal(keys[1], (2, seq, 2, head_dim), dtype=dtype)
+    v = jax.random.normal(keys[2], (2, seq, 2, head_dim), dtype=dtype)
+    return q, k, v
+
+
+@_GPU_ONLY
+@pytest.mark.parametrize("segmented", [False, True])
+def test_default_gpu_attention_matches_reference_for_causal_self_attention(segmented):
+    # Spike 0: grug's GPU default was the reference path at 33 TFLOP/s; FA4 runs at 140 on sm_120.
+    q, k, v = _causal_inputs()
+    mask = AttentionMask.causal()
+    if segmented:
+        mask = mask.with_segment_ids(jnp.repeat(jnp.array([[0, 1]], dtype=jnp.int32), 128, axis=1).repeat(2, axis=0))
+
+    def loss(fn, q, k, v):
+        return fn(q, k, v).astype(jnp.float32).sum()
+
+    default = lambda q, k, v: attention(q, k, v, mask)  # noqa: E731
+    reference = lambda q, k, v: attention(q, k, v, mask, implementation="reference")  # noqa: E731
+    np.testing.assert_allclose(
+        np.asarray(default(q, k, v), dtype=np.float32),
+        np.asarray(reference(q, k, v), dtype=np.float32),
+        atol=7e-2,
+        rtol=7e-2,
+    )
+    got = jax.grad(lambda *a: loss(default, *a), argnums=(0, 1, 2))(q, k, v)
+    want = jax.grad(lambda *a: loss(reference, *a), argnums=(0, 1, 2))(q, k, v)
+    for g, w in zip(got, want, strict=True):
+        np.testing.assert_allclose(
+            np.asarray(g, dtype=np.float32), np.asarray(w, dtype=np.float32), atol=7e-2, rtol=7e-2
+        )
+
+
+@_GPU_ONLY
+@pytest.mark.parametrize(
+    "case",
+    ["non_causal", "float32", "head_dim_96", "cross_attention"],
+)
+def test_default_gpu_attention_falls_back_to_reference_outside_fa4_coverage(case):
+    q, k, v = _causal_inputs(
+        dtype=jnp.float32 if case == "float32" else jnp.bfloat16, head_dim=96 if case == "head_dim_96" else 64
+    )
+    mask = AttentionMask(is_causal=False) if case == "non_causal" else AttentionMask.causal()
+    if case == "cross_attention":
+        q = q[:, :128]
+        mask = AttentionMask(is_causal=False)
+    out = attention(q, k, v, mask)
+    expected = attention(q, k, v, mask, implementation="reference")
+    np.testing.assert_array_equal(np.asarray(out), np.asarray(expected))

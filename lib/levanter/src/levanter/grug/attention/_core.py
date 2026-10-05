@@ -429,6 +429,28 @@ def _tpu_splash_attention(
     return jnp.transpose(out, (0, 2, 1, 3)).astype(v.dtype)
 
 
+_FA4_HEAD_DIMS = frozenset({64, 128})
+_FA4_ARCH_FAMILIES = frozenset({8, 9, 10, 12})
+
+
+def _fa4_supports(q: jax.Array, k: jax.Array, mask: object) -> bool:
+    """Whether the default GPU path can use FA4: causal self-attention in the shapes its tests cover.
+
+    FA4 handles causal masks, packed segment IDs, and sliding windows. It does not handle
+    bidirectional masks, cross-attention, or float32 inputs. Head dimensions 64 and 128 and compute
+    capabilities 8.x, 9.x, 10.x, and 12.x are the configurations covered by FA4's tests.
+    """
+    if not isinstance(mask, AttentionMask) or not mask.is_causal:
+        return False
+    if q.shape[1] != k.shape[1] or q.shape[-1] not in _FA4_HEAD_DIMS:
+        return False
+    if q.dtype not in (jnp.bfloat16, jnp.float16):
+        return False
+    from levanter.cutlass_kernel_cache import gpu_compute_capability  # noqa: PLC0415
+
+    return gpu_compute_capability() // 10 in _FA4_ARCH_FAMILIES
+
+
 def attention(
     q: Float[Array, "B Q Hq D"],
     k: Float[Array, "B K Hkv D"],
@@ -462,6 +484,10 @@ def attention(
         if isinstance(mask, jax.Array):
             return reference_attention(q, k, v, mask, logits_dtype=jnp.float32)
         return _tpu_splash_attention(q, k, v, mask)
+    if jax.default_backend() == "gpu" and _fa4_supports(q, k, mask):
+        from levanter.grug.attention._fa4_cute import gpu_fa4_cute_attention  # noqa: PLC0415
+
+        return gpu_fa4_cute_attention(q, k, v, mask)
     return reference_attention(q, k, v, mask, logits_dtype=jnp.float32)
 
 
