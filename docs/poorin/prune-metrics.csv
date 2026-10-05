@@ -1,0 +1,2 @@
+date,phase,step,first_party_lines,reachable_lines,reachable_modules,r1_imported_modules,r1_import_time,r1_warm_wall_time,r2_warm_wall_time,venv_size
+2026-10-05,P0,baseline,385058,138099,455,6709,7.33,72.7,47.3,12180241576

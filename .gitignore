@@ -211,6 +211,7 @@ archive/
 
 # csv
 *.csv
+!docs/poorin/prune-metrics.csv
 
 # wandb logs
 wandb
