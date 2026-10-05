@@ -1,0 +1,127 @@
+# Roots for the Poorin prune. See docs/poorin/specs/2026-10-04-core-prune-design.md, "Roots".
+# Code reachable from these roots is kept. A trailing ".*" selects every module under a package.
+
+[[runnable]]
+name = "R1"
+module = "experiments.tutorials.train_tiny_model"
+args = ["--device", "rtx5090x1", "--dataset", "wikitext", "--version", "dev", "--run"]
+
+[[runnable]]
+name = "R2"
+module = "experiments.grug.base.launch"
+args = ["--version", "dev", "--run"]
+
+[kept]
+modules = [
+    # Scaling-law code
+    "experiments.grug.fast_track.launch",
+    "experiments.grug.fast_track.train",
+    "experiments.grug.fast_track.model",
+    "experiments.grug.fast_track.heuristic",
+    "experiments.references.reference_scaling_suite",
+    "experiments.tutorials.train_tiny_sweep",
+    "marin.scaling_laws",
+    "marin.experiment.cli",
+    # Light post-training kit
+    "levanter.main.train_dpo",
+    "levanter.main.lora_lm",
+    "levanter.main.lora_dpo",
+    "levanter.main.sample_lm",
+    # Serving and in-loop evaluation for Levanter models
+    "levanter.inference.openai",
+    "levanter.eval_harness",
+    # Evaluation framework
+    "marin.evaluation.evalchemy.*",
+    "marin.evaluation.harbor.*",
+    "marin.evaluation.lm_eval",
+    "marin.evaluation.lm_eval_samples",
+    "marin.evaluation.records",
+    "marin.evaluation.rollouts",
+    "marin.evaluation.eval_stats",
+    "marin.evaluation.eval_measurements",
+    "marin.evaluation.metric_selection",
+    "marin.evaluation.evaluation_config",
+    "marin.evaluation.model_config",
+    "marin.evaluation.model_identity",
+    "marin.evaluation.eval_env",
+    "marin.evaluation.perplexity_gap",
+    "marin.evaluation.trace_labeled_eval",
+    # Plugin registry members: draccus finds these by name, so static imports do not reach them.
+    "levanter.optim.*",
+    "levanter.data.text.*",
+    "levanter.tracker.tracker",
+    "levanter.tracker.wandb",
+    "levanter.tracker.json_logger",
+    "levanter.tracker.json_file",
+    "levanter.tracker.telemetry",
+    "levanter.models.llama",
+]
+# Kept for reachability, not imported by prune_check: these run inside Harbor's isolated runtime,
+# which provides the `harbor` package.
+static_only = [
+    "marin.evaluation.harbor.trial_driver",
+    "marin.evaluation.harbor.single_turn_aime_agent",
+]
+
+[deleted]
+# Deleted by Pass 1 regardless of reachability. Excluded from traversal, with their submodules.
+modules = [
+    "iris",
+    "fray.iris_backend",
+    "marin.rl",
+    "marin.mcp",
+    "marin.experiment.evaluation",
+    "marin.evaluation.runner",
+    "marin.evaluation.serving_config",
+    "marin.evaluation.hardware",
+    "marin.evaluation.inference_metrics",
+    "marin.evaluation.eval_policy",
+    "marin.evaluation.eval_policy_sources",
+    # marin.inference except types.py, which moves to marin.evaluation in P3
+    "marin.inference.backend",
+    "marin.inference.broker",
+    "marin.inference.chat_template_protocol",
+    "marin.inference.config",
+    "marin.inference.dashboard_server",
+    "marin.inference.http_proxy",
+    "marin.inference.iris",
+    "marin.inference.iris_cli",
+    "marin.inference.iris_vllm",
+    "marin.inference.levanter_backend",
+    "marin.inference.model_preparation",
+    "marin.inference.openai_batch",
+    "marin.inference.proxy",
+    "marin.inference.python_tool_routes",
+    "marin.inference.python_tools",
+    "marin.inference.repository_snapshot",
+    "marin.inference.serve",
+    "marin.inference.serve_cli",
+    "marin.inference.shell_workspace",
+    "marin.inference.structured_output",
+    "marin.inference.vllm_backend",
+    "marin.inference.vllm_cache",
+    "marin.inference.vllm_release",
+    "marin.inference.vllm_server",
+    "marin.inference.vllm_smoke_test",
+    "marin.inference.vllm_wheel_entrypoint",
+    "marin.inference.worker",
+    "experiments.post_training",
+    "experiments.evaluation",
+    "finelog.deploy",
+    "finelog.benchmarks",
+    # The 14 Levanter architectures the owner chose to delete
+    "levanter.models.mistral",
+    "levanter.models.mixtral",
+    "levanter.models.gemma",
+    "levanter.models.olmo",
+    "levanter.models.olmo3",
+    "levanter.models.whisper",
+    "levanter.models.asr_model",
+    "levanter.models.hyena",
+    "levanter.models.gpt2_hyena",
+    "levanter.models.modernbert",
+    "levanter.models.apertus",
+    "levanter.models.snowball",
+    "levanter.models.qwen3_moe",
+    "levanter.models.moe",
+]
