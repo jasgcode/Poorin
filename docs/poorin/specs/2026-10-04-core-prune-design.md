@@ -14,7 +14,7 @@ The prune runs in two passes:
 1. Pass 1 deletes everything outside the static import closure of the roots defined below, plus
    Iris, Marin's in-repo SkyRL integration, LLM serving and evaluation, and Marin's fleet
    operations. First-party library and experiment code (excluding tests) goes from 386k lines to
-   at most 123k.
+   at most 135k.
 2. Pass 2 assigns a verdict to each remaining dependency, in ranked order, one commit per
    change, until only deliberate dependencies remain.
 
@@ -34,6 +34,9 @@ its own spec after Pass 2 ends.
   Q-function ([arXiv 2605.25477](https://arxiv.org/abs/2605.25477)).
 - A light LLM post-training capability (SFT, DPO, LoRA, sampling) for representation-learning
   experiments on models trained from scratch.
+- Evaluation against public benchmarks. Marin's evaluation framework runs external benchmark
+  harnesses against any model served behind an OpenAI-compatible URL and records results with
+  uncertainty intervals. Sub-project 7 extends the same pattern to robot policies in simulators.
 - A repository the owner understands end to end and documents in a technical blog. Each change
   must be small enough to explain.
 - JAX stays the framework. Upstream Marin serves as a reference; Poorin does not merge from it.
@@ -50,6 +53,7 @@ its own spec after Pass 2 ends.
 | 4 | Embodied model templates | 1, 3 |
 | 5 | Scaling-law harness | 2, 4 |
 | 6 | Online simulation loop for EXPO-FT | 1, 4 |
+| 7 | Evaluation harness: a local orchestrator that serves a checkpoint and runs the kept benchmark harnesses, then simulator benchmarks for policies on the same records and statistics | 1, 4 |
 
 ### Libraries in the workspace
 
@@ -57,11 +61,11 @@ its own spec after Pass 2 ends.
 |---|---|---|
 | `haliax` | Named-tensor layer over JAX | Kept; 1b decides its future |
 | `levanter` | Trainer, models, data loading, checkpointing, optimizers, kernels | Kept and pruned |
-| `marin` | Experiment executor, training bridge, tokenization, scaling-law analysis, plus RL, evaluation, and inference tooling | Kept and pruned |
+| `marin` | Experiment executor, training bridge, tokenization, scaling-law analysis, evaluation framework, plus RL and inference tooling | Kept and pruned |
 | `fray` | Job and resource API with a local backend and an Iris backend | Kept; Iris backend deleted |
 | `zephyr` | Lazy dataset pipelines; builds Levanter's token caches | Kept |
 | `rigging` | Shared utilities: filesystem and bucket configuration, timing, telemetry | Kept and pruned |
-| `finestore` | Transactional Parquet store on local disk or object storage | Kept if reachable after P5 |
+| `finestore` | Transactional Parquet store on local disk or object storage | Kept; the evaluation framework stores samples and rollouts in it |
 | `iris` | Multi-tenant cluster scheduler for TPU and GPU fleets | Deleted in P5 |
 | `finelog` | Log and metrics service used by Iris | Deleted in P6 |
 | `ducky` | DuckDB SQL service for object-store Parquet | Deleted in P4 |
@@ -97,6 +101,8 @@ against the measured 222 TFLOP/s peak.
 | Delete Iris completely. Keep `iris/jax/compile_cache.py` and `iris/env_resources.py`. | Iris has 84k lines of Python source (plus 67k of tests), 3k of Rust, and 16k of TypeScript. A single researcher needs machine provisioning, multi-host JAX setup on multi-host TPU slices, and preemption retry. Sub-project 2 provides those. |
 | Delete Marin's in-repo SkyRL integration. | The owner maintains a customized SkyRL in a separate repository and will reintegrate it against the new dispatch from sub-project 2. |
 | Keep a light LLM post-training kit. | The owner plans representation-learning experiments on models trained from scratch. |
+| Keep Marin's evaluation framework. Delete only its fleet orchestration and published-cohort policy. | The benchmark harness integrations, per-run records, normalized rollout table, and statistics need only a served endpoint. About 2k of its 9.2k lines need Iris or the serving fleet. |
+| Delete 14 of Levanter's LLM architectures. Keep Llama, Qwen, and GPT-2. | Grug is the modeling template. The deleted architectures remain at `upstream-baseline`. |
 | Delete `infra/` and `scripts/` completely. | The owner uses none of these tools. Lint moves to a short root-level setup in P1. |
 | Run the prune as reachability-driven Pass 1 and Pass 2, then consolidate in 1b. | Pass 1 removes most lines mechanically. Pass 2 forces a reading of each surviving dependency. Consolidation is easier once the survivors are known. |
 
@@ -128,6 +134,10 @@ Kept roots must import and pass type checking. They are not executed.
 | `experiments.tutorials.train_tiny_sweep` | The executor's sweep pattern. |
 | `marin.scaling_laws`, `marin.experiment.cli` | IsoFLOP analysis and plots; the shared experiment CLI. |
 | `levanter.main.train_dpo`, `levanter.main.lora_lm`, `levanter.main.lora_dpo`, `levanter.main.sample_lm` | The light post-training kit. A later sub-project makes it runnable with a small SFT → DPO → sample test on `llama_nano` (`experiments/llama.py`: 2 layers, hidden size 32). |
+| `levanter.inference.openai`, `levanter.eval_harness` | An OpenAI-compatible server for Levanter models, so the benchmark harnesses can evaluate checkpoints that vLLM cannot serve; and lm-evaluation-harness multiple-choice tasks scored from JAX log-probabilities during training, with no server. |
+| `marin.evaluation.evalchemy.*`, `marin.evaluation.harbor.*`, `marin.evaluation.lm_eval`, `marin.evaluation.lm_eval_samples` | Integrations with three external benchmark harnesses: lm-evaluation-harness, Evalchemy (benchmark collections built on it), and Harbor (agentic tasks in sandboxed environments). Each runs in an isolated, version-pinned `uvx` environment against a served endpoint. A benchmark that a harness already implements is added as a YAML file under `experiments/evaluation/configs/`, which is kept. |
+| `marin.evaluation.records`, `rollouts`, `eval_measurements`, `eval_stats`, `metric_selection`, `evaluation_config`, `model_config`, `model_identity`, `eval_env` | One durable `record.json` per evaluation; the normalized `rollouts_v1` table; score intervals that account for ungraded items; intervals for the difference between two runs. |
+| `marin.evaluation.perplexity_gap`, `marin.evaluation.trace_labeled_eval` | Per-dataset perplexity comparison between two models; loss on agent conversation traces. |
 | Plugin registry members (next table) | `draccus.PluginRegistry` subclasses are found by name at config-parse time, so static imports do not reach them. |
 
 | Registry | Discovery package | Members kept as roots |
@@ -138,9 +148,9 @@ Kept roots must import and pass type checking. They are not executed.
 | `LmConfig` | `levanter.models` | `llama` |
 
 With these roots, the reachable Levanter models are `gpt2`, `linear`, `llama`, `lm_model`, `loss`,
-and `qwen`. The other 14 model modules (Mistral, Mixtral, Gemma, OLMo, OLMo 3, Whisper and the
-ASR model, Hyena, GPT-2 Hyena, ModernBERT, Apertus, Snowball, Qwen3 MoE, Levanter MoE) are
-deleted in P7 and remain available at `upstream-baseline`.
+and `qwen`. The owner chose to delete the other 14 model modules in P7: Mistral, Mixtral, Gemma,
+OLMo, OLMo 3, Whisper and the ASR model, Hyena, GPT-2 Hyena, ModernBERT, Apertus, Snowball,
+Qwen3 MoE, and Levanter MoE. They remain available at `upstream-baseline`.
 
 ### Deleted regardless of reachability
 
@@ -148,8 +158,8 @@ deleted in P7 and remain available at `upstream-baseline`.
 |---|---|
 | `iris` | See P5 |
 | `marin.rl`, all of `experiments/post_training` | None in roots |
-| `marin.inference` | None in roots. Levanter's own inference engine (`levanter.inference`) is separate and stays; see Pass 2. |
-| `marin.evaluation`, `marin.experiment.evaluation` | Remove the evaluation wiring from `marin.experiment.train` and `experiments/tutorials/train_tiny_sweep.py`. Levanter's validation-loss evaluation (`levanter.eval`) stays; scaling-law fits use it. |
+| `marin.inference`, except `types.py` | `RunningModel` and `OpenAIEndpoint` move from `marin/inference/types.py` to `marin/evaluation/endpoint.py`. `evalchemy/runner.py`, `harbor/runner.py`, and `harbor/driver_config.py` stop using Iris's serving-session types (`RemoteInferenceSession`, `InferenceBackendState`) and take a `RunningModel`. `model_config.py` drops speculative-serving settings, and `resolve_tokenizer_revision` moves into it. Levanter's own inference engine (`levanter.inference`) is separate and stays. |
+| `marin.evaluation` fleet orchestration: `runner.py`, `serving_config.py`, `hardware.py`, `inference_metrics.py`; published-cohort policy: `eval_policy.py`, `eval_policy_sources.py`; `marin.experiment.evaluation`; the fleet launcher in `experiments/evaluation/*.py` | Remove imports of these modules from `marin.experiment.train` and `experiments/tutorials/train_tiny_sweep.py`. The in-loop path through `levanter.eval_harness` and Levanter's validation-loss evaluation (`levanter.eval`) stay; scaling-law fits use the latter. Sub-project 7 writes a local orchestrator to replace `runner.py`. |
 | `marin.mcp` | None in roots |
 | `fray.iris_backend` | See P5 |
 
@@ -218,11 +228,11 @@ them with `tools/reachability.py`.
 | P0 Setup | Tag `upstream-baseline`. Delete `.github/workflows` (38 workflows; the fork is public and has Actions enabled). Add the tools and roots file. Add the `rtx5090x1` device to R1 and an RTX 5090 entry to `fray.device_flops`. Make R2 local-first. Apply the spike fixes assigned to P0 below. Add the spike note. Record the baseline metrics row. | adds ~0.5k |
 | P1 Fleet operations | Delete `infra/`, `scripts/`, `docker/`, and `etc/`. Replace `infra/pre-commit.py` with a root-level lint entry point (see below). Replace `config/marin.yaml` and `config/coreweave.yaml` with `config/local.yaml`, which declares no region buckets, and change the default of `MARIN_CLUSTER` in `rigging.filesystem.cluster_config` from `marin` to `local`. `MARIN_PREFIX` keeps pointing outputs at local disk. Rewrite `AGENTS.md` and prune `.agents/skills/` (see below). | ~87k |
 | P2 RL stack | `marin.rl`, `experiments/post_training`, `lib/verifyit`, `lib/shellbox`, `lib/taskcompendium` | ~47k |
-| P3 LLM serving and evaluation | `marin.inference`, `marin.evaluation`, `marin.experiment.evaluation`, `marin.mcp`, `eval_policy/`, `experiments/evals`, `experiments/evaluation` | ~36k |
+| P3 LLM serving and evaluation orchestration | `marin.inference` (after moving `types.py`), the fleet orchestration and cohort-policy modules of `marin.evaluation`, `marin.experiment.evaluation`, `marin.mcp`, `eval_policy/`, the Python files of `experiments/evaluation` (its `configs/` stay); see "Deleted regardless of reachability" for the edges to cut | ~19k |
 | P4 Data services | `lib/ducky`, `lib/dupekit` | ~4k |
 | P5 Iris | Three steps, P5a to P5c; see the next section | ~151k (84k source, 67k tests) |
 | P6 Orphans | `lib/finelog` and other code that only Iris kept reachable | ~14k |
-| P7 Unreachable sweep | One commit per library: `experiments/`, `marin`, `levanter`, `zephyr`, `rigging`, `finestore`, with their tests and docs. Includes code no root reaches, such as Levanter's OpenAI-compatible server and the 14 unreached model modules. `haliax` and `fray` have almost no unreachable code left by this point. | ~70k |
+| P7 Unreachable sweep | One commit per library: `experiments/`, `marin`, `levanter`, `zephyr`, `rigging`, `finestore`, with their tests and docs. Includes code no root reaches, such as the 14 deleted model modules. `haliax` and `fray` have almost no unreachable code left by this point. | ~70k |
 | P8 Workspace | Root `pyproject.toml` dependencies, extras, and `uv` conflict declarations; `uv.lock`; decide whether PyTorch moves to its CPU wheel | 0 |
 
 Each deletion commit removes the code, its tests, its docs, its workspace entry, and its entries
@@ -298,18 +308,19 @@ has an entry in `docs/poorin/architecture.md`. There is no line-count target.
 ### Initial targets
 
 Measured on the current tree with all roots, after excluding the modules that Pass 1 deletes
-regardless of reachability: 123,157 reachable lines in 398 modules.
+regardless of reachability: 134,650 reachable lines in 439 modules.
 
 | Dominated lines | Module | Reached through | Verdict |
 |---|---|---|---|
-| 2.5k | `levanter.eval_harness` | `marin.experiment.train`, for optional LM benchmark evals | Delete |
+| root | `levanter.eval_harness` | kept root; `marin.experiment.train` also imports it at module level for optional in-loop evals | Make lazy: import it only when an in-loop eval suite is configured |
 | 3.5k | `levanter.grug._moe.ep_deepep`, `levanter.kernels.deepep` | grug MoE | Delete. Expert-parallel all-to-all has no use on one GPU. |
 | 2.8k | `experiments.grug.moe.launch_datakit_moe_mix` | a helper that fast-track imports from another experiment | Move the helper into fast-track; cut the edge |
 | 2.1k | `levanter.compat.hf_checkpoints` | `levanter.main.train_lm`; loads `transformers` and `torch` | Make lazy. Sub-project 4 needs it to import pretrained vision and VLA weights. |
 | 1.9k | `levanter.main.train_dpo`, `levanter.adaptor` | `marin.training.training` imports every training mode at module level | Make lazy. Both stay reachable as kept roots; the cut stops pretraining runs from loading them. |
-| 2.5k | `levanter.inference.engine`, `jit_scheduler` | `levanter.eval_harness` and the kept root `sample_lm` | Make lazy after the eval harness is deleted |
+| 1.5k | `levanter.inference.engine`, `jit_scheduler` | the kept roots `sample_lm`, `levanter.inference.openai`, and `levanter.eval_harness` | Make lazy so training runs do not load the inference engine |
 | 4.5k | Pallas variants in `levanter.kernels.pallas.fused_cross_entropy_loss`; `levanter.kernels.pallas.splash_attention` (0.2k) | Fused cross-entropy is grug's loss (`levanter.grug.loss`) and selects `batched_xla`, its pure-XLA implementation, on GPU. Splash attention is reached because `levanter.data.loader` imports the `AttentionMask` type from `levanter.layers.attention`, which imports the splash kernel at module level. | Make the TPU variants lazy behind a TPU backend check. Keep `batched_xla`. The TPU kernels are the TPU fast path for sub-project 2. |
 | 1.2k | `levanter.analysis.backward_flow` | grug's train loop | Make lazy and opt-in |
+| 1.8k | `levanter.tracker.telemetry` | the `levanter.tracker` package; it reports through Iris and Finelog | Delete. Scheduled in P5b, so Pass 2 should not see it. |
 | 7.6k | Zephyr (`zephyr.context`) | tokenization and cache building | Keep. Sub-project 3 decides whether Zephyr becomes the video and trajectory pipeline. |
 | 5.6k | `levanter.grug.grug_moe` | fast-track | Keep. Dense versus MoE comparisons are in scope. |
 | 4.1k | `levanter.grug.attention` | grug model | Keep |
@@ -350,6 +361,7 @@ regardless of reachability: 123,157 reachable lines in 398 modules.
 | Redesigning Fray's job API | Sub-project 2 |
 | Keeping or removing R1's model path and Haliax (about 20k lines; the post-training kit depends on it) | Sub-project 1b, after Pass 2 |
 | Making the post-training kit runnable | A later sub-project |
+| A local evaluation orchestrator, and simulator benchmarks for policies | Sub-project 7 |
 | Measuring run-to-run noise | Sub-project 5 |
 | Video, trajectory, simulation, and VLA work | Sub-projects 3, 4, and 6 |
 
