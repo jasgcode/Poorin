@@ -22,8 +22,8 @@ The prune runs in two passes:
 Every commit keeps two local training runs working on the 5090 and appends a row of measurements
 to `docs/poorin/prune-metrics.csv`.
 
-A follow-on sub-project, 1b, consolidates the surviving packages into a simpler layout. It gets
-its own spec after Pass 2 ends.
+A follow-on sub-project, 1b, decides whether Haliax stays and consolidates the surviving
+packages. It gets its own spec after Pass 2 ends.
 
 ## Context
 
@@ -43,7 +43,14 @@ its own spec after Pass 2 ends.
   contract and rollout schema are shaped for LLMs. Sub-project 7 generalizes them.
 - A repository the owner understands end to end and documents in a technical blog. Each change
   must be small enough to explain.
-- JAX stays the framework. Upstream Marin serves as a reference; Poorin does not merge from it.
+- JAX and Equinox are the modeling framework. Grug's style (Equinox modules, JAX's explicit
+  sharding) is the template for new models. Pretrained VLA and vision models (openpi,
+  big_vision) are published in Flax; Poorin uses them through a bridge that stores an NNX
+  module's graph as a static Equinox field and its weights as an ordinary pytree field.
+- Finished architectures are later ported to PyTorch or Flax for release (sub-project 8).
+- Durable, queryable logging next to W&B. Every run writes the same metrics to W&B and to
+  Finelog, a log and metrics store that answers SQL across all runs.
+- Upstream Marin serves as a reference; Poorin does not merge from it.
 
 ### Sub-project order
 
@@ -51,24 +58,25 @@ its own spec after Pass 2 ends.
 |---|---|---|
 | 0 | RTX 5090 spike (done) | |
 | 1 | Core prune (this spec) | 0 |
-| 1b | Consolidate surviving packages | 1 |
+| 1b | Consolidation: decide whether Haliax stays; if not, port R1's model path, the post-training kit, and the 12 Haliax-aware optimizer modules to plain Equinox; merge small packages | 1 |
 | 2 | Compute dispatch: local, Modal, GCP TPU | 1 |
 | 3 | Data layer: text, video, and trajectory datasets | 1 |
-| 4 | Model templates: LLM (grug), video world model, VLA, WAM | 1, 3, 7a |
+| 4 | Model templates in Equinox, grug style: LLM, video world model, VLA, WAM; the Flax bridge for pretrained components | 1, 3, 7a |
 | 5 | Scaling-law harness across model families | 2, 4, 7 |
 | 6 | Online simulation loop for EXPO-FT | 1, 4 |
 | 7a | Evaluation contracts: one serving interface per model kind (text, policy, world model, WAM), a rollout schema of episodes and typed steps, the evaluation record | 1 |
 | 7b | Evaluation mechanisms: a local orchestrator for the kept LLM harnesses, then simulator suites for policies and WAMs and video-metric suites for world models. Each family's mechanisms land with its template in 4. | 7a, 4 |
+| 8 | Release ports: export finished architectures and weights to PyTorch (Hugging Face) or Flax. `levanter.compat.hf_checkpoints` and `levanter.main.export_lm_to_hf` are the existing pattern. | 4 |
 
 Design order after this sub-project: 7a first, so every model template in 4 is built against an
 evaluation interface and sub-project 5 fits scaling curves on one record format. 1b, 2, and 3
-can proceed in parallel with 7a.
+can proceed in parallel with 7a. 4 needs 3 and 7a.
 
 ### Libraries in the workspace
 
 | Library | Role in Marin | Fate |
 |---|---|---|
-| `haliax` | Named-tensor layer over JAX | Kept; 1b decides its future |
+| `haliax` | Named-tensor layer over JAX, built on Equinox | Kept: R1, the post-training kit, and 12 optimizer modules use it; 1b decides whether it stays |
 | `levanter` | Trainer, models, data loading, checkpointing, optimizers, kernels | Kept and pruned |
 | `marin` | Experiment executor, training bridge, tokenization, scaling-law analysis, evaluation framework, plus RL and inference tooling | Kept and pruned |
 | `fray` | Job and resource API with a local backend and an Iris backend | Kept; Iris backend deleted |
@@ -76,7 +84,7 @@ can proceed in parallel with 7a.
 | `rigging` | Shared utilities: filesystem and bucket configuration, timing, telemetry | Kept and pruned |
 | `finestore` | Transactional Parquet store on local disk or object storage | Kept; the evaluation framework stores samples and rollouts in it |
 | `iris` | Multi-tenant cluster scheduler for TPU and GPU fleets | Deleted in P5 |
-| `finelog` | Log and metrics service used by Iris | Deleted in P6 |
+| `finelog` | Log and metrics store: typed tables, SQL queries, process logs, Parquet storage on disk or object storage, forwarding between servers. Python client in the repository; server written in Rust. | Trimmed in P6 to its Python client; the server comes from the published `marin-finelog-server` wheel |
 | `ducky` | DuckDB SQL service for object-store Parquet | Deleted in P4 |
 | `dupekit` | Rust text-deduplication kernels | Deleted in P4 |
 | `verifyit`, `shellbox`, `taskcompendium` | Grading, sandboxed shell environments, and task presentation for RL | Deleted in P2 |
@@ -113,6 +121,8 @@ against the measured 222 TFLOP/s peak.
 | Keep Marin's evaluation framework. Delete only its fleet orchestration and published-cohort policy. | The benchmark harness integrations, per-run records, normalized rollout table, and statistics need only a served endpoint. About 2k of its 9.2k lines need Iris or the serving fleet. |
 | Delete 14 of Levanter's LLM architectures. Keep Llama, Qwen, and GPT-2. | Grug is the modeling template. The deleted architectures remain at `upstream-baseline`. |
 | Delete `infra/` and `scripts/` completely. | The owner uses none of these tools. Lint moves to a short root-level setup in P1. |
+| Keep Finelog's Python client. Depend on the published server wheel. | Finelog does not depend on Iris; Iris hosted its server. A local server starts from a directory (`EmbeddedServer(log_dir=...)`): a probe wrote 300 typed rows and queried them back with SQL. The Rust server is 69k lines and is treated as an external dependency. |
+| Use Equinox for models. Reach pretrained Flax models through a bridge. | The repository's training stack is Equinox: Levanter's trainer, the optimizer collection, grug, fast-track, LoRA, the post-training kit, evaluation, and inference. Optax, Orbax, jaxtyping, and JAX sharding operate on Equinox pytrees. A probe trained a Flax NNX module's weights inside an Equinox model with `eqx.filter_jit` and Optax (loss 1.20 to 0.00), then merged them back into a live NNX module. The baseline lock pins Flax 0.12.4, which fails to import under JAX 0.11 (`jax.core.Effect` was removed); Flax 0.12.10 works. |
 | Run the prune as reachability-driven Pass 1 and Pass 2, then consolidate in 1b. | Pass 1 removes most lines mechanically. Pass 2 forces a reading of each surviving dependency. Consolidation is easier once the survivors are known. |
 
 ## Roots
@@ -153,7 +163,7 @@ Kept roots must import and pass type checking. They are not executed.
 |---|---|---|
 | `OptimizerConfig` | `levanter.optim` | All modules (`levanter.optim.*`) |
 | `LmDatasetFormatBase` | `levanter.data.text` | All modules (`levanter.data.text.*`): text, chat, and preference formats |
-| `TrackerConfig` | `levanter.tracker` | `tracker`, `wandb`, `json_logger`, `json_file` |
+| `TrackerConfig` | `levanter.tracker` | `tracker`, `wandb`, `json_logger`, `json_file`, `telemetry` (writes to Finelog through `finelog_metrics`) |
 | `LmConfig` | `levanter.models` | `llama` |
 
 With these roots, the reachable Levanter models are `gpt2`, `linear`, `llama`, `lm_model`, `loss`,
@@ -183,7 +193,10 @@ before each commit. It fails if any check fails.
    the same commit.
 4. `uv run pyrefly check` passes, and the lint entry point passes: `./infra/pre-commit.py` until
    P1, the replacement after P1.
-5. One row is appended to `docs/poorin/prune-metrics.csv` and committed with the change.
+5. R2 logs to W&B in offline mode and to Finelog. `prune_check` starts a local Finelog server in
+   a temporary directory for the duration of the check and confirms that R2's metric rows arrived.
+   Until P5b, R2's Finelog tracker reads its run identity from Iris, so this check starts in P5b.
+6. One row is appended to `docs/poorin/prune-metrics.csv` and committed with the change.
 
 Metrics columns:
 
@@ -240,9 +253,9 @@ them with `tools/reachability.py`.
 | P3 LLM serving and evaluation orchestration | `marin.inference` (after moving `types.py`), the fleet orchestration and cohort-policy modules of `marin.evaluation`, `marin.experiment.evaluation`, `marin.mcp`, `eval_policy/`, the Python files of `experiments/evaluation` (its `configs/` stay); see "Deleted regardless of reachability" for the edges to cut | ~19k |
 | P4 Data services | `lib/ducky`, `lib/dupekit` | ~4k |
 | P5 Iris | Three steps, P5a to P5c; see the next section | ~151k (84k source, 67k tests) |
-| P6 Orphans | `lib/finelog` and other code that only Iris kept reachable | ~14k |
+| P6 Orphans and Finelog trim | Code that only Iris kept reachable. Trim `lib/finelog` to its Python client (`client/`, `rpc/`, top-level modules, and their tests): delete `rust/` (69k lines of Rust), `deploy/`, `benchmarks/`, `dashboard/`, and its operations docs. Pin `marin-finelog-server==0.2.46.dev33324331711`, the version installed at baseline. | ~7k Python, 69k Rust |
 | P7 Unreachable sweep | One commit per library: `experiments/`, `marin`, `levanter`, `zephyr`, `rigging`, `finestore`, with their tests and docs. Includes code no root reaches, such as the 14 deleted model modules. `haliax` and `fray` have almost no unreachable code left by this point. | ~70k |
-| P8 Workspace | Root `pyproject.toml` dependencies, extras, and `uv` conflict declarations; `uv.lock`; decide whether PyTorch moves to its CPU wheel | 0 |
+| P8 Workspace | Root `pyproject.toml` dependencies, extras, and `uv` conflict declarations; `uv.lock`; upgrade Flax to 0.12.10 or later; decide whether PyTorch moves to its CPU wheel. Dependencies may be upgraded freely in any phase, each upgrade in its own commit. | 0 |
 
 Each deletion commit removes the code, its tests, its docs, its workspace entry, and its entries
 in tool configuration. The commit message states what the code did for Marin and why Poorin does
@@ -278,7 +291,7 @@ cuDNN attention passes with the preload and without `LD_LIBRARY_PATH`.
 |---|---|
 | Fray | Delete `iris_backend.py` (820 lines). `current_client()` returns the explicitly set client, otherwise `LocalClient`. |
 | Zephyr | Remove the Iris context checks in `context`, `coordinator`, `worker`, and `stats`. They look up Iris's log-server endpoint and otherwise use the local path. `shuffle` uses `zephyr/resources.py`. |
-| Levanter | `distributed.py` keeps SLURM detection and JAX's own cluster detection, which configures `jax.distributed` on TPU VMs. It loses the Iris branch, which found the JAX coordinator through Iris's endpoint registry. Delete `megascale.py` (multi-slice TPU), `callbacks/_iris_status.py`, the Iris telemetry hooks in `tracker/`, and `training_control.py` (an HTTP status page reached through Iris's proxy) along with its uses in `main/train_lm.py` and grug. |
+| Levanter | `distributed.py` keeps SLURM detection and JAX's own cluster detection, which configures `jax.distributed` on TPU VMs. It loses the Iris branch, which found the JAX coordinator through Iris's endpoint registry. Delete `megascale.py` (multi-slice TPU), `callbacks/_iris_status.py`, and `training_control.py` (an HTTP status page reached through Iris's proxy) along with its uses in `main/train_lm.py` and grug. `tracker/telemetry.py` and `tracker/finelog_metrics.py` stay; their run identity (job ID, node name, process index), which came from Iris, comes from Levanter's run ID and `jax.process_index()` instead. `TelemetryConfig` takes an explicit Finelog URL and raises if it cannot connect. Today `LevanterMetricsWriter.from_iris()` finds no server outside Iris, and `TelemetryConfig.init` catches the error and returns a tracker that silently discards metrics. |
 | Marin executor | `step_status` and `step_runner` keep only the local worker ID. `sweep_coordination` keeps only the single-host path and loses the multi-host leader and follower actors. `marin.training.training` loses the env-dict cache code. Grug's dispatcher stops importing Iris's priority bands. |
 | Experiments outside the roots | Any such file that imports Iris is deleted in this phase so its tests do not fail before P7. |
 
@@ -329,7 +342,7 @@ regardless of reachability: 134,650 reachable lines in 439 modules.
 | 1.5k | `levanter.inference.engine`, `jit_scheduler` | the kept roots `sample_lm`, `levanter.inference.openai`, and `levanter.eval_harness` | Make lazy so training runs do not load the inference engine |
 | 4.5k | Pallas variants in `levanter.kernels.pallas.fused_cross_entropy_loss`; `levanter.kernels.pallas.splash_attention` (0.2k) | Fused cross-entropy is grug's loss (`levanter.grug.loss`) and selects `batched_xla`, its pure-XLA implementation, on GPU. Splash attention is reached because `levanter.data.loader` imports the `AttentionMask` type from `levanter.layers.attention`, which imports the splash kernel at module level. | Make the TPU variants lazy behind a TPU backend check. Keep `batched_xla`. The TPU kernels are the TPU fast path for sub-project 2. |
 | 1.2k | `levanter.analysis.backward_flow` | grug's train loop | Make lazy and opt-in |
-| 1.8k | `levanter.tracker.telemetry` | the `levanter.tracker` package; it reports through Iris and Finelog | Delete. Scheduled in P5b, so Pass 2 should not see it. |
+| 1.8k | `levanter.tracker.telemetry` | kept root (tracker registry) | Keep. P5b removes its Iris dependency. |
 | 7.6k | Zephyr (`zephyr.context`) | tokenization and cache building | Keep. Sub-project 3 decides whether Zephyr becomes the video and trajectory pipeline. |
 | 5.6k | `levanter.grug.grug_moe` | fast-track | Keep. Dense versus MoE comparisons are in scope. |
 | 4.1k | `levanter.grug.attention` | grug model | Keep |
@@ -368,7 +381,10 @@ regardless of reachability: 134,650 reachable lines in 439 modules.
 | Item | Where it goes |
 |---|---|
 | Redesigning Fray's job API | Sub-project 2 |
-| Keeping or removing R1's model path and Haliax (about 20k lines; the post-training kit depends on it) | Sub-project 1b, after Pass 2 |
+| Deciding whether Haliax stays; porting Haliax-based code to plain Equinox | Sub-project 1b |
+| The Flax bridge for pretrained models | Sub-project 4 |
+| Porting finished architectures to PyTorch or Flax | Sub-project 8 |
+| A persistent local Finelog service shared by all runs; forwarding from Modal and TPU runs | Sub-project 2 |
 | Making the post-training kit runnable | A later sub-project |
 | Evaluation contracts for all four model families; a local orchestrator; simulator and video-metric suites | Sub-projects 7a and 7b |
 | Measuring run-to-run noise | Sub-project 5 |
@@ -381,4 +397,5 @@ regardless of reachability: 134,650 reachable lines in 439 modules.
 | Static analysis misses modules loaded by name: plugin registries, `importlib`, string entry points | The four registries in this repository are listed as roots. R1 and R2 execute real runs. Before deleting a module, search the surviving tree for its dotted name as a string. |
 | A kept root that cannot run decays | Kept roots must import and type-check on every commit. Sub-projects 3 and 5 give fast-track and the reference suite local data so they become runnable roots. |
 | `prune_check` becomes too slow to run on every commit | Target under 10 minutes. If the test suite exceeds that, run the full suite once per phase and a fast subset per commit. |
-| `uv.lock` changes hide unrelated version upgrades | Regenerate the lock only in phases that change dependencies, and review its diff for version changes. |
+| Marin stops publishing `marin-finelog-server`, or a later client change breaks protocol compatibility with the pinned server | The server is pinned. Its source remains at `upstream-baseline` and builds with `maturin` if a patch is needed. |
+| A lock regeneration hides an unintended version change | Upgrades are allowed in any phase. Each dependency change goes in its own commit, and its `uv.lock` diff is reviewed for versions that moved without being asked. |
