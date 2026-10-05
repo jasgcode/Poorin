@@ -5,7 +5,8 @@ Status: approved design, 2026-10-04. Implementation plan: not written yet.
 ## TL;DR
 
 Poorin is a hard fork of [Marin](https://github.com/marin-community/marin) for one researcher
-training embodied-AI models on a local RTX 5090, with occasional cloud runs. This sub-project
+training LLMs, video world models, and robot policy models on a local RTX 5090, with occasional
+cloud runs. This sub-project
 shrinks the repository to the code that a fixed set of entry points can reach, then cuts import
 edges that make unrelated code load, until every surviving module has a stated reason to exist.
 
@@ -28,15 +29,18 @@ its own spec after Pass 2 ends.
 
 ### Project goals
 
-- Research on embodied AI: architecture search and scaling laws for video world models and
-  offline robot datasets first. Later, online simulation data for EXPO-FT, an RL method that
-  fine-tunes a pretrained vision-language-action (VLA) model with a small edit policy and a
-  Q-function ([arXiv 2605.25477](https://arxiv.org/abs/2605.25477)).
+- Research across four model families: LLMs, video world models, vision-language-action
+  models (VLAs), and world action models (WAMs), which predict future observations and actions
+  together. The work is architecture search and scaling laws, starting with video and offline
+  robot datasets. Later work adds online simulation data for EXPO-FT, an RL method that
+  fine-tunes a pretrained VLA with a small edit policy and a Q-function
+  ([arXiv 2605.25477](https://arxiv.org/abs/2605.25477)).
 - A light LLM post-training capability (SFT, DPO, LoRA, sampling) for representation-learning
   experiments on models trained from scratch.
-- Evaluation against public benchmarks. Marin's evaluation framework runs external benchmark
-  harnesses against any model served behind an OpenAI-compatible URL and records results with
-  uncertainty intervals. Sub-project 7 extends the same pattern to robot policies in simulators.
+- One evaluation framework for all four families. Marin's framework runs external benchmark
+  harnesses against a model served behind an OpenAI-compatible URL and records results with
+  uncertainty intervals. Its records and statistics already apply to any family; its serving
+  contract and rollout schema are shaped for LLMs. Sub-project 7 generalizes them.
 - A repository the owner understands end to end and documents in a technical blog. Each change
   must be small enough to explain.
 - JAX stays the framework. Upstream Marin serves as a reference; Poorin does not merge from it.
@@ -49,11 +53,16 @@ its own spec after Pass 2 ends.
 | 1 | Core prune (this spec) | 0 |
 | 1b | Consolidate surviving packages | 1 |
 | 2 | Compute dispatch: local, Modal, GCP TPU | 1 |
-| 3 | Embodied data layer: video and trajectory datasets | 1 |
-| 4 | Embodied model templates | 1, 3 |
-| 5 | Scaling-law harness | 2, 4 |
+| 3 | Data layer: text, video, and trajectory datasets | 1 |
+| 4 | Model templates: LLM (grug), video world model, VLA, WAM | 1, 3, 7a |
+| 5 | Scaling-law harness across model families | 2, 4, 7 |
 | 6 | Online simulation loop for EXPO-FT | 1, 4 |
-| 7 | Evaluation harness: a local orchestrator that serves a checkpoint and runs the kept benchmark harnesses, then simulator benchmarks for policies on the same records and statistics | 1, 4 |
+| 7a | Evaluation contracts: one serving interface per model kind (text, policy, world model, WAM), a rollout schema of episodes and typed steps, the evaluation record | 1 |
+| 7b | Evaluation mechanisms: a local orchestrator for the kept LLM harnesses, then simulator suites for policies and WAMs and video-metric suites for world models. Each family's mechanisms land with its template in 4. | 7a, 4 |
+
+Design order after this sub-project: 7a first, so every model template in 4 is built against an
+evaluation interface and sub-project 5 fits scaling curves on one record format. 1b, 2, and 3
+can proceed in parallel with 7a.
 
 ### Libraries in the workspace
 
@@ -159,7 +168,7 @@ Qwen3 MoE, and Levanter MoE. They remain available at `upstream-baseline`.
 | `iris` | See P5 |
 | `marin.rl`, all of `experiments/post_training` | None in roots |
 | `marin.inference`, except `types.py` | `RunningModel` and `OpenAIEndpoint` move from `marin/inference/types.py` to `marin/evaluation/endpoint.py`. `evalchemy/runner.py`, `harbor/runner.py`, and `harbor/driver_config.py` stop using Iris's serving-session types (`RemoteInferenceSession`, `InferenceBackendState`) and take a `RunningModel`. `model_config.py` drops speculative-serving settings, and `resolve_tokenizer_revision` moves into it. Levanter's own inference engine (`levanter.inference`) is separate and stays. |
-| `marin.evaluation` fleet orchestration: `runner.py`, `serving_config.py`, `hardware.py`, `inference_metrics.py`; published-cohort policy: `eval_policy.py`, `eval_policy_sources.py`; `marin.experiment.evaluation`; the fleet launcher in `experiments/evaluation/*.py` | Remove imports of these modules from `marin.experiment.train` and `experiments/tutorials/train_tiny_sweep.py`. The in-loop path through `levanter.eval_harness` and Levanter's validation-loss evaluation (`levanter.eval`) stay; scaling-law fits use the latter. Sub-project 7 writes a local orchestrator to replace `runner.py`. |
+| `marin.evaluation` fleet orchestration: `runner.py`, `serving_config.py`, `hardware.py`, `inference_metrics.py`; published-cohort policy: `eval_policy.py`, `eval_policy_sources.py`; `marin.experiment.evaluation`; the fleet launcher in `experiments/evaluation/*.py` | Remove imports of these modules from `marin.experiment.train` and `experiments/tutorials/train_tiny_sweep.py`. The in-loop path through `levanter.eval_harness` and Levanter's validation-loss evaluation (`levanter.eval`) stay; scaling-law fits use the latter. Sub-project 7b writes a local orchestrator to replace `runner.py`. P3 removes only the Iris and fleet dependencies and redesigns nothing, so sub-project 7a starts from Marin's framework as it is. |
 | `marin.mcp` | None in roots |
 | `fray.iris_backend` | See P5 |
 
@@ -361,7 +370,7 @@ regardless of reachability: 134,650 reachable lines in 439 modules.
 | Redesigning Fray's job API | Sub-project 2 |
 | Keeping or removing R1's model path and Haliax (about 20k lines; the post-training kit depends on it) | Sub-project 1b, after Pass 2 |
 | Making the post-training kit runnable | A later sub-project |
-| A local evaluation orchestrator, and simulator benchmarks for policies | Sub-project 7 |
+| Evaluation contracts for all four model families; a local orchestrator; simulator and video-metric suites | Sub-projects 7a and 7b |
 | Measuring run-to-run noise | Sub-project 5 |
 | Video, trajectory, simulation, and VLA work | Sub-projects 3, 4, and 6 |
 
