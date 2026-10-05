@@ -346,6 +346,7 @@ project-includes = [
     "lib/zephyr/src/**/*.py",
     "lib/verifyit/src/**/*.py",
     "lib/finestore/src/**/*.py",
+    "tools/**/*.py",
     "infra/marina/src/**/*.py",
     "infra/marina/apps/**/*.py",
     "infra/deploy/src/**/*.py",
