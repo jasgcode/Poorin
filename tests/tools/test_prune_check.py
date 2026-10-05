@@ -4,6 +4,7 @@
 """Behavior tests for the pure parts of tools.prune_check."""
 
 import csv
+import os
 import subprocess
 
 import pytest
@@ -12,12 +13,17 @@ from tools.prune_check import (
     METRIC_COLUMNS,
     ImportProfile,
     PytestInvocation,
+    affected_legs,
     append_metrics_row,
     changed_files,
     parse_importtime,
     pytest_invocations,
+    remove_new_entries,
     remove_run_outputs,
+    snapshot_entries,
+    train_roots,
 )
+from tools.reachability import RunnableRoot
 
 IMPORTTIME_STDERR = """\
 import time: self [us] | cumulative | imported package
@@ -95,3 +101,30 @@ def test_changed_files_are_the_uncommitted_change_including_untracked_files(tmp_
     (tmp_path / "removed.py").unlink()
     (tmp_path / "new.py").write_text("y = 1\n")
     assert changed_files(tmp_path) == ["edited.py", "new.py", "removed.py"]
+
+
+def test_affected_legs_add_the_tools_tests_for_changes_under_tools():
+    # The test selector knows lib/*/src and experiments as source roots, not tools/.
+    assert affected_legs(["tools/prune_check.py"], []) == [("marin-core", "tests/tools")]
+    assert affected_legs(["docs/poorin/note.md"], []) == []
+
+
+def test_remove_new_entries_deletes_only_what_appeared_after_the_snapshot(tmp_path):
+    logs, wandb = tmp_path / "logs", tmp_path / "wandb"
+    (logs / "old-run").mkdir(parents=True)
+    before = snapshot_entries([logs, wandb])
+    (logs / "new-run" / "artifacts").mkdir(parents=True)
+    (wandb / "offline-run-1").mkdir(parents=True)
+    (wandb / "debug.log").write_text("x")
+    remove_new_entries(before)
+    assert [p.name for p in logs.iterdir()] == ["old-run"]
+    assert list(wandb.iterdir()) == []
+
+
+def test_train_roots_removes_run_outputs_when_a_run_fails(tmp_path):
+    prefix = tmp_path / "prefix"
+    (prefix / "users" / "someone" / "grug").mkdir(parents=True)
+    failing = RunnableRoot("R", "tools.no_such_module", ())
+    with pytest.raises(subprocess.CalledProcessError):
+        train_roots([failing], dict(os.environ), prefix=prefix, log_dirs=[])
+    assert not (prefix / "users").exists()

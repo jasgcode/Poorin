@@ -21,8 +21,9 @@ Checks run in order and the first failure stops the run, so nothing is recorded:
    re-syncs ``.venv`` with CPU-only JAX.
 5. Each runnable root trains to completion twice. The second run, with warm caches, is timed.
 
-Runnable roots write under ``~/.cache/poorin/prune-check``. Per-user run outputs are deleted after
-the runs; tokenized datasets and kernel autotune caches are kept so later checks stay warm.
+Runnable roots write under ``~/.cache/poorin/prune-check``. After the runs, even failed ones, the
+per-user run outputs there and the new entries in the repository's ``logs/`` and ``wandb/`` are
+deleted; tokenized datasets and kernel autotune caches are kept so later checks stay warm.
 """
 
 import argparse
@@ -49,6 +50,10 @@ MARIN_PREFIX = CACHE_HOME / "prune-check"
 JAX_CACHE_DIR = CACHE_HOME / "jax"
 HALIAX_PACKAGE = "marin-haliax"
 HALIAX_CPU_DEVICES = "8"  # infra/ci/run_tests.py runs Haliax tests on eight CPU devices
+# Levanter writes run logs under ./logs and W&B under ./wandb; runnable roots run from REPO_ROOT.
+RUN_LOG_DIRS = (REPO_ROOT / "logs", REPO_ROOT / "wandb")
+# The test selector knows lib/*/src and experiments as source roots, not tools/.
+TOOLS_TEST_LEG = ("marin-core", "tests/tools")
 
 METRIC_COLUMNS = (
     "date",
@@ -119,6 +124,24 @@ def remove_run_outputs(prefix: Path) -> None:
         shutil.rmtree(users)
 
 
+def snapshot_entries(dirs: Iterable[Path]) -> dict[Path, set[str]]:
+    """The entries each directory holds now; a missing directory has none."""
+    return {directory: set(os.listdir(directory)) if directory.is_dir() else set() for directory in dirs}
+
+
+def remove_new_entries(before: Mapping[Path, set[str]]) -> None:
+    """Delete the entries that appeared in each directory after ``before`` was taken."""
+    for directory, names in before.items():
+        if not directory.is_dir():
+            continue
+        for name in set(os.listdir(directory)) - names:
+            path = directory / name
+            if path.is_dir() and not path.is_symlink():
+                shutil.rmtree(path)
+            else:
+                path.unlink()
+
+
 def directory_size(path: Path) -> int:
     return sum(f.stat().st_size for f in path.rglob("*") if f.is_file() and not f.is_symlink())
 
@@ -168,6 +191,14 @@ def pytest_invocations(legs: Iterable[tuple[str, str]]) -> list[PytestInvocation
     return invocations
 
 
+def affected_legs(changed: Sequence[str], selected: Sequence[tuple[str, str]]) -> list[tuple[str, str]]:
+    """The selector's ``(package, test paths)`` legs, plus ``tests/tools`` when ``tools/`` changed."""
+    legs = list(selected)
+    if any(path.startswith("tools/") for path in changed):
+        legs.append(TOOLS_TEST_LEG)
+    return legs
+
+
 def lint_changed_files() -> None:
     paths = [path for path in changed_files(REPO_ROOT) if (REPO_ROOT / path).is_file()]
     if paths:
@@ -175,8 +206,9 @@ def lint_changed_files() -> None:
 
 
 def run_affected_tests() -> None:
-    selection = select_local_tests(changed_files(REPO_ROOT), REPO_ROOT)
-    invocations = pytest_invocations((leg.package, leg.test_paths) for leg in selection.matrix)
+    changed = changed_files(REPO_ROOT)
+    selection = select_local_tests(changed, REPO_ROOT)
+    invocations = pytest_invocations(affected_legs(changed, [(leg.package, leg.test_paths) for leg in selection.matrix]))
     if not invocations:
         print("no affected tests", flush=True)
         return
@@ -194,6 +226,26 @@ def train(root: RunnableRoot, env: Mapping[str, str]) -> float:
     start = time.perf_counter()
     _run([sys.executable, "-m", root.module, *root.args], env=env)
     return time.perf_counter() - start
+
+
+def train_roots(
+    runnable: Sequence[RunnableRoot], env: Mapping[str, str], *, prefix: Path, log_dirs: Sequence[Path]
+) -> dict[str, float]:
+    """Train each root twice and time the second, warm run.
+
+    Run outputs are removed even when a run fails, so a failed check does not leave a checkpoint
+    behind.
+    """
+    before = snapshot_entries(log_dirs)
+    warm: dict[str, float] = {}
+    try:
+        for root in runnable:
+            train(root, env)  # first run fills the compile and autotune caches
+            warm[root.name] = train(root, env)
+    finally:
+        remove_run_outputs(prefix)
+        remove_new_entries(before)
+    return warm
 
 
 def profile_import(module: str) -> ImportProfile:
@@ -222,12 +274,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     lint_changed_files()
     run_affected_tests()
 
-    env = run_env()
-    warm: dict[str, float] = {}
-    for root in roots.runnable:
-        train(root, env)  # first run fills the compile and autotune caches
-        warm[root.name] = train(root, env)
-    remove_run_outputs(MARIN_PREFIX)
+    warm = train_roots(roots.runnable, run_env(), prefix=MARIN_PREFIX, log_dirs=RUN_LOG_DIRS)
 
     r1 = next(root for root in roots.runnable if root.name == "R1")
     profile = profile_import(r1.module)

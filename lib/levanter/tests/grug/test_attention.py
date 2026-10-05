@@ -286,3 +286,15 @@ def test_default_gpu_attention_falls_back_to_reference_outside_fa4_coverage(case
     out = attention(q, k, v, mask)
     expected = attention(q, k, v, mask, implementation="reference")
     np.testing.assert_array_equal(np.asarray(out), np.asarray(expected))
+
+
+@_GPU_ONLY
+def test_default_gpu_attention_lowers_to_the_fa4_kernel_only_for_causal_masks():
+    # The parity tests above also pass on the reference path; this pins that the default uses FA4.
+    q, k, v = _causal_inputs()
+
+    def custom_calls(mask):
+        return jax.jit(lambda q, k, v: attention(q, k, v, mask)).lower(q, k, v).as_text().count("custom_call")
+
+    assert custom_calls(AttentionMask.causal()) >= 1
+    assert custom_calls(AttentionMask(is_causal=False)) == 0
