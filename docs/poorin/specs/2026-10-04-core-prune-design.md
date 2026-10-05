@@ -66,7 +66,7 @@ packages. It gets its own spec after Pass 2 ends.
 | 6 | Online simulation loop for EXPO-FT | 1, 4 |
 | 7a | Evaluation contracts: one serving interface per model kind (text, policy, world model, WAM), a rollout schema of episodes and typed steps, the evaluation record | 1 |
 | 7b | Evaluation mechanisms: a local orchestrator for the kept LLM harnesses, then simulator suites for policies and WAMs and video-metric suites for world models. Each family's mechanisms land with its template in 4. | 7a, 4 |
-| 8 | Release ports: export finished architectures and weights to PyTorch (Hugging Face) or Flax. `levanter.compat.hf_checkpoints` and `levanter.main.export_lm_to_hf` are the existing pattern. | 4 |
+| 8 | Release ports: export finished architectures and weights to PyTorch (Hugging Face) or Flax. Release weights use safetensors with a JSON config; training checkpoints stay in Levanter's TensorStore format (Zarr v3 in OCDBT), which also holds optimizer state. `levanter.compat.hf_checkpoints`, `haliax.state_dict.to_torch_compatible_state_dict`, and `levanter.main.export_lm_to_hf` are the existing pattern. Sub-project 4 fixes parameter names and weight layouts so they map directly onto the ported modules. | 4 |
 
 Design order after this sub-project: 7a first, so every model template in 4 is built against an
 evaluation interface and sub-project 5 fits scaling curves on one record format. 1b, 2, and 3
