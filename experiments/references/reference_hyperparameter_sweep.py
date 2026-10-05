@@ -626,6 +626,8 @@ def _train_step(
                 name=None,
                 replicate_path=ctx.output_path,
             ),
+            watch_interval=10,
+            backward_flow_interval=50,
             optimizer=_build_adamh_config(
                 learning_rate=SWEEP.search_space["lr"][0],
                 beta1=SWEEP.search_space["beta1"][0],

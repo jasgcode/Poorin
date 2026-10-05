@@ -5,23 +5,27 @@
 
 The run is a function that returns a typed :class:`Checkpoint` handle addressed by an
 explicit ``name@version``. The model, optimizer, data mixture, token budget, and evals
-are stated inline; the output path is ``ctx.output_path`` and the TPU is a run-arg, so neither
+are stated inline; the output path is ``ctx.output_path`` and the GPU is a run-arg, so neither
 bears on the artifact's identity.
 
 The grug training mechanism (``GrugBaseLaunchConfig`` + ``build_grug_run_config`` ->
 ``run_grug``) is grug-specific compute and is kept as-is: the recipe's ``fn`` builds the
 Levanter trainer (its checkpointer paths derive from ``output_path``) and dispatches the
 training job to Fray. Only the data/validation wiring around it is assembled lazily.
+
+This launcher is Poorin's R2 prune root: it must train locally on one RTX 5090. Diagnostics
+(gradient watch, backward flow) are off; enable them per run by setting their intervals.
 """
 
 import dataclasses
-import os
 from dataclasses import dataclass
 from datetime import timedelta
 
 import jmp
 from fray.cluster import ResourceConfig
+from levanter.analysis.backward_flow import BackwardFlowConfig
 from levanter.callbacks.profiler import ProfilerConfig
+from levanter.callbacks.watch import WatchConfig
 from levanter.checkpoint import CheckpointerConfig
 from levanter.data.text.datasets import LmDataConfig
 from levanter.optim.config import AdamConfig, OptimizerConfig
@@ -31,38 +35,26 @@ from levanter.trainer import TrainerConfig
 from marin.execution.build_context import resolve_version
 from marin.execution.lazy import ArtifactStep, StepContext
 from marin.experiment.cli import experiment_main
-from marin.experiment.data import mixture
+from marin.experiment.data import mixture, pretokenized
 from marin.experiment.namespacing import user_namespaced_name
 from marin.training.training import LevanterCheckpoint, resolve_checkpointer_output_path
 
-from experiments.datasets.nemotron import nemotron_datasets
-from experiments.datasets.paloma import paloma_datasets
-from experiments.datasets.proofpile import proofpile_dataset
-from experiments.datasets.starcoder import starcoder_dataset
-from experiments.datasets.uncheatable import uncheatable_datasets
 from experiments.grug.base.model import GrugModelConfig
 from experiments.grug.base.train import GrugEvalConfig, GrugRunConfig, GrugTrainerConfig, run_grug
-from experiments.llama import llama3_tokenizer
+from experiments.marin_tokenizer import marin_tokenizer
 
-# The TPU the training job is dispatched onto. A run-arg, not part of the config's
-# identity: re-running on a different TPU is the same checkpoint. The launcher step
-# runs inline (run_grug dispatches its own Fray job).
-_TRAIN_RESOURCES = ResourceConfig.with_tpu("v5p-8")
+# One local RTX 5090. A run-arg, not part of the config's identity: the same checkpoint can be
+# rebuilt on other hardware. The local backend ignores these values; they describe the machine.
+_TRAIN_RESOURCES = ResourceConfig.with_gpu("RTX5090", count=1, cpu=16, disk="128G", ram="96G")
 
-# Nemotron CC mixture weights: the corpus's TiB proportions, plus starcoder and
-# proof-pile at their published weights. Policy lives here, in the experiment.
-_NEMOTRON_WEIGHTS = {
-    "hq_actual": 0.91351,
-    "hq_synth": 2.72,
-    "medium_high": 0.82471,
-    "medium": 3.38,
-    "medium_low": 1.54,
-    "low_actual": 0.70123,
-    "low_synth": 0.62771,
-}
-_STARCODER_WEIGHT = 0.25
-_PROOFPILE_WEIGHT = 0.055
-
+# 10M pretokenized FineWeb-Edu tokens (about 20 MB) from the Hugging Face Hub, tokenized with the
+# Marin tokenizer (the Llama 3 vocabulary, 128,256 entries, matching GRUG_130M_MODEL).
+_TRAIN_DATA = pretokenized(
+    "fineweb-edu-10M",
+    repo_id="marin-community/fineweb-edu-pretokenized-10M",
+    tokenizer=marin_tokenizer,
+    version="2026.06.28",
+)
 
 GRUG_130M_MODEL = GrugModelConfig(
     vocab_size=128_256,
@@ -74,6 +66,9 @@ GRUG_130M_MODEL = GrugModelConfig(
     max_seq_len=4096,
     head_dim=None,
 )
+
+# GRUG_130M_MODEL at 1024 tokens, which fits batch 16 on one RTX 5090 with room to spare.
+_LOCAL_MODEL = dataclasses.replace(GRUG_130M_MODEL, max_seq_len=1024)
 
 
 @dataclass(frozen=True)
@@ -88,6 +83,9 @@ class GrugBaseLaunchConfig:
     fingerprint cannot serialize. ``build_grug_run_config`` reconstitutes them (with
     their default pspecs) at run time, keeping the sharding plumbing out of the
     artifact's identity.
+
+    Each enabled diagnostic is a static flag on the jitted step, so it adds one compiled step
+    variant (about 90 s each for the 130M model on an RTX 5090).
     """
 
     model: GrugModelConfig
@@ -101,6 +99,8 @@ class GrugBaseLaunchConfig:
     mp: str  # jmp policy string, e.g. "params=float32,compute=bfloat16,output=bfloat16".
     tracker: TrackerConfig
     optimizer: OptimizerConfig
+    watch_interval: int  # gradient/parameter statistics every N steps; 0 disables them.
+    backward_flow_interval: int  # backward-flow diagnostic every N steps; 0 disables it.
     z_loss_weight: float = 1e-4
     ema_beta: float | None = None  # EMA coefficient for eval/checkpoint model; None disables EMA.
     log_every: int = 1
@@ -110,15 +110,6 @@ class GrugBaseLaunchConfig:
     max_eval_batches: int = 8
     eval_current: bool = True
     eval_ema: bool = False
-
-
-def _resolve_run_id(default_run_id: str) -> str:
-    """Resolve run id and append `FERRY_DATE` when launching from ferry workflows."""
-    run_id = os.environ.get("GRUG_RUN_ID", default_run_id)
-    ferry_date = os.environ.get("FERRY_DATE")
-    if ferry_date:
-        run_id = f"{run_id}-{ferry_date}"
-    return run_id
 
 
 def _resolve_tracker(tracker: TrackerConfig, run_id: str) -> TrackerConfig:
@@ -144,6 +135,7 @@ def build_grug_run_config(launch: GrugBaseLaunchConfig) -> GrugRunConfig:
         mp=jmp.get_policy(launch.mp),
         tracker=_resolve_tracker(launch.tracker, launch.run_id),
         use_explicit_mesh_axes=True,
+        watch=WatchConfig(interval=launch.watch_interval),
         require_accelerator=True,
         allow_nondivisible_batch_size=False,
         checkpointer=resolve_checkpointer_output_path(
@@ -158,6 +150,7 @@ def build_grug_run_config(launch: GrugBaseLaunchConfig) -> GrugRunConfig:
         ema_beta=launch.ema_beta,
         log_every=launch.log_every,
         loss_implementation=launch.loss_implementation,
+        backward_flow=BackwardFlowConfig(interval=launch.backward_flow_interval),
     )
 
     eval_config = (
@@ -193,38 +186,25 @@ def run_grug_base_trial(config: GrugBaseLaunchConfig) -> None:
 
 
 def grug_base_trial(*, version: str | None = None) -> ArtifactStep[LevanterCheckpoint]:
-    """The base grug trial on the Nemotron mix as a lazy checkpoint.
-
-    Every component is a :class:`Dataset` handle, so the whole graph lowers via
-    :func:`~marin.execution.lazy.lower`. The paloma/uncheatable suites are validation
-    (weight 0).
-    """
+    """The base grug trial on 10M FineWeb-Edu tokens, on one local GPU, as a lazy checkpoint."""
     name = "grug/base-trial"
     version = resolve_version(name, version)
-    nem = nemotron_datasets(tokenizer=llama3_tokenizer)
-    train = {nem[split]: weight for split, weight in _NEMOTRON_WEIGHTS.items()}
-    train[starcoder_dataset(tokenizer=llama3_tokenizer)] = _STARCODER_WEIGHT
-    train[proofpile_dataset(tokenizer=llama3_tokenizer)] = _PROOFPILE_WEIGHT
-    validation = [
-        *paloma_datasets(tokenizer=llama3_tokenizer).values(),
-        *uncheatable_datasets(tokenizer=llama3_tokenizer).values(),
-    ]
-
-    run_id = _resolve_run_id("grug-base-trial")
+    train = {_TRAIN_DATA: 1.0}
+    run_id = f"grug-base-{version}"
 
     def build_config(ctx: StepContext) -> GrugBaseLaunchConfig:
         return GrugBaseLaunchConfig(
-            model=GRUG_130M_MODEL,
-            data=mixture(ctx, train, validation=validation),
+            model=_LOCAL_MODEL,
+            data=mixture(ctx, train),
             output_path=ctx.output_path,
             run_id=run_id,
             resources=ctx.runtime_arg("train_resources"),
-            steps=2_000,
-            batch_size=512,
+            steps=50,
+            batch_size=16,
             seed=0,
             mp="params=float32,compute=bfloat16,output=bfloat16",
             tracker=WandbConfig(
-                project="marin",
+                project="poorin",
                 tags=["grug", "template"],
                 group="grug-base-trial",
                 name=None,  # filled from run_id in _resolve_tracker
@@ -236,16 +216,14 @@ def grug_base_trial(*, version: str | None = None) -> ArtifactStep[LevanterCheck
                 lr_schedule="cosine",
                 decay=0.2,
                 min_lr_ratio=0.1,
-                warmup=1000,
+                warmup=10,
             ),
+            watch_interval=0,
+            backward_flow_interval=0,
             z_loss_weight=1e-4,
             ema_beta=None,
             log_every=1,
-            eval_batch_size=512,
-            steps_per_eval=1000,
-            max_eval_batches=8,
-            eval_current=True,
-            eval_ema=False,
+            eval_batch_size=None,
         )
 
     return ArtifactStep(
@@ -254,7 +232,7 @@ def grug_base_trial(*, version: str | None = None) -> ArtifactStep[LevanterCheck
         artifact_type=LevanterCheckpoint,
         run=run_grug_base_trial,
         build_config=build_config,
-        deps=(*train, *validation),
+        deps=tuple(train),
         runtime_args={"train_resources": _TRAIN_RESOURCES},
     )
 

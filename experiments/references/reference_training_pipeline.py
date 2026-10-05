@@ -208,6 +208,8 @@ def reference_train_on_store(
                 name=None,
                 replicate_path=ctx.output_path,
             ),
+            watch_interval=10,
+            backward_flow_interval=50,
             optimizer=AdamConfig(
                 learning_rate=3e-3,
                 weight_decay=0.1,
