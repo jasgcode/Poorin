@@ -13,9 +13,11 @@ Checks run in order and the first failure stops the run, so nothing is recorded:
 2. ``pyrefly check`` passes.
 3. ``./infra/pre-commit.py`` passes on every changed file. The files are passed by path because
    ``--changed-files`` skips untracked files.
-4. The unit tests affected by the branch and working tree pass. Selection comes from
-   ``infra/ci/select_tests.py``; pytest runs with ``--no-sync`` in the existing GPU venv and with
-   ``JAX_PLATFORMS=cpu``, as in Marin's CI. ``infra/ci/run_tests.py`` is not used because it
+4. The unit tests affected by the change being checked (tracked files that differ from ``HEAD``,
+   plus untracked files) pass. Selection comes from ``infra/ci/select_tests.py``. Each package's
+   tests run in their own pytest invocation, because packages' ``tests/conftest.py`` modules
+   collide in a single run, with ``--no-sync`` in the existing GPU venv and with
+   ``JAX_PLATFORMS=cpu`` as in Marin's CI. ``infra/ci/run_tests.py`` is not used because it
    re-syncs ``.venv`` with CPU-only JAX.
 5. Each runnable root trains to completion twice. The second run, with warm caches, is timed.
 
@@ -32,7 +34,7 @@ import subprocess
 import sys
 import sysconfig
 import time
-from collections.abc import Mapping, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
@@ -45,7 +47,8 @@ METRICS_FILE = REPO_ROOT / "docs" / "poorin" / "prune-metrics.csv"
 CACHE_HOME = Path.home() / ".cache" / "poorin"
 MARIN_PREFIX = CACHE_HOME / "prune-check"
 JAX_CACHE_DIR = CACHE_HOME / "jax"
-BASE_REF = "main"
+HALIAX_PACKAGE = "marin-haliax"
+HALIAX_CPU_DEVICES = "8"  # infra/ci/run_tests.py runs Haliax tests on eight CPU devices
 
 METRIC_COLUMNS = (
     "date",
@@ -60,6 +63,12 @@ METRIC_COLUMNS = (
     "r2_warm_wall_time",
     "venv_size",
 )
+
+
+@dataclass(frozen=True)
+class PytestInvocation:
+    paths: tuple[str, ...]
+    env: dict[str, str]
 
 
 @dataclass(frozen=True)
@@ -132,31 +141,47 @@ def _run(cmd: Sequence[str], *, env: Mapping[str, str] | None = None) -> None:
     subprocess.run(cmd, cwd=REPO_ROOT, env=env, check=True)
 
 
-def _changed_files() -> list[str]:
-    """Paths changed since the merge base with ``main``, including uncommitted and untracked files."""
+def changed_files(repo_root: Path) -> list[str]:
+    """The change being checked: tracked paths that differ from ``HEAD``, plus untracked files."""
 
     def git(*args: str) -> list[str]:
-        out = subprocess.run(["git", *args], cwd=REPO_ROOT, check=True, capture_output=True, text=True).stdout
+        out = subprocess.run(["git", *args], cwd=repo_root, check=True, capture_output=True, text=True).stdout
         return [line for line in out.splitlines() if line]
 
-    merge_base = git("merge-base", BASE_REF, "HEAD")[0]
-    return sorted({*git("diff", "--name-only", merge_base), *git("ls-files", "--others", "--exclude-standard")})
+    return sorted({*git("diff", "--name-only", "HEAD"), *git("ls-files", "--others", "--exclude-standard")})
+
+
+def pytest_invocations(legs: Iterable[tuple[str, str]]) -> list[PytestInvocation]:
+    """Group selected test paths into one CPU pytest run per package.
+
+    ``legs`` are ``(uv package name, space-separated test paths)`` pairs from the test selector.
+    """
+    by_package: dict[str, set[str]] = {}
+    for package, test_paths in legs:
+        by_package.setdefault(package, set()).update(shlex.split(test_paths))
+    invocations = []
+    for package in sorted(by_package):
+        env = {"JAX_PLATFORMS": "cpu"}
+        if package == HALIAX_PACKAGE:
+            env["JAX_NUM_CPU_DEVICES"] = HALIAX_CPU_DEVICES
+        invocations.append(PytestInvocation(paths=tuple(sorted(by_package[package])), env=env))
+    return invocations
 
 
 def lint_changed_files() -> None:
-    paths = [path for path in _changed_files() if (REPO_ROOT / path).is_file()]
+    paths = [path for path in changed_files(REPO_ROOT) if (REPO_ROOT / path).is_file()]
     if paths:
         _run(["./infra/pre-commit.py", *paths])
 
 
 def run_affected_tests() -> None:
-    selection = select_local_tests(_changed_files(), REPO_ROOT)
-    paths = sorted({path for leg in selection.matrix for path in shlex.split(leg.test_paths)})
-    if not paths:
+    selection = select_local_tests(changed_files(REPO_ROOT), REPO_ROOT)
+    invocations = pytest_invocations((leg.package, leg.test_paths) for leg in selection.matrix)
+    if not invocations:
         print("no affected tests", flush=True)
         return
-    # CPU, as in CI: xdist starts many workers, and each would claim most of the GPU's memory.
-    _run(["uv", "run", "--no-sync", "pytest", *paths], env={**os.environ, "JAX_PLATFORMS": "cpu"})
+    for invocation in invocations:
+        _run(["uv", "run", "--no-sync", "pytest", *invocation.paths], env={**os.environ, **invocation.env})
 
 
 def import_kept_roots(kept: Sequence[str], static_only: Sequence[str], modules: Sequence[str]) -> None:
