@@ -86,6 +86,16 @@ DEVICE_FLOPS: dict[str, dict[str, float]] = {
         "fp16": 125e12,
         "bf16": 125e12,
     },
+    # GeForce RTX 5090 (consumer Blackwell, sm_120). Dense tensor throughput with FP32
+    # accumulate; NVIDIA's sheet lists 2x for sparsity. Spike 0 measured a 222 TFLOP/s bf16
+    # 8192^3 matmul, above this rated value because the card boosts past its rated clock.
+    # source: https://images.nvidia.com/aem-dam/Solutions/geforce/blackwell/nvidia-rtx-blackwell-gpu-architecture.pdf
+    "rtx5090": {
+        "fp32": 104.8e12,
+        "tf32": 104.8e12,
+        "fp16": 209.5e12,
+        "bf16": 209.5e12,
+    },
     # source: https://images.nvidia.com/content/Solutions/data-center/a40/nvidia-a40-datasheet.pdf
     "a40": {
         "fp32": 37.4e12,
@@ -322,6 +332,8 @@ def jax_device_kind_to_fray_device_type(kind: str) -> str:
         return tpu_gen.replace(" ", "")
 
     # NVIDIA GPUs - check more specific patterns first
+    if "rtx 5090" in kind:
+        return "rtx5090"
     if "h100" in kind and "pcie" in kind:
         return "h100-pcie"
     if "h100" in kind:

@@ -41,6 +41,7 @@ from experiments.marin_tokenizer import marin_tokenizer
 DEVICES = {
     "cpu": (ResourceConfig.with_cpu(), 4),
     "h100x1": (ResourceConfig.with_gpu("H100", count=1, cpu=8, disk="128G", ram="64G", regions=[ANY_REGION]), 32),
+    "rtx5090x1": (ResourceConfig.with_gpu("RTX5090", count=1, cpu=16, disk="128G", ram="96G"), 32),
     "h100x8": (
         ResourceConfig.with_gpu("H100", count=8, cpu=32, disk="128G", ram="128G", regions=[ANY_REGION]),
         256,
