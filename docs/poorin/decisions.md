@@ -723,6 +723,20 @@ Plan: `plans/2026-10-05-p1-fleet-operations.md`. Executing on branch `prune/p1-f
 - **Cost if wrong:** None; Task 9 deletes it anyway. The blind spot closes when `scripts/` goes.
 - **Landed:** `[poorin] Delete the canary-metrics test that loads a deleted ferry`.
 
+### D59. Finelog's tests of Marin's deploy files go with `infra/`
+
+- **When:** 2026-10-06, P1 Task 7. **Status:** Adopted.
+- **Decision:** Delete three Finelog tests in the commit that deletes `infra/`: two that check
+  `pulumi refresh` runs after a Kubernetes rollback, and one that loads Marin's cluster-capacity
+  Grafana dashboard. The rest of their files stay.
+- **Why:** Finelog's Pulumi deploys run from `infra/finelog` and stop with "must run from a Marin
+  repository checkout" without it, so the refresh path is dead in Poorin; the dashboard JSON
+  lived in `infra/grafana`. P6 deletes Finelog's `deploy/` and `benchmarks/`.
+- **Alternatives:** Point the tests at a temporary Pulumi project, which keeps testing code
+  Poorin cannot run; pull P6's Finelog trim into P1.
+- **Cost if wrong:** None; P6 deletes the code they tested.
+- **Landed:** `[poorin] Delete infra/`.
+
 ---
 
 ## Deferred

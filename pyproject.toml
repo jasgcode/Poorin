@@ -29,13 +29,9 @@ dependencies = [
     # marin-iris, which depends on it explicitly. `scripts/rust_mode.py dev` swaps
     # marin-finelog-server to a local source build.
     "marin-finelog",
-    "marin-deploy",
     # marin-ducky is the ad-hoc DuckDB SQL service (dashboard + runner + deploy),
     # a workspace member so service fixes land without a wheel republish.
     "marin-ducky",
-    # marin-marina is the multi-app web kernel (infra/marina), a workspace member so
-    # `uv run marina dev` serves the apps from this checkout.
-    "marin-marina",
     # top level deps. try to keep these small.
     "watchdog",
     # Codehealth's weekly review workbench persists into the shared metadata database.
@@ -200,10 +196,6 @@ members = [
     "lib/zephyr",
     "lib/verifyit",
     "lib/finestore",
-    "infra/pulumi",
-    "infra/buckets",
-    "infra/deploy",
-    "infra/marina",
 ]
 # Native maturin packages are excluded from uv workspace discovery because each
 # owns its own build backend and package metadata. The path sources below build
@@ -218,10 +210,8 @@ exclude = ["lib/finelog/rust", "lib/dupekit/rust", "lib/iris/rust", "config/exte
 marin-iris = { workspace = true }
 marin-fray = { workspace = true }
 marin-finelog = { workspace = true }
-marin-deploy = { workspace = true }
 marin-dupekit = { workspace = true }
 marin-ducky = { workspace = true }
-marin-marina = { workspace = true }
 marin-haliax = { workspace = true }
 marin-levanter = { workspace = true }
 marin-core = { workspace = true }
@@ -229,7 +219,6 @@ marin-rigging = { workspace = true }
 marin-zephyr = { workspace = true }
 verifyit = { workspace = true }
 marin-finestore = { workspace = true }
-marin-iac = { workspace = true }
 jaxpp = { git = "https://github.com/NVIDIA/jaxpp.git", rev = "46b8443eed01f54688dd24ae451203a504b1cff8" }
 torch = [{ index = "pytorch-cpu", extra = "pipeline", marker = "sys_platform == 'linux'" }]
 nvidia-cutlass-dsl = { index = "nvidia" }
@@ -320,10 +309,7 @@ ignore = ["F722", "B008", "UP015", "UP046", "UP047", "A005", "E741"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["experiments"]
-# "config" is the local module in infra/tpu-ci/{setup,vm_manager}.py. The repo-root
-# config/ directory (cluster YAMLs) would otherwise make isort treat ``import config``
-# as first-party and reorder it, so pin it to the third-party group it already sits in.
-known-third-party = ["wandb", "config", "marin"]
+known-third-party = ["wandb", "marin"]
 
 
 # ty type checker configuration (D49). ty runs through uvx at the version pinned in

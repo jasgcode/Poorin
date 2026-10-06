@@ -1,8 +1,0 @@
-[project]
-name = "marin-buckets"
-version = "0.0.0"
-requires-python = ">=3.12"
-dependencies = ["marin-iac[deploy]"]
-
-[tool.uv]
-package = false

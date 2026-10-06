@@ -17,7 +17,6 @@ from finelog.deploy._k8s import (
     K8sRevisionConflict,
     K8sRevisionHistory,
     _build_env_secret_manifest,
-    k8s_pulumi_rollout,
     k8s_rollback,
     k8s_status,
     k8s_verify_ingest_ready,
@@ -316,34 +315,6 @@ class FakeK8sDeploy:
             body = "degraded: registration failed" if self.current.replica_set in self.unhealthy else HEALTH_OK
             return subprocess.CompletedProcess(argv, 0, stdout=body, stderr="")
         raise AssertionError(argv)
-
-
-def test_failed_pulumi_update_restores_captured_revision(monkeypatch: pytest.MonkeyPatch) -> None:
-    previous = _revision("finelog-good", 4, 1)
-    attempted = _revision("finelog-bad", 5, 0)
-    deploy = FakeK8sDeploy(current=previous, revisions=(previous, attempted))
-    deploy.pulumi_failure_target = attempted.replica_set
-    monkeypatch.setattr(subprocess, "run", deploy.run)
-
-    with pytest.raises(click.ClickException):
-        k8s_pulumi_rollout(_s3_config(), stack="cw", yes=True)
-
-    assert deploy.current.replica_set == previous.replica_set
-    assert deploy.refreshed
-
-
-def test_failed_manual_rollback_restores_source_revision(monkeypatch: pytest.MonkeyPatch) -> None:
-    current = _revision("finelog-current", 5, 0)
-    target = _revision("finelog-unhealthy", 4, 1)
-    deploy = FakeK8sDeploy(current=current, revisions=(current, target))
-    deploy.unhealthy.add(target.replica_set)
-    monkeypatch.setattr(subprocess, "run", deploy.run)
-
-    with pytest.raises(click.ClickException):
-        k8s_rollback(_s3_config(), stack="cw", to_revision=target.revision, yes=True)
-
-    assert deploy.current.replica_set == current.replica_set
-    assert deploy.refreshed
 
 
 def test_manual_rollback_does_not_override_concurrent_rollout(monkeypatch: pytest.MonkeyPatch) -> None:

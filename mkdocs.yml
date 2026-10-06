@@ -57,9 +57,6 @@ watch:
   - docs/
   - lib/marin/src/
 
-hooks:
-  - infra/mkdocs_hooks.py
-
 nav:
   - Home: index.md
   - Tutorials:
@@ -69,7 +66,6 @@ nav:
       - Setting up a Local GPU Environment: tutorials/local-gpu.md
       - Training on Cloud GPUs: tutorials/cloud-gpu.md
       - Fine-tune Snowball on Your H100 Cluster: tutorials/run-snowball-sft-on-h100.md
-      - Prepare a Storage Bucket: tutorials/storage-bucket.md
       - Publishing an Analysis Site: tutorials/publish-analysis-site.md
       - Training an LM: tutorials/train-an-lm.md
       - Run Evaluations: tutorials/run-lm-evals.md
@@ -90,7 +86,6 @@ nav:
   - Developer Guide:
       - Contributing: dev-guide/contributing.md
       - Tutorial Guidelines: dev-guide/tutorial-guidelines.md
-      - Internal Onboarding: dev-guide/guidelines-internal.md
       - Forking Policy: dev-guide/forking-policy.md
       - Building Docs: dev-guide/building-docs.md
       - Releasing to PyPI: dev-guide/releasing.md

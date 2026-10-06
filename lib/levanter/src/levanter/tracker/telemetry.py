@@ -48,7 +48,7 @@ def _metric_name(name: str) -> str:
 
 # Keep this well under the reader's enrollment window. Telemetry is best-effort and
 # drops records under queue pressure, so several missed beats must not un-enroll a
-# live job. The reader's window lives in infra/grafana/src/training_stalls.py.
+# live job.
 _PHASE_HEARTBEAT_SECONDS = 60.0
 _NCCL_RAS_POLL_SECONDS = 10 * 60.0
 _NCCL_STALL_CAPTURE_SECONDS = 8.0

@@ -141,31 +141,6 @@ Marin runs on multiple types of hardware (CPU, GPU, TPU).
         uv sync --all-packages --extra=tpu
         ```
 
-## Rust Crates (dupekit)
-
-Marin includes Rust-backed packages (`marin-dupekit-native`,
-`marin-finelog-server`) that are installed as **pre-built wheels** by default —
-no Rust toolchain needed. `uv sync` fetches the wheels from PyPI automatically.
-
-To switch to **source builds** (requires Cargo), use the Makefile targets:
-
-```bash
-# Check current mode and Cargo availability
-make rust-status
-
-# Switch to dev mode: modifies pyproject.toml to build from source (requires Cargo)
-make rust-dev
-
-# Switch back to user mode: reverts pyproject.toml to pre-built wheels (no Cargo needed)
-make rust-user
-```
-
-!!! warning
-    `make rust-dev` adds local path sources for the native packages to the root
-    `pyproject.toml` and to `lib/dupekit/pyproject.toml` / `lib/finelog/pyproject.toml`.
-    **Do not commit those files while in dev mode** — CI will reject them.
-    Run `make rust-user` before committing.
-
 ## Trying it Out
 
 To check that your installation worked, you can go to the [First Experiment](first-experiment.md) tutorial, where

@@ -116,18 +116,3 @@ def test_render_sql_resolves_scalar_and_multivalue_dashboard_variables() -> None
         "SELECT 'job_id' AS kind FROM telemetry_v1 "
         "WHERE job_id IN ('/job-a','quoted''job') AND node_name IN ('node-a')"
     )
-
-
-def test_cluster_capacity_dashboard_exposes_both_finelog_queries() -> None:
-    dashboard = Path(__file__).resolve().parents[3] / "infra/grafana/dashboards/cluster_capacity.json"
-
-    corpus = load_dashboard_corpus(
-        dashboard,
-        start_ms=1_000,
-        end_ms=5_000,
-        interval_ms=250,
-        variables={"cluster": ("marin",)},
-    )
-
-    assert {query.name for query in corpus.queries} == {"cluster_capacity_h", "cluster_capacity_t"}
-    assert {query.target for query in corpus.queries} == {"H", "T"}

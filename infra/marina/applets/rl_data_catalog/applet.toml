@@ -1,3 +1,0 @@
-title = "RL Data Atlas"
-description = "Live source inventory from MarinSkyRL and Task Trove, with release provenance and task counts."
-python_entrypoint = "server.app:create_api"
