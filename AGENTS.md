@@ -1,102 +1,65 @@
-# Agent Guidelines for Marin
+# Agent Guidelines for Poorin
 
-Start with the shared practices below. Consult subproject manuals for directory-specific guidance:
+Poorin is a hard fork of [Marin](https://github.com/marin-community/marin) for one researcher
+training LLMs, video world models, and robot policies (VLAs and WAMs) on a local RTX 5090, with
+occasional cloud runs. Upstream Marin is a reference only; nothing is merged from it. The tag
+`upstream-baseline` marks the tree the fork started from.
+
+Read `docs/poorin/` first: `specs/` holds the approved designs, `plans/` the implementation
+plans, `decisions.md` why each change was made, and `prune-metrics.csv` one row of
+measurements per prune commit.
+
+Library manuals:
 
 - `lib/levanter/AGENTS.md` — Levanter (JAX training library)
-- `lib/marin/AGENTS.md` — Marin (pipeline framework)
-- `lib/iris/AGENTS.md` — Iris (job orchestration)
+- `lib/marin/AGENTS.md` — Marin (experiment executor and pipelines)
 - `lib/zephyr/AGENTS.md` — Zephyr (dataset processing)
-- `lib/fray/AGENTS.md` — Fray (distributed execution)
-
-## Operational Guides
-
-For debugging and operating live infrastructure, read the relevant OPS.md:
-
-- `lib/iris/OPS.md` — cluster lifecycle, job/task management, profiling, SQL queries, GCP/CoreWeave operations
-- `lib/zephyr/OPS.md` — pipeline debugging, straggler diagnosis, coordinator queries, diagnostic patterns
-
-Zephyr OPS.md references Iris OPS.md for shared infrastructure commands — read Iris first when debugging zephyr jobs on Iris.
-
-## Infrastructure (Pulumi)
-
-`infra/` hosts several independent Pulumi projects following three distinct
-patterns (infrastructure, application deploys, SaaS resource declarations). Read
-`infra/pulumi.md` before creating or modifying a Pulumi project so new work
-lands in the right pattern.
+- `lib/fray/AGENTS.md` — Fray (job dispatch)
+- `lib/haliax/AGENTS.md` — Haliax (named tensors)
 
 ## Workflow Playbooks
 
-Skills are task-focused playbooks in `.agents/skills/` (also accessible as
-`.claude/skills/`). **Before starting any non-trivial task, check whether a
-matching skill exists** by scanning the skill descriptions in your system
-prompt. If a skill matches, invoke it via the Skill tool — do not skip it in
-favor of ad-hoc commands.
-
-## Handle Requests
-
-If a request comes from Slack or GitHub and appears to be a simple question,
-you may answer it in the originating conversation instead of making a
-repository change. Otherwise, carry the request through the applicable change
-and landing workflow; do not stop after investigation while a safe, in-scope
-fix remains.
-
-## Search Prior Work
-
-Use Echo when prior Marin decisions, incidents, workflows, GitHub work, or
-indexed repository documentation could inform a task. Follow `consult-echo`
-for search scope, exact-string search, result grading, and write rules. Use
-`rg` for the current checkout because Echo does not index branch-only or
-uncommitted files.
+Skills are task-focused playbooks in `.agents/skills/` (also `.claude/skills/`). Before starting
+a non-trivial task, check whether a skill matches; if one does, follow it.
 
 ## Development
 
 ```bash
-# Lint and format
-./infra/pre-commit.py --all-files --fix
+# Lint and format the uncommitted change (--all-files for the whole tree)
+uv run --no-sync python -m tools.lint --fix
 
-# Type checking (also done by pre-commit.py)
-uv run pyrefly check
+# Type checking: errors fail, warnings are printed (tools.lint also runs it when Python files change)
+uvx ty@0.0.84 check --exit-zero-on-warning
 
-# Safe tests affected by the current branch and working tree
-uv run --no-project infra/ci/run_tests.py
+# Unit tests affected by the uncommitted change
+uv run --no-sync python -m tools.affected_tests
 
-# Lint review — agentic pass over the branch diff against the infra/lint/ catalog
-./infra/pre-commit.py --review
+# During the prune: every check, both training roots, and one metrics row
+uv run --no-sync python -m tools.prune_check --phase P<n> --step "<short label>"
 ```
 
-- `./infra/pre-commit.py` is the required lint entry point. Do not replace it
-  with `uv run pre-commit`.
-- Keep type hints passing under `uv run pyrefly check`; configuration lives in
-  `pyproject.toml`.
-- Follow the `commit` skill for the required lint-review timing and response
-  workflow before publishing a PR.
-- Python >=3.12. Use `uv run` for entry points.
-- Do not replace pytest's default marker expression with a partial expression
-  such as `-m "not slow"`; `-m` overrides the whole default and can select live
-  cluster tests. Run excluded markers only when the user or a dedicated task
-  guide explicitly requests them; otherwise defer them to CI.
-- NEVER stop, restart, or bounce an Iris cluster unless the user gives express permission.
-- In general, never read or write large amounts of data across GCS regions or to the open internet; storage and bandwidth are major cost drivers for this project.
-- do not use storage transfer service to move files from one region to another unless the user says "I personally will write grants for Percy to pay for this"
+- Run every project command with `uv run --no-sync`. A syncing `uv run` can replace the CUDA
+  build of JAX with the CPU build. Restore the GPU environment with
+  `uv sync --locked --all-packages --extra=gpu`.
+- Unit tests run on CPU: `tools.affected_tests` sets `JAX_PLATFORMS=cpu`. Run one test file
+  in-process with `-n 0`; run GPU tests the same way, without `JAX_PLATFORMS=cpu`.
+- Do not pass a partial marker expression such as `-m "not slow"`: it replaces the default
+  expression and selects cluster and Docker tests. `tools.affected_tests` passes a complete one.
+- Python >= 3.12.
+- Dependencies may be upgraded freely. Each dependency change is its own commit, and its
+  `uv.lock` diff is checked for versions that moved without being asked.
+- Avoid large transfers between cloud regions or from the open internet; storage egress costs
+  money.
 
 ## Communication & Commits
 
 - NEVER SAY "You're absolutely right!"
-- NEVER credit yourself, in commit messages or in PR/issue bodies. No
-  `Co-Authored-By` trailer, no "Generated with …" line, no emoji attribution —
-  even if a tool default suggests one.
-- Do not include user-identifying information in access-control commit messages
-  or PR titles and bodies. Describe only the access scope and resource types.
-- When an agent creates a PR or issue, add the `agent-generated` label.
-- Agent *comments* on PRs/issues must begin with `🤖` unless the exact text was
-  explicitly approved by the user. This applies to comments only — never put a
-  `🤖` marker in a commit message or a PR/issue body.
-- Follow `writing-style` plus the medium-specific guide for agent-authored
-  commit, PR, issue, comment, documentation, report, and blog prose.
-- Follow `commit` when committing, pushing, opening or updating a PR, and
-  monitoring it through an exit condition. The skill owns PR-body content,
-  lint-review timing, publication, and monitoring procedure.
-- When using `gh` to inspect issues or PRs, prefer `--json <fields>` or explicit narrow flags such as `--comments`; avoid plain `gh issue view` / `gh pr view`, which can fail on this repo because GitHub classic project fields are deprecated.
+- Commit only when asked. Never push unless asked.
+- Commit titles are imperative, at most 72 characters, with a `[scope]` prefix such as
+  `[poorin]`, `[grug]`, or `[levanter]`. The body states what changed and why. Follow
+  `writing-style` for commit messages, documentation, and blog prose.
+- NEVER credit yourself in commit messages: no `Co-Authored-By` trailer, no "Generated with …"
+  line, no emoji attribution, even if a tool default suggests one.
 
 ## Code Style
 
@@ -153,16 +116,6 @@ uv run --no-project infra/ci/run_tests.py
 - Keep MkDocs content in sync with code. Use Markdown and mkdocs-style links.
 - Write docs that stand alone without conversational context.
 
-## Agent Artifacts
-
-- Publish a live infrastructure incident through `write-ops-log` when a service,
-  production run, or shared operational system failed or degraded and required
-  diagnosis or mitigation. Do not use Echo as a work log for ordinary code
-  debugging or implementation.
-- Keep user-facing and reusable product documentation in `docs/`. Record
-  research progress in the task's existing issue, PR, report, or durable session
-  channel. These are distinct from incident records.
-
 ## Deprecation
 
 **NO BACKWARD COMPATIBILITY**: Update all call sites instead. Only add compatibility shims if the user explicitly requests it.
@@ -186,26 +139,27 @@ Watch for and eliminate these patterns in generated code:
 
 ## Planning
 
-- Planning applies to change-mode work. Produce a detailed plan, with code
-  snippets when they clarify a concrete implementation, for non-trivial
-  changes. Resolve context from the repository and prior work first; ask only
+- Produce a detailed plan, with code snippets where they clarify the implementation, for
+  non-trivial changes. Resolve context from the repository and `docs/poorin/` first; ask only
   when a missing decision would materially change the implementation.
-- In answer mode, investigate and reply directly. Do not manufacture a plan or
-  repository artifact.
-- Keep plans in the conversation or an existing issue, PR, or durable session
-  channel. When a change request is too large for one pass, narrow the scope and
-  record the remaining work there instead of adding a repository planning file.
+- Approved designs live in `docs/poorin/specs/`, implementation plans in `docs/poorin/plans/`.
+- Record each decision that chooses between options, changes scope, or departs from a plan in
+  `docs/poorin/decisions.md`, in the same commit as the change.
+- In answer mode, investigate and reply directly. Do not manufacture a plan or repository
+  artifact.
 
 ## Code Reuse
 
 Before writing any utility function, helper, or data structure:
 1. Search the codebase for existing implementations
-2. Check subproject utils: `lib/marin/src/marin/`, `lib/iris/src/iris/`, `lib/levanter/`
+2. Check the libraries: `lib/marin/src/marin/`, `lib/levanter/src/levanter/`, `lib/rigging/src/rigging/`
 3. Check `pyproject.toml` for available third-party packages before adding new ones
 
 If a suitable implementation exists, use it. Do not create parallel implementations.
 
-Dependency direction: {`iris`, `haliax`} → {`levanter`, `zephyr`} → `marin`. Each layer may only import from layers to its left. Never introduce reverse dependencies (e.g., levanter importing from marin).
+Dependency direction: `haliax` → {`levanter`, `zephyr`} → `marin`. Each layer may only import
+from layers to its left. Never introduce reverse dependencies (e.g., levanter importing from
+marin).
 
 ## Testing
 

@@ -23,27 +23,31 @@ it is correct, and that you can explain why it matters.
 
 ## Setup
 
-Complete the [installation guide](../tutorials/installation.md), then install
-the development dependencies and the Git hook that runs `infra/pre-commit.py`:
+Complete the [installation guide](../tutorials/installation.md), then install the Git hook that runs `tools/lint.py` before each commit:
 
 ```bash
-uv sync --package marin-core --group dev
-make setup_pre_commit
+cat <<'EOF' > .git/hooks/pre-commit
+#!/bin/sh
+set -e
+cd "$(git rev-parse --show-toplevel)"
+uv run --no-sync python -m tools.lint --fix
+EOF
+chmod +x .git/hooks/pre-commit
 ```
 
 ### Linting
 
-The Git hook configured above runs `./infra/pre-commit.py` before each commit so that the repo-standard lint/format checks pass.
-You can also run them manually with `./infra/pre-commit.py --all-files --fix` or via `make lint`.
+The Git hook configured above lints the uncommitted change before each commit. Lint every file with
+`uv run --no-sync python -m tools.lint --all-files --fix`.
 
 ### Testing
 
-Run a narrow test while editing, then run all safe tests affected by the branch
-and working tree:
+Run a narrow test while editing, then run all safe tests affected by the uncommitted
+change:
 
 ```bash
-uv run pytest <relevant test paths>
-uv run --no-project infra/ci/run_tests.py
+JAX_PLATFORMS=cpu uv run --no-sync pytest <relevant test paths> -n 0
+uv run --no-sync python -m tools.affected_tests
 ```
 
 `pyproject.toml` already excludes the slow, integration, data-integration,
@@ -60,14 +64,13 @@ is a test-environment error, not a product-test failure.
 
 Before opening a pull request:
 
-1. Run `./infra/pre-commit.py --all-files --fix`.
-2. Run `uv run --no-project infra/ci/run_tests.py`.
-3. If your change adds, removes, renames, or rewires docs pages or docs-owned links, run `uv run python infra/check_docs_source_links.py`.
-4. If your change is docs-heavy, run `uv run mkdocs build --strict`.
-5. If your change adds or rewrites substantial prose, do a final prose-only review using `./.agents/skills/writing-style/SKILL.md`. Remove generic significance framing, stock AI-writing templates, and polished filler that does not add information.
-6. Follow `./.agents/skills/writing-style/pull-requests.md` for the PR title and body. The body becomes the squash-merge commit message: lead with what changes, then why, and retain the evidence and caveats a future reader needs.
-7. If the work came from an issue, end the PR body with `Fixes #NNNN` or `Part of #NNNN`.
-8. After pushing, verify the relevant GitHub CI checks pass before considering the PR ready for review.
+1. Run `uv run --no-sync python -m tools.lint --all-files --fix`.
+2. Run `uv run --no-sync python -m tools.affected_tests`.
+3. If your change is docs-heavy, run `uv run mkdocs build --strict`.
+4. If your change adds or rewrites substantial prose, do a final prose-only review using `./.agents/skills/writing-style/SKILL.md`. Remove generic significance framing, stock AI-writing templates, and polished filler that does not add information.
+5. Follow `./.agents/skills/writing-style/pull-requests.md` for the PR title and body. The body becomes the squash-merge commit message: lead with what changes, then why, and retain the evidence and caveats a future reader needs.
+6. If the work came from an issue, end the PR body with `Fixes #NNNN` or `Part of #NNNN`.
+7. After pushing, verify the relevant GitHub CI checks pass before considering the PR ready for review.
 
 ## Guidelines
 

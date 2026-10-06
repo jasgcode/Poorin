@@ -43,7 +43,7 @@ code/interfaces into a separate module, or use `Protocol` at module boundaries w
 
 ### 1.3 License header
 
-License headers are managed by pre-commit.py. See below.
+License headers are checked by `tools/lint.py`. See below.
 
 ---
 
@@ -293,7 +293,7 @@ These are the specific patterns that automated cleanup workflows should look for
 
 ## 9. Formatting and Lint Rules
 
-Enforced automatically by `./infra/pre-commit.py --all-files --fix`.
+Enforced automatically by `uv run --no-sync python -m tools.lint --all-files --fix`.
 
 ---
 

@@ -9,14 +9,14 @@ Dev Installation
 First follow the same instructions as provided for the [Levanter README](README.md) to install Levanter.
 
 The main addition for a dev environment is to install the Git hook that runs our repo-wide
-`infra/pre-commit.py` checks:
+`tools/lint.py` checks:
 
 ```bash
 cat <<'EOF' > .git/hooks/pre-commit
 #!/bin/sh
 set -e
 cd "$(git rev-parse --show-toplevel)"
-./infra/pre-commit.py --fix
+uv run --no-sync python -m tools.lint --fix
 EOF
 chmod +x .git/hooks/pre-commit
 ```
@@ -65,7 +65,7 @@ before you start making commits.
 
 You can also check all files in the current branch with this command:
 
-    ./infra/pre-commit.py --all-files
+    uv run --no-sync python -m tools.lint --all-files
 
 When your changes are operational you should verify that the current tests are passing.
 

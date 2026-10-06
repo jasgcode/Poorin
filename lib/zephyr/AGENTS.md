@@ -5,10 +5,7 @@ Lazy dataset processing library. Start with the shared instructions in `/AGENTS.
 ## Key Docs
 
 - `README.md` — overview, API reference, quick start
-- `OPS.md` — debugging pipelines: dashboard, observability, profiling, diagnostic patterns (also used by skills: `debug`, `babysit-zephyr`)
-- Echo — live infrastructure incident records; use `write-ops-log` when an
-  investigation diagnoses a service, production run, or shared operational
-  system failure or degradation
+- `OPS.md` — debugging pipelines: dashboard, observability, profiling, diagnostic patterns (also used by the `debug` skill)
 
 ## Source Layout
 

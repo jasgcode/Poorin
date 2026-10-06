@@ -162,9 +162,9 @@ associations when present, and intentional drops. Read `TESTING.md` first.
 Run the chat tests and repository checks from the repository root:
 
 ```bash
-uv run pytest tests/datakit/download tests/datakit/test_chat.py tests/datakit/test_chat_normalize.py
-uv run --no-project infra/ci/run_tests.py
-./infra/pre-commit.py --changed-files --fix
+JAX_PLATFORMS=cpu uv run --no-sync pytest tests/datakit/download tests/datakit/test_chat.py tests/datakit/test_chat_normalize.py
+uv run --no-sync python -m tools.affected_tests
+uv run --no-sync python -m tools.lint --fix
 ```
 
 Before using the source in training, run its processing chain in an environment

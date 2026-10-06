@@ -22,10 +22,9 @@ repository. Follow these notes when implementing new features or fixing bugs.
 ## Code Style
 
 * **Python version**: the project targets Python >=3.12.
-* **Formatting and Linting**: We use `./infra/pre-commit.py` (ruff, black, license headers) to keep files consistent.
-* **Typing**: the code base uses `pyrefly` for static type checking. `pyrefly` is run by the same `infra/pre-commit.py` entrypoint and the
-  configuration is found in `pyproject.toml`.
-* **Run `./infra/pre-commit.py --all-files`** before committing. The CI workflows run the same checks.
+* **Formatting and Linting**: run `uv run --no-sync python -m tools.lint` from the repository root; it runs the linter, the formatter, the license-header check, and the type checker.
+* **Typing**: the code base uses `ty` for static type checking; its configuration is in the root `pyproject.toml`.
+* **Run `uv run --no-sync python -m tools.lint --all-files`** before committing.
 * **Use `uv run` for commands.** When running tools like `pytest` or other scripts, invoke them via `uv run` so the development dependencies are active.
 * **Doc Strings**: All public functions, classes, and modules should have docstrings, unless
   their purpose is painfully obvious. Use

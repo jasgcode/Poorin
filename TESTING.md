@@ -1,6 +1,6 @@
 # Testing Guidelines
 
-This is Marin's project-wide testing policy. Module-specific `AGENTS.md` and
+This is the project-wide testing policy. Module-specific `AGENTS.md` and
 `TESTING.md` files are authoritative for local commands, markers, fakes, mocks,
 numerical tolerances, and integration-test boundaries. Before writing or
 reviewing tests, read root `AGENTS.md`, this file, the nearest module
@@ -8,12 +8,11 @@ reviewing tests, read root `AGENTS.md`, this file, the nearest module
 
 ## Running Tests Locally
 
-Run a narrow test while editing, then run all safe tests affected by the branch
-and working tree:
+Run a narrow test while editing, then run all safe tests affected by the uncommitted change:
 
 ```bash
-uv run pytest <test path>
-uv run --no-project infra/ci/run_tests.py
+JAX_PLATFORMS=cpu uv run --no-sync pytest <test path> -n 0
+uv run --no-sync python -m tools.affected_tests
 ```
 
 The repository defaults exclude `slow`, `integration`, `data_integration`,
@@ -34,21 +33,10 @@ follow-up changes executable behavior or test expectations.
 
 ## Adding a New Library
 
-When adding a new `lib/<name>/` package, run its unit tests through
-[unified-unit.yaml](.github/workflows/unified-unit.yaml). Add its short name to
-`SCOPES` and its uv package name to `UV_PACKAGE` in
-[select_tests.py](infra/ci/select_tests.py). The selector uses
-`lib/<name>/tests` by default; update `TEST_DIRS` if its tests live elsewhere.
-These registrations include the library in pull request, push, and full-suite
-runs.
-
-Root `pyproject.toml` and `uv.lock` changes run the broad CPU matrix. The
-Levanter TPU lane runs for those changes when the resolved dependencies of
-`marin-levanter` with its `tpu` extra and `test` group change, including
-transitive dependencies. If the selector cannot compare the base and head
-lockfiles, it runs the TPU lane. Levanter or Haliax source changes also select
-the lane. The Levanter Torch lane retains its root manifest trigger. Scheduled
-or manual runs without a base ref run every suite.
+A new `lib/<name>/` package gets its own test suite when it is a workspace member in the root
+`pyproject.toml` and has a `lib/<name>/tests` directory. `tools/affected_tests.py` selects its
+tests from the import graph; nothing else needs registering. A change to the root
+`pyproject.toml` or `uv.lock` runs every suite.
 
 ## Core Rule
 

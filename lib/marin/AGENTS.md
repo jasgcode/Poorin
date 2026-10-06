@@ -10,11 +10,11 @@ Vendored Marin pipeline framework. In this file, leading `/` refers to repositor
 ## Development
 
 ```bash
-# Full safe Marin suite
-uv run --package marin-core --group test --extra cpu --extra dedup pytest tests
+# Root suite (tests/ and experiments/), on CPU
+JAX_PLATFORMS=cpu uv run --no-sync pytest tests experiments
 
 # Lint
-./infra/pre-commit.py --all-files --fix
+uv run --no-sync python -m tools.lint --all-files --fix
 ```
 
 ## Code Conventions
