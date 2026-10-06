@@ -22,7 +22,6 @@ architecture. Dataset changes can usually reuse an existing heuristic.
 - **Tuned reference hyperparameters** at a fixed scale (from Vizier sweep or equivalent).
 - **Validated scaling rules** confirmed at ~1e19 FLOPs and across the full isoflop range.
 - A **scaling ladder** training optimal models at larger budgets.
-- **Canary promotion** in `experiments/ferries/canary_ferry.py`.
 - A **running experiment record** in the coordinating issue, W&B report, or
   durable session channel.
 
@@ -35,8 +34,6 @@ experiments/references/completed_adamh.py      # AdamH heuristic (no create_isof
 experiments/references/
     reference_hyperparameter_sweep.py  # Vizier hparam tuning at fixed scale
     reference_scaling_suite.py         # full isoflop analysis + scaling ladder
-
-experiments/ferries/canary_ferry.py            # daily canary
 
 lib/marin/src/marin/scaling_laws/
     isoflop_analysis.py       # fit_scaling_laws, predict_optimal_config, ScalingHeuristic
@@ -176,11 +173,6 @@ uv run iris --cluster=marin job run --no-wait --cpu=1 --memory=2G --extra=cpu \
   -- python -m experiments.my_scaling_suite
 ```
 
-### 6) Promote to canary
-
-Update `experiments/ferries/canary_ferry.py` with the new best setup. Keep the canary
-model size and FLOP budget roughly fixed (~30M params, ~1B tokens) so it stays cheap.
-
 ## Iteration
 
 General rule: **find the smallest scale that reproduces a problem, fix it there, then scale up.**
@@ -197,5 +189,4 @@ General rule: **find the smallest scale that reproduces a problem, fix it there,
 - No loss spikes or regressions at ~1e19; competitive with prior heuristic at all sizes.
 - Full isoflop sweep with fitted scaling laws and reviewed plots.
 - Scaling ladder trained at target budgets.
-- Canary promoted in `experiments/ferries/canary_ferry.py`.
 - Report: scaling rules, sweep results, comparison vs baseline, known limitations.
