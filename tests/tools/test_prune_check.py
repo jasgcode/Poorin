@@ -12,12 +12,8 @@ import pytest
 from tools.prune_check import (
     METRIC_COLUMNS,
     ImportProfile,
-    PytestInvocation,
-    affected_legs,
     append_metrics_row,
-    changed_files,
     parse_importtime,
-    pytest_invocations,
     remove_new_entries,
     remove_run_outputs,
     snapshot_entries,
@@ -70,43 +66,6 @@ def test_remove_run_outputs_deletes_user_runs_and_keeps_shared_caches(tmp_path):
     assert not (tmp_path / "users").exists()
     assert (tmp_path / "wikitext" / "2026.06.28").is_dir()
     assert (tmp_path / "tmp" / "levanter_kernel_autotune").is_dir()
-
-
-def test_pytest_invocations_run_each_package_separately_and_give_haliax_eight_cpu_devices():
-    # One invocation per package: packages' tests/conftest.py modules collide in a single run.
-    legs = [
-        ("marin-levanter", "lib/levanter/tests/a.py"),
-        ("marin-haliax", "lib/haliax/tests/h.py"),
-        ("marin-levanter", "lib/levanter/tests/b.py lib/levanter/tests/a.py"),
-    ]
-    assert pytest_invocations(legs) == [
-        PytestInvocation(paths=("lib/haliax/tests/h.py",), env={"JAX_PLATFORMS": "cpu", "JAX_NUM_CPU_DEVICES": "8"}),
-        PytestInvocation(paths=("lib/levanter/tests/a.py", "lib/levanter/tests/b.py"), env={"JAX_PLATFORMS": "cpu"}),
-    ]
-
-
-def _git(repo, *args):
-    subprocess.run(["git", *args], cwd=repo, check=True, capture_output=True)
-
-
-def test_changed_files_are_the_uncommitted_change_including_untracked_files(tmp_path):
-    _git(tmp_path, "init", "-q")
-    _git(tmp_path, "config", "user.email", "t@example.com")
-    _git(tmp_path, "config", "user.name", "t")
-    for name in ("kept.py", "edited.py", "removed.py"):
-        (tmp_path / name).write_text("x = 1\n")
-    _git(tmp_path, "add", ".")
-    _git(tmp_path, "commit", "-q", "-m", "base")
-    (tmp_path / "edited.py").write_text("x = 2\n")
-    (tmp_path / "removed.py").unlink()
-    (tmp_path / "new.py").write_text("y = 1\n")
-    assert changed_files(tmp_path) == ["edited.py", "new.py", "removed.py"]
-
-
-def test_affected_legs_add_the_tools_tests_for_changes_under_tools():
-    # The test selector knows lib/*/src and experiments as source roots, not tools/.
-    assert affected_legs(["tools/prune_check.py"], []) == [("marin-core", "tests/tools")]
-    assert affected_legs(["docs/poorin/note.md"], []) == []
 
 
 def test_remove_new_entries_deletes_only_what_appeared_after_the_snapshot(tmp_path):

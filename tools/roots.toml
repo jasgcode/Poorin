@@ -55,6 +55,8 @@ modules = [
     "levanter.tracker.json_file",
     "levanter.tracker.telemetry",
     "levanter.models.llama",
+    # Poorin's own tooling: the prune must not delete it.
+    "tools.*",
 ]
 # Kept for reachability, not imported by prune_check: these run inside Harbor's isolated runtime,
 # which provides the `harbor` package.

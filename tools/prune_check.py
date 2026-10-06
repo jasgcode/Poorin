@@ -13,12 +13,8 @@ Checks run in order and the first failure stops the run, so nothing is recorded:
 2. ``pyrefly check`` passes.
 3. ``./infra/pre-commit.py`` passes on every changed file. The files are passed by path because
    ``--changed-files`` skips untracked files.
-4. The unit tests affected by the change being checked (tracked files that differ from ``HEAD``,
-   plus untracked files) pass. Selection comes from ``infra/ci/select_tests.py``. Each package's
-   tests run in their own pytest invocation, because packages' ``tests/conftest.py`` modules
-   collide in a single run, with ``--no-sync`` in the existing GPU venv and with
-   ``JAX_PLATFORMS=cpu`` as in Marin's CI. ``infra/ci/run_tests.py`` is not used because it
-   re-syncs ``.venv`` with CPU-only JAX.
+4. The unit tests affected by the uncommitted change pass, as ``tools.affected_tests`` selects
+   and runs them: one CPU pytest process per suite.
 5. Each runnable root trains to completion twice. The second run, with warm caches, is timed.
 
 Runnable roots write under ``~/.cache/poorin/prune-check``. After the runs, even failed ones, the
@@ -40,7 +36,8 @@ from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
 
-from infra.ci.select_tests import select_local_tests
+from tools import affected_tests
+from tools.changes import changed_files
 from tools.reachability import ROOTS_FILE, RunnableRoot, expand, load_roots, summarize, workspace_modules
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -48,12 +45,8 @@ METRICS_FILE = REPO_ROOT / "docs" / "poorin" / "prune-metrics.csv"
 CACHE_HOME = Path.home() / ".cache" / "poorin"
 MARIN_PREFIX = CACHE_HOME / "prune-check"
 JAX_CACHE_DIR = CACHE_HOME / "jax"
-HALIAX_PACKAGE = "marin-haliax"
-HALIAX_CPU_DEVICES = "8"  # infra/ci/run_tests.py runs Haliax tests on eight CPU devices
 # Levanter writes run logs under ./logs and W&B under ./wandb; runnable roots run from REPO_ROOT.
 RUN_LOG_DIRS = (REPO_ROOT / "logs", REPO_ROOT / "wandb")
-# The test selector knows lib/*/src and experiments as source roots, not tools/.
-TOOLS_TEST_LEG = ("marin-core", "tests/tools")
 
 METRIC_COLUMNS = (
     "date",
@@ -68,12 +61,6 @@ METRIC_COLUMNS = (
     "r2_warm_wall_time",
     "venv_size",
 )
-
-
-@dataclass(frozen=True)
-class PytestInvocation:
-    paths: tuple[str, ...]
-    env: dict[str, str]
 
 
 @dataclass(frozen=True)
@@ -164,41 +151,6 @@ def _run(cmd: Sequence[str], *, env: Mapping[str, str] | None = None) -> None:
     subprocess.run(cmd, cwd=REPO_ROOT, env=env, check=True)
 
 
-def changed_files(repo_root: Path) -> list[str]:
-    """The change being checked: tracked paths that differ from ``HEAD``, plus untracked files."""
-
-    def git(*args: str) -> list[str]:
-        out = subprocess.run(["git", *args], cwd=repo_root, check=True, capture_output=True, text=True).stdout
-        return [line for line in out.splitlines() if line]
-
-    return sorted({*git("diff", "--name-only", "HEAD"), *git("ls-files", "--others", "--exclude-standard")})
-
-
-def pytest_invocations(legs: Iterable[tuple[str, str]]) -> list[PytestInvocation]:
-    """Group selected test paths into one CPU pytest run per package.
-
-    ``legs`` are ``(uv package name, space-separated test paths)`` pairs from the test selector.
-    """
-    by_package: dict[str, set[str]] = {}
-    for package, test_paths in legs:
-        by_package.setdefault(package, set()).update(shlex.split(test_paths))
-    invocations = []
-    for package in sorted(by_package):
-        env = {"JAX_PLATFORMS": "cpu"}
-        if package == HALIAX_PACKAGE:
-            env["JAX_NUM_CPU_DEVICES"] = HALIAX_CPU_DEVICES
-        invocations.append(PytestInvocation(paths=tuple(sorted(by_package[package])), env=env))
-    return invocations
-
-
-def affected_legs(changed: Sequence[str], selected: Sequence[tuple[str, str]]) -> list[tuple[str, str]]:
-    """The selector's ``(package, test paths)`` legs, plus ``tests/tools`` when ``tools/`` changed."""
-    legs = list(selected)
-    if any(path.startswith("tools/") for path in changed):
-        legs.append(TOOLS_TEST_LEG)
-    return legs
-
-
 def lint_changed_files() -> None:
     paths = [path for path in changed_files(REPO_ROOT) if (REPO_ROOT / path).is_file()]
     if paths:
@@ -206,14 +158,8 @@ def lint_changed_files() -> None:
 
 
 def run_affected_tests() -> None:
-    changed = changed_files(REPO_ROOT)
-    selection = select_local_tests(changed, REPO_ROOT)
-    invocations = pytest_invocations(affected_legs(changed, [(leg.package, leg.test_paths) for leg in selection.matrix]))
-    if not invocations:
-        print("no affected tests", flush=True)
-        return
-    for invocation in invocations:
-        _run(["uv", "run", "--no-sync", "pytest", *invocation.paths], env={**os.environ, **invocation.env})
+    selections = affected_tests.select(changed_files(REPO_ROOT), REPO_ROOT)
+    affected_tests.run(affected_tests.pytest_runs(selections), REPO_ROOT)
 
 
 def import_kept_roots(kept: Sequence[str], static_only: Sequence[str], modules: Sequence[str]) -> None:

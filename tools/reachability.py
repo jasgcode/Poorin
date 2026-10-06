@@ -123,7 +123,7 @@ def _ancestors(dotted: str) -> list[str]:
 
 
 def _absolute_base(node: ast.ImportFrom, module: str, is_package: bool) -> str:
-    """Absolute dotted prefix named by ``from ... import``. Copied from infra/ci/select_tests.py."""
+    """Absolute dotted prefix named by ``from ... import``. From Marin's infra/ci/select_tests.py."""
     if node.level == 0:
         return node.module or ""
     package = module if is_package else module.rsplit(".", 1)[0] if "." in module else ""
