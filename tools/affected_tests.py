@@ -116,20 +116,38 @@ def select(changed: Sequence[str], repo_root: Path) -> list[Selection]:
     return selections
 
 
-def pytest_runs(selections: Iterable[Selection]) -> list[PytestRun]:
-    """One CPU pytest invocation per selected suite."""
+def pytest_runs(selections: Iterable[Selection], exclusions: Sequence[str]) -> list[PytestRun]:
+    """One CPU pytest invocation per selected suite, skipping the tests ``exclusions`` name.
+
+    ``exclusions`` are ``--ignore`` and ``--deselect`` options with repository-relative paths, such
+    as ``HOST_EXCLUSIONS``; each suite gets the ones under its test directories.
+    """
     runs = []
     for selection in selections:
         suite = selection.suite
         own_prefixes = tuple(f"{test_dir}/" for test_dir in suite.test_dirs)
-        exclusions = [option for option in HOST_EXCLUSIONS if option.split("=", 1)[1].startswith(own_prefixes)]
+        own = [
+            _suite_relative(option, suite) for option in exclusions if option.split("=", 1)[1].startswith(own_prefixes)
+        ]
         runs.append(
             PytestRun(
-                args=("uv", "run", "--no-sync", "pytest", "-m", LOCAL_SAFE_MARKERS, *exclusions, *selection.paths),
+                args=("uv", "run", "--no-sync", "pytest", "-m", LOCAL_SAFE_MARKERS, *own, *selection.paths),
                 env={**TEST_ENV, **SUITE_ENV.get(suite.config_dir, {})},
             )
         )
     return runs
+
+
+def _suite_relative(option: str, suite: Suite) -> str:
+    """``option`` as pytest reads it in ``suite``'s run from the repository root.
+
+    ``--deselect`` takes a node ID, which pytest makes relative to the suite's configuration
+    directory; ``--ignore`` takes a path relative to the working directory.
+    """
+    flag, path = option.split("=", 1)
+    if flag != "--deselect" or not suite.config_dir:
+        return option
+    return f"{flag}={path.removeprefix(f'{suite.config_dir}/')}"
 
 
 def run(runs: Sequence[PytestRun], repo_root: Path) -> None:
@@ -287,7 +305,7 @@ def _collected_by_name(name: str) -> bool:
 
 def main(argv: Sequence[str] | None = None) -> int:
     argparse.ArgumentParser(description="Run the unit tests affected by the uncommitted change.").parse_args(argv)
-    run(pytest_runs(select(changed_files(REPO_ROOT), REPO_ROOT)), REPO_ROOT)
+    run(pytest_runs(select(changed_files(REPO_ROOT), REPO_ROOT), HOST_EXCLUSIONS), REPO_ROOT)
     return 0
 
 

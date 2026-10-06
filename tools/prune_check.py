@@ -152,7 +152,7 @@ def _run(cmd: Sequence[str], *, env: Mapping[str, str] | None = None) -> None:
 
 def run_affected_tests() -> None:
     selections = affected_tests.select(changed_files(REPO_ROOT), REPO_ROOT)
-    affected_tests.run(affected_tests.pytest_runs(selections), REPO_ROOT)
+    affected_tests.run(affected_tests.pytest_runs(selections, affected_tests.HOST_EXCLUSIONS), REPO_ROOT)
 
 
 def import_kept_roots(kept: Sequence[str], static_only: Sequence[str], modules: Sequence[str]) -> None:
