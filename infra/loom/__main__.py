@@ -3,6 +3,6 @@
 
 """Pulumi entry point for the production Loom host."""
 
-from infrastructure import DeploymentConfig, create_infrastructure  # pyrefly: ignore[missing-import]
+from infrastructure import DeploymentConfig, create_infrastructure
 
 create_infrastructure(DeploymentConfig.from_pulumi())

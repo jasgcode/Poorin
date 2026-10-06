@@ -41,7 +41,7 @@ class FakeJudgeServer(ThreadingHTTPServer):
 class _Handler(BaseHTTPRequestHandler):
     def do_POST(self) -> None:
         assert self.path.endswith(("/chat/completions", "/responses"))
-        server: FakeJudgeServer = self.server  # pyrefly: ignore[bad-assignment]
+        server: FakeJudgeServer = self.server
         request = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
         server.requests.append(request)
         inputs = request.get("messages", request.get("input"))

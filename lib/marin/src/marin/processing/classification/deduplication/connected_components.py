@@ -236,7 +236,7 @@ def connected_components(
         shard_results = ctx.execute(
             Dataset.from_list(curr_it)
             .load_parquet()
-            .map(lambda record: CCNode(**record))
+            .map(lambda record: CCNode(**record))  # ty: ignore[missing-typed-dict-key]
             .flat_map(_emit_messages)
             .group_by(key=lambda x: x["key"], reducer=_reduce_node_step, num_output_shards=num_reduce_shards)
             .map_shard(_get_write_shard_and_count_fn(i)),

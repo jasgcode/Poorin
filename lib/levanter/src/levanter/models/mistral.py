@@ -82,7 +82,7 @@ class MistralConfig(LlamaConfig):
     HeadSize = property(lambda self: Axis(name="head_size", size=self.hidden_dim // self.num_heads))
 
     # config-reuse subclass narrows to its own HF config/model type (LSP narrowing; pyrefly flags the same)
-    def hf_checkpoint_converter(  # pyrefly: ignore[bad-override]
+    def hf_checkpoint_converter(
         self, ref_checkpoint: Optional[str] = None
     ) -> HFCheckpointConverter["MistralConfig"]:  # type: ignore
         return HFCheckpointConverter(
@@ -111,9 +111,9 @@ class MistralConfig(LlamaConfig):
             rope=rope_config,
         )
 
-    def to_hf_config(  # pyrefly: ignore[bad-override]
+    def to_hf_config(
         self, vocab_size: int, config_overrides: Optional[Dict] = None
-    ) -> HfMistralConfig:
+    ) -> HfMistralConfig:  # ty: ignore[invalid-method-override]
         """Convert to HuggingFace's MistralConfig
 
         Args:
@@ -148,7 +148,7 @@ class MistralConfig(LlamaConfig):
         )
 
     @property
-    def model_type(cls) -> Type["MistralLMHeadModel"]:  # pyrefly: ignore[bad-override]
+    def model_type(cls) -> Type["MistralLMHeadModel"]:
         return MistralLMHeadModel
 
     def attention_config(self) -> AttentionConfig:
@@ -171,7 +171,7 @@ class MistralLMHeadModel(ModuleWithStateDictSerialization, LmHeadModel[MistralCo
     lm_head: hnn.Linear
 
     @property
-    def config(self):  # pyrefly: ignore[bad-override]  # config-reuse: reuses LlamaTransformer
+    def config(self):  # config-reuse: reuses LlamaTransformer
         return self.transformer.config
 
     @property

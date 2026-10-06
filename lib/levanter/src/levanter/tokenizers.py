@@ -728,7 +728,7 @@ class HfMarinTokenizer:
             repo_id, _, revision = self._name_or_path.partition("@")
             tokenizer = AutoTokenizer.from_pretrained(repo_id, revision=revision or None, trust_remote_code=True)
         if self._chat_template is not None and getattr(tokenizer, "chat_template", None) != self._chat_template:
-            tokenizer.chat_template = self._chat_template
+            tokenizer.chat_template = self._chat_template  # ty: ignore[invalid-assignment]
         return tokenizer
 
 

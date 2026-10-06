@@ -59,7 +59,7 @@ class Metric:
         if self.reduction is ReductionType.MEAN:
             count = self._count.array if hasattr(self._count, "array") else self._count
             # jnp.where keeps this JIT-safe and avoids divide-by-zero on empty folds.
-            return jnp.where(count > 0, value / count, 0.0)
+            return jnp.where(count > 0, value / count, 0.0)  # ty: ignore[unsupported-operator]
         return value
 
     def __float__(self) -> float:

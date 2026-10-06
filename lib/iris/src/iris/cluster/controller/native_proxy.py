@@ -6,7 +6,7 @@
 import json
 from dataclasses import dataclass
 
-import iris_native as _native  # pyrefly: ignore[missing-import]
+import iris_native as _native
 
 DECISION_SECRET_HEADER = _native.DECISION_SECRET_HEADER
 DEFAULT_PROXY_TIMEOUT_SECONDS = _native.DEFAULT_PROXY_TIMEOUT_SECONDS

@@ -123,7 +123,7 @@ def _load_model(
                 dtype=trainer_config.mp.compute_dtype,
                 axis_mapping=trainer_config.parameter_axis_mapping,
             )
-            return model, tokenizer  # type: ignore[return-value]
+            return model, tokenizer  # type: ignore[return-value]  # ty: ignore[invalid-return-type]
 
 
 @dataclass

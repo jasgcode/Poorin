@@ -184,7 +184,7 @@ class TreeCache(AsyncDataset[T_co]):
             self._reader = _MaterializedTreeCacheReader(store)
 
     @property
-    def store(self) -> TreeStore[T_co]:
+    def store(self) -> TreeStore[T_co]:  # ty: ignore[invalid-generic-class]
         return self._reader.store
 
     @property
@@ -330,7 +330,7 @@ class TreeCache(AsyncDataset[T_co]):
     def _read_sharded_flat_field_slice_sync(self, field: str, item: slice) -> np.ndarray:
         return blocking_wait(self._read_sharded_flat_field_slice(field, item))
 
-    def _shard_store(self, shard_name: str) -> TreeStore[T_co]:
+    def _shard_store(self, shard_name: str) -> TreeStore[T_co]:  # ty: ignore[invalid-generic-class]
         with self._shard_stores_lock:
             store = self._shard_stores.get(shard_name)
         if store is not None:
@@ -340,7 +340,7 @@ class TreeCache(AsyncDataset[T_co]):
         with self._shard_stores_lock:
             return self._shard_stores.setdefault(shard_name, opened)
 
-    async def _shard_store_async(self, shard_name: str) -> TreeStore[T_co]:
+    async def _shard_store_async(self, shard_name: str) -> TreeStore[T_co]:  # ty: ignore[invalid-generic-class]
         return await _await_shared_open(
             self._shard_stores,
             self._pending_shard_stores,
@@ -386,7 +386,7 @@ class TreeCache(AsyncDataset[T_co]):
 
         return shard_names, shard_batches
 
-    async def _get_sharded_batch(self, indices: Sequence[int]) -> List[T_co]:
+    async def _get_sharded_batch(self, indices: Sequence[int]) -> List[T_co]:  # ty: ignore[invalid-generic-class]
         if len(indices) == 0:
             return []
 
@@ -408,7 +408,7 @@ class TreeCache(AsyncDataset[T_co]):
             rows.append(row)
         return rows
 
-    def _get_sharded_batch_sync(self, indices: Sequence[int]) -> List[T_co]:
+    def _get_sharded_batch_sync(self, indices: Sequence[int]) -> List[T_co]:  # ty: ignore[invalid-generic-class]
         if len(indices) == 0:
             return []
 
@@ -498,7 +498,7 @@ class TreeCache(AsyncDataset[T_co]):
         return True
 
 
-class _TreeCacheReader(Protocol[T_co]):
+class _TreeCacheReader(Protocol[T_co]):  # ty: ignore[invalid-protocol]
     @property
     def store(self) -> TreeStore[T_co]: ...
 
@@ -530,7 +530,7 @@ class _MaterializedTreeCacheReader(Generic[T_co]):
         self._store = store
 
     @property
-    def store(self) -> TreeStore[T_co]:
+    def store(self) -> TreeStore[T_co]:  # ty: ignore[invalid-generic-class]
         return self._store
 
     async def async_len(self) -> int:
@@ -585,7 +585,7 @@ class _ShardedTreeCacheReader(Generic[T_co]):
         self._cache = cache
 
     @property
-    def store(self) -> TreeStore[T_co]:
+    def store(self) -> TreeStore[T_co]:  # ty: ignore[invalid-generic-class]
         raise RuntimeError(f"Cache at {self._cache.cache_dir} is sharded and has no top-level TreeStore.")
 
     async def async_len(self) -> int:

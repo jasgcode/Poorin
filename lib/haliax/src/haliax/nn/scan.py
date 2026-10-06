@@ -223,7 +223,7 @@ class BlockSeq(ModuleWithStateDictSerialization, Generic[M]):
                 )
 
                 # eqx.Module defines __call__ on subclasses but not on the base, so M is not seen as callable.
-                block_result = block(carry, *block_args, **block_kwargs)  # pyrefly: ignore[not-callable]
+                block_result = block(carry, *block_args, **block_kwargs)  # ty: ignore[call-non-callable]
 
                 if not isinstance(block_result, (tuple, list)) or len(block_result) != 2:
                     raise ValueError(
@@ -250,7 +250,7 @@ class BlockSeq(ModuleWithStateDictSerialization, Generic[M]):
                     (args, kwargs),
                 )
                 # eqx.Module defines __call__ on subclasses but not on the base, so M is not seen as callable.
-                carry = block(carry, *block_args, **block_kwargs)  # pyrefly: ignore[not-callable]
+                carry = block(carry, *block_args, **block_kwargs)  # ty: ignore[call-non-callable]
                 carry = tree_checkpoint_name(carry, self._carry_ckpt_name)
             return carry
 

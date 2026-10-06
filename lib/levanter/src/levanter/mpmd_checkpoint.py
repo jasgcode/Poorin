@@ -16,7 +16,7 @@ from levanter.tensorstore_serialization import (
 )
 
 try:
-    import jaxpp.api as jaxpp  # pyrefly: ignore[missing-import]  # Optional pipeline extra.
+    import jaxpp.api as jaxpp  # Optional pipeline extra.
 except ModuleNotFoundError as error:
     if error.name != "jaxpp":
         raise

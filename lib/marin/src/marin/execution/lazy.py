@@ -251,7 +251,7 @@ class ArtifactStep(Generic[T]):
         version: str,
         source: str,
         *,
-        kind: type[T] = Artifact,  # pyrefly: ignore[bad-function-definition]
+        kind: type[T] = Artifact,  # ty: ignore[invalid-parameter-default]
         config: dict | None = None,
     ) -> "ArtifactStep[T]":
         """Register pre-existing data at ``source`` as a managed ``name@version`` handle.
@@ -504,7 +504,7 @@ def apply(
     fn: Callable[..., Any],
     *,
     version: str | None = None,
-    artifact_type: type[T] = Artifact,  # pyrefly: ignore[bad-function-definition]
+    artifact_type: type[T] = Artifact,  # ty: ignore[invalid-parameter-default]
     pin: str | None = None,
     **inputs: Any,
 ) -> "ArtifactStep[T]":

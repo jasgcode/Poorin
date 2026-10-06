@@ -49,7 +49,9 @@ def _as_sequence(
     if implementation is None:
         return _default_implementations()
     if isinstance(implementation, str):
-        return (implementation,)  # explicit single choice: fail fast, never silently fall back
+        return (
+            implementation,
+        )  # explicit single choice: fail fast, never silently fall back  # ty: ignore[invalid-return-type]
     return tuple(implementation)
 
 
@@ -239,7 +241,6 @@ def _short_conv_sharded(
                 seg_block = jnp.pad(seg_block, ((0, 0), (0, tail)), constant_values=OOB_SEGMENT)
         return local_call(weight_local, x_block, seg_block)[:, halo : halo + local_seq, :]
 
-    # pyrefly: ignore[bad-argument-count]  # jax.shard_map decorator erases _local's real signature
     return _local(weight, x, segment_ids)
 
 

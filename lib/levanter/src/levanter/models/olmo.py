@@ -173,7 +173,7 @@ class Olmo2Config(HFCompatConfig):
 
     # config narrows the base's model_type to its own concrete head class (LSP narrowing; pyrefly flags the same)
     @property
-    def model_type(self) -> Type["Olmo2LMHeadModel"]:  # pyrefly: ignore[bad-override]
+    def model_type(self) -> Type["Olmo2LMHeadModel"]:
         return Olmo2LMHeadModel
 
     def mk_LayerNorm(self, axis: AxisSpec) -> hnn.RmsNorm:
@@ -263,7 +263,7 @@ class Olmo2Attention(ModuleWithStateDictSerialization, Attention):
     attention_dropout: float = eqx.field(static=True, default=0.0)
 
     @staticmethod
-    def init(config: Olmo2Config, *, key) -> "Olmo2Attention":  # type: ignore[override]
+    def init(config: Olmo2Config, *, key) -> "Olmo2Attention":  # type: ignore[override]  # ty: ignore[invalid-method-override]
         attn_config = config.attention_config()
         use_bias = attn_config.use_bias
         use_output_bias = attn_config.use_output_bias if attn_config.use_output_bias is not None else use_bias

@@ -73,7 +73,6 @@ def is_nested(subschema: object) -> bool:
 def validates_empty_table(schema: dict) -> bool:
     """Whether ``{}`` satisfies the schema, which is what an empty TOML document parses to."""
     validator_class = validator_for(schema)
-    # pyrefly: ignore[bad-instantiation, missing-argument]  # validator_for returns a concrete
     # validator class; jsonschema types it as the Validator protocol.
     return validator_class(schema).is_valid({})
 

@@ -22,7 +22,7 @@ from pathlib import Path
 try:
     # Generated into built artifacts by hatch_build.py, and absent from a
     # checkout — an editable install resolves its date from git instead.
-    from iris._build_info import BUILD_DATE  # pyrefly: ignore[missing-import]
+    from iris._build_info import BUILD_DATE
 except ImportError:
     BUILD_DATE = ""
 

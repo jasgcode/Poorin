@@ -154,7 +154,7 @@ class Olmo3Config(HFCompatConfig):
 
     # config narrows the base's model_type to its own concrete head class (LSP narrowing; pyrefly flags the same)
     @property
-    def model_type(self) -> Type["Olmo3LMHeadModel"]:  # pyrefly: ignore[bad-override]
+    def model_type(self) -> Type["Olmo3LMHeadModel"]:
         return Olmo3LMHeadModel
 
     def mk_LayerNorm(self, axis: AxisSpec) -> hnn.RmsNorm:

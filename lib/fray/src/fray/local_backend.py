@@ -179,7 +179,7 @@ class LocalClient:
     ) -> "LocalActorHandle":
         """Create an in-process actor, returning a handle immediately."""
         group = self.create_actor_group(actor_class, *args, name=name, count=1, resources=resources, **kwargs)
-        return group.wait_ready()[0]  # type: ignore[return-value]
+        return group.wait_ready()[0]  # type: ignore[return-value]  # ty: ignore[invalid-return-type]
 
     def create_actor_group(
         self,

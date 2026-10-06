@@ -289,7 +289,6 @@ def reference_attention(
     # (align_kv_heads drops the head-axis sharding, and a sharded head_dim makes the
     # score contraction ambiguous), so run the math under Auto axes and pin only the
     # output to q's sharding.
-    # pyrefly: ignore[bad-assignment]  # auto_axes's decorator overload erases the wrapped signature
     wrapped: Callable[..., Float[Array, "B Q Hq D"]] = auto_axes(_reference_attention_math, out_sharding=out_sharding)
     return wrapped(q, k, v, mask, logits_dtype=logits_dtype)
 
@@ -424,7 +423,6 @@ def _tpu_splash_attention(
             seg_ids,
         )
 
-    # pyrefly: ignore[bad-specialization, bad-argument-count]  # jax.shard_map decorator erases wrap's real signature
     out = wrap(q_, k_, v_, segment_id_lowering.segment_ids, splash_kernel)
     return jnp.transpose(out, (0, 2, 1, 3)).astype(v.dtype)
 

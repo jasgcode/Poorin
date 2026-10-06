@@ -183,4 +183,4 @@ def _norm(v: Union[str, Sequence[str]]) -> Union[str, Tuple[str, ...]]:
     if isinstance(v, (list, tuple)):
         v = tuple(v)
         return v if len(v) > 1 else v[0]
-    return v  # type: ignore[bad-return]
+    return v  # type: ignore[bad-return]  # ty: ignore[invalid-return-type]

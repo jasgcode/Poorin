@@ -10,7 +10,7 @@ Run from the repository root before every prune commit:
 Checks run in order and the first failure stops the run, so nothing is recorded:
 
 1. Every kept root imports, except ``static_only`` roots.
-2. ``pyrefly check`` passes.
+2. ``ty check`` passes.
 3. ``tools.lint`` passes on the uncommitted change.
 4. The unit tests affected by the uncommitted change pass, as ``tools.affected_tests`` selects
    and runs them: one CPU pytest process per suite.
@@ -37,6 +37,7 @@ from pathlib import Path
 
 from tools import affected_tests
 from tools.changes import changed_files
+from tools.lint import TY
 from tools.reachability import ROOTS_FILE, RunnableRoot, expand, load_roots, summarize, workspace_modules
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -209,7 +210,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     roots = load_roots(ROOTS_FILE)
     modules = sorted(workspace_modules(REPO_ROOT))
     import_kept_roots(roots.kept, roots.static_only, modules)
-    _run(["uv", "run", "--no-sync", "pyrefly", "check"])
+    _run(list(TY))
     _run([sys.executable, "-m", "tools.lint"])
     run_affected_tests()
 

@@ -72,7 +72,7 @@ def pool(
     if stride is not None:
         if len(Window) != len(stride):
             raise ValueError(f"len(Window) ({len(Window)}) != len(stride) ({len(stride)})")
-        stride = ensure_tuple(stride)
+        stride = ensure_tuple(stride)  # ty: ignore[invalid-assignment]
         stride_map = {w: s for w, s in zip(Window, stride)}
         stride_out = []
         for ax in inputs.axes:

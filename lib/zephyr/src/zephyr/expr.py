@@ -39,10 +39,10 @@ class Expr(ABC):
         return hash(repr(self))
 
     # Comparison operators
-    def __eq__(self, other: object) -> "CompareExpr":  # type: ignore[override]
+    def __eq__(self, other: object) -> "CompareExpr":  # type: ignore[override]  # ty: ignore[invalid-method-override]
         return CompareExpr(self, _to_expr(other), "eq")
 
-    def __ne__(self, other: object) -> "CompareExpr":  # type: ignore[override]
+    def __ne__(self, other: object) -> "CompareExpr":  # type: ignore[override]  # ty: ignore[invalid-method-override]
         return CompareExpr(self, _to_expr(other), "ne")
 
     def __lt__(self, other: object) -> "CompareExpr":

@@ -266,7 +266,7 @@ class DataLoaderIterator(Iterator[Ex]):
 
     def __del__(self):
         if hasattr(self, "_batches") and hasattr(self._batches, "stop"):
-            self._batches.stop()
+            self._batches.stop()  # ty: ignore[call-non-callable]
 
     async def _produce_batches(self):
         with local_cpu_mesh():

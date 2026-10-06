@@ -408,7 +408,7 @@ def detect_fd_leaks(request):
 
 
 def assert_visible(page, selector: str, *, timeout: int = 10_000) -> None:
-    from playwright.sync_api import expect  # noqa: PLC0415  # pyrefly: ignore[missing-import]
+    from playwright.sync_api import expect  # noqa: PLC0415
 
     expect(page.locator(selector).first).to_be_visible(timeout=timeout)
 

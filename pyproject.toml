@@ -326,188 +326,49 @@ known-first-party = ["experiments"]
 known-third-party = ["wandb", "config", "marin"]
 
 
-# Pyrefly type checker configuration
-[tool.pyrefly]
+# ty type checker configuration (D49). ty runs through uvx at the version pinned in
+# tools/lint.py. It checks the libraries that survive the prune and tools/; Iris, Ducky, and
+# Verifyit are deleted in P2 to P5 and stay unchecked.
+[tool.ty.environment]
+python = ".venv"
 python-version = "3.12"
-# Worktrees often live under hidden parent directories (e.g. `.codex/worktrees/*`).
-# Disable pyrefly's built-in exclude heuristics so hidden ancestors do not exclude
-# the entire project when running from those paths.
-disable-project-excludes-heuristics = true
 
-project-includes = [
-    "lib/marin/src/**/*.py",
-    "lib/levanter/src/**/*.py",
-    "lib/haliax/src/**/*.py",
-    "lib/fray/src/**/*.py",
-    "lib/iris/src/**/*.py",
-    "lib/iris/scripts/**/*.py",
-    "lib/ducky/src/**/*.py",
-    "lib/rigging/src/**/*.py",
-    "lib/zephyr/src/**/*.py",
-    "lib/verifyit/src/**/*.py",
-    "lib/finestore/src/**/*.py",
-    "tools/**/*.py",
-    "infra/marina/src/**/*.py",
-    "infra/marina/apps/**/*.py",
-    "infra/deploy/src/**/*.py",
-    "experiments/grug/moe_hero_ep/ops/**/*.py",
-    "scripts/ci",
-    "scripts/cost_manager",
-]
-
-# Explicitly tell Pyrefly where our editable packages live so it resolves imports
-# against the library sources instead of the top-level `src` directory, which only
-# contains a handful of legacy modules.
-search-path = [
+[tool.ty.src]
+include = [
     "lib/marin/src",
     "lib/levanter/src",
     "lib/haliax/src",
+    "lib/fray/src",
     "lib/rigging/src",
     "lib/zephyr/src",
-    "lib/verifyit/src",
     "lib/finestore/src",
-    "lib/fray/src",
-    "lib/iris/src",
-    "lib/ducky/src",
-    "infra/deploy/src",
-    "infra/marina/src",
-    "infra/marina/apps",
-    ".",
-]
-disable-search-path-heuristics = true
-
-# Type-check against real installed third-party types. CI's marin-lint job syncs
-# this venv (uv sync --all-packages --extra=cpu --no-default-groups); locally it is
-# your worktree .venv. Relative path keeps it worktree-local.
-python-interpreter-path = ".venv/bin/python"
-use-ignore-files = false
-
-# Parse jaxtyping/native tensor shape annotations (e.g. Float[Array, "batch seq"])
-# as shape specifications instead of forward-reference type expressions. Without this,
-# Pyrefly reads the dimension tokens inside the shape string ("B", "N", "groups", ...)
-# as undefined forward references and emits ~141 false `unknown-name` errors across
-# levanter/grug and levanter/kernels. See docs/plans/pyrefly-tensor-shapes.md.
-tensor-shapes = true
-
-# Modules treated as Any when absent on disk. Pyrefly still uses real stubs when
-# the dep is installed (so a deleted/misspelled internal module still trips
-# missing-import). Covers deps no lint profile installs (vllm/lm_eval, resiliparse)
-# and compute deps a local venv commonly skips (torch, sympy). List both `pkg` and
-# `pkg.*`.
-ignore-missing-imports = [
-    # The evaldash server's own deps: its image installs them, no lint profile does.
-    "anthropic",
-    "anthropic.*",
-    "google.cloud.compute_v1",
-    "google.cloud.compute_v1.*",
-    "google.cloud.sql.connector",
-    "google.cloud.sql.connector.*",
-    # Optional extra marin-rigging[secrets]; only rigging.secrets imports it, lazily.
-    "google.cloud.secretmanager",
-    "google.cloud.secretmanager.*",
-    # QuACK and CUTLASS are Linux/CUDA-only optional dependencies.
-    "cutlass",
-    "cutlass.*",
-    "jax_triton",
-    "jax_triton.*",
-    "jaxlib",
-    "jaxlib.*",
-    "kubernetes",
-    "kubernetes.*",
-    "librosa",
-    "librosa.*",
-    "lm_eval",
-    "lm_eval.*",
-    "memray",
-    "memray.*",
-    "prompt_toolkit",
-    "prompt_toolkit.*",
-    "quack",
-    "quack.*",
-    "resiliparse",
-    "resiliparse.*",
-    "sympy",
-    "sympy.*",
-    "tensorboardX",
-    "tensorboardX.*",
-    "torch",
-    "torch.*",
-    "tpu_inference",
-    "tpu_inference.*",
-    "trackio",
-    "trackio.*",
-    "triton",
-    "triton.*",
-    "vllm",
-    "vllm.*",
-    "xprof",
-    "xprof.*",
+    "tools",
 ]
 
-# Exclude non-production code from type checking
-project-excludes = [
-    "scripts/debug/**",
-    "scripts/ferries/**",
-    "scripts/gpu_eval/**",
-    "scripts/iris/**",
-    "scripts/ops/**",
-    "scripts/pm/**",
-    "scripts/speedrun/**",
-    "scripts/training/**",
-    "scripts/*.py",
-    "tests/**",
-    "examples/**",           # Example code doesn't need strict typing
-    "lib/**/crawl/**",       # Crawl scripts have library typing issues with smart_open
-    "lib/iris/src/iris/rpc/*_pb2*",  # Generated protobuf files
-    "lib/iris/src/iris/rpc/*_connect.py",  # Generated Connect RPC files
-    # Keep key excludes that pyrefly normally adds heuristically.
-    "**/node_modules",
-    "**/__pycache__",
-    "**/venv/**",
+[tool.ty.rules]
+# Mostly third-party stub noise (JAX, Equinox, NumPy arrays); pyrefly's configuration turned
+# off the same categories (bad-argument-type, missing-attribute, no-matching-overload).
+invalid-argument-type = "ignore"
+unresolved-attribute = "ignore"
+no-matching-overload = "ignore"
+
+[tool.ty.analysis]
+# Optional dependencies that the GPU environment does not install.
+allowed-unresolved-imports = [
+    "cuda", "cuda.**",
+    "cutlass", "cutlass.**",
+    "harbor", "harbor.**",
+    "jaxlib.**",
+    "jaxpp", "jaxpp.**",
+    "librosa", "librosa.**",
+    "lm_eval", "lm_eval.**",
+    "resiliparse", "resiliparse.**",
+    "soundfile", "soundfile.**",
+    "tensorboardX", "tensorboardX.**",
+    "trackio", "trackio.**",
+    "transformer_engine", "transformer_engine.**",
+    "xprof", "xprof.**",
 ]
-
-# Disable specific error codes that are primarily noise from missing type stubs.
-# Enable gradually as the codebase improves.
-[tool.pyrefly.errors]
-# Untyped-library attribute access (jax/flax/equinox); sampling found ~no real bugs.
-missing-attribute = false
-
-# Real undefined-name bugs. The former jaxtyping shape-string false positives are now
-# handled natively by tensor-shapes = true above; residual false positives are
-# suppressed in .pyrefly-baseline.json.
-unknown-name = true
-
-# Complex overload resolution (stdlib/library overloads); sampling found ~no real bugs.
-no-matching-overload = false
-
-# Mostly third-party stub noise (smart_open, Flax, jax/numpy arrays), with a handful of
-# real callsite mismatches buried in the volume.
-bad-argument-type = false
-
-# Real "code that can be better written" bugs mixed with control-flow false positives
-# pyrefly cannot prove safe.
-unbound-name = false
-
-# Kept enabled (high signal): bad-override, bad-assignment, bad-return,
-# unsupported-operation, not-callable. Pre-existing instances are suppressed via
-# .pyrefly-baseline.json.
-
-# jit_scheduler.py annotates eqx.Module fields with single-axis haxtyping shapes,
-# e.g. `ht.i32[NamedArray, "position"]`. tensor-shapes = true parses multi-token
-# shape strings ("seq page") correctly, but reads a lone bare-identifier axis
-# ("position", "seq") as a forward reference, yielding false unknown-name errors.
-# Scope the disable to this one file rather than scattering 17 inline ignores.
-[[tool.pyrefly.sub_config]]
-matches = "lib/levanter/src/levanter/inference/jit_scheduler.py"
-[tool.pyrefly.sub_config.errors]
-unknown-name = false
-
-# Turn bad-argument-type ON for these controller-driving scripts (it is off
-# repo-wide) so a wrong-type call into the controller API fails type-checking.
-[[tool.pyrefly.sub_config]]
-matches = "lib/iris/scripts/**"
-[tool.pyrefly.sub_config.errors]
-bad-argument-type = true
 
 [tool.hatch.metadata]
 allow-direct-references = true

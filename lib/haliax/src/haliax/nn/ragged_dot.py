@@ -381,7 +381,7 @@ def _preferred_implementations(implementation: Implementation) -> tuple[Implemen
     #   RAGGED_DOT_IMPL=triton  → force Triton
     env_override = os.environ.get("RAGGED_DOT_IMPL")
     if env_override is not None:
-        return (env_override,)  # type: ignore[return-value]
+        return (env_override,)  # type: ignore[return-value]  # ty: ignore[invalid-return-type]
 
     if implementation != "auto":
         return (implementation,)

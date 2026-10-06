@@ -78,9 +78,9 @@ class QwenConfig(LlamaConfig):
         )
 
     # config-reuse subclass narrows to its own HF config/model type (LSP narrowing; pyrefly flags the same)
-    def to_hf_config(  # pyrefly: ignore[bad-override]
+    def to_hf_config(
         self, vocab_size: int, config_overrides: Optional[Dict] = None
-    ) -> HfQwenConfig:
+    ) -> HfQwenConfig:  # ty: ignore[invalid-method-override]
         if config_overrides is None:
             config_overrides = {}
 
@@ -109,7 +109,7 @@ class QwenConfig(LlamaConfig):
         )
 
     @property
-    def model_type(self) -> Type["QwenLMHeadModel"]:  # pyrefly: ignore[bad-override]
+    def model_type(self) -> Type["QwenLMHeadModel"]:
         return QwenLMHeadModel
 
     def flops_per_token(self, vocab_size: int, context_length: int):
@@ -194,12 +194,12 @@ class QwenDecoderLayer(eqx.Module):
 class QwenTransformer(LlamaTransformer):
     # config-reuse: QwenTransformer reuses LlamaTransformer but narrows config/layers to its own
     # Qwen types (LSP narrowing; pyrefly flags the same)
-    config: QwenConfig = eqx.field(static=True)  # pyrefly: ignore[bad-override]
-    layers: BlockFoldable[QwenDecoderLayer]  # pyrefly: ignore[bad-override]
+    config: QwenConfig = eqx.field(static=True)
+    layers: BlockFoldable[QwenDecoderLayer]
     norm: hnn.RmsNorm
 
     @staticmethod
-    def init(config: QwenConfig, *, key) -> "QwenTransformer":  # pyrefly: ignore[bad-override]
+    def init(config: QwenConfig, *, key) -> "QwenTransformer":  # ty: ignore[invalid-method-override]
         S = Stacked
         if not config.scan_layers:
             S = BlockSeq
@@ -317,9 +317,9 @@ class Qwen3Config(LlamaConfig):
             HfConfigClass=HfQwen3Config,
         )
 
-    def to_hf_config(  # pyrefly: ignore[bad-override]
+    def to_hf_config(
         self, vocab_size: int, config_overrides: Optional[Dict] = None
-    ) -> HfQwen3Config:
+    ) -> HfQwen3Config:  # ty: ignore[invalid-method-override]
         if config_overrides is None:
             config_overrides = {}
 
@@ -385,7 +385,7 @@ class Qwen3LMHeadModel(LlamaLMHeadModel):
     """Identical to LlamaLMHeadModel except built off a Qwen3Config."""
 
     @classmethod
-    def init(cls, Vocab: Axis, config: Qwen3Config, *, key):  # type: ignore[override]
+    def init(cls, Vocab: Axis, config: Qwen3Config, *, key):  # type: ignore[override]  # ty: ignore[invalid-method-override]
         k_t, k_emb = jrandom.split(key, 2)
         transformer = LlamaTransformer.init(config, key=k_t)
         embeddings = LlamaEmbedding.init(Vocab, config, key=k_emb)

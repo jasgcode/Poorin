@@ -255,7 +255,7 @@ class SnowballConfig(HFCompatConfig):
         return self.hidden_dim // self.num_heads
 
     @property
-    def model_type(self) -> Type["SnowballLMHeadModel"]:  # pyrefly: ignore[bad-override]
+    def model_type(self) -> Type["SnowballLMHeadModel"]:
         return SnowballLMHeadModel
 
     @property
@@ -324,7 +324,7 @@ class SnowballConfig(HFCompatConfig):
             config.update(config_overrides)
         return GrugMoeHfConfig(**config)
 
-    def hf_checkpoint_converter(  # pyrefly: ignore[bad-override]
+    def hf_checkpoint_converter(
         self, ref_checkpoint: Optional[str] = None
     ) -> HFCheckpointConverter["SnowballConfig"]:  # type: ignore[type-var]
         ref = self.reference_checkpoint if ref_checkpoint is None else ref_checkpoint
@@ -733,7 +733,7 @@ class SnowballLMHeadModel(ModuleWithStateDictSerialization, LmHeadModel[Snowball
         cfg = config if Vocab.size == config.vocab_size else dataclasses.replace(config, vocab_size=Vocab.size)
         return SnowballLMHeadModel(SnowballTransformer.init(cfg, key=key), cfg)
 
-    def activations(  # pyrefly: ignore[bad-override]  # narrows the MoE-optional aux return to a plain NamedArray
+    def activations(  # narrows the MoE-optional aux return to a plain NamedArray
         self,
         input_ids: NamedArray,
         attn_mask: Optional[LmHeadAttentionMask | NamedArray] = None,

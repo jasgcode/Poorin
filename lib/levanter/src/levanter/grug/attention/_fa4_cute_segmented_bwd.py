@@ -30,7 +30,6 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # ruff: noqa
-# pyrefly: ignore-errors
 
 """Segment-aware FA4/CuTe backward kernels adapted from flash-attn-4.
 
@@ -1195,10 +1194,10 @@ class SegmentedFlashAttentionBackwardSm80:
                         0,
                         None,
                         [],
-                    )
+                    )  # ty: ignore[call-non-callable]
                 )
         if cutlass.const_expr(mask_fn is not None):
-            mask_fn(acc_S, m_block=m_block)
+            mask_fn(acc_S, m_block=m_block)  # ty: ignore[call-non-callable]
         bidx = 0
         # if cute.arch.thread_idx()[0] == 0 and cute.arch.block_idx()[0] == bidx: cute.print_tensor(acc_S_mn)
         # if cute.arch.thread_idx()[0] == 0 and cute.arch.block_idx()[0] == 1: cute.print_tensor(tLSErLSE)
@@ -1248,7 +1247,7 @@ class SegmentedFlashAttentionBackwardSm80:
                     0,
                     None,
                     [],
-                )
+                )  # ty: ignore[call-non-callable]
             acc_dP_mn[r, None].store(grad_val)
         # if cute.arch.thread_idx()[0] == 0 and cute.arch.block_idx()[0] == bidx: cute.print_tensor(acc_dP_mn)
         rP = cute.make_fragment_like(acc_S, self.dtype)

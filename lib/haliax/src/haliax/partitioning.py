@@ -905,8 +905,7 @@ def shard_map(
         # `inner` is `def inner(args, kwargs)`, so the shard_map'd callable takes the packed
         # (args, kwargs) tuple+dict positionally; pyrefly mis-binds jax.shard_map's ParamSpec
         # through functools.partial.
-        # pyrefly: ignore[bad-specialization, bad-argument-count]
-        out = almost_shmap(out_specs=this_out_specs)(args, kwargs)
+        out = almost_shmap(out_specs=this_out_specs)(args, kwargs)  # ty: ignore[too-many-positional-arguments]
         return out
 
     return functools.update_wrapper(wrapper, f)

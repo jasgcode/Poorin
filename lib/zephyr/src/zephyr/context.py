@@ -685,7 +685,7 @@ class ZephyrContext:
                     pool.shutdown()
                 _cleanup_execution(self.chunk_storage_prefix, execution_id)
 
-        raise last_exception  # type: ignore[misc]
+        raise last_exception  # type: ignore[misc]  # ty: ignore[invalid-raise]
 
     def shutdown(self) -> None:
         """Stop an owned shared pool."""

@@ -127,7 +127,7 @@ def maybe_reduce_loss(
 
     if reduction is not None and reduction_axis != ():
         if reduction is UNSPECIFIED:
-            reduction = hax.mean
+            reduction = hax.mean  # ty: ignore[invalid-assignment]
 
         if effective_weight is not None:
             weighted_arr = arr * effective_weight
@@ -137,9 +137,9 @@ def maybe_reduce_loss(
                 zeros = hax.zeros_like(numerator)
                 arr = hax.where(denom != 0, numerator / denom, zeros)
             else:
-                arr = reduction(weighted_arr, axis=reduction_axis)
+                arr = reduction(weighted_arr, axis=reduction_axis)  # ty: ignore[call-non-callable]
         else:
-            arr = reduction(arr, where=where, axis=reduction_axis)
+            arr = reduction(arr, where=where, axis=reduction_axis)  # ty: ignore[call-non-callable]
     elif effective_weight is not None:
         arr = arr * effective_weight
 

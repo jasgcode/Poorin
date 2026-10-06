@@ -51,7 +51,7 @@ class JuneSnowballConfig(SnowballConfig):
     capacity_factor: float = _DEFAULT_EP_CAPACITY_FACTOR
 
     @property
-    def model_type(self):  # pyrefly: ignore[bad-override]  # Same HF recipe, different transformer implementation.
+    def model_type(self):  # Same HF recipe, different transformer implementation.
         return JuneSnowballLMHeadModel
 
     def training_config(self) -> GrugModelConfig:

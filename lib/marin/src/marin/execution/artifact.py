@@ -316,7 +316,7 @@ def payload_json(value: object) -> JSONValue:
         return value.model_dump(mode="json")
     if is_dataclass(value) and not isinstance(value, type):
         return asdict(value)
-    return value  # pyrefly: ignore[bad-return]
+    return value  # ty: ignore[invalid-return-type]
 
 
 def read_artifact(output_path: str, schema: type[M]) -> M:

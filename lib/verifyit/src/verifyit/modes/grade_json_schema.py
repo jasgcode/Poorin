@@ -95,7 +95,6 @@ def grade_json_schema_candidate(schema: dict, instance: Any) -> Reward:
     try:
         if has_nonfinite_number(instance):
             return scored(0.0, reason="nonfinite_number")
-        # pyrefly: ignore[bad-instantiation, missing-argument]  # validator_for returns a concrete validator.
         validator = validator_class(schema)
         errors = sorted(validator.iter_errors(instance), key=lambda error: [str(part) for part in error.path])
     except RecursionError:

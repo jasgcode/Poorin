@@ -183,7 +183,7 @@ class LlamaConfig(HFCompatConfig):
         )
 
     @property
-    def model_type(self) -> Type["LlamaLMHeadModel"]:  # pyrefly: ignore[bad-override]
+    def model_type(self) -> Type["LlamaLMHeadModel"]:
         return LlamaLMHeadModel
 
     @property

@@ -11,9 +11,10 @@ Usage (from the repository root):
 
 Every file is checked for size, merge-conflict markers, trailing whitespace, and a final newline.
 Python, TOML, YAML, and JSON files must parse, and notebooks must have no outputs. Python files
-must start with their library's license header and pass ruff and black, and pyrefly checks the
+must start with their library's license header and pass ruff and black, and ty checks the
 project when any Python file is linted. Ruff and black run at the versions Marin pinned, with
-each library's own configuration, so switching from Marin's script reformats nothing.
+each library's own configuration, so switching from Marin's script reformats nothing; ty runs at
+0.0.84.
 
 A check fails when it finds a problem, even when ``--fix`` repaired it, so a fixed file is
 reviewed before it is committed.
@@ -36,7 +37,8 @@ from tools.reachability import REPO_ROOT
 
 RUFF = ("uvx", "ruff@0.14.3", "check")
 BLACK = ("uvx", "black@25.9.0")
-PYREFLY = ("uv", "run", "--no-sync", "pyrefly", "check")
+# Errors fail the check; warnings are reported without failing it.
+TY = ("uvx", "ty@0.0.84", "check", "--exit-zero-on-warning")
 MAX_FILE_BYTES = 500 * 1024
 # Built at runtime so this file does not contain the markers it looks for.
 CONFLICT_MARKERS = (b"<" * 7, b">" * 7)
@@ -201,7 +203,7 @@ def _tool_output(command: Sequence[str], repo_root: Path) -> str | None:
 
 
 def python_tool_problems(paths: Sequence[str], fix: bool, repo_root: Path) -> list[str]:
-    """Ruff and black once per library style, and pyrefly over the project."""
+    """Ruff and black once per library style, and ty over the project."""
     if not paths:
         return []
     problems = []
@@ -220,9 +222,9 @@ def python_tool_problems(paths: Sequence[str], fix: bool, repo_root: Path) -> li
             problems.append(f"black ({style.black_config}):\n{black}")
             if fix:
                 _tool_output([*BLACK, *config, *members], repo_root)
-    pyrefly = _tool_output(PYREFLY, repo_root)
-    if pyrefly is not None:
-        problems.append(f"pyrefly:\n{pyrefly}")
+    ty = _tool_output(TY, repo_root)
+    if ty is not None:
+        problems.append(f"ty:\n{ty}")
     return problems
 
 

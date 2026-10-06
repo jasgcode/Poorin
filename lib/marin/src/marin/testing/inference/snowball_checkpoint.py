@@ -41,7 +41,7 @@ def load_checkpoint(
         mesh=mesh,
     )
     jax.block_until_ready(checkpoint_state)
-    return checkpoint_state["params"], checkpoint_state["pending_qb_betas"]
+    return checkpoint_state["params"], checkpoint_state["pending_qb_betas"]  # ty: ignore[invalid-return-type]
 
 
 def apply_pending_qb_betas(model: VendoredTransformer, pending_qb_betas: jax.Array) -> VendoredTransformer:

@@ -158,10 +158,10 @@ class ModernBertConfig(HFCompatConfig):
         return self.norm_config.build(axis)
 
     @property
-    def model_type(self) -> Type["ModernBertForMaskedLM"]:  # pyrefly: ignore[bad-override]
+    def model_type(self) -> Type["ModernBertForMaskedLM"]:
         return ModernBertForMaskedLM
 
-    def hf_checkpoint_converter(  # pyrefly: ignore[bad-override]
+    def hf_checkpoint_converter(
         self, ref_checkpoint: Optional[str] = None
     ) -> HFCheckpointConverter["ModernBertConfig"]:
         return HFCheckpointConverter(

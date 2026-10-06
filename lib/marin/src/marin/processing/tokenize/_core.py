@@ -200,7 +200,7 @@ def _splits_with_tokens(value: object, num_tokens: int) -> bool:
     if isinstance(value, str | bytes | bytearray | Mapping):
         return False
     try:
-        return len(value) == num_tokens  # pyrefly: ignore[missing-attribute]
+        return len(value) == num_tokens
     except TypeError:
         return False
 
@@ -275,7 +275,7 @@ def tokenize_batches_with_id(
     # Without this, a single multi-MB outlier passes one giant string to the
     # Rust tokenizer and OOMs the worker.
     if hasattr(inner, "_long_string_workaround"):
-        inner._long_string_workaround = True
+        inner._long_string_workaround = True  # ty: ignore[invalid-assignment]
     processor = IdPreservingPreprocessor(inner)
     token_data_key = data_format.token_data_key
     counters.pipeline.update_counter("tokenize/initialization_seconds", time.monotonic() - initialization_start)

@@ -151,4 +151,4 @@ def wait_all(
             time.sleep(sleep_secs)
             sleep_secs = min(sleep_secs * 1.5, max_sleep_secs)
 
-    return results  # type: ignore[return-value]
+    return results  # type: ignore[return-value]  # ty: ignore[invalid-return-type]

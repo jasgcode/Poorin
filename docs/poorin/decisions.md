@@ -401,7 +401,8 @@ from the final review of the branch.
 
 ## P1 fleet operations: planned 2026-10-05
 
-Plan: `plans/2026-10-05-p1-fleet-operations.md`, awaiting the owner's review. Not executed.
+Plan: `plans/2026-10-05-p1-fleet-operations.md`. Executing on branch `prune/p1-fleet-ops` since
+2026-10-06; rulings made while executing it are D53 to D56.
 
 ### D37. Affected tests come from the reachability import graph
 
@@ -419,7 +420,8 @@ Plan: `plans/2026-10-05-p1-fleet-operations.md`, awaiting the owner's review. No
 
 ### D38. Five host-specific test exclusions; tests run in UTC
 
-- **When:** 2026-10-05, P1. **Status:** Planned (Task 1).
+- **When:** 2026-10-05, P1. **Status:** Adopted. The Iris and Verifyit deselects took effect only
+  with D56.
 - **Decision:** Skip `test_tensorboard.py` (P7 deletes the tracker), two Iris hardware-probe tests
   that expect no GPU (P5 deletes Iris), and two Verifyit Go-grader tests that fail with this
   workstation's Go toolchain (P2 deletes Verifyit). Run every test with `TZ=UTC`.
@@ -428,6 +430,7 @@ Plan: `plans/2026-10-05-p1-fleet-operations.md`, awaiting the owner's review. No
   delete. One Finelog test assumes UTC, as Marin's CI does.
 - **Cost if wrong:** A real regression in one of those five tests goes unseen until its code is
   deleted.
+- **Landed:** `[poorin] Select affected tests from the reachability import graph`.
 
 ### D39. The linter moves to `tools/lint.py`
 
@@ -579,7 +582,7 @@ Plan: `plans/2026-10-05-p1-fleet-operations.md`, awaiting the owner's review. No
 
 ### D49. ty replaces pyrefly
 
-- **When:** 2026-10-06, P1. **Status:** Planned (P1 Task 3).
+- **When:** 2026-10-06, P1. **Status:** Adopted. Warnings do not fail the check (D54).
 - **Decision:** Type-check with ty 0.0.84, run through `uvx` at a pinned version like ruff. It
   checks the libraries that survive the prune (Marin, Levanter, Haliax, Fray, rigging, Zephyr,
   Finestore) and `tools/`; Iris, Ducky, and Verifyit, deleted in P2, P4, and P5, are left
@@ -594,6 +597,7 @@ Plan: `plans/2026-10-05-p1-fleet-operations.md`, awaiting the owner's review. No
   categories as warnings only.
 - **Cost if wrong:** ty is pre-1.0 and its diagnostics change between releases, so upgrading the
   pin is its own commit with a diagnostics diff.
+- **Landed:** `[poorin] Type-check with ty instead of pyrefly`.
 
 ### D50. ruff format replaces black
 
@@ -636,6 +640,64 @@ Plan: `plans/2026-10-05-p1-fleet-operations.md`, awaiting the owner's review. No
 
 ---
 
+## P1 execution: 2026-10-06
+
+### D53. Tests that read P0's deleted workflows go before the first full check
+
+- **When:** 2026-10-06, P1 Task 3. **Status:** Adopted.
+- **Decision:** Delete `tests/infra/ci/test_package_release.py` and one `infra/pulumi` test, which
+  read the `.github/workflows` files P0 deleted, in their own commit ahead of Task 7, which deletes
+  the rest of `infra/`.
+- **Why:** Task 3 changes the root `pyproject.toml`, so its check is the first to run every suite,
+  and those tests failed on the missing files.
+- **Alternatives:** Move Task 7 ahead of Task 3.
+- **Cost if wrong:** None; Task 7 deletes the directories they lived in.
+- **Landed:** `[poorin] Delete tests that read the workflows P0 removed`.
+
+### D54. ty fails the check on errors only
+
+- **When:** 2026-10-06, P1 Task 3. **Status:** Adopted.
+- **Decision:** `tools.lint` and `tools.prune_check` run ty with `--exit-zero-on-warning`, and the
+  markers added at the switch cover errors only: 87 `# ty: ignore[rule]` markers on 79 lines. The
+  231 warnings (161 unused `type: ignore` comments, 36 redundant casts, 34 possibly missing
+  submodules) are printed on every run, and Pass 2 clears them.
+- **Why:** ty 0.0.84 exits non-zero on warnings, and `--add-ignore` marks warnings too: it added
+  157 markers, 71 of them for warnings. D49 meant to suppress errors only.
+- **Alternatives:** Mark the warnings as well; turn the three warning rules off.
+- **Cost if wrong:** A new warning never fails a check, so warnings can accumulate until Pass 2.
+- **Landed:** `[poorin] Type-check with ty instead of pyrefly`.
+
+### D55. A test that times out under host load is rerun, not given a longer limit
+
+- **When:** 2026-10-06, P1 Task 3. **Status:** Adopted.
+- **Decision:** When grug's `test_staged_loss_and_gradients_match_the_unsplit_model` passed the
+  60-second limit while about 200 browser processes outside the checkout held the load average at
+  243 on 32 cores, the check was rerun unchanged, and it passed.
+- **Why:** Alone, under the same load, it took 57 seconds, and it had passed in the previous run
+  of the same tree. The change being checked touched only a comment the test never reaches, and
+  P7 deletes the MoE pipeline.
+- **Alternatives:** `@pytest.mark.timeout(...)`, which `TESTING.md` allows for a legitimately
+  long test.
+- **Cost if wrong:** The check can fail on host load until P7.
+
+### D56. Host exclusions are rewritten relative to each suite's configuration
+
+- **When:** 2026-10-06, P1 Task 3. **Status:** Adopted.
+- **Decision:** `HOST_EXCLUSIONS` keeps repository-relative paths. `pytest_runs` takes the
+  exclusions explicitly and rewrites each `--deselect` relative to the suite's configuration
+  directory; `--ignore` stays relative to the repository root, where pytest runs.
+- **Why:** Every library under `lib/` has its own pytest configuration, which makes it pytest's
+  rootdir, so node IDs inside the Iris suite start at `tests/`. D38's deselects never matched,
+  and Task 1's test checked only the argument strings. The new test runs real pytest on a library
+  with its own configuration.
+- **Alternatives:** Write each exclusion relative to its suite by hand; run each library suite
+  from its own directory, which moves every path, not only the exclusions.
+- **Cost if wrong:** None known. `--ignore` still does not apply to a file passed by name (see
+  Deferred).
+- **Landed:** `[poorin] Deselect host-excluded tests by suite node ID`.
+
+---
+
 ## Deferred
 
 Known gaps left open on purpose. Each names where it gets resolved.
@@ -651,3 +713,6 @@ Known gaps left open on purpose. Each names where it gets resolved.
 | `test_append_metrics_row_rejects_a_row_with_missing_columns` is a guard test under `TESTING.md` | P0 review | Open |
 | About 125 MB of untracked `logs/` and `wandb/` entries from P0's check runs sit in the checkout | P0 | Open; delete on request |
 | Set up `projects/` as a git-ignored, nested uv workspace member for `looped-diffusion-lm`, and scan `projects/*` for prune roots | D52 | The phase after P1 |
+| `tools.lint --all-files` reports two files under `infra/`: a TypeScript config with comments, and the old linter's own conflict-marker strings | P1 Task 2 | P1 Task 7 |
+| `--ignore` skips a file found in a directory but not one passed by name, so a change that selects `test_tensorboard.py` through its imports still collects it, and it fails on `tensorboardX` | D56 | P7 deletes the TensorBoard tracker |
+| ty's 231 warnings | D54 | Pass 2 |

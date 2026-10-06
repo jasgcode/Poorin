@@ -612,7 +612,7 @@ def _merge_hot_ops(timeline_hot_ops: list[HotOp], table_hot_ops: list[HotOp], *,
 def _xspace_message_class() -> Any:
     global _XSPACE_MESSAGE_CLASS
     if _XSPACE_MESSAGE_CLASS is None:
-        pool = descriptor_pool.DescriptorPool()
+        pool = descriptor_pool.DescriptorPool()  # ty: ignore[possibly-missing-implicit-call]
         pool.Add(_xplane_file_descriptor())
         _XSPACE_MESSAGE_CLASS = message_factory.GetMessageClass(pool.FindMessageTypeByName("tensorflow.profiler.XSpace"))
     return _XSPACE_MESSAGE_CLASS

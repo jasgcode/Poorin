@@ -118,6 +118,5 @@ def xla_flash_attention(
     out_sharding = named_sharding_of(q)
     if out_sharding is None:
         return _xla_flash_attention_math(q, k, v, mask, block_size=block_size)
-    # pyrefly: ignore[bad-assignment]  # auto_axes's decorator overload erases the wrapped signature
     wrapped: Callable[..., Float[Array, "B Q Hq D"]] = auto_axes(_xla_flash_attention_math, out_sharding=out_sharding)
     return wrapped(q, k, v, mask, block_size=block_size)

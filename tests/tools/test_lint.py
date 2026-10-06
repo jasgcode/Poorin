@@ -1,7 +1,7 @@
 # Copyright The Marin Authors
 # SPDX-License-Identifier: Apache-2.0
 
-"""Behavior tests for tools.lint's file checks. Ruff, black, and pyrefly are not run here."""
+"""Behavior tests for tools.lint's file checks. Ruff, black, and ty are not run here."""
 
 import json
 from pathlib import Path

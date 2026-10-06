@@ -457,7 +457,7 @@ def run_step(step: StepSpec) -> None:
                 elif isinstance(step.fn, RemoteCallable):
                     _run_remote_step(step, output_path)
                 else:
-                    result = step.fn(output_path)  # pyrefly: ignore[not-callable]
+                    result = step.fn(output_path)  # ty: ignore[call-non-callable]
                     # A lazy step writes its own full record; a plain step's return is saved
                     # with its identity + lineage (name, deps, config) so the output is traceable.
                     if not step.writes_record:

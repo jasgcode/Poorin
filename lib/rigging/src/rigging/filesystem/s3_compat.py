@@ -81,7 +81,6 @@ class TotalDeadlineAIOHTTPSession(AIOHTTPSession):
         super().__init__(*args, **kwargs)
         # aiobotocore annotates the ``timeout`` constructor parameter as a scalar
         # but stores the assembled ClientTimeout in the same attribute.
-        # pyrefly: ignore[bad-assignment]
         self._timeout = aiohttp.ClientTimeout(
             sock_connect=self._timeout.sock_connect,
             sock_read=self._timeout.sock_read,

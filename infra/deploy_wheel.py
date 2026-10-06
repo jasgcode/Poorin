@@ -47,7 +47,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 # script reuses the exact release build (maturin + zig manylinux, version
 # stamping, wheel validation) rather than forking a second copy of that logic.
 sys.path.insert(0, str(REPO_ROOT / "scripts" / "ci"))
-import package_release as pr  # noqa: E402  # pyrefly: ignore[missing-import]
+import package_release as pr  # noqa: E402
 
 DEFAULT_REPO = "marin-community/marin"
 DEFAULT_TAG = "dev-wheels"

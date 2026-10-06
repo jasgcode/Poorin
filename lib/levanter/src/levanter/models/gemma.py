@@ -274,7 +274,7 @@ class GemmaConfig(HFCompatConfig):
 
     # config-reuse subclass narrows to its own HF config/model type (LSP narrowing; pyrefly flags the same)
     @property
-    def model_type(self) -> type["GemmaLMHeadModel"]:  # pyrefly: ignore[bad-override]
+    def model_type(self) -> type["GemmaLMHeadModel"]:
         return GemmaLMHeadModel
 
     def flops_per_token(self, vocab_size: int, context_length: int) -> float | None:
@@ -528,12 +528,12 @@ class Gemma2Config(GemmaConfig):
 
     # ---------- Convenience ----------
     @property  # type: ignore[override]
-    def model_type(self):  # noqa: D401  # pyrefly: ignore[bad-override]  # property returns type, not a str
+    def model_type(self):  # noqa: D401  # property returns type, not a str
         """Return the Levanter model class for Gemma-2."""
         return Gemma2LMHeadModel
 
     # ---------- HF checkpoint helpers ----------
-    def hf_checkpoint_converter(  # pyrefly: ignore[bad-override]
+    def hf_checkpoint_converter(
         self, ref_checkpoint: str = "google/gemma-2-2b"
     ) -> HFCheckpointConverter["Gemma2Config"]:  # type: ignore
         return HFCheckpointConverter(
@@ -848,11 +848,11 @@ class Gemma3Config(Gemma2Config):
 
     # ---------- Convenience ----------
     @property  # type: ignore[override]
-    def model_type(self):  # noqa: D401  # pyrefly: ignore[bad-override]
+    def model_type(self):  # noqa: D401
         return Gemma3LMHeadModel
 
     # ---------- HF helpers ----------
-    def hf_checkpoint_converter(  # pyrefly: ignore[bad-override]
+    def hf_checkpoint_converter(
         self, ref_checkpoint: str = "google/gemma-3-1b-pt"
     ) -> HFCheckpointConverter["Gemma3Config"]:  # type: ignore
         return HFCheckpointConverter(
@@ -981,7 +981,7 @@ class Gemma3LMHeadModel(LmHeadModel[Gemma3Config], ModuleWithStateDictSerializat
     lm_head: hnn.Linear | None
 
     @property
-    def config(self):  # pyrefly: ignore[bad-override]  # config-reuse: Gemma-3 head reuses the Gemma-2 transformer
+    def config(self):  # config-reuse: Gemma-3 head reuses the Gemma-2 transformer
         return self.transformer.config
 
     @property

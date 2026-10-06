@@ -153,7 +153,7 @@ def _run_grug_local(config: GrugPipelineTrainConfig) -> None:
     os.environ.setdefault("XLA_PYTHON_CLIENT_PREALLOCATE", "false")
     initialize_jax()
 
-    from jaxpp.array import MpmdArray  # noqa: PLC0415  # pyrefly: ignore[missing-import]
+    from jaxpp.array import MpmdArray  # noqa: PLC0415
 
     mp_policy = jmp.get_policy(config.mp_policy_string)
     pipeline_config = GrugMoePipelineConfig(

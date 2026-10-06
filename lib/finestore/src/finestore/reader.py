@@ -209,7 +209,7 @@ def _matches_filter(row: dict, where: list[tuple[str, str, object]]) -> bool:
             return False
         if operator == "!=" and candidate == value:
             return False
-        if operator == "in" and candidate not in value:
+        if operator == "in" and candidate not in value:  # ty: ignore[unsupported-operator]
             return False
     return True
 

@@ -184,7 +184,7 @@ def from_state_dict(tree: T, state_dict: StateDict, prefix: str | None = None) -
     # TODO: assert compatibility of old and new values (type, shape, etc.)
     if isinstance(tree, eqx.Module):
         if hasattr(tree, "from_state_dict"):
-            return tree.from_state_dict(state_dict, prefix)
+            return tree.from_state_dict(state_dict, prefix)  # ty: ignore[call-non-callable]
         else:
             return default_eqx_module_from_state_dict(tree, state_dict, prefix)
     elif isinstance(tree, list):

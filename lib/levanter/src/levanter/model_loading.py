@@ -100,7 +100,9 @@ def load_hf_checkpoint(
 
     resolved = resolve_cached_model_path(checkpoint, cache_ttl_days=cache_ttl_days, cache_prefix=_HF_CACHE_PREFIX)
     ref = RepoRef.from_string(resolved)
-    converter: HFCheckpointConverter = model_config.hf_checkpoint_converter().replaced(
+    converter: (
+        HFCheckpointConverter
+    ) = model_config.hf_checkpoint_converter().replaced(  # ty: ignore[call-non-callable]
         reference_checkpoint=ref, tokenizer=tokenizer
     )
     model = converter.load_pretrained(model_config.model_type, ref=ref, axis_mapping=axis_mapping, dtype=compute_dtype)

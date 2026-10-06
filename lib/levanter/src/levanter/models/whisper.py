@@ -66,7 +66,7 @@ class WhisperConfig(HFCompatConfig, ASRConfig):
 
     # config narrows the base's model_type to its own concrete model class (LSP narrowing; pyrefly flags the same)
     @property
-    def model_type(self) -> Type["WhisperModel"]:  # pyrefly: ignore[bad-override]
+    def model_type(self) -> Type["WhisperModel"]:
         return WhisperModel
 
     @property
@@ -508,7 +508,7 @@ class WhisperModel(eqx.Module, ModelWithHfSerializationMixin[WhisperConfig]):
 
 # WhisperModel.resize_vocab returns WhisperModel; ASRMixin declares -> ASRMixin. The concrete
 # implementation is inherited from WhisperModel; aligning would require restructuring the mixin.
-class WhisperASRModel(WhisperModel, ASRMixin):  # pyrefly: ignore[inconsistent-inheritance]
+class WhisperASRModel(WhisperModel, ASRMixin):  # ty: ignore[invalid-method-override]
     pass
 
 

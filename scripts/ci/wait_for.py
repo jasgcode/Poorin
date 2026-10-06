@@ -250,7 +250,7 @@ def resolve_repo(repo: str | None) -> str:
     if repo:
         return repo
     data = gh_json(["repo", "view", "--json", "nameWithOwner"])
-    return data["nameWithOwner"]  # pyrefly: ignore  # gh JSON shape
+    return data["nameWithOwner"]  # gh JSON shape
 
 
 def authenticated_user() -> str:

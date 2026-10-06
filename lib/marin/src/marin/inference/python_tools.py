@@ -185,13 +185,13 @@ def _annotation_type(annotation: ast.expr) -> Any:
         return _annotation_type(annotation.left) | _annotation_type(annotation.right)
     if isinstance(annotation, ast.Subscript) and isinstance(annotation.value, ast.Name):
         if annotation.value.id == "list":
-            return list[_annotation_type(annotation.slice)]
+            return list[_annotation_type(annotation.slice)]  # ty: ignore[invalid-type-form]
         if annotation.value.id == "dict" and isinstance(annotation.slice, ast.Tuple) and len(annotation.slice.elts) == 2:
             key_node, value_node = annotation.slice.elts
             key_type = _annotation_type(key_node)
             if key_type is not str:
                 raise ValueError("Python tool dictionaries must use string keys")
-            return dict[str, _annotation_type(value_node)]
+            return dict[str, _annotation_type(value_node)]  # ty: ignore[invalid-type-form]
     raise ValueError(f"Unsupported Python tool annotation: {ast.unparse(annotation)}")
 
 

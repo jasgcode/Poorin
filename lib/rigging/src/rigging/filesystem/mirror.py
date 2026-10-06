@@ -303,7 +303,6 @@ class MirrorFileSystem(fsspec.AbstractFileSystem):
     # fsspec's AbstractFileSystem.rm_file is typed as returning Never (its body
     # delegates to the unimplemented _rm), so a real None-returning override is
     # flagged. Parameters already match the base.
-    # pyrefly: ignore[bad-override]
     def rm_file(self, path: str) -> None:
         path = cast(str, self._strip_protocol(path))
         local_url = self._local_url(path)

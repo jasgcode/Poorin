@@ -97,7 +97,7 @@ class TestSpec:
 
 
 def _args(resources: ResourceSpec) -> IrisServiceArgs:
-    return IrisServiceArgs(**_SPEC_KWARGS | {"resources": resources})  # pyrefly: ignore
+    return IrisServiceArgs(**_SPEC_KWARGS | {"resources": resources})
 
 
 class TestResources:
@@ -133,7 +133,7 @@ class TestSubmit:
             client,
             _spec(pip_packages=("xprof==2.22.3",), sync_packages=("marin-iris", "marin-rigging")),
             {"K": "v"},
-        )  # pyrefly: ignore
+        )
         kwargs = client.kwargs
         assert kwargs["max_retries_preemption"] == ALWAYS_ON_RETRIES
         assert kwargs["max_retries_failure"] == ALWAYS_ON_RETRIES
@@ -150,7 +150,7 @@ class TestSubmit:
 
     def test_region_pin(self):
         client = _CapturingClient()
-        submit_service(client, _spec(regions=("us-east5",)), {})  # pyrefly: ignore
+        submit_service(client, _spec(regions=("us-east5",)), {})
         (constraint,) = client.kwargs["constraints"]
         assert "us-east5" in str(constraint)
 
@@ -175,22 +175,22 @@ class _TerminatingClient:
 class TestTerminate:
     def test_missing_job_is_success(self):
         client = _TerminatingClient([None])
-        terminate_service(client, JobName.root("ops", "svc"))  # pyrefly: ignore
+        terminate_service(client, JobName.root("ops", "svc"))
         assert not client.terminated
 
     def test_terminal_job_is_success(self):
         client = _TerminatingClient([JobState.KILLED])
-        terminate_service(client, JobName.root("ops", "svc"))  # pyrefly: ignore
+        terminate_service(client, JobName.root("ops", "svc"))
         assert not client.terminated
 
     def test_running_job_terminates_and_waits(self):
         client = _TerminatingClient([JobState.RUNNING, JobState.KILLED])
-        terminate_service(client, JobName.root("ops", "svc"), wait=5)  # pyrefly: ignore
+        terminate_service(client, JobName.root("ops", "svc"), wait=5)
         assert client.terminated
 
     def test_job_vanishing_during_drain_is_success(self):
         client = _TerminatingClient([JobState.RUNNING, None])
-        terminate_service(client, JobName.root("ops", "svc"), wait=5)  # pyrefly: ignore
+        terminate_service(client, JobName.root("ops", "svc"), wait=5)
         assert client.terminated
 
 

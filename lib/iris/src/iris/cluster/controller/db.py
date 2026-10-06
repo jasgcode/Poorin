@@ -106,7 +106,7 @@ def _make_engine(
     )
 
     @event.listens_for(engine, "connect")
-    def _on_connect(dbapi_conn, _record):  # pyrefly: ignore  # event hook
+    def _on_connect(dbapi_conn, _record):  # event hook
         _install_pragmas(dbapi_conn, auth_path_str)
         if read_only:
             cur = dbapi_conn.cursor()

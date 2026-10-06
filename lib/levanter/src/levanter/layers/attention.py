@@ -1434,8 +1434,8 @@ class Attention(eqx.Module):
         v = self.v_proj(x, key=key_v)
 
         if self.config.qk_norm is not None:
-            q = self.q_norm(q)  # type: ignore[misc]
-            k = self.k_norm(k)  # type: ignore[misc]
+            q = self.q_norm(q)  # type: ignore[misc]  # ty: ignore[call-non-callable]
+            k = self.k_norm(k)  # type: ignore[misc]  # ty: ignore[call-non-callable]
 
         if self.rot_embs is not None:
             if pos_ids is None:

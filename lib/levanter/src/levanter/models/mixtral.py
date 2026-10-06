@@ -123,7 +123,7 @@ class MixtralConfig(MistralConfig):
         ), f"num_experts_per_tok={self.num_experts_per_tok} greater than by n_routed_experts={self.n_routed_experts}."
 
     # config-reuse subclass narrows to its own HF config/model type (LSP narrowing; pyrefly flags the same)
-    def hf_checkpoint_converter(  # pyrefly: ignore[bad-override]
+    def hf_checkpoint_converter(
         self, ref_checkpoint: Optional[str] = None
     ) -> HFCheckpointConverter["MixtralConfig"]:  # type: ignore
         return HFCheckpointConverter(
@@ -155,9 +155,9 @@ class MixtralConfig(MistralConfig):
             lbl_coef=hf_config.router_aux_loss_coef,
         )
 
-    def to_hf_config(  # pyrefly: ignore[bad-override]
+    def to_hf_config(
         self, vocab_size: int, config_overrides: Optional[Dict] = None
-    ) -> HfMixtralConfig:
+    ) -> HfMixtralConfig:  # ty: ignore[invalid-method-override]
         """Convert to HuggingFace's MistralConfig
 
         Args:
@@ -194,7 +194,7 @@ class MixtralConfig(MistralConfig):
         )
 
     @property
-    def model_type(cls) -> Type["MixtralLMHeadModel"]:  # pyrefly: ignore[bad-override]
+    def model_type(cls) -> Type["MixtralLMHeadModel"]:
         return MixtralLMHeadModel
 
     def mk_LayerNorm(self, axis: AxisSpec) -> LayerNormBase:
@@ -391,7 +391,7 @@ class MixtralSparseMoeBlock(eqx.Module):
 
         # jax.shard_map erases the wrapped callable's signature, so pyrefly mis-binds its
         # decorator TypeVar to the Array argument; cast back to a plain callable.
-        sharded_route = cast(Callable[..., Any], sharded_route)
+        sharded_route = cast(Callable[..., Any], sharded_route)  # ty: ignore[invalid-assignment]
 
         with jax.named_scope("route"):
             selected_weights_, selected_experts_ = sharded_route(router_probs.array)
@@ -426,7 +426,7 @@ class MixtralSparseMoeBlock(eqx.Module):
             return x_repeat_sort_, group_sizes_, sort_idx_
 
         # See sharded_route above: cast around jax.shard_map's signature erasure.
-        permute_sharded = cast(Callable[..., Any], permute_sharded)
+        permute_sharded = cast(Callable[..., Any], permute_sharded)  # ty: ignore[invalid-assignment]
 
         with jax.named_scope("permute"):
             x_repeat_sort_, group_sizes_, sort_idx_ = permute_sharded(x_flat.array, topk_idx_flat.array)
@@ -465,7 +465,7 @@ class MixtralSparseMoeBlock(eqx.Module):
             return out_repeat_unflat_
 
         # See sharded_route above: cast around jax.shard_map's signature erasure.
-        unpermute_sharded = cast(Callable[..., Any], unpermute_sharded)
+        unpermute_sharded = cast(Callable[..., Any], unpermute_sharded)  # ty: ignore[invalid-assignment]
 
         with jax.named_scope("unpermute"):
             out_repeat_unflat_ = unpermute_sharded(out_repeat_sort.array, sort_idx.array)
@@ -644,7 +644,7 @@ class MixtralLMHeadModel(ModuleWithStateDictSerialization, LmHeadModel[MixtralCo
     lm_head: Optional[hnn.Linear]
 
     @property
-    def config(self):  # pyrefly: ignore[bad-override]  # config-reuse: narrows config to MixtralConfig
+    def config(self):  # config-reuse: narrows config to MixtralConfig
         return self.transformer.config
 
     @property

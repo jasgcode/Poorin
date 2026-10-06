@@ -743,7 +743,7 @@ class LabeledEvaluator(Generic[Ex, M]):
             tokenizer=tokenizer,
             device_mesh=device_mesh,
             axis_mapping=axis_mapping,
-        )
+        )  # ty: ignore[invalid-return-type]
 
     def _make_accum_for_batch(self) -> Callable[[M, "_LabeledEvalRunningMeans", Ex], "_LabeledEvalRunningMeans"]:
         bytes_per_token = self.bytes_per_token

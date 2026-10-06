@@ -184,7 +184,6 @@ def build_generation_config(
 
 
 def _coerce_to_hf_tokenizer(tokenizer: PreTrainedTokenizerBase | MarinTokenizer) -> PreTrainedTokenizerBase:
-    # pyrefly: ignore[unsafe-overlap]  # MarinTokenizer is a runtime-checkable Protocol that overlaps PreTrainedTokenizerBase via __getattr__
     if isinstance(tokenizer, MarinTokenizer):
         tokenizer = tokenizer.as_hf_tokenizer()
     return tokenizer
@@ -624,7 +623,7 @@ class HFCheckpointConverter(Generic[LevConfig]):
                 # `v` is typed as the abstract LmConfig base (registry value), whose __init__
                 # requires max_seq_len; at runtime every registered choice is a concrete config
                 # that supplies a default, so the no-arg construction is safe.
-                instance = v()  # pyrefly: ignore[missing-argument]
+                instance = v()
                 # Building a candidate converter loads that model's default reference tokenizer, and
                 # some defaults are gated (e.g. gemma -> google/gemma-2b) so they 401 on nodes without
                 # access. A candidate whose converter cannot even be built is not the target model, so
@@ -1024,7 +1023,7 @@ class HFCheckpointConverter(Generic[LevConfig]):
 
         load_from_state_dict = haliax.named_jit(
             load_from_state_dict, axis_resources=axis_mapping, out_axis_resources=axis_mapping, donate_args=(True,)
-        )
+        )  # ty: ignore[invalid-assignment]
         lev_model = eqx.filter_eval_shape(lm_model_cls.init, Vocab, config, key=PRNGKey(0))
         lev_model = load_from_state_dict(lev_model, state_dict)
 
@@ -1756,7 +1755,7 @@ def _patch_hf_hub_download():
             return original_hf_hub_download(*args, **kwargs)
 
         # Monkeypatch hf_hub_download
-        transformers.utils.hub.hf_hub_download = custom_hf_hub_download
+        transformers.utils.hub.hf_hub_download = custom_hf_hub_download  # ty: ignore[invalid-assignment]
 
         # we also need to monkeypatch huggingface_hub/utils/_validators.py:106 validate_repo_id
         # to allow fsspec paths
@@ -1767,7 +1766,7 @@ def _patch_hf_hub_download():
                 return
             return original_validate_repo_id(repo_id)
 
-        huggingface_hub.utils._validators.validate_repo_id = custom_validate_repo_id
+        huggingface_hub.utils._validators.validate_repo_id = custom_validate_repo_id  # ty: ignore[invalid-assignment]
 
         # transformers calls  model_info in _patch_mistral_regex to check if model is a base Mistral model
         original_model_info = huggingface_hub.hf_api.model_info
@@ -1778,7 +1777,7 @@ def _patch_hf_hub_download():
                 return ModelInfo(id="monkeypatched", tags=None)
             return original_model_info(repo_id, *args, **kwargs)
 
-        huggingface_hub.hf_api.model_info = custom_model_info
+        huggingface_hub.hf_api.model_info = custom_model_info  # ty: ignore[invalid-assignment]
 
         try:
             yield custom_hf_hub_download

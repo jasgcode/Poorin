@@ -113,7 +113,7 @@ class ArrayStacked(ModuleWithStateDictSerialization, Generic[M]):
     ):
         def call_layer(layer: M, carry, *args, **kwargs):
             # eqx.Module defines __call__ on subclasses but not on the base, so M is not seen as callable.
-            return layer(carry, *args, **kwargs)  # pyrefly: ignore[not-callable]
+            return layer(carry, *args, **kwargs)  # ty: ignore[call-non-callable]
 
         return self.scan_via(call_layer, unroll=unroll, in_axes=in_axes)(init, *extra_args, **extra_kwargs)
 
@@ -127,7 +127,7 @@ class ArrayStacked(ModuleWithStateDictSerialization, Generic[M]):
     ):
         def call_layer(layer: M, carry, *layer_args, **layer_kwargs):
             # eqx.Module defines __call__ on subclasses but not on the base, so M is not seen as callable.
-            return layer(carry, *layer_args, **layer_kwargs)  # pyrefly: ignore[not-callable]
+            return layer(carry, *layer_args, **layer_kwargs)  # ty: ignore[call-non-callable]
 
         return self.fold_via(call_layer, unroll=unroll, in_axes=in_axes)(init, *args, **kwargs)
 

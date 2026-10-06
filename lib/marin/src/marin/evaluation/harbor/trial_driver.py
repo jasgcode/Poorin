@@ -19,19 +19,19 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from harbor.agents.factory import AgentFactory  # pyrefly: ignore[missing-import]  # installed by external driver
-from harbor.agents.installed.acp_registry import (  # pyrefly: ignore[missing-import]
+from harbor.agents.factory import AgentFactory  # installed by external driver
+from harbor.agents.installed.acp_registry import (
     is_acp_registry_shorthand,
     parse_registry_spec,
 )
-from harbor.environments.factory import _load_environment_class  # pyrefly: ignore[missing-import]
-from harbor.job import Job  # pyrefly: ignore[missing-import]  # installed by external driver
-from harbor_config import JobConfig  # pyrefly: ignore[missing-import]  # installed by external driver
-from harbor_config.env import get_required_host_vars  # pyrefly: ignore[missing-import]
-from harbor_config.errors import ErrorCategory, errors_by_category, known_error_types  # pyrefly: ignore[missing-import]
-from harbor_config.models.agent.name import AgentName  # pyrefly: ignore[missing-import]
-from harbor_config.models.job.config import ArchiveConfig, DatasetConfig  # pyrefly: ignore[missing-import]
-from harbor_config.models.trial.config import AgentConfig  # pyrefly: ignore[missing-import]
+from harbor.environments.factory import _load_environment_class
+from harbor.job import Job  # installed by external driver
+from harbor_config import JobConfig  # installed by external driver
+from harbor_config.env import get_required_host_vars
+from harbor_config.errors import ErrorCategory, errors_by_category, known_error_types
+from harbor_config.models.agent.name import AgentName
+from harbor_config.models.job.config import ArchiveConfig, DatasetConfig
+from harbor_config.models.trial.config import AgentConfig
 from pydantic import BaseModel, ConfigDict, ValidationError
 from rigging.filesystem.storage_path import StoragePath
 

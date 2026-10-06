@@ -114,7 +114,7 @@ class PreferenceChatLmDatasetFormat(LmDatasetFormatBase):
         self, tokenizer: MarinTokenizer, *, enforce_eos: bool = True, enforce_bos: bool = True
     ) -> BatchProcessor[dict, dict]:
         del enforce_eos, enforce_bos
-        return preprocessor_for_preference_format(self, tokenizer)  # type: ignore[return-value]
+        return preprocessor_for_preference_format(self, tokenizer)  # type: ignore[return-value]  # ty: ignore[invalid-return-type]
 
 
 class PreferenceChatProcessor(BatchProcessor[dict, ProcessedPreferenceChatDict]):

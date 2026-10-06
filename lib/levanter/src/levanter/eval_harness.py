@@ -331,7 +331,7 @@ class _LmEvalHarnessWorker:
     @property
     def max_gen_toks(self) -> int:
         """Backward compatibility property for max_gen_toks."""
-        return self._generation_kwargs.get("max_gen_toks", 256)
+        return self._generation_kwargs.get("max_gen_toks", 256)  # ty: ignore[invalid-return-type]
 
     def make_harness_lm(self):
         if jax.process_index() == 0:
@@ -453,7 +453,6 @@ def _eval_pad_token_id(tokenizer: MarinTokenizer) -> int:
     return eos_token_id
 
 
-# pyrefly: ignore[invalid-inheritance]  # TemplateLM falls back to `object` when the optional lm_eval dep is absent or broken
 class LevanterHarnessLM(TemplateLM):
     """
     Levanter implementation of the LM Eval Harness TemplateLM interface.
@@ -750,8 +749,7 @@ class LevanterHarnessLM(TemplateLM):
             return None
 
         # Process stop sequences to ensure EOS is included
-        # pyrefly: ignore[not-callable]  # handle_stop_sequences is None only when the optional lm_eval dep is absent or broken
-        processed_until = handle_stop_sequences(until, eos=eos)
+        processed_until = handle_stop_sequences(until, eos=eos)  # ty: ignore[call-non-callable]
 
         if not processed_until:
             return None
@@ -938,10 +936,9 @@ class LevanterHarnessLM(TemplateLM):
                 text = self.tokenizer.decode(full_tokens, skip_special_tokens=True)
 
                 # Post-process the generated text using the imported utility function
-                # pyrefly: ignore[not-callable]  # postprocess_generated_text is None only when the optional lm_eval dep is absent or broken
                 text = postprocess_generated_text(
                     text, gen_kwargs.get("until"), None  # think_end_token - could be made configurable if needed
-                )
+                )  # ty: ignore[call-non-callable]
                 outputs.append(text)
                 output_idx += 1  # consume one generation per request
             else:

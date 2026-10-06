@@ -90,7 +90,7 @@ def _load_model(config: SampleLmConfig, Vocab: Axis, *, key) -> LmHeadModel:
         return model
     else:
         assert hasattr(config.model, "hf_checkpoint_converter"), "model config lacks HF loader"
-        converter: HFCheckpointConverter = config.model.hf_checkpoint_converter()
+        converter: HFCheckpointConverter = config.model.hf_checkpoint_converter()  # ty: ignore[call-non-callable]
         converter = converter.replaced(
             reference_checkpoint=config.hf_checkpoint, tokenizer=load_tokenizer(config.tokenizer)
         )
@@ -100,7 +100,7 @@ def _load_model(config: SampleLmConfig, Vocab: Axis, *, key) -> LmHeadModel:
             axis_mapping=config.trainer.parameter_axis_mapping,
             dtype=config.trainer.mp.compute_dtype,
         )
-        return model  # type: ignore[return-value]
+        return model  # type: ignore[return-value]  # ty: ignore[invalid-return-type]
 
 
 def main(config: SampleLmConfig):

@@ -117,7 +117,7 @@ class Qwen3MoeConfig(LlamaConfig):
             raise NotImplementedError("Qwen3 MoE decoder_sparse_step values other than 1 are not supported yet.")
 
     # config-reuse subclass narrows to its own HF config/model type (LSP narrowing; pyrefly flags the same)
-    def hf_checkpoint_converter(  # pyrefly: ignore[bad-override]
+    def hf_checkpoint_converter(
         self, ref_checkpoint: Optional[str] = None
     ) -> HFCheckpointConverter["Qwen3MoeConfig"]:  # type: ignore
         return HFCheckpointConverter(
@@ -159,9 +159,9 @@ class Qwen3MoeConfig(LlamaConfig):
             rope=rope_config,
         )
 
-    def to_hf_config(  # pyrefly: ignore[bad-override]
+    def to_hf_config(
         self, vocab_size: int, config_overrides: Optional[Dict] = None
-    ) -> HfQwen3MoeConfig:
+    ) -> HfQwen3MoeConfig:  # ty: ignore[invalid-method-override]
         if config_overrides is None:
             config_overrides = {}
 
@@ -198,7 +198,7 @@ class Qwen3MoeConfig(LlamaConfig):
         )
 
     @property
-    def model_type(self) -> Type["Qwen3MoeLMHeadModel"]:  # pyrefly: ignore[bad-override]
+    def model_type(self) -> Type["Qwen3MoeLMHeadModel"]:
         return Qwen3MoeLMHeadModel
 
     def flops_per_token(self, vocab_size: int, context_length: int):
@@ -335,7 +335,7 @@ class Qwen3MoeSparseMoeBlock(eqx.Module):
 
         # jax.shard_map erases the wrapped callable's signature, so pyrefly mis-binds its
         # decorator TypeVar to the Array argument; cast back to a plain callable.
-        sharded_route = cast(Callable[..., Any], sharded_route)
+        sharded_route = cast(Callable[..., Any], sharded_route)  # ty: ignore[invalid-assignment]
 
         with jax.named_scope("route"):
             selected_weights, selected_experts, expert_loads = sharded_route(router_logits.array)
@@ -369,7 +369,7 @@ class Qwen3MoeSparseMoeBlock(eqx.Module):
             return x_repeat_sort_, group_sizes_, sort_idx_
 
         # See sharded_route above: cast around jax.shard_map's signature erasure.
-        permute_sharded = cast(Callable[..., Any], permute_sharded)
+        permute_sharded = cast(Callable[..., Any], permute_sharded)  # ty: ignore[invalid-assignment]
 
         with jax.named_scope("permute"):
             x_repeat_sort, group_sizes, sort_idx = permute_sharded(x_flat.array, topk_idx_flat.array)
@@ -402,7 +402,7 @@ class Qwen3MoeSparseMoeBlock(eqx.Module):
             return jnp.reshape(out_repeat_, (-1, self.config.num_experts_per_tok, self.config.hidden_dim))
 
         # See sharded_route above: cast around jax.shard_map's signature erasure.
-        unpermute_sharded = cast(Callable[..., Any], unpermute_sharded)
+        unpermute_sharded = cast(Callable[..., Any], unpermute_sharded)  # ty: ignore[invalid-assignment]
 
         with jax.named_scope("unpermute"):
             out_repeat_unflat = unpermute_sharded(out_repeat_sort.array, sort_idx.array)
@@ -556,21 +556,21 @@ class Qwen3MoeLMHeadModel(ModuleWithStateDictSerialization, LmHeadModel[Qwen3Moe
         pos_ids: NamedArray | None = None,
         *,
         key=None,
-    ) -> NamedArray:
+    ) -> NamedArray:  # ty: ignore[invalid-method-override]
         k_t, k_head = maybe_rng_split(key, 2)
         x, _ = self.activations(input_ids, attn_mask=attn_mask, key=k_t, pos_ids=pos_ids)
         if self.lm_head is not None:
             return self.lm_head(x, key=k_head)
         return self.embeddings.unembed(x)
 
-    def activations(  # pyrefly: ignore[bad-override]  # narrows activations return type for this MoE head
+    def activations(  # narrows activations return type for this MoE head
         self,
         input_ids: NamedArray,
         attn_mask: AttentionMask | None = None,
         *,
         key=None,
         pos_ids: NamedArray | None = None,
-    ) -> tuple[NamedArray, NamedArray | float]:
+    ) -> tuple[NamedArray, NamedArray | float]:  # ty: ignore[invalid-method-override]
         x = self.embeddings.embed(input_ids)
         x, extras = self.transformer(x, attn_mask=attn_mask, key=key, pos_ids=pos_ids)
 
