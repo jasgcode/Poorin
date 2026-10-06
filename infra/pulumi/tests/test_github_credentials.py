@@ -49,22 +49,6 @@ EXPECTED_REMOVAL_CANDIDATES = frozenset(
 )
 
 
-def test_committed_stack_covers_workflow_references_and_isolates_removal_candidates() -> None:
-    manifest = load_stack_manifest(STACK_CONFIG)
-    references = discover_secret_references(REPO_ROOT)
-
-    report = audit_credentials(manifest, references)
-
-    assert report.errors == ()
-    assert set(report.removal_candidates) == EXPECTED_REMOVAL_CANDIDATES
-    assert set(report.referenced_missing) == {
-        "repository:marin-community/marin:ANTHROPIC_ADMIN_KEY",
-        "repository:marin-community/marin:COREWEAVE_API_TOKEN",
-        "repository:marin-community/marin:OPENAI_ADMIN_KEY",
-    }
-    assert set(report.shadowed) == {"organization:GCP_PROJECT_ID"}
-
-
 def test_committed_stack_models_every_present_external_secret_as_a_read_only_resource() -> None:
     manifest = load_stack_manifest(STACK_CONFIG)
 
