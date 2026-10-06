@@ -66,7 +66,6 @@ nav:
       - Setting up a Local GPU Environment: tutorials/local-gpu.md
       - Training on Cloud GPUs: tutorials/cloud-gpu.md
       - Fine-tune Snowball on Your H100 Cluster: tutorials/run-snowball-sft-on-h100.md
-      - Publishing an Analysis Site: tutorials/publish-analysis-site.md
       - Training an LM: tutorials/train-an-lm.md
       - Run Evaluations: tutorials/run-lm-evals.md
   - Explanations:
@@ -77,7 +76,6 @@ nav:
       - Guidelines: explanations/guidelines.md
   - Experiments:
       - Report Index: reports/index.md
-      - Agent MoE Experiment Digest: reports/agent-moe-experiments.md
       - Marin 8B Retro: reports/marin-8b-retro.md
       - Marin 32B Retro: reports/marin-32b-retro.md
       - Markdownified Datasets: reports/markdownified-datasets.md
@@ -88,7 +86,6 @@ nav:
       - Tutorial Guidelines: dev-guide/tutorial-guidelines.md
       - Forking Policy: dev-guide/forking-policy.md
       - Building Docs: dev-guide/building-docs.md
-      - Releasing to PyPI: dev-guide/releasing.md
       - Snapshot Tests: dev-guide/snapshot-tests.md
   - Technical Reference:
       - Specifying Hardware Resources: references/resource-config.md

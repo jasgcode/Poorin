@@ -1,8 +1,6 @@
 # Training on Cloud GPUs
 
-Marin runs shared H100 and GB200 workloads on CoreWeave through Iris. Use
-`scripts/iris/dev_gpu.py` for short interactive tests. Submit a full Iris job
-after the code works on the reserved node.
+Marin runs shared H100 and GB200 workloads on CoreWeave through Iris.
 
 For a GPU you control directly, see [Setting up a Local GPU
 Environment](local-gpu.md). For the training script itself, see [Training an

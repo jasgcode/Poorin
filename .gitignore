@@ -206,7 +206,6 @@ marin/crawl/bigquery-gcs-key.json
 archive/
 
 # Caches and Outputs
-!/scripts/web/output/
 !/output/
 
 # csv

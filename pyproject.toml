@@ -26,8 +26,7 @@ dependencies = [
     # republish. Its native companion marin-finelog-server (the in-process
     # log-server ext, module `finelog_server`, maturin lib/finelog/rust) is NOT a
     # member: it ships as a pre-built wheel and reaches us transitively via
-    # marin-iris, which depends on it explicitly. `scripts/rust_mode.py dev` swaps
-    # marin-finelog-server to a local source build.
+    # marin-iris, which depends on it explicitly.
     "marin-finelog",
     # marin-ducky is the ad-hoc DuckDB SQL service (dashboard + runner + deploy),
     # a workspace member so service fixes land without a wheel republish.
@@ -39,8 +38,7 @@ dependencies = [
     # (editable source). Its native companion marin-dupekit-native (the Rust
     # kernels, module `dupekit_native`, maturin lib/dupekit/rust) is NOT a
     # member: it ships as a pre-built platform wheel and reaches us transitively
-    # as marin-dupekit's runtime dependency. `scripts/rust_mode.py dev` swaps
-    # marin-dupekit-native to a local source build.
+    # as marin-dupekit's runtime dependency.
     "marin-dupekit",
 ]
 
@@ -221,8 +219,6 @@ torch = [{ index = "pytorch-cpu", extra = "pipeline", marker = "sys_platform == 
 nvidia-cutlass-dsl = { index = "nvidia" }
 nvidia-cutlass-dsl-libs-base = { index = "nvidia" }
 nvidia-cutlass-dsl-libs-cu13 = { index = "nvidia" }
-# ### BEGIN RUST-DEV SOURCES ###
-# ### END RUST-DEV SOURCES ###
 
 [[tool.uv.index]]
 name = "nvidia"
@@ -246,23 +242,9 @@ line-length = 121
 target-version = ["py312"]
 preview = true
 
-# Note :: Grow more strict over time!
-extend-exclude = """
-(
-    scripts/
-)
-"""
-
 [tool.ruff]
 line-length = 121
 target-version = "py312"
-
-# Note :: Grow more strict over time!
-# Most of `scripts/**` is excluded until cleaned up, but `scripts/ci/**` and
-# `scripts/cost_manager/**` hold scripts invoked directly by `.github/workflows`
-# and stay under ruff.
-extend-exclude = ["scripts/"]
-extend-include = ["scripts/ci/**/*.py", "scripts/cost_manager/**/*.py"]
 
 [tool.ruff.lint]
 # A,B,E,F,I,NPY,RUF,UP,W are the established families. The individually-listed

@@ -1,22 +1,8 @@
 # Selected Experiment Reports
 
-This is a semi-automatically generated list of experiment issues and reports. It is periodically updated by a script,
-and then curated by hand.
+This is a curated list of Marin's experiment issues and reports.
 
 This page includes only experiments that have at least one run or report.
-
-## Curated experiment series
-
-- [Agent MoE experiment digest](./agent-moe-experiments.md) — outcomes from small-scale modeling, optimizer, routing, systems, and data tests.
-
-## Published analysis sites
-
-One-off analysis pages published to durable public hosting (see
-[Publishing an Analysis Site](../tutorials/publish-analysis-site.md)). The machine-readable list is
-[`gs://marin-public/index.json`](https://storage.googleapis.com/marin-public/index.json).
-
-- [DataKit side-by-side](https://storage.googleapis.com/marin-public/held/datakit-sidebyside/2026.07.01/index.html) — cluster examples, side by side (held)
-- [Delphi mid-training dossier](https://storage.googleapis.com/marin-public/ahmad/delphi-midtraining/2026.07.01/index.html) — mid-training analysis dossier (ahmad)
 
 ## Marin 8B Base
 
