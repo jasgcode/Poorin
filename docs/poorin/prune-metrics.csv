@@ -2,3 +2,4 @@ date,phase,step,first_party_lines,reachable_lines,reachable_modules,r1_imported_
 2026-10-05,P0,baseline,385058,138099,455,6709,7.33,72.7,47.3,12180241576
 2026-10-05,P0,prune_check review fixes,385105,138099,455,6709,4.7,87.5,33.7,12180241576
 2026-10-06,P1,Select affected tests without infra/ci,385369,138980,460,6709,10.92,179.3,63.3,12224270500
+2026-10-06,P1,Lint with tools/lint.py,385617,139228,461,6709,9.93,163.6,64.7,12224270500

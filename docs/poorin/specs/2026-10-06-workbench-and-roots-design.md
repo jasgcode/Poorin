@@ -1,6 +1,8 @@
 # Amendment: Poorin as a workbench, and the roots that follow
 
-Status: proposed 2026-10-06, awaiting review. Amends
+Status: approved 2026-10-06. Superseded in part the same day by D51 and D52: projects run on
+Marin's executor and live in Poorin's uv workspace, so they import Poorin's code; the files
+described below remain how data moves between them. Amends
 [`2026-10-04-core-prune-design.md`](2026-10-04-core-prune-design.md). Decisions D44 to D48 in
 [`../decisions.md`](../decisions.md) record the choices made while writing it.
 

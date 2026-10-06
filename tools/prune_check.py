@@ -11,8 +11,7 @@ Checks run in order and the first failure stops the run, so nothing is recorded:
 
 1. Every kept root imports, except ``static_only`` roots.
 2. ``pyrefly check`` passes.
-3. ``./infra/pre-commit.py`` passes on every changed file. The files are passed by path because
-   ``--changed-files`` skips untracked files.
+3. ``tools.lint`` passes on the uncommitted change.
 4. The unit tests affected by the uncommitted change pass, as ``tools.affected_tests`` selects
    and runs them: one CPU pytest process per suite.
 5. Each runnable root trains to completion twice. The second run, with warm caches, is timed.
@@ -151,12 +150,6 @@ def _run(cmd: Sequence[str], *, env: Mapping[str, str] | None = None) -> None:
     subprocess.run(cmd, cwd=REPO_ROOT, env=env, check=True)
 
 
-def lint_changed_files() -> None:
-    paths = [path for path in changed_files(REPO_ROOT) if (REPO_ROOT / path).is_file()]
-    if paths:
-        _run(["./infra/pre-commit.py", *paths])
-
-
 def run_affected_tests() -> None:
     selections = affected_tests.select(changed_files(REPO_ROOT), REPO_ROOT)
     affected_tests.run(affected_tests.pytest_runs(selections), REPO_ROOT)
@@ -217,7 +210,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     modules = sorted(workspace_modules(REPO_ROOT))
     import_kept_roots(roots.kept, roots.static_only, modules)
     _run(["uv", "run", "--no-sync", "pyrefly", "check"])
-    lint_changed_files()
+    _run([sys.executable, "-m", "tools.lint"])
     run_affected_tests()
 
     warm = train_roots(roots.runnable, run_env(), prefix=MARIN_PREFIX, log_dirs=RUN_LOG_DIRS)

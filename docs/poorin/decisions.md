@@ -431,7 +431,8 @@ Plan: `plans/2026-10-05-p1-fleet-operations.md`, awaiting the owner's review. No
 
 ### D39. The linter moves to `tools/lint.py`
 
-- **When:** 2026-10-05, P1. **Status:** Planned (Task 2).
+- **When:** 2026-10-05, P1. **Status:** Adopted. Marin's code keeps its explicit ruff configuration (see
+  `PythonStyle.ruff_config`).
 - **Decision:** `tools/lint.py` runs ruff 0.14.3 and black 25.9.0 (each library's black
   configuration), pyrefly, license headers, file size, syntax, merge-conflict markers, TOML,
   YAML, and JSON validity, trailing whitespace, final newlines, and notebook outputs. It drops
@@ -443,6 +444,7 @@ Plan: `plans/2026-10-05-p1-fleet-operations.md`, awaiting the owner's review. No
 - **Alternatives:** A script at the repository root; the `pre-commit` framework.
 - **Cost if wrong:** A formatting difference would show up as churn in the first full run, which
   Task 2 checks for.
+- **Landed:** `[poorin] Replace infra/pre-commit.py with tools/lint.py`.
 
 ### D40. `tools.*` becomes a kept root
 
@@ -523,7 +525,8 @@ Plan: `plans/2026-10-05-p1-fleet-operations.md`, awaiting the owner's review. No
 
 ### D46. Projects use Poorin as a workbench only
 
-- **When:** 2026-10-06, design. **Status:** Adopted.
+- **When:** 2026-10-06, design. **Status:** Superseded in part by D51 and D52: projects import
+  Marin's executor and share Poorin's workspace; data still moves between them as files.
 - **Decision:** A research project imports nothing from Poorin. Poorin runs as a workbench in
   its own environment and writes files the project reads: tokenized datasets, model weights,
   evaluation results, and scaling-law fits. A project that needs a small piece of Poorin's code,
@@ -605,6 +608,32 @@ Plan: `plans/2026-10-05-p1-fleet-operations.md`, awaiting the owner's review. No
 - **Cost if wrong:** About 133 files change once (measured before P1's deletions), and black's
   preview style is not reproduced exactly.
 
+### D51. Projects run on Marin's executor, not Hydra
+
+- **When:** 2026-10-06, design. **Status:** Adopted.
+- **Decision:** `looped-diffusion-lm` defines its runs as Marin executor steps instead of Hydra
+  configs: typed dataclass configs, versioned output paths (`name@version`, with P0's fresh `dev`
+  versions and `--resume`), fingerprints, dry runs, and `marin.experiment.sweep` for grids.
+- **Why:** The owner's choice: Marin's executor already does run identity, caching, and
+  versioning, which the project's design had planned to build on Hydra.
+- **Alternatives:** Hydra with the project's own run keys and `runs.tsv` (its original design).
+- **Cost if wrong:** Fray has no SLURM backend, so runs on NU Quest need one (sub-project 2) or
+  a job script that runs the executor inside a SLURM allocation.
+
+### D52. Projects are nested uv workspace members
+
+- **When:** 2026-10-06, design. **Status:** Planned (after P1).
+- **Decision:** A project keeps its own git repository, checked out under `Poorin/projects/` and
+  ignored by Poorin's git, and is listed as a uv workspace member. It shares Poorin's lockfile and
+  CUDA environment and imports the executor, Fray, and Levanter's utilities directly. Each run
+  records both repositories' commits.
+- **Why:** The executor brings Fray, rigging, and draccus with it; one shared workspace avoids
+  carrying Poorin's package indexes and sources into a second lockfile.
+- **Alternatives:** A separate repository depending on Poorin's packages pinned by commit; the
+  project's code inside Poorin's `experiments/`.
+- **Cost if wrong:** Poorin's lockfile carries the project's dependencies, and the project's
+  imports become prune roots, so Poorin's prune has to keep them working.
+
 ---
 
 ## Deferred
@@ -621,3 +650,4 @@ Known gaps left open on purpose. Each names where it gets resolved.
 | The cross-attention case in `test_attention.py` is non-causal, so it never exercises the `q_len != k_len` guard in `_fa4_supports` | P0 review | Open |
 | `test_append_metrics_row_rejects_a_row_with_missing_columns` is a guard test under `TESTING.md` | P0 review | Open |
 | About 125 MB of untracked `logs/` and `wandb/` entries from P0's check runs sit in the checkout | P0 | Open; delete on request |
+| Set up `projects/` as a git-ignored, nested uv workspace member for `looped-diffusion-lm`, and scan `projects/*` for prune roots | D52 | The phase after P1 |
