@@ -711,6 +711,18 @@ Plan: `plans/2026-10-05-p1-fleet-operations.md`. Executing on branch `prune/p1-f
 - **Cost if wrong:** One short file to delete.
 - **Landed:** `[poorin] Delete Marin's organization skills and agent notes`.
 
+### D58. The canary-metrics test goes with the ferries it loads
+
+- **When:** 2026-10-06, P1 Task 7. **Status:** Adopted.
+- **Decision:** Delete `tests/test_validate_canary_metrics.py` in its own commit, ahead of Task 9,
+  which deletes it with `scripts/`.
+- **Why:** It imports `scripts/ci/validate_canary_metrics.py`, which imports the canary ferry
+  Task 6 deleted. Task 6's check did not select it: its reference search skipped `scripts/`, and
+  the import graph does not read `scripts/` either. Task 7's check, which runs every suite,
+  failed on it.
+- **Cost if wrong:** None; Task 9 deletes it anyway. The blind spot closes when `scripts/` goes.
+- **Landed:** `[poorin] Delete the canary-metrics test that loads a deleted ferry`.
+
 ---
 
 ## Deferred
