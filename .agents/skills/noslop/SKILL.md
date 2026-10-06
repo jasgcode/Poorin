@@ -29,7 +29,7 @@ git status --short
 git diff --stat "$BASE"
 git diff --check "$BASE"
 git diff "$BASE"
-uv run python .agents/skills/noslop/scripts/scan_diff.py "$BASE"
+uv run --no-sync python .agents/skills/noslop/scripts/scan_diff.py "$BASE"
 ```
 
 List every changed test, comment, docstring, Markdown file, commit message, and
@@ -105,11 +105,10 @@ while safe fixes remain.
 Run the narrow affected tests, then:
 
 ```bash
-./infra/pre-commit.py --changed-files --fix
+uv run --no-sync python -m tools.lint --fix
 ```
 
-Run `./infra/pre-commit.py --review` only at the point required by the commit
-workflow. Do not claim a clean pass while known findings remain.
+Do not claim a clean pass while known findings remain.
 
 ## Report
 

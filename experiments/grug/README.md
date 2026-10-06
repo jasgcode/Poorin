@@ -181,7 +181,7 @@ enforces these minimum interfaces:
 
 ## Further guidance
 
-- Grug principles: [`/.agents/projects/grugformer.md`](../../.agents/projects/grugformer.md)
+- Grug principles: [`PRINCIPLES.md`](PRINCIPLES.md)
 - Change workflow: [`.agents/skills/change-grug/`](../../.agents/skills/change-grug/SKILL.md)
 - Backward-flow recipe: [`/docs/recipes/add_grug_backward_flow_logging.md`](../../docs/recipes/add_grug_backward_flow_logging.md)
 - HBM/OOM tuning guide: [`/docs/references/hbm-optimization.md`](../../docs/references/hbm-optimization.md)

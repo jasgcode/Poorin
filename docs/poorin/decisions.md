@@ -402,7 +402,7 @@ from the final review of the branch.
 ## P1 fleet operations: planned 2026-10-05
 
 Plan: `plans/2026-10-05-p1-fleet-operations.md`. Executing on branch `prune/p1-fleet-ops` since
-2026-10-06; rulings made while executing it are D53 to D56.
+2026-10-06; rulings made while executing it are D53 onward.
 
 ### D37. Affected tests come from the reachability import graph
 
@@ -695,6 +695,21 @@ Plan: `plans/2026-10-05-p1-fleet-operations.md`. Executing on branch `prune/p1-f
 - **Cost if wrong:** None known. `--ignore` still does not apply to a file passed by name (see
   Deferred).
 - **Landed:** `[poorin] Deselect host-excluded tests by suite node ID`.
+
+### D57. Grug's principles move next to the code
+
+- **When:** 2026-10-06, P1 Task 5. **Status:** Adopted.
+- **Decision:** `.agents/projects/grugformer.md`, Marin's 46-line statement of grug's rules
+  (Equinox modules with explicit `init` and `__call__`, raw JAX ops instead of `eqx.nn`, explicit
+  sharding, `einsum`, copy-paste variants), becomes `experiments/grug/PRINCIPLES.md` with its
+  commands updated, instead of being deleted with the rest of `.agents/projects/`. The grug README
+  links it there.
+- **Why:** Poorin builds its models in grug style (D13), so these rules
+  are design guidance for Poorin itself, not notes about Marin's systems.
+- **Alternatives:** Delete it with `.agents/projects/` as planned and point the README at the
+  `upstream-baseline` tag.
+- **Cost if wrong:** One short file to delete.
+- **Landed:** `[poorin] Delete Marin's organization skills and agent notes`.
 
 ---
 

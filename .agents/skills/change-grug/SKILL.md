@@ -39,17 +39,13 @@ Keep each pass scoped to one bucket:
 
 ### 3) Record the experiment
 
-Update `docs/reports/grug-archive.md` with: path, origin (`base`, `moe`, or another source variant), commit SHA (when known), purpose, status (`active`, `superseded`, `deleted`), and diff link (prefer the CI-posted PR comment link; fallback to local report path).
+Update `docs/reports/grug-archive.md` with: path, origin (`base`, `moe`, or another source variant), commit SHA (when known), purpose, status (`active`, `superseded`, `deleted`), and how to see its diff against the origin.
 
-For PRs that add a new `experiments/grug/<variant>/`, CI posts a visual diff comment automatically — copy that link into the archive entry.
-
-For a local fallback, generate the diff report manually and link the report in the archive entry:
+To review a variant against its origin:
 
 ```bash
-uv run python scripts/ci/grug_dir_diff.py \
-  experiments/grug/base \
-  experiments/grug/<variant> \
-  --out /tmp/grug-diff
+git diff --no-index --stat experiments/grug/base experiments/grug/<variant>
+git diff --no-index experiments/grug/base experiments/grug/<variant>
 ```
 
 ### 4) Upstream to base if it wins
@@ -70,8 +66,8 @@ After upstreaming, delete superseded experiment code; keep only the archive trai
 ### 6) Validate
 
 ```bash
-./infra/pre-commit.py --all-files
-uv run pytest tests/test_grug_variant_contracts.py
+uv run --no-sync python -m tools.lint --all-files
+JAX_PLATFORMS=cpu uv run --no-sync pytest tests/test_grug_variant_contracts.py -n 0
 ```
 
 Add focused tests for any behavior changes.

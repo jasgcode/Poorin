@@ -7,3 +7,4 @@ date,phase,step,first_party_lines,reachable_lines,reachable_modules,r1_imported_
 2026-10-06,P1,Deselect host-excluded tests by suite node ID,385635,139246,461,6709,9.66,217.0,65.5,12279533063
 2026-10-06,P1,Type-check with ty,385625,139239,461,6709,8.32,179.1,51.9,12279533063
 2026-10-06,P1,Point agent instructions at Poorin's tools,385625,139239,461,6709,7.92,143.0,51.6,12279533063
+2026-10-06,P1,Prune skills and Marin's agent notes,385625,139239,461,6709,7.76,144.5,51.9,12279533063

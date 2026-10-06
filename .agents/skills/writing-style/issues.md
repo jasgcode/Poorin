@@ -9,9 +9,6 @@ Use this file for GitHub issues. Marin uses two issue styles with different expe
 
 ## Standard OSS Issues
 
-See also the [file-issue](../file-issue/SKILL.md) skill which focuses
-more on what should be included rather than tone.
-
 ### Assume This Reader
 
 - Assume the reader is a contributor or user who knows the repo but not this problem.

@@ -412,5 +412,5 @@ passing `--size`. Runs report to W&B group `moe-hero-ep-scaling-ladder`.
 
 ## Result Record
 
-The experiment record is in [`.agents/logbooks/7279-moe-hero-ep.md`](../../../.agents/logbooks/7279-moe-hero-ep.md).
+The experiment record is `.agents/logbooks/7279-moe-hero-ep.md` at the `upstream-baseline` tag.
 Issue [#7279](https://github.com/marin-community/marin/issues/7279) is the coordination record.

@@ -1,37 +1,22 @@
 ---
 name: debug
-description: Diagnose a stated code, JAX, Marin, Iris, Zephyr, or TPU fault or startup/performance regression; do not activate for ordinary implementation or optimization without a symptom.
+description: Diagnose a stated code, JAX, Levanter, Marin, Zephyr, or GPU fault or startup/performance regression; do not activate for ordinary implementation or optimization without a symptom.
 ---
 
 # Debug
 
 Keep working notes in the active task. Do not add repository debug-log files.
-At the start of a fresh investigation, use `consult-echo` when repository policy
-requires prior-work search. During continued diagnosis or mitigation of the
-same incident, reuse results already read instead of invoking `consult-echo`
-again unless the scope or freshness requirement changes or the user asks for a
-new search. After diagnosing a live infrastructure incident, use
-`write-ops-log` to publish its standalone Echo record and link it from the
-associated PR or issue. A code bug or local debugging session is not an
-incident unless it caused a service, production run, or shared operational
-system to fail or degrade.
 
-## Infrastructure faults
+## GPU faults
 
-Read `lib/iris/AGENTS.md` or `lib/zephyr/AGENTS.md` for context, then follow
-the matching `OPS.md` section:
+For a fault on the local RTX 5090 (cuDNN attention, the compilation cache, attention backends,
+missing MFU), read `docs/poorin/spike-0-rtx5090.md` first: it records what is known to fail on
+sm_120 and the workaround for each.
 
-| Symptom | Read |
-|---|---|
-| Stuck job, scheduling failure, resource leak, controller stalled | `lib/iris/OPS.md` → SQL Queries, Process Inspection & Profiling, Known Bugs, Troubleshooting |
-| Iris task misbehaving, container inspection, profiling a running task | `lib/iris/OPS.md` → Task Operations, Process Inspection & Profiling |
-| Zephyr pipeline slow / stragglers / data skew / worker failures | `lib/zephyr/OPS.md` → Diagnostic Patterns, Observability |
-| TPU bad node (`No accelerator found`, `FAILED_PRECONDITION`, `Device or resource busy`) | `lib/iris/OPS.md` → TPU Bad-Node Recovery |
+## Pipeline faults
 
-Read the guardrails beside the commands. Never modify the controller database,
-prefer `iris process profile` over SSH, and never run a full
-`iris cluster restart` without approval. After a TPU recovery or Zephyr fix,
-return to the active Iris job-monitoring or `babysit-zephyr` loop.
+For a slow Zephyr pipeline, stragglers, data skew, or worker failures, read
+`lib/zephyr/AGENTS.md`, then `lib/zephyr/OPS.md` → Diagnostic Patterns, Observability.
 
 ## Code bugs
 
