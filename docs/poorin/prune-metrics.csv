@@ -13,3 +13,4 @@ date,phase,step,first_party_lines,reachable_lines,reachable_modules,r1_imported_
 2026-10-06,P1,Delete infra/,384378,139239,461,6702,7.71,144.1,50.4,11932781337
 2026-10-06,P1,Drop dependencies nothing uses,384378,139239,461,6702,8.33,151.0,55.6,11893054128
 2026-10-06,P1,Delete scripts/,384378,139239,461,6702,8.1,150.5,53.3,11893054128
+2026-10-06,P1,"Delete docker/, etc/, and .github/",384377,139238,461,6702,8.23,149.9,53.4,11893054128

@@ -44,7 +44,6 @@ MAX_FILE_BYTES = 500 * 1024
 CONFLICT_MARKERS = (b"<" * 7, b">" * 7)
 EXCLUDED = (
     ".git/**",
-    ".github/**",
     "tests/snapshots/**",
     "**/*_connect.py",
     "**/*_pb2.py",

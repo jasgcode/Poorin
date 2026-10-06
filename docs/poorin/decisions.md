@@ -458,7 +458,8 @@ Plan: `plans/2026-10-05-p1-fleet-operations.md`. Executing on branch `prune/p1-f
 
 ### D41. Delete more than the spec's P1 list
 
-- **When:** 2026-10-05, P1. **Status:** Planned (Tasks 5–10).
+- **When:** 2026-10-05, P1. **Status:** Adopted, except `.agents/projects/grugformer.md`, which
+  moved (D57).
 - **Decision:** Also delete Marin's ferries, the whole `.github/` directory, the `Makefile`,
   `.agents/{agents,docs,logbooks,ops,projects}` (151 files of Marin's notes), 29 of 41 skills,
   the three `license_header.txt` files, and the docs pages about deleted tooling.
@@ -466,12 +467,16 @@ Plan: `plans/2026-10-05-p1-fleet-operations.md`. Executing on branch `prune/p1-f
   them import `infra`. The `Makefile` targets wrap deleted tools or set up Marin's GCP project.
   `.github/` holds actions for deleted workflows, plus Dependabot and CodeQL configuration.
 - **Cost if wrong:** Anything needed again is at `upstream-baseline`.
+- **Landed:** `[poorin] Delete Marin's organization skills and agent notes`, `[poorin] Delete
+  Marin's ferries`, `[poorin] Delete infra/`, `[poorin] Delete scripts/`, `[poorin] Delete
+  docker/, etc/, and the GitHub configuration`.
 
 ### D42. Keep `.dockerignore`
 
-- **When:** 2026-10-05, P1. **Status:** Planned (Task 10).
+- **When:** 2026-10-05, P1. **Status:** Adopted.
 - **Why:** Levanter's TPU tutorial builds Docker images that respect it. Sub-project 2 decides how
   TPU jobs are packaged.
+- **Landed:** `[poorin] Delete docker/, etc/, and the GitHub configuration`.
 
 ### D43. The local machine is the default cluster; Marin's clusters become fixtures
 

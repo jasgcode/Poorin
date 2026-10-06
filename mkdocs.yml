@@ -84,7 +84,6 @@ nav:
   - Developer Guide:
       - Contributing: dev-guide/contributing.md
       - Tutorial Guidelines: dev-guide/tutorial-guidelines.md
-      - Forking Policy: dev-guide/forking-policy.md
       - Building Docs: dev-guide/building-docs.md
       - Snapshot Tests: dev-guide/snapshot-tests.md
   - Technical Reference:

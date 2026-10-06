@@ -184,8 +184,8 @@ name = "marin-resiliparse"
 url = "https://marin-community.github.io/chatnoir-resiliparse/simple"
 
 [tool.uv.sources]
-# Marin's patched ragged all-to-all PJRT plugin, promoted from marin-community/xla
-# (docs/dev-guide/forking-policy.md). Non-aarch64 resolution falls back to PyPI.
+# Marin's patched ragged all-to-all PJRT plugin, promoted from marin-community/xla.
+# Non-aarch64 resolution falls back to PyPI.
 jax-cuda13-pjrt = { url = "https://github.com/marin-community/xla/releases/download/marin-xla-pjrt-20260915-708c3a4ec79c/jax_cuda13_pjrt-0.11.1%2Bmarin.708c3a4ec79c-py3-none-manylinux_2_27_aarch64.whl", extra = "gpu", marker = "platform_machine == 'aarch64'" }
 torchvision = [
     # Default to the CPU index for TPU/CPU builds
