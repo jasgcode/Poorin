@@ -1008,6 +1008,18 @@ Plan: `plans/2026-10-07-p4-p7-strip.md`.
 - **Cost if wrong:** Marin's reports and tutorials remain at `upstream-baseline`. Poorin's own
   tutorials are not written yet.
 
+### D77. R2 gets the Finelog URL as a runtime argument
+
+- **When:** 2026-10-07, cleanup. **Status:** Adopted.
+- **Decision:** `experiments.grug.base.launch` takes `--finelog-url`. The URL is a runtime
+  argument of the trial's artifact step, so it does not change the checkpoint's fingerprint. The
+  launch config passes it to an explicit `TelemetryConfig` next to W&B. `prune_check` starts an
+  embedded Finelog server in a temporary directory, passes its address to R2 only, and fails if
+  the server's `levanter.metrics` table is empty after the runs. Every run's rows land in that one
+  table, with `run_id` as a column, so a fresh server holds only R2's rows.
+- **Why:** Spec invariant item 5, deferred from P5b by D74.
+- **Cost if wrong:** The check confirms that rows arrived, not which metrics they hold.
+
 ### D78. The profiling package returns as a kept root
 
 - **When:** 2026-10-07, cleanup. **Status:** Adopted.
@@ -1044,7 +1056,7 @@ Known gaps left open on purpose. Each names where it gets resolved.
 | `--ignore` skips a file found in a directory but not one passed by name, so a change that selects `test_tensorboard.py` through its imports still collects it, and it fails on `tensorboardX` | D56 | D61 |
 | ty's 231 warnings | D54 | Pass 2 |
 | Dependencies only deleted code used, such as `mcp` in `marin-core` | P3 | P8 |
-| `prune_check` starts a local Finelog server and confirms R2's metric rows (spec invariant item 5); R2 needs a way to receive the URL | D74 | Cleanup after P7 |
+| `prune_check` starts a local Finelog server and confirms R2's metric rows (spec invariant item 5); R2 needs a way to receive the URL | D74 | D77 |
 | `experiments/rl_data_reviews/publish_review.py` imports the deleted `marina` package; it is unreachable and untested | P1 Task 7 | P2 |
 | Links to deleted skills remain in `experiments/grug/moe/agent.md`, `experiments/grug/fast_track/agent.md`, and `experiments/post_training/cat_count_canary/README.md` | P1 review | P2, P7, D75 |
 | ty's three noisy warning rules could be set per rule, so other warning rules would fail; `tools.lint` prints ty's warnings only when ty fails | P1 review | Pass 2 |

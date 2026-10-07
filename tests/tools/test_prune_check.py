@@ -1,18 +1,21 @@
 # Copyright The Marin Authors
 # SPDX-License-Identifier: Apache-2.0
 
-"""Behavior tests for the pure parts of tools.prune_check."""
+"""Behavior tests for tools.prune_check."""
 
 import csv
 import os
 import subprocess
 
 import pytest
+from finelog.embedded import require_embedded_server
+from levanter.tracker.finelog_metrics import LevanterMetricsWriter
 
 from tools.prune_check import (
     METRIC_COLUMNS,
     ImportProfile,
     append_metrics_row,
+    levanter_metric_rows,
     parse_importtime,
     remove_new_entries,
     remove_run_outputs,
@@ -87,3 +90,13 @@ def test_train_roots_removes_run_outputs_when_a_run_fails(tmp_path):
     with pytest.raises(subprocess.CalledProcessError):
         train_roots([failing], dict(os.environ), prefix=prefix, log_dirs=[])
     assert not (prefix / "users").exists()
+
+
+def test_levanter_metric_rows_counts_the_rows_a_levanter_run_wrote(tmp_path):
+    with require_embedded_server()(log_dir=str(tmp_path)) as server:
+        assert levanter_metric_rows(server.address) == 0
+        writer = LevanterMetricsWriter.connect(server.address, "grug-base-test", 0)
+        writer.scalar("train/loss", 1.0, step=1)
+        writer.scalar("train/loss", 0.5, step=2)
+        writer.close()
+        assert levanter_metric_rows(server.address) == 2

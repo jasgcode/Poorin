@@ -21,6 +21,7 @@ import dataclasses
 from dataclasses import dataclass
 from datetime import timedelta
 
+import click
 import jmp
 from fray.cluster import ResourceConfig
 from levanter.analysis.backward_flow import BackwardFlowConfig
@@ -30,11 +31,12 @@ from levanter.checkpoint import CheckpointerConfig
 from levanter.data.text.datasets import LmDataConfig
 from levanter.optim.config import AdamConfig, OptimizerConfig
 from levanter.tracker import TrackerConfig
+from levanter.tracker.telemetry import TelemetryConfig
 from levanter.tracker.wandb import WandbConfig
 from levanter.trainer import TrainerConfig
 from marin.execution.build_context import resolve_version
 from marin.execution.lazy import ArtifactStep, StepContext
-from marin.experiment.cli import experiment_main
+from marin.experiment.cli import build_options
 from marin.experiment.data import mixture, pretokenized
 from marin.experiment.namespacing import user_namespaced_name
 from marin.training.training import LevanterCheckpoint, resolve_checkpointer_output_path
@@ -98,6 +100,7 @@ class GrugBaseLaunchConfig:
     seed: int
     mp: str  # jmp policy string, e.g. "params=float32,compute=bfloat16,output=bfloat16".
     tracker: TrackerConfig
+    finelog_url: str | None  # Finelog server that receives the run's metrics; None publishes none.
     optimizer: OptimizerConfig
     watch_interval: int  # gradient/parameter statistics every N steps; 0 disables them.
     backward_flow_interval: int  # backward-flow diagnostic every N steps; 0 disables it.
@@ -112,10 +115,11 @@ class GrugBaseLaunchConfig:
     eval_ema: bool = False
 
 
-def _resolve_tracker(tracker: TrackerConfig, run_id: str) -> TrackerConfig:
+def _trackers(launch: GrugBaseLaunchConfig) -> tuple[TrackerConfig, ...]:
+    tracker = launch.tracker
     if isinstance(tracker, WandbConfig):
-        return dataclasses.replace(tracker, name=run_id)
-    return tracker
+        tracker = dataclasses.replace(tracker, name=launch.run_id)
+    return tracker, TelemetryConfig(finelog_url=launch.finelog_url)
 
 
 def build_grug_run_config(launch: GrugBaseLaunchConfig) -> GrugRunConfig:
@@ -133,7 +137,7 @@ def build_grug_run_config(launch: GrugBaseLaunchConfig) -> GrugRunConfig:
         num_train_steps=launch.steps,
         profiler=ProfilerConfig(enabled=False, start_step=5, num_steps=100, perfetto_link=False),
         mp=jmp.get_policy(launch.mp),
-        tracker=_resolve_tracker(launch.tracker, launch.run_id),
+        tracker=_trackers(launch),
         use_explicit_mesh_axes=True,
         watch=WatchConfig(interval=launch.watch_interval),
         require_accelerator=True,
@@ -185,8 +189,12 @@ def run_grug_base_trial(config: GrugBaseLaunchConfig) -> None:
     run_grug(build_grug_run_config(config))
 
 
-def grug_base_trial(*, version: str | None = None) -> ArtifactStep[LevanterCheckpoint]:
-    """The base grug trial on 10M FineWeb-Edu tokens, on one local GPU, as a lazy checkpoint."""
+def grug_base_trial(*, version: str | None = None, finelog_url: str | None = None) -> ArtifactStep[LevanterCheckpoint]:
+    """The base grug trial on 10M FineWeb-Edu tokens, on one local GPU, as a lazy checkpoint.
+
+    ``finelog_url`` names a Finelog server for the run's metrics. It is a runtime argument, so it
+    does not change the checkpoint's identity.
+    """
     name = "grug/base-trial"
     version = resolve_version(name, version)
     train = {_TRAIN_DATA: 1.0}
@@ -207,9 +215,10 @@ def grug_base_trial(*, version: str | None = None) -> ArtifactStep[LevanterCheck
                 project="poorin",
                 tags=["grug", "template"],
                 group="grug-base-trial",
-                name=None,  # filled from run_id in _resolve_tracker
+                name=None,  # filled from run_id in _trackers
                 replicate_path=ctx.output_path,
             ),
+            finelog_url=ctx.runtime_arg("finelog_url"),
             optimizer=AdamConfig(
                 learning_rate=3e-3,
                 weight_decay=0.1,
@@ -233,9 +242,16 @@ def grug_base_trial(*, version: str | None = None) -> ArtifactStep[LevanterCheck
         run=run_grug_base_trial,
         build_config=build_config,
         deps=tuple(train),
-        runtime_args={"train_resources": _TRAIN_RESOURCES},
+        runtime_args={"train_resources": _TRAIN_RESOURCES, "finelog_url": finelog_url},
     )
 
 
+@click.command()
+@click.option("--finelog-url", default=None, help="Finelog server that receives the run's metrics.")
+@build_options
+def main(finelog_url: str | None) -> ArtifactStep[LevanterCheckpoint]:
+    return grug_base_trial(finelog_url=finelog_url)
+
+
 if __name__ == "__main__":
-    experiment_main(grug_base_trial)()
+    main()

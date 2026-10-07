@@ -15,6 +15,8 @@ Checks run in order and the first failure stops the run, so nothing is recorded:
 4. The unit tests affected by the uncommitted change pass, as ``tools.affected_tests`` selects
    and runs them: one CPU pytest process per suite.
 5. Each runnable root trains to completion twice. The second run, with warm caches, is timed.
+6. R2's metric rows arrived in Finelog. A local Finelog server runs in a temporary directory for
+   the duration of the runs, and R2 receives its address with ``--finelog-url``.
 
 ``--fast`` skips checks 2 to 4 while the tree is being stripped; a cleanup pass runs them all
 afterwards (D73).
@@ -31,11 +33,16 @@ import shlex
 import shutil
 import subprocess
 import sys
+import tempfile
 import time
 from collections.abc import Iterable, Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import date
 from pathlib import Path
+
+from finelog.client import LogClient
+from finelog.embedded import require_embedded_server
+from levanter.tracker.finelog_metrics import LEVANTER_METRICS_NAMESPACE
 
 from tools import affected_tests
 from tools.changes import changed_files
@@ -48,6 +55,8 @@ CACHE_HOME = Path.home() / ".cache" / "poorin"
 MARIN_PREFIX = CACHE_HOME / "prune-check"
 # Levanter writes run logs under ./logs and W&B under ./wandb; runnable roots run from REPO_ROOT.
 RUN_LOG_DIRS = (REPO_ROOT / "logs", REPO_ROOT / "wandb")
+# The runnable root whose metrics must reach Finelog (spec invariant item 5).
+FINELOG_ROOT = "R2"
 
 METRIC_COLUMNS = (
     "date",
@@ -183,6 +192,24 @@ def train_roots(
     return warm
 
 
+def with_finelog_url(runnable: Sequence[RunnableRoot], url: str) -> list[RunnableRoot]:
+    """The runnable roots, with ``FINELOG_ROOT`` told to publish its metrics to ``url``."""
+    return [
+        replace(root, args=(*root.args, "--finelog-url", url)) if root.name == FINELOG_ROOT else root
+        for root in runnable
+    ]
+
+
+def levanter_metric_rows(url: str) -> int:
+    """Rows in the Levanter metrics table of the Finelog server at ``url``; every run shares it."""
+    client = LogClient.connect(url)
+    try:
+        namespaces = client.list_namespaces()
+    finally:
+        client.close()
+    return next((ns.row_count for ns in namespaces if ns.namespace == LEVANTER_METRICS_NAMESPACE), 0)
+
+
 def profile_import(module: str) -> ImportProfile:
     result = subprocess.run(
         [sys.executable, "-X", "importtime", "-c", f"import {module}"],
@@ -211,7 +238,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         _run([sys.executable, "-m", "tools.lint"])
         run_affected_tests()
 
-    warm = train_roots(roots.runnable, run_env(), prefix=MARIN_PREFIX, log_dirs=RUN_LOG_DIRS)
+    with tempfile.TemporaryDirectory() as finelog_dir, require_embedded_server()(log_dir=finelog_dir) as finelog:
+        runnable = with_finelog_url(roots.runnable, finelog.address)
+        warm = train_roots(runnable, run_env(), prefix=MARIN_PREFIX, log_dirs=RUN_LOG_DIRS)
+        metric_rows = levanter_metric_rows(finelog.address)
+    if metric_rows == 0:
+        raise RuntimeError(f"{FINELOG_ROOT} trained but wrote no metric rows to Finelog")
+    print(f"Finelog received {metric_rows} Levanter metric rows", flush=True)
 
     r1 = next(root for root in roots.runnable if root.name == "R1")
     profile = profile_import(r1.module)
