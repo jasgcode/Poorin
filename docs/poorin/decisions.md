@@ -5,6 +5,9 @@ was considered, and what it costs if it turns out wrong. The spec
 (`specs/2026-10-04-core-prune-design.md`) and the phase plans (`plans/`) hold the full designs;
 commits hold the diffs. This log is the place to read why the tree looks the way it does.
 
+Entries before D85 use upstream's library names (`marin`, `fray`, `finelog`, `rigging`); the
+"Renamed libraries" table in AGENTS.md maps them to the `poorin` names.
+
 ## Adding an entry
 
 - Add an entry when a change chooses between options, changes scope, or departs from a plan.

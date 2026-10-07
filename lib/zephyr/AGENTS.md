@@ -26,7 +26,7 @@ Lazy dataset processing library. Start with the shared instructions in `/AGENTS.
 Actor-based, pull-based task distribution. Workers are persistent across stages.
 
 ```
-ZephyrContext → ZephyrCoordinator (fray actor) → ZephyrWorker actors (fray actor_group)
+ZephyrContext → ZephyrCoordinator (poorin_fray actor) → ZephyrWorker actors (poorin_fray actor_group)
 ```
 
 ### Data flow between stages

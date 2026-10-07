@@ -695,7 +695,7 @@ def test_step_with_remote_fn_uses_fray(tmp_path: Path):
 
 
 class _SubmitSpy:
-    """Wraps a fray client and captures every ``submit`` call's request."""
+    """Wraps a poorin_fray client and captures every ``submit`` call's request."""
 
     def __init__(self, inner):
         self._inner = inner
@@ -854,7 +854,7 @@ def test_remote_decorator_with_custom_resources():
 def test_runner_propagates_context_vars(tmp_path):
     """StepRunner must propagate contextvars to worker threads.
 
-    This ensures that fray's ``set_current_client`` is visible inside step
+    This ensures that poorin_fray's ``set_current_client`` is visible inside step
     functions dispatched by the thread pool, so ZephyrContext (and anything
     else that calls ``current_client()``) picks up the correct client.
     """
@@ -880,7 +880,7 @@ def test_runner_propagates_context_vars(tmp_path):
 
 
 def test_runner_propagates_fray_client(tmp_path):
-    """StepRunner explicitly propagates the fray client to worker threads.
+    """StepRunner explicitly propagates the poorin_fray client to worker threads.
 
     This tests the explicit client capture path (not just generic contextvars)
     to ensure current_client() returns the correct client inside step functions.

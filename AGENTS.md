@@ -12,10 +12,26 @@ measurements per prune commit.
 Library manuals:
 
 - `lib/levanter/AGENTS.md` — Levanter (JAX training library)
-- `lib/poorin/AGENTS.md` — Marin (experiment executor and pipelines)
+- `lib/poorin/AGENTS.md` — poorin (experiment framework: artifacts, pipelines, evaluation)
 - `lib/zephyr/AGENTS.md` — Zephyr (dataset processing)
-- `lib/poorin_fray/AGENTS.md` — Fray (job dispatch)
+- `lib/poorin_fray/AGENTS.md` — poorin_fray (job dispatch)
+- `lib/poorin_finelog/AGENTS.md` — poorin_finelog (Finelog's Python client)
 - `lib/haliax/AGENTS.md` — Haliax (named tensors)
+
+### Renamed libraries
+
+Poorin renamed the libraries it cut heavily (D85); each one's README lists what was removed. Upstream
+Marin code, and Poorin's specs, plans, and decisions before D85, use the old names:
+
+| Upstream name (import / distribution) | Poorin name |
+|---|---|
+| `marin` / `marin-core` | `poorin` / `poorin` |
+| `fray` / `marin-fray` | `poorin_fray` / `poorin-fray` |
+| `finelog` / `marin-finelog` | `poorin_finelog` / `poorin-finelog` |
+| `rigging` / `marin-rigging` | `poorin_rigging` / `poorin-rigging` |
+
+Levanter, Haliax, Zephyr, Finestore, and Dupekit keep upstream's names. The `MARIN_*` environment
+variables and `marin_*` helpers keep theirs for now.
 
 ## Workflow Playbooks
 

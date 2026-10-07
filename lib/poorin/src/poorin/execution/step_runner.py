@@ -188,12 +188,14 @@ class StepRunner:
         if max_workers < 1:
             raise ValueError(f"max_concurrent must be >= 1, got {max_concurrent}")
 
-        # Capture the fray client on the calling thread so worker threads can
+        # Capture the poorin_fray client on the calling thread so worker threads can
         # inherit it explicitly. More robust than contextvars.copy_context()
         # alone, which can lose state across thread-pool reuse patterns.
         caller_fray_client = _current_client_var.get()
         if caller_fray_client is not None:
-            logger.info("StepRunner: captured fray client %s for worker threads", type(caller_fray_client).__name__)
+            logger.info(
+                "StepRunner: captured poorin_fray client %s for worker threads", type(caller_fray_client).__name__
+            )
 
         local_pool = ThreadPoolExecutor(max_workers=max_workers, thread_name_prefix="marin-step-runner")
 
@@ -368,7 +370,7 @@ class StepRunner:
         worker_fn.__qualname__ = step_name
         worker_fn.__name__ = step_name
 
-        # Also copy the full context for any other context vars (not just fray).
+        # Also copy the full context for any other context vars (not just poorin_fray).
         ctx = contextvars.copy_context()
         future = local_pool.submit(ctx.run, worker_fn)
         return LocalJobHandle(f"local-{step_name}", future)

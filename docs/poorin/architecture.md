@@ -40,6 +40,21 @@ through that module):
 Pass 2's edge cuts and their measurements are in `decisions.md` (D81, D82) and
 `prune-metrics.csv`. Deferred: Hugging Face conversion stays eager until sub-project 4 (D82).
 
+## Libraries forked and made lighter
+
+Poorin renamed the libraries it cut heavily (D85). Source lines against `upstream-baseline`; each
+library's README lists what was removed.
+
+| Library | Poorin name | Upstream name | Before | Now |
+|---|---|---|---|---|
+| Experiment framework | `poorin` | `marin` (`marin-core`) | 65,588 | 23,602 |
+| Finelog client | `poorin_finelog` | `finelog` | 10,023 Python, plus 74,921 Rust | 3,417 Python |
+| Rigging | `poorin_rigging` | `rigging` | 14,465 | 10,352 |
+| Fray | `poorin_fray` | `fray` | 2,768 | 1,925 |
+
+Deleted outright: Iris (83,889), Verifyit (7,916), Shellbox (2,675), Ducky (2,074), and
+Taskcompendium (1,664). Levanter (85,297 to 62,330) keeps its name: its core is intact.
+
 ## Candidates for the next pass
 
 Modules marked "(review)" below, grouped by why they look vestigial on a one-GPU stack:
@@ -313,7 +328,7 @@ Modules marked "(review)" below, grouped by why they look vestigial on a one-GPU
 | `levanter.utils.tree_utils` | Pytree helpers: inference mode, one-level flatten with keys, key-path strings | R2 |
 | `levanter.utils.types` | ComputeLossFunction protocol for model loss functions | R2 |
 
-### marin
+### poorin
 
 | Module | Purpose | Reached from |
 |---|---|---|
@@ -489,7 +504,7 @@ Modules marked "(review)" below, grouped by why they look vestigial on a one-GPU
 | `poorin_rigging.testing` | Recording telemetry transport and NCCL RAS payload fixture for tests (review) | test support |
 | `poorin_rigging.timing` | Time types and helpers: Deadline, Duration, Timer, rate limiters, backoff retry | R1 |
 
-### fray
+### poorin_fray
 
 | Module | Purpose | Reached from |
 |---|---|---|
@@ -502,7 +517,7 @@ Modules marked "(review)" below, grouped by why they look vestigial on a one-GPU
 | `poorin_fray.local_backend` | LocalClient: in-process Fray backend running jobs as threads or subprocesses | R1 |
 | `poorin_fray.types` | Job request, resource (CPU/GPU/TPU), environment, and entrypoint dataclasses | R1 |
 
-### finelog
+### poorin_finelog
 
 | Module | Purpose | Reached from |
 |---|---|---|
