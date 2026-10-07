@@ -23,8 +23,6 @@ from pydantic import AliasChoices, BaseModel, ConfigDict, Field, model_validator
 from rigging.filesystem.factory import open_url, url_to_fs
 from rigging.filesystem.storage_path import prefix_join
 
-from marin.evaluation.harbor.driver_protocol import FULL_GIT_COMMIT_PATTERN
-
 logger = logging.getLogger(__name__)
 
 DEFAULT_RECORDS_PREFIX = "gs://marin-eval-metadata/evals"
@@ -43,6 +41,7 @@ DEFAULT_SCAN_PREFIXES = (
 RECORD_FILE = "record.json"
 _MAX_RECORD_READERS = 16
 EVALCHEMY_INFRASTRUCTURE_ERROR = "EVALCHEMY_INFRASTRUCTURE_ERROR"
+FULL_GIT_COMMIT_PATTERN = r"^[0-9a-f]{40}$"
 
 
 class RunStatus(StrEnum):

@@ -317,7 +317,6 @@ no-matching-overload = "ignore"
 allowed-unresolved-imports = [
     "cuda", "cuda.**",
     "cutlass", "cutlass.**",
-    "harbor", "harbor.**",
     "jaxlib.**",
     "jaxpp", "jaxpp.**",
     "librosa", "librosa.**",
