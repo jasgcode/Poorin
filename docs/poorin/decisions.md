@@ -1110,6 +1110,24 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
 - **Cost if wrong:** Runs that never convert checkpoints, grug's R2 among them, pay about 0.9 s at
   every launch.
 
+### D83. Pass 2's ranked loop ends on Keep verdicts; architecture.md is checked by a test
+
+- **When:** 2026-10-07, Pass 2. **Status:** Adopted.
+- **Decision:** After the Phase A cuts, the ten modules that dominate the most reachable lines
+  all get Keep verdicts: Haliax and its `core` and `nn`, grug's attention and its FA4 CuTe
+  backend, the fused cross-entropy loss and its API, `zephyr.coordinator`, and
+  `levanter.layers.attention`. `docs/poorin/architecture.md` gives every one of the 466 workspace
+  modules a one-line purpose and the root that reaches it, and lists 34 modules that look
+  vestigial on one GPU as candidates for the next pass instead of deleting them now.
+  `tests/tools/test_architecture.py` fails when a module has no row or a row names a missing
+  module; it runs with `tools.affected_tests --all`, not per change.
+- **Why:** The spec's end condition for Pass 2. The candidates are reachable from kept roots or
+  training runs, so each needs a decision about its root rather than a sweep.
+- **Alternatives:** Select the test whenever any module changes, which needs a new selection rule
+  in `tools.affected_tests`.
+- **Cost if wrong:** A module added or deleted between full runs leaves the page stale until the
+  next one.
+
 ---
 
 ## Deferred
