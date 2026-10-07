@@ -1130,6 +1130,33 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
 
 ---
 
+## Direction after the prune: 2026-10-07
+
+### D84. Haliax and Levanter stay as libraries; Marin's framework runs the experiments
+
+- **When:** 2026-10-07, after Pass 2. **Status:** Adopted.
+- **Decision:** Research code imports Haliax and Levanter as libraries and runs its experiments
+  through Marin's framework layer: lazy versioned artifacts and their fingerprints, the step
+  runner, the experiment CLI, the data pipelines, the training wrappers, evaluation records, and
+  scaling-law fitting. A model variant may use Haliax named tensors or plain arrays, grug style.
+  Sub-project 1b no longer decides whether Haliax stays; it shrinks to an optional merge of
+  Marin's small plumbing packages (`rigging`, `fray`, `finelog`, `finestore`) if their
+  boundaries get in the way. The next step is the `projects/` integration (D52), which puts
+  `looped-diffusion-lm` on these libraries and the framework.
+- **Why:** The owner, 2026-10-07: they had read the workspace as one Marin framework, and are
+  happy to use Haliax and Levanter as libraries with Marin's framework for experimentation and
+  reproducibility. Measured: grug uses Levanter as infrastructure (data, checkpointing,
+  optimizers, tracking, kernels) and imports three small Haliax helpers; the libraries are
+  separate packages by origin but share one lock and editable installs, so their boundaries cost
+  little.
+- **Alternatives:** Replace Haliax with plain arrays and checked jaxtyping annotations
+  everywhere, which means reworking Levanter's data, optimizer, and checkpoint layers; merge the
+  workspace into one `poorin` package.
+- **Cost if wrong:** Video and action data meet Levanter's language-model-shaped data interfaces
+  (`LmDataConfig`, named-array batches); sub-project 3, the data layer, decides that.
+
+---
+
 ## Deferred
 
 Known gaps left open on purpose. Each names where it gets resolved.
@@ -1144,7 +1171,7 @@ Known gaps left open on purpose. Each names where it gets resolved.
 | The cross-attention case in `test_attention.py` is non-causal, so it never exercises the `q_len != k_len` guard in `_fa4_supports` | P0 review | Open |
 | `test_append_metrics_row_rejects_a_row_with_missing_columns` is a guard test under `TESTING.md` | P0 review | Open |
 | About 125 MB of untracked `logs/` and `wandb/` entries from P0's check runs sit in the checkout | P0 | Open; delete on request |
-| Set up `projects/` as a git-ignored, nested uv workspace member for `looped-diffusion-lm`, and scan `projects/*` for prune roots | D52 | When `looped-diffusion-lm` has code (D67) |
+| Set up `projects/` as a git-ignored, nested uv workspace member for `looped-diffusion-lm`, and scan `projects/*` for prune roots | D52 | Next step (D84), once `looped-diffusion-lm` has code |
 | Design the SkyRL integration: a Hugging Face mapping for grug, launching the owner's SkyRL fork from the executor, and moving checkpoints both ways | D68 | A later sub-project |
 | `tools.lint --all-files` reports two files under `infra/`: a TypeScript config with comments, and the old linter's own conflict-marker strings | P1 Task 2 | P1 Task 7 |
 | `--ignore` skips a file found in a directory but not one passed by name, so a change that selects `test_tensorboard.py` through its imports still collects it, and it fails on `tensorboardX` | D56 | D61 |

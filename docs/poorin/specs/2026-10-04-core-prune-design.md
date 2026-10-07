@@ -1,8 +1,9 @@
 # Sub-project 1: Core prune
 
-Status: approved design, 2026-10-04. Implementation plans: one per phase in
-`docs/poorin/plans/`; P0 and P1 are done. Amended by
-`2026-10-06-workbench-and-roots-design.md`.
+Status: approved design, 2026-10-04; implemented 2026-10-07 (P0 to P8 and Pass 2). Implementation
+plans: one per phase in `docs/poorin/plans/`. Amended by
+`2026-10-06-workbench-and-roots-design.md`. D84 in `decisions.md` narrows sub-project 1b: Haliax
+and Levanter stay.
 
 ## TL;DR
 
