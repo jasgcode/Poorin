@@ -7,9 +7,9 @@ import json
 import logging
 
 from poorin_fray.cluster import ResourceConfig
-from rigging.filesystem.atomic import atomic_rename
-from rigging.filesystem.factory import open_url
-from rigging.filesystem.storage_path import StoragePath, prefix_join
+from poorin_rigging.filesystem.atomic import atomic_rename
+from poorin_rigging.filesystem.factory import open_url
+from poorin_rigging.filesystem.storage_path import StoragePath, prefix_join
 from zephyr.context import ZephyrContext
 from zephyr.dataset import Dataset
 

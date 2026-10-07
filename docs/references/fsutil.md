@@ -53,11 +53,11 @@ that touch its buckets; the rest keep working.
 
 ## Python API
 
-Transfer and streaming hash functions live in `rigging.filesystem` and use the
+Transfer and streaming hash functions live in `poorin_rigging.filesystem` and use the
 same backend routing and credentials as the CLI:
 
 ```python
-from rigging.filesystem.transfer import copy
+from poorin_rigging.filesystem.transfer import copy
 
 copy("./my-dir", "s3://bucket/prefix/", recursive=True)
 ```
@@ -69,7 +69,7 @@ exact output path. Set `no_clobber=True` to preserve existing destination files.
 For multiple sources or to inspect operations before executing them, use
 `copy_plan()` and `execute_copy_plan()` from the same module. `sync_plan()` and
 `execute_sync()` synchronize directory contents directly into a destination
-prefix. `rigging.filesystem.hashing.file_md5()` streams a file and returns its
+prefix. `poorin_rigging.filesystem.hashing.file_md5()` streams a file and returns its
 MD5 digest as bytes.
 
 ## Commands
@@ -190,8 +190,8 @@ than 10 MB is reported and skipped instead of read — copy that file to read it
 footer itself is read whatever its size, so the 10 MB cap above bounds the column data
 rather than the whole preview.
 
-Parquet previews need pyarrow in the environment. It is not a `marin-rigging`
-dependency, because rigging sits under every other package, but the marin workspace
+Parquet previews need pyarrow in the environment. It is not a `poorin-rigging`
+dependency, because poorin_rigging sits under every other package, but the marin workspace
 installs it.
 
 ## The browser
@@ -222,6 +222,6 @@ Buckets and backends are declared in `config/*.yaml` under `data.region_buckets`
 each S3-compatible backend's endpoint and credential variables under `data.stores`.
 `fsutil` builds one filesystem per backend from that config, so adding a bucket is a
 config change rather than a code change. The same routing is available to library code
-as `rigging.filesystem.buckets.filesystem_for(url)`, which is the way to reach two S3 backends
+as `poorin_rigging.filesystem.buckets.filesystem_for(url)`, which is the way to reach two S3 backends
 from one process — the process-wide `AWS_*` / `FSSPEC_S3` variables can only describe
 one at a time.

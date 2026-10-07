@@ -12,10 +12,10 @@ import jax.numpy as jnp
 import numpy as np
 import pytest
 from poorin_finelog.client import FlushResult
-from rigging import telemetry
-from rigging.telemetry.probes import nccl_ras
-from rigging.telemetry.probes.nccl_client import NCCL_RAS_ENABLE_ENV
-from rigging.testing import RecordingTelemetryTransport, nccl_ras_payload
+from poorin_rigging import telemetry
+from poorin_rigging.telemetry.probes import nccl_ras
+from poorin_rigging.telemetry.probes.nccl_client import NCCL_RAS_ENABLE_ENV
+from poorin_rigging.testing import RecordingTelemetryTransport, nccl_ras_payload
 
 from levanter.callbacks import ProgressEvent
 from levanter.callbacks.progress_watchdog import ProgressTimeout

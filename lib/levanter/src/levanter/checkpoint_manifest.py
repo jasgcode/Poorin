@@ -13,7 +13,7 @@ from typing import Sequence
 
 from pydantic import BaseModel, ConfigDict
 
-from rigging.filesystem.storage_path import StoragePath, prefix_join
+from poorin_rigging.filesystem.storage_path import StoragePath, prefix_join
 
 logger = logging.getLogger(__name__)
 

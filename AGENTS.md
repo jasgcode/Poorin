@@ -152,7 +152,7 @@ Watch for and eliminate these patterns in generated code:
 
 Before writing any utility function, helper, or data structure:
 1. Search the codebase for existing implementations
-2. Check the libraries: `lib/marin/src/marin/`, `lib/levanter/src/levanter/`, `lib/rigging/src/rigging/`
+2. Check the libraries: `lib/marin/src/marin/`, `lib/levanter/src/levanter/`, `lib/poorin_rigging/src/poorin_rigging/`
 3. Check `pyproject.toml` for available third-party packages before adding new ones
 
 If a suitable implementation exists, use it. Do not create parallel implementations.

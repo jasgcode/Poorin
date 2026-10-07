@@ -55,9 +55,9 @@ import dupekit
 import pyarrow as pa
 import pyarrow.parquet as pq
 from poorin_fray.types import ResourceConfig
+from poorin_rigging.filesystem.factory import url_to_fs
+from poorin_rigging.filesystem.storage_path import StoragePath, prefix_join
 from pydantic import BaseModel
-from rigging.filesystem.factory import url_to_fs
-from rigging.filesystem.storage_path import StoragePath, prefix_join
 from zephyr import counters
 from zephyr.context import ZephyrContext
 from zephyr.dataset import Dataset, ShardInfo
@@ -1256,7 +1256,7 @@ def merge_eval_blooms(
     src_indexes = [bloom_paths(d)[1] for d in per_eval_bloom_dirs]
 
     def emit_rows() -> Iterator[dict[str, Any]]:
-        # Use zephyr's load_file so the read goes through rigging's
+        # Use zephyr's load_file so the read goes through poorin_rigging's
         # CrossRegionGuardedFS wrapper. Passing it directly to pq.read_table's
         # filesystem= kwarg trips pyarrow's strict type check (it expects a
         # native pyarrow.fs.FileSystem).

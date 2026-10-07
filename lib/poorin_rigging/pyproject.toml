@@ -1,0 +1,52 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "poorin-rigging"
+version = "0.2.0"
+requires-python = ">=3.12,<3.14"
+dependencies = [
+    # Imported directly by poorin_rigging.filesystem.s3_compat, which subclasses
+    # aiobotocore's AIOHTTPSession to add a whole-request aiohttp timeout.
+    # AioConfig gained http_session_cls in aiobotocore 2.12.2; passing it to an
+    # older release raises during client creation.
+    "aiobotocore>=2.12.2",
+    "aiohttp>=3.9",
+    "braceexpand>=0.1.7",
+    "click>=8.3.1",
+    "fsspec>=2024.0.0",
+    "gcsfs>=2024.0.0",
+    "msgspec>=0.20.0",
+    "pydantic>=2.0",
+    "pyyaml>=6.0",
+    "requests>=2.0.0",
+    "s3fs>=2024.0.0",
+    "zstandard>=0.22",
+]
+
+[project.scripts]
+fsutil = "poorin_rigging.fsutil.cli:main"
+
+[dependency-groups]
+test = [
+    "pytest>=8.3.2",
+    "pytest-asyncio",
+    "pytest-timeout",
+    "pytest-xdist",
+]
+dev = [{ include-group = "test" }]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/poorin_rigging"]
+
+[tool.hatch.build.targets.wheel.force-include]
+# The repo-root config/ cluster YAMLs are configuration data, not package
+# source. force-include maps them into the wheel at rigging/clusters/ so that an
+# installed poorin_rigging (no checkout) can still resolve config/local.yaml via the
+# bundled-dir probe in filesystem._bundled_cluster_config_dir(). Mirrors the
+# iris pattern (lib/iris/pyproject.toml -> iris/config).
+"../../config" = "rigging/clusters"
+
+[tool.pytest.ini_options]
+timeout = 10

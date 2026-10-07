@@ -247,7 +247,7 @@ def test_num_train_epochs_rejects_a_mixture():
 
 def test_dev_checkpoints_are_per_user_while_datasets_stay_shared(tmp_path, monkeypatch):
     def build_as(user: str):
-        monkeypatch.setattr("rigging.provenance._getuser", lambda: user)
+        monkeypatch.setattr("poorin_rigging.provenance._getuser", lambda: user)
         return train_lm(
             name="checkpoints/unit",
             model=_MODEL,

@@ -14,8 +14,8 @@ from typing import Any, Callable, Generic, Iterable, Iterator, List, Sequence, T
 import datasets
 import numpy as np
 import pyarrow.parquet as pq
-from rigging.filesystem.factory import open_url
-from rigging.filesystem.storage_path import StoragePath
+from poorin_rigging.filesystem.factory import open_url
+from poorin_rigging.filesystem.storage_path import StoragePath
 
 logger = logging.getLogger(__name__)
 

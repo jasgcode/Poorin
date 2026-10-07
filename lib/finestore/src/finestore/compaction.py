@@ -12,9 +12,9 @@ from dataclasses import dataclass
 from itertools import chain
 from typing import Protocol
 
+import poorin_rigging.filesystem.factory as factory
 import pyarrow as pa
 import pyarrow.parquet as pq
-import rigging.filesystem.factory as factory
 from pyarrow.fs import FSSpecHandler, PyFileSystem
 
 from finestore.commit import ArchiveSnapshot, CommitConflict, CommitCoordinator, CommitDelta, TableReplacement

@@ -18,8 +18,8 @@ import numpy as np
 from draccus import ChoiceRegistry, field
 from haliax import Axis
 from jaxtyping import PRNGKeyArray
-from rigging.filesystem.storage_path import StoragePath, prefix_join
-from rigging.timing import log_time
+from poorin_rigging.filesystem.storage_path import StoragePath, prefix_join
+from poorin_rigging.timing import log_time
 
 import levanter
 import levanter.config

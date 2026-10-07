@@ -18,7 +18,7 @@ import polars as pl
 import pyarrow.parquet as pq
 import pytest
 from fsspec.implementations.local import LocalFileSystem
-from rigging.filesystem.storage_path import StoragePath
+from poorin_rigging.filesystem.storage_path import StoragePath
 from zephyr import memory_budget
 from zephyr.resources import HostResources
 from zephyr.runners import _InProcessWorkerContext

@@ -45,13 +45,13 @@ Pass 2's edge cuts and their measurements are in `decisions.md` (D81, D82) and
 Modules marked "(review)" below, grouped by why they look vestigial on a one-GPU stack:
 
 - **Cluster and multi-region operations:** `zephyr.dashboard` (and its `app` and `coordinator`),
-  whose web app nothing serves; `rigging.filesystem.mirror`, which copies from other regions'
+  whose web app nothing serves; `poorin_rigging.filesystem.mirror`, which copies from other regions'
   `marin-*` buckets; `levanter.model_cache`, a region-local shared Hugging Face cache;
   `levanter.infra.cli_helpers`, of which Marin uses only `get_git_commit`, `default_run_id`, and
   `load_config`; `levanter.utils.cloud_utils`, which registers TPU VM shutdown.
-- **NCCL stall diagnostics:** `rigging.telemetry.probes` and its `nccl`, `nccl_client`,
-  `nccl_ras`, and `runner` modules, with `rigging.telemetry.metrics` and the fixtures in
-  `rigging.testing`. A single-GPU run has no NCCL communicators.
+- **NCCL stall diagnostics:** `poorin_rigging.telemetry.probes` and its `nccl`, `nccl_client`,
+  `nccl_ras`, and `runner` modules, with `poorin_rigging.telemetry.metrics` and the fixtures in
+  `poorin_rigging.testing`. A single-GPU run has no NCCL communicators.
 - **Evaluation leftovers from the deleted serving flow:** `marin.evaluation.eval_env`,
   `model_config`, `model_identity`, and most of `lm_eval_samples`;
   `finestore.migrations.m0001_manifest`, which upgrades upstream archives.
@@ -304,7 +304,7 @@ Modules marked "(review)" below, grouped by why they look vestigial on a one-GPU
 | `levanter.utils.hardware_topology` | Device topology summary: TPU coordinates and nvidia-smi topology matrix | R2 |
 | `levanter.utils.hf_utils` | UTF-8 byte length of a tokenizer token | R2 |
 | `levanter.utils.jax_utils` | JAX helpers: CPU-device contexts, multihost sync and barriers, tree key paths, sharding | R1 |
-| `levanter.utils.logging` | Logging setup via rigging, loading-time iterator, transformers warning suppression | R2 |
+| `levanter.utils.logging` | Logging setup via poorin_rigging, loading-time iterator, transformers warning suppression | R2 |
 | `levanter.utils.mesh` | MeshConfig and JAX mesh construction from ICI and DCN axis sizes | R1 |
 | `levanter.utils.profile_dirs` | Resolves and mirrors profiler output directories for a W&B run | `marin.profiling.cli` |
 | `levanter.utils.py_utils` | CPU core count, dataclass default init, global RNG seeding, fail-safe JSON encoder | R1 |
@@ -441,53 +441,53 @@ Modules marked "(review)" below, grouped by why they look vestigial on a one-GPU
 | `zephyr.worker_context` | Worker context exposed to task code, with counter snapshot types | R1 |
 | `zephyr.writers` | Writers for JSONL, Parquet, Vortex, and binary outputs, plus a threaded batch writer | R1 |
 
-### rigging
+### poorin_rigging
 
 | Module | Purpose | Reached from |
 |---|---|---|
-| `rigging` | Package marker | R1 |
-| `rigging.cache` | Content hashes of files, directories, and dependencies for compiled-artifact cache keys | R2 |
-| `rigging.config_discovery` | Finds the project root and cluster YAML config files | R1 |
-| `rigging.filesystem` | Package marker for storage paths, cluster data config, guarded filesystem access | R1 |
-| `rigging.filesystem.atomic` | Atomic local downloads and object-store write-then-rename | R2 |
-| `rigging.filesystem.buckets` | Routes each bucket URL to its declared backend filesystem (GCS, CoreWeave, R2) | R1 |
-| `rigging.filesystem.bulk_deletion` | Batched, throttled bulk deletion attached to S3 and GCS filesystems | R1 |
-| `rigging.filesystem.cluster_config` | Cluster DataConfig: bucket and region resolution, storage prefix, temp buckets, GCS location checks | R1 |
-| `rigging.filesystem.conditional_object` | Compare-and-swap reads and writes of one object on local, GCS, or S3 | R1 |
-| `rigging.filesystem.cross_region` | Cross-region GCS read guard and process-wide transfer byte budget | R1 |
-| `rigging.filesystem.distributed_lock` | Lease-based distributed locks on GCS, S3, local files, or fsspec | R1 |
-| `rigging.filesystem.factory` | Guarded url_to_fs, open_url, filesystem with GCS region guard and S3 timeouts | R1 |
-| `rigging.filesystem.hashing` | Streaming MD5 of local and object-store files | `rigging.fsutil.cli` |
-| `rigging.filesystem.listing_cache` | Process-wide fsspec directory-listing cache defaults | R1 |
-| `rigging.filesystem.mirror` | mirror:// filesystem copying files from other-region marin-* GCS buckets on first read (review) | `rigging.filesystem.mirror` |
-| `rigging.filesystem.paged_listing` | Paged single-level and recursive object listings for S3 and GCS | R1 |
-| `rigging.filesystem.protocols` | Normalizes fsspec protocol names | R1 |
-| `rigging.filesystem.s3_compat` | S3-compatible store setup: credentials, endpoints, addressing, request timeouts for CoreWeave and R2 | R1 |
-| `rigging.filesystem.s3_errors` | Classifies retryable S3 and object-store transport errors | R2 |
-| `rigging.filesystem.storage_path` | StoragePath value type: parsed storage URL with I/O verbs and path helpers | R1 |
-| `rigging.filesystem.transfer` | Copy, move, and sync plans and execution across routed filesystems | `rigging.fsutil.cli` |
-| `rigging.fsutil` | Package marker for the fsutil bucket browser and CLI | `rigging.fsutil.cli` |
-| `rigging.fsutil.cli` | fsutil command line: list, read, size, copy, sync, remove across buckets | `rigging.fsutil.cli` |
-| `rigging.fsutil.compression` | Compression detection for file previews | `rigging.fsutil.compression` |
-| `rigging.fsutil.deletion` | Streamed parallel deletion of object-store prefixes | `rigging.fsutil.deletion` |
-| `rigging.fsutil.listing` | Directory-listing entries and file previews over bucket-routed filesystems | `rigging.fsutil.listing` |
-| `rigging.fsutil.parquet` | Parquet schema, summary, and row previews for fsutil | `rigging.fsutil.parquet` |
-| `rigging.fsutil.render` | Renders sizes, listings, JSON tables, and file previews as text | `rigging.fsutil.render` |
-| `rigging.fsutil.tui` | Curses bucket browser and file viewer for fsutil browse and show | `rigging.fsutil.tui` |
-| `rigging.fsutil.usage` | Object-storage usage scans and deletion-candidate reports | `rigging.fsutil.usage` |
-| `rigging.fsutil.verified_copy` | Resumable, hash-verified prefix copies across routed filesystems | `rigging.fsutil.verified_copy` |
-| `rigging.log_setup` | Logging setup: level-prefix formatter, log ring buffer, fault handler | R1 |
-| `rigging.provenance` | Build provenance: content tree hash plus git, user, and launch context | R1 |
-| `rigging.telemetry` | Bounded, best-effort counters, gauges, histograms, and events exported to Finelog | R2 |
-| `rigging.telemetry.metrics` | Publishes externally collected metric snapshots into telemetry (review) | R2 |
-| `rigging.telemetry.probes` | Package marker for NVIDIA and NCCL telemetry probes (review) | R2 |
-| `rigging.telemetry.probes.nccl` | Periodic NCCL RAS collection and stall capture published as telemetry (review) | R2 |
-| `rigging.telemetry.probes.nccl_client` | Bounded client for NCCL's RAS text protocol (review) | R2 |
-| `rigging.telemetry.probes.nccl_ras` | Parses and reduces NCCL RAS status responses into per-rank reports (review) | R2 |
-| `rigging.telemetry.probes.runner` | Bounded subprocess runner and periodic driver for hardware probes (review) | R2 |
-| `rigging.telemetry.serialization` | Bounded JSON serialization and validation for telemetry records | R2 |
-| `rigging.testing` | Recording telemetry transport and NCCL RAS payload fixture for tests (review) | test support |
-| `rigging.timing` | Time types and helpers: Deadline, Duration, Timer, rate limiters, backoff retry | R1 |
+| `poorin_rigging` | Package marker | R1 |
+| `poorin_rigging.cache` | Content hashes of files, directories, and dependencies for compiled-artifact cache keys | R2 |
+| `poorin_rigging.config_discovery` | Finds the project root and cluster YAML config files | R1 |
+| `poorin_rigging.filesystem` | Package marker for storage paths, cluster data config, guarded filesystem access | R1 |
+| `poorin_rigging.filesystem.atomic` | Atomic local downloads and object-store write-then-rename | R2 |
+| `poorin_rigging.filesystem.buckets` | Routes each bucket URL to its declared backend filesystem (GCS, CoreWeave, R2) | R1 |
+| `poorin_rigging.filesystem.bulk_deletion` | Batched, throttled bulk deletion attached to S3 and GCS filesystems | R1 |
+| `poorin_rigging.filesystem.cluster_config` | Cluster DataConfig: bucket and region resolution, storage prefix, temp buckets, GCS location checks | R1 |
+| `poorin_rigging.filesystem.conditional_object` | Compare-and-swap reads and writes of one object on local, GCS, or S3 | R1 |
+| `poorin_rigging.filesystem.cross_region` | Cross-region GCS read guard and process-wide transfer byte budget | R1 |
+| `poorin_rigging.filesystem.distributed_lock` | Lease-based distributed locks on GCS, S3, local files, or fsspec | R1 |
+| `poorin_rigging.filesystem.factory` | Guarded url_to_fs, open_url, filesystem with GCS region guard and S3 timeouts | R1 |
+| `poorin_rigging.filesystem.hashing` | Streaming MD5 of local and object-store files | `poorin_rigging.fsutil.cli` |
+| `poorin_rigging.filesystem.listing_cache` | Process-wide fsspec directory-listing cache defaults | R1 |
+| `poorin_rigging.filesystem.mirror` | mirror:// filesystem copying files from other-region marin-* GCS buckets on first read (review) | `poorin_rigging.filesystem.mirror` |
+| `poorin_rigging.filesystem.paged_listing` | Paged single-level and recursive object listings for S3 and GCS | R1 |
+| `poorin_rigging.filesystem.protocols` | Normalizes fsspec protocol names | R1 |
+| `poorin_rigging.filesystem.s3_compat` | S3-compatible store setup: credentials, endpoints, addressing, request timeouts for CoreWeave and R2 | R1 |
+| `poorin_rigging.filesystem.s3_errors` | Classifies retryable S3 and object-store transport errors | R2 |
+| `poorin_rigging.filesystem.storage_path` | StoragePath value type: parsed storage URL with I/O verbs and path helpers | R1 |
+| `poorin_rigging.filesystem.transfer` | Copy, move, and sync plans and execution across routed filesystems | `poorin_rigging.fsutil.cli` |
+| `poorin_rigging.fsutil` | Package marker for the fsutil bucket browser and CLI | `poorin_rigging.fsutil.cli` |
+| `poorin_rigging.fsutil.cli` | fsutil command line: list, read, size, copy, sync, remove across buckets | `poorin_rigging.fsutil.cli` |
+| `poorin_rigging.fsutil.compression` | Compression detection for file previews | `poorin_rigging.fsutil.compression` |
+| `poorin_rigging.fsutil.deletion` | Streamed parallel deletion of object-store prefixes | `poorin_rigging.fsutil.deletion` |
+| `poorin_rigging.fsutil.listing` | Directory-listing entries and file previews over bucket-routed filesystems | `poorin_rigging.fsutil.listing` |
+| `poorin_rigging.fsutil.parquet` | Parquet schema, summary, and row previews for fsutil | `poorin_rigging.fsutil.parquet` |
+| `poorin_rigging.fsutil.render` | Renders sizes, listings, JSON tables, and file previews as text | `poorin_rigging.fsutil.render` |
+| `poorin_rigging.fsutil.tui` | Curses bucket browser and file viewer for fsutil browse and show | `poorin_rigging.fsutil.tui` |
+| `poorin_rigging.fsutil.usage` | Object-storage usage scans and deletion-candidate reports | `poorin_rigging.fsutil.usage` |
+| `poorin_rigging.fsutil.verified_copy` | Resumable, hash-verified prefix copies across routed filesystems | `poorin_rigging.fsutil.verified_copy` |
+| `poorin_rigging.log_setup` | Logging setup: level-prefix formatter, log ring buffer, fault handler | R1 |
+| `poorin_rigging.provenance` | Build provenance: content tree hash plus git, user, and launch context | R1 |
+| `poorin_rigging.telemetry` | Bounded, best-effort counters, gauges, histograms, and events exported to Finelog | R2 |
+| `poorin_rigging.telemetry.metrics` | Publishes externally collected metric snapshots into telemetry (review) | R2 |
+| `poorin_rigging.telemetry.probes` | Package marker for NVIDIA and NCCL telemetry probes (review) | R2 |
+| `poorin_rigging.telemetry.probes.nccl` | Periodic NCCL RAS collection and stall capture published as telemetry (review) | R2 |
+| `poorin_rigging.telemetry.probes.nccl_client` | Bounded client for NCCL's RAS text protocol (review) | R2 |
+| `poorin_rigging.telemetry.probes.nccl_ras` | Parses and reduces NCCL RAS status responses into per-rank reports (review) | R2 |
+| `poorin_rigging.telemetry.probes.runner` | Bounded subprocess runner and periodic driver for hardware probes (review) | R2 |
+| `poorin_rigging.telemetry.serialization` | Bounded JSON serialization and validation for telemetry records | R2 |
+| `poorin_rigging.testing` | Recording telemetry transport and NCCL RAS payload fixture for tests (review) | test support |
+| `poorin_rigging.timing` | Time types and helpers: Deadline, Duration, Timer, rate limiters, backoff retry | R1 |
 
 ### fray
 

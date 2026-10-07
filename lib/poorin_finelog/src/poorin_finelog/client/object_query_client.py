@@ -14,8 +14,8 @@ import duckdb
 import pyarrow as pa
 from google.protobuf import json_format
 from google.protobuf.message import Message
-from rigging.filesystem.factory import url_to_fs
-from rigging.filesystem.storage_path import StoragePath
+from poorin_rigging.filesystem.factory import url_to_fs
+from poorin_rigging.filesystem.storage_path import StoragePath
 
 from poorin_finelog.errors import QueryResultTooLargeError, QueryTimeoutError, StatsError
 from poorin_finelog.rpc import finelog_stats_pb2 as stats_pb2

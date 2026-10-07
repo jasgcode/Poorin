@@ -16,8 +16,8 @@ from typing import Any, Optional
 import jax
 import numpy as np
 from poorin_finelog.client import FlushResult
-from rigging import telemetry
-from rigging.telemetry.probes import nccl, nccl_client
+from poorin_rigging import telemetry
+from poorin_rigging.telemetry.probes import nccl, nccl_client
 
 from levanter.callbacks.progress_watchdog import ProgressTimeout
 from levanter.tracker import Tracker, TrackerConfig, get_tracker

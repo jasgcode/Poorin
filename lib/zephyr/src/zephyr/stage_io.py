@@ -19,8 +19,8 @@ from typing import Protocol
 import cloudpickle
 import humanfriendly
 from poorin_fray.types import ResourceConfig
-from rigging.filesystem.atomic import unique_temp_path
-from rigging.filesystem.factory import open_url
+from poorin_rigging.filesystem.atomic import unique_temp_path
+from poorin_rigging.filesystem.factory import open_url
 
 from zephyr.plan import PhysicalOp, Scatter
 from zephyr.shuffle import ListShard, _write_scatter

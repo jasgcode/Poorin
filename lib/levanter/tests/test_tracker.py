@@ -12,7 +12,7 @@ from typing import Tuple
 import draccus
 import pytest
 import yaml
-from rigging.provenance import LAUNCH_PROVENANCE_ENV, Provenance
+from poorin_rigging.provenance import LAUNCH_PROVENANCE_ENV, Provenance
 
 import levanter.tracker
 import levanter.tracker.tracker_fns as tracker_fns

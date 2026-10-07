@@ -19,10 +19,10 @@ import huggingface_hub
 from huggingface_hub.errors import HfHubHTTPError
 from packaging.version import Version
 from poorin_fray.types import ResourceConfig
-from rigging.filesystem.atomic import atomic_rename
-from rigging.filesystem.factory import open_url, url_to_fs
-from rigging.filesystem.storage_path import StoragePath, prefix_join
-from rigging.log_setup import configure_logging
+from poorin_rigging.filesystem.atomic import atomic_rename
+from poorin_rigging.filesystem.factory import open_url, url_to_fs
+from poorin_rigging.filesystem.storage_path import StoragePath, prefix_join
+from poorin_rigging.log_setup import configure_logging
 from zephyr.context import ZephyrContext
 from zephyr.dataset import Dataset
 

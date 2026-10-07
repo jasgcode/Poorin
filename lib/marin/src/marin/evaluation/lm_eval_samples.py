@@ -23,7 +23,7 @@ from dataclasses import dataclass, field
 from pathlib import PurePosixPath
 from typing import Protocol
 
-import rigging.filesystem.factory as factory
+import poorin_rigging.filesystem.factory as factory
 from finestore.eval import (
     ARCHIVE_SAMPLES_TABLE,
     ARCHIVE_STEPS_TABLE,
@@ -41,7 +41,7 @@ from finestore.eval import (
 from finestore.layout import ARCHIVE_FILE, DATA_DIR, HEAD_FILE, MANIFESTS_DIR, SCHEMAS_DIR, BlobTables
 from finestore.migrations.m0001_manifest import LEGACY_SEAL_FILE
 from finestore.reader import ReadView
-from rigging.filesystem.storage_path import StoragePath, prefix_join
+from poorin_rigging.filesystem.storage_path import StoragePath, prefix_join
 
 from marin.evaluation.eval_stats import SAMPLE_COUNT_METRIC, UNGRADED_ERROR
 from marin.evaluation.evaluation_config import eval_task_directory

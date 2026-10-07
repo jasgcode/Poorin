@@ -17,7 +17,7 @@ dependencies = [
     "draccus>=0.11.6",
     "poorin-fray",
     "marin-finestore",
-    "marin-rigging",
+    "poorin-rigging",
     "fsspec>=2025.3.0",
     "gcsfs",
     "google-cloud-storage",

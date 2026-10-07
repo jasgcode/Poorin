@@ -24,7 +24,7 @@ from marin.profiling.xplane import (
     summarize_xplane,
     summarize_xplane_tables,
 )
-from rigging.filesystem.storage_path import StoragePath
+from poorin_rigging.filesystem.storage_path import StoragePath
 
 
 def test_summarize_trace_produces_deterministic_breakdown_and_hot_ops(tmp_path: Path) -> None:

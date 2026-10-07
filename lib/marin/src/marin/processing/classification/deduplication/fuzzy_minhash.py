@@ -22,8 +22,8 @@ import dupekit
 import pyarrow as pa
 import pyarrow.compute as pc
 from poorin_fray.types import ResourceConfig
+from poorin_rigging.filesystem.storage_path import StoragePath, prefix_join
 from pydantic import BaseModel
-from rigging.filesystem.storage_path import StoragePath, prefix_join
 from zephyr import counters
 from zephyr.context import ZephyrContext
 from zephyr.dataset import Dataset

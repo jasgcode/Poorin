@@ -34,9 +34,9 @@ from haliax.jax_utils import broadcast_one_to_all, is_in_jit, is_jax_array_like
 from jax.experimental.array_serialization.serialization import GlobalAsyncCheckpointManager
 from jaxtyping import PyTree
 
-from rigging import telemetry
-from rigging.filesystem.atomic import atomic_rename
-from rigging.filesystem.storage_path import StoragePath, prefix_join
+from poorin_rigging import telemetry
+from poorin_rigging.filesystem.atomic import atomic_rename
+from poorin_rigging.filesystem.storage_path import StoragePath, prefix_join
 
 from levanter._debug_logging import flush_debug_output
 from levanter.tensorstore_serialization import (

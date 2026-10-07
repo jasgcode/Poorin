@@ -7,7 +7,7 @@ import os
 from urllib.parse import urlparse
 
 import polars as pl
-from rigging.filesystem.s3_compat import needs_virtual_host_addressing
+from poorin_rigging.filesystem.s3_compat import needs_virtual_host_addressing
 
 
 def scan_parquet(path: str, *, schema: pl.Schema | None = None) -> pl.LazyFrame:

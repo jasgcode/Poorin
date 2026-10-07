@@ -23,9 +23,9 @@ from poorin_fray.actor import ActorGroup, ActorHandle, current_actor
 from poorin_fray.current_client import current_client
 from poorin_fray.local_backend import LocalClient
 from poorin_fray.types import ActorConfig, ResourceConfig
-from rigging import telemetry
-from rigging.filesystem.storage_path import StoragePath
-from rigging.timing import Duration, ExponentialBackoff, RateLimiter, Timestamp, log_time
+from poorin_rigging import telemetry
+from poorin_rigging.filesystem.storage_path import StoragePath
+from poorin_rigging.timing import Duration, ExponentialBackoff, RateLimiter, Timestamp, log_time
 from starlette.types import ASGIApp
 
 from zephyr.dashboard.app import (

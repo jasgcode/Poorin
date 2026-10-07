@@ -18,5 +18,5 @@ Start with the shared instructions in `/AGENTS.md`.
 
 ## Conventions
 
-- Finelog imports nothing from the rest of the workspace except `rigging`.
+- Finelog imports nothing from the rest of the workspace except `poorin_rigging`.
 - Regenerating `rpc/` from `proto/` needs the generator at the `upstream-baseline` tag.

@@ -16,8 +16,8 @@ from fsspec.implementations.local import LocalFileSystem
 from poorin_finelog.client import LogClient
 from poorin_finelog.embedded import EmbeddedServer
 from poorin_fray.types import ResourceConfig
-from rigging.filesystem.storage_path import StoragePath
-from rigging.timing import Duration, ExponentialBackoff
+from poorin_rigging.filesystem.storage_path import StoragePath
+from poorin_rigging.timing import Duration, ExponentialBackoff
 from zephyr import counters, runners, worker
 from zephyr.context import ZephyrContext
 from zephyr.dataset import Dataset

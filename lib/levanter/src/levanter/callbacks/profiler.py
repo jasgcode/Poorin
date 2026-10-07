@@ -15,8 +15,8 @@ from urllib.parse import urlencode
 
 import jax
 
-from rigging.filesystem.cluster_config import marin_temp_bucket
-from rigging.filesystem.storage_path import StoragePath
+from poorin_rigging.filesystem.cluster_config import marin_temp_bucket
+from poorin_rigging.filesystem.storage_path import StoragePath
 
 from levanter.callbacks._core import StepInfo
 from levanter.utils.jax_utils import barrier_sync

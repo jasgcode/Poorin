@@ -51,9 +51,9 @@ import msgspec
 import polars as pl
 import psutil
 import pyarrow as pa
-from rigging.filesystem.factory import open_url, url_to_fs
-from rigging.filesystem.storage_path import StoragePath
-from rigging.timing import RateLimiter, log_time
+from poorin_rigging.filesystem.factory import open_url, url_to_fs
+from poorin_rigging.filesystem.storage_path import StoragePath
+from poorin_rigging.timing import RateLimiter, log_time
 
 from zephyr import memory_budget
 from zephyr.parquet_scan import scan_parquet

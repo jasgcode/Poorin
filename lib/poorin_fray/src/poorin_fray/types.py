@@ -17,7 +17,7 @@ from types import MappingProxyType
 from typing import Any, Literal
 
 import humanfriendly
-from rigging.timing import Duration
+from poorin_rigging.timing import Duration
 
 from poorin_fray.device_flops import device_flops as _device_flops
 

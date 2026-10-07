@@ -11,8 +11,8 @@ from typing import Any
 from urllib.parse import urlparse
 
 from poorin_fray.types import ResourceConfig
-from rigging.filesystem.cluster_config import marin_prefix
-from rigging.filesystem.storage_path import prefix_join
+from poorin_rigging.filesystem.cluster_config import marin_prefix
+from poorin_rigging.filesystem.storage_path import prefix_join
 
 
 def _is_relative_path(url_or_path: str) -> bool:

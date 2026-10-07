@@ -19,8 +19,8 @@ from typing import Any, Dict, Generic, List, Optional, Protocol, Sequence, Tuple
 import deepdiff
 import jax
 import jax.tree_util as jtu
-from rigging.filesystem.factory import url_to_fs
-from rigging.filesystem.storage_path import StoragePath, prefix_join
+from poorin_rigging.filesystem.factory import url_to_fs
+from poorin_rigging.filesystem.storage_path import StoragePath, prefix_join
 import numpy as np
 import pyarrow as pa
 import tensorstore as ts
@@ -33,7 +33,7 @@ from tqdm_loggable.tqdm_logging import tqdm_logging
 from zephyr.dataset import Dataset
 from zephyr.context import ZephyrContext
 from zephyr import counters as zephyr_counters
-from rigging.filesystem.atomic import atomic_rename
+from poorin_rigging.filesystem.atomic import atomic_rename
 from zephyr.writers import ThreadedBatchWriter, batchify, ensure_parent_dir
 
 from levanter.data.dataset import AsyncDataset

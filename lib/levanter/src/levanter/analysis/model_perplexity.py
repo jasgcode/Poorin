@@ -10,8 +10,8 @@ from typing import Any, Sequence
 import numpy as np
 import pyarrow as pa
 import pyarrow.parquet as pq
-from rigging.filesystem.factory import open_url
-from rigging.filesystem.storage_path import StoragePath, prefix_join
+from poorin_rigging.filesystem.factory import open_url
+from poorin_rigging.filesystem.storage_path import StoragePath, prefix_join
 
 from levanter.analysis.perplexity_gap import (
     LOG2E,

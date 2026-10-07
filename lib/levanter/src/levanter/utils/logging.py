@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Iterable, Iterator, TypeVar, Union
 
 import jax
-import rigging.log_setup as iris_logging
+import poorin_rigging.log_setup as iris_logging
 
 pylogger = pylogging.getLogger(__name__)
 
@@ -17,7 +17,7 @@ T = TypeVar("T")
 
 def init_logging(log_dir: Union[str, Path], run_id: str, level: int = pylogging.INFO) -> None:
     """
-    Initialize logging with :mod:`rigging.log_setup` (stderr + ring buffer) plus a levanter-format file log.
+    Initialize logging with :mod:`poorin_rigging.log_setup` (stderr + ring buffer) plus a levanter-format file log.
 
     The file log uses a verbose format that includes process index, filename, and line number,
     which is useful for post-hoc debugging of distributed runs.
@@ -30,7 +30,7 @@ def init_logging(log_dir: Union[str, Path], run_id: str, level: int = pylogging.
     log_dir.mkdir(parents=True, exist_ok=True)
     path = log_dir / f"{run_id}.log"
 
-    # Set up rigging logging (stderr handler + ring buffer).
+    # Set up poorin_rigging logging (stderr handler + ring buffer).
     iris_logging.configure_logging(level)
 
     # Add a file handler with levanter's verbose format, which includes process index,

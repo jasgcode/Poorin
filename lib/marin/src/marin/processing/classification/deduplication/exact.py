@@ -9,7 +9,7 @@ import dupekit
 import humanfriendly
 import pyarrow as pa
 from poorin_fray.types import ResourceConfig
-from rigging.filesystem.storage_path import rebase_file_path
+from poorin_rigging.filesystem.storage_path import rebase_file_path
 from zephyr import counters
 from zephyr.context import ZephyrContext
 from zephyr.dataset import Dataset

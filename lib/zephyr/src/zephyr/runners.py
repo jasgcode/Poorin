@@ -38,7 +38,7 @@ from typing import Any, TypeVar
 
 import cloudpickle
 import psutil
-from rigging.filesystem.storage_path import StoragePath
+from poorin_rigging.filesystem.storage_path import StoragePath
 
 from zephyr import counters, memory_budget
 from zephyr.plan import Scatter, StageContext, run_stage

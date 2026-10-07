@@ -25,9 +25,9 @@ from poorin_fray.client import JobHandle, JobStatus
 from poorin_fray.current_client import _current_client_var, current_client, set_current_client
 from poorin_fray.local_backend import LocalJobHandle
 from poorin_fray.types import Entrypoint, JobRequest, ResourceConfig, create_environment
-from rigging.filesystem.factory import url_to_fs
-from rigging.filesystem.storage_path import StoragePath
-from rigging.log_setup import configure_logging
+from poorin_rigging.filesystem.factory import url_to_fs
+from poorin_rigging.filesystem.storage_path import StoragePath
+from poorin_rigging.log_setup import configure_logging
 
 from marin.execution.artifact import (
     FINGERPRINT_KEY,

@@ -58,7 +58,7 @@ from zephyr.worker_context import CounterEntry, CounterSnapshot, zephyr_worker_c
 
 
 class _UnpicklableError(Exception):
-    """Mimics rigging's old TransferBudgetExceeded: __init__ args don't match self.args."""
+    """Mimics poorin_rigging's old TransferBudgetExceeded: __init__ args don't match self.args."""
 
     def __init__(self, a, b, c):
         self.a, self.b, self.c = a, b, c

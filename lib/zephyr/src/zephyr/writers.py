@@ -20,11 +20,11 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import vortex
 import zstandard as zstd
+from poorin_rigging.filesystem.atomic import atomic_rename
+from poorin_rigging.filesystem.factory import url_to_fs
+from poorin_rigging.filesystem.s3_compat import S3_RETRY_MAX_ATTEMPTS
+from poorin_rigging.filesystem.storage_path import StoragePath
 from pyarrow import fs as pa_fs
-from rigging.filesystem.atomic import atomic_rename
-from rigging.filesystem.factory import url_to_fs
-from rigging.filesystem.s3_compat import S3_RETRY_MAX_ATTEMPTS
-from rigging.filesystem.storage_path import StoragePath
 
 from zephyr import counters
 
@@ -271,7 +271,7 @@ def _accumulate_tables(
 
 
 # Finite network timeouts for the native S3FileSystem, matching the bounds
-# rigging's fsspec factory injects: an unbounded dead socket wedges a shard's
+# poorin_rigging's fsspec factory injects: an unbounded dead socket wedges a shard's
 # upload forever instead of failing it into a retry.
 _S3_NATIVE_CONNECT_TIMEOUT = 30
 _S3_NATIVE_REQUEST_TIMEOUT = 120
@@ -280,7 +280,7 @@ _S3_NATIVE_REQUEST_TIMEOUT = 120
 def _s3_filesystem_kwargs() -> dict[str, str | bool | int]:
     """Translate the ambient fsspec S3 config into pyarrow S3FileSystem kwargs.
 
-    :func:`rigging.filesystem.s3_compat.configure_fsspec_s3` exports the store's
+    :func:`poorin_rigging.filesystem.s3_compat.configure_fsspec_s3` exports the store's
     connection settings for s3fs via ``FSSPEC_S3``: ``endpoint_url``, a signing region of
     ``auto`` for non-AWS endpoints, and ``addressing_style: virtual`` where
     the endpoint rejects path-style requests (CoreWeave object storage).

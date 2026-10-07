@@ -23,8 +23,8 @@ from connectrpc.compression.gzip import GzipCompression
 from connectrpc.compression.zstd import ZstdCompression
 from connectrpc.errors import ConnectError
 from connectrpc.interceptor import Interceptor
-from rigging.log_setup import LOG_DATEFMT, LOG_FORMAT, LevelPrefixFormatter
-from rigging.timing import ExponentialBackoff, RateLimiter
+from poorin_rigging.log_setup import LOG_DATEFMT, LOG_FORMAT, LevelPrefixFormatter
+from poorin_rigging.timing import ExponentialBackoff, RateLimiter
 
 from poorin_finelog.errors import (
     InvalidNamespaceError,

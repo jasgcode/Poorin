@@ -25,7 +25,7 @@ from typing import Any
 
 import cloudpickle
 import pyarrow as pa
-from rigging.log_setup import configure_logging
+from poorin_rigging.log_setup import configure_logging
 
 from zephyr.runners import (
     _InProcessWorkerContext,

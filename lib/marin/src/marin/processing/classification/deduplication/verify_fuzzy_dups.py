@@ -16,8 +16,8 @@ from typing import Any, Literal
 import pyarrow as pa
 import pyarrow.parquet as pq
 from poorin_fray.types import ResourceConfig
+from poorin_rigging.filesystem.storage_path import StoragePath, prefix_join
 from pydantic import BaseModel, ConfigDict, Field, model_validator
-from rigging.filesystem.storage_path import StoragePath, prefix_join
 from zephyr import counters
 from zephyr.context import MAX_IRIS_WORKER_REPLICAS, ZephyrContext
 from zephyr.dataset import Dataset

@@ -33,8 +33,8 @@ from enum import StrEnum
 
 import pyarrow as pa
 import pyarrow.parquet as pq
+from poorin_rigging.filesystem.storage_path import prefix_join
 from pydantic import BaseModel
-from rigging.filesystem.storage_path import prefix_join
 
 from finestore.schema import arrow_schema
 from finestore.store import DataStore

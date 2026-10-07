@@ -22,8 +22,8 @@ from typing import BinaryIO
 
 import pyarrow as pa
 import pyarrow.parquet as pq
-from rigging.filesystem.atomic import atomic_rename
-from rigging.filesystem.storage_path import StoragePath
+from poorin_rigging.filesystem.atomic import atomic_rename
+from poorin_rigging.filesystem.storage_path import StoragePath
 
 from finestore.layout import BlobTables
 

@@ -19,11 +19,11 @@ by refactoring to a common package instead of hacking around them.
 ```python
 # BAD
 def train(config):
-    from rigging.log_setup import configure_logging  # buried import
+    from poorin_rigging.log_setup import configure_logging  # buried import
     configure_logging()
 
 # GOOD
-from rigging.log_setup import configure_logging
+from poorin_rigging.log_setup import configure_logging
 
 def train(config):
     configure_logging()

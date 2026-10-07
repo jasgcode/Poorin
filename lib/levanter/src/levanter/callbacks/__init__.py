@@ -10,7 +10,7 @@ from contextlib import contextmanager
 from typing import Callable, Optional
 
 import jax
-from rigging.filesystem.storage_path import StoragePath
+from poorin_rigging.filesystem.storage_path import StoragePath
 from tqdm_loggable.auto import tqdm
 
 import levanter.tracker

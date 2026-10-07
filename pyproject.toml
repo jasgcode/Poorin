@@ -14,7 +14,7 @@ dependencies = [
     "marin-haliax",
     "marin-levanter",
     "marin-core",
-    "marin-rigging",
+    "poorin-rigging",
     "marin-zephyr",
     # poorin-finelog is Finelog's Python client, a workspace member. Its server is the published
     # marin-finelog-server wheel, pinned to the version Marin last released with this client.
@@ -89,7 +89,7 @@ members = [
     "lib/haliax",
     "lib/levanter",
     "lib/marin",
-    "lib/rigging",
+    "lib/poorin_rigging",
     "lib/zephyr",
     "lib/finestore",
 ]
@@ -107,7 +107,7 @@ marin-dupekit = { workspace = true }
 marin-haliax = { workspace = true }
 marin-levanter = { workspace = true }
 marin-core = { workspace = true }
-marin-rigging = { workspace = true }
+poorin-rigging = { workspace = true }
 marin-zephyr = { workspace = true }
 marin-finestore = { workspace = true }
 # Every torch requirement resolves to the CPU wheel: Poorin uses torch only to convert
@@ -189,7 +189,7 @@ include = [
     "lib/levanter/src",
     "lib/haliax/src",
     "lib/poorin_fray/src",
-    "lib/rigging/src",
+    "lib/poorin_rigging/src",
     "lib/zephyr/src",
     "lib/finestore/src",
     "tools",

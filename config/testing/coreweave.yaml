@@ -3,7 +3,7 @@ data:
   scheme: s3
   # S3-compatible storage for the CoreWeave clusters. `store` selects the backend
   # (endpoint/addressing/credentials); CoreWeave AI Object Storage buckets also
-  # carry their `signing_region`. Consumed by rigging temp-path routing and the
+  # carry their `signing_region`. Consumed by poorin_rigging temp-path routing and the
   # shared infra/buckets Pulumi project.
   region_buckets:
     na:          { bucket: marin-na,          store: r2 }

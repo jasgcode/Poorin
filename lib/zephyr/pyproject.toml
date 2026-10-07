@@ -9,7 +9,7 @@ description = "Lightweight dataset library for distributed data processing"
 readme = "README.md"
 requires-python = ">=3.12,<3.14"
 dependencies = [
-    "marin-rigging",
+    "poorin-rigging",
     "poorin-fray",
     "click>=8.0",
     "cloudpickle>=3.0",

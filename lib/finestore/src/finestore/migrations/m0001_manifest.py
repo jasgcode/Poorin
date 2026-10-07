@@ -11,9 +11,9 @@ import re
 import uuid
 
 import pyarrow.parquet as pq
+from poorin_rigging.filesystem.conditional_object import ConditionalWriteError, conditional_object
+from poorin_rigging.filesystem.storage_path import StoragePath
 from pydantic import AliasChoices, BaseModel, Field
-from rigging.filesystem.conditional_object import ConditionalWriteError, conditional_object
-from rigging.filesystem.storage_path import StoragePath
 
 from finestore.commit import read_snapshot, write_schema
 from finestore.layout import (

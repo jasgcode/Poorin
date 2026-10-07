@@ -16,7 +16,7 @@ import jax.numpy as jnp
 from jax.sharding import AxisType
 from jax.experimental.array_serialization.serialization import GlobalAsyncCheckpointManager
 
-from rigging.filesystem.storage_path import StoragePath, prefix_join
+from poorin_rigging.filesystem.storage_path import StoragePath, prefix_join
 
 import levanter
 import levanter.config
