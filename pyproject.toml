@@ -27,9 +27,6 @@ dependencies = [
     # member: it ships as a pre-built wheel and reaches us transitively via
     # marin-iris, which depends on it explicitly.
     "marin-finelog",
-    # marin-ducky is the ad-hoc DuckDB SQL service (dashboard + runner + deploy),
-    # a workspace member so service fixes land without a wheel republish.
-    "marin-ducky",
     # top level deps. try to keep these small.
     "watchdog",
     "seaborn>=0.13",
@@ -182,7 +179,6 @@ members = [
     "lib/fray",
     "lib/finelog",
     "lib/dupekit",
-    "lib/ducky",
     "lib/haliax",
     "lib/levanter",
     "lib/marin",
@@ -204,7 +200,6 @@ marin-iris = { workspace = true }
 marin-fray = { workspace = true }
 marin-finelog = { workspace = true }
 marin-dupekit = { workspace = true }
-marin-ducky = { workspace = true }
 marin-haliax = { workspace = true }
 marin-levanter = { workspace = true }
 marin-core = { workspace = true }
