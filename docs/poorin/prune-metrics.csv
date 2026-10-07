@@ -22,3 +22,4 @@ date,phase,step,first_party_lines,reachable_lines,reachable_modules,r1_imported_
 2026-10-06,P1,Keep the workbench tools as roots,384632,127512,420,6702,10.05,186.6,68.4,11893054128
 2026-10-06,P1,Fix stale P0 docs,384632,127512,420,6702,9.9,188.9,69.4,11893054128
 2026-10-06,P1,Lint only staged files from the Git hook,384646,127526,420,6702,7.54,136.9,49.2,11893054128
+2026-10-06,P1,Run every suite when the cluster configs change,384650,127530,420,6702,7.73,148.6,57.3,11893054128

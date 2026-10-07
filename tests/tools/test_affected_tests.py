@@ -115,6 +115,13 @@ def test_workspace_manifests_select_every_member_suite_and_a_library_manifest_it
     assert select(["lib/beta/pyproject.toml"], repo) == [Selection(BETA, BETA.test_dirs)]
 
 
+def test_cluster_configs_and_their_test_fixtures_select_every_member_suite(repo):
+    # Rigging, Iris, and the root suite read config/; nothing imports a YAML file.
+    every_suite = [Selection(ROOT, ROOT.test_dirs), Selection(ALPHA, ALPHA.test_dirs), Selection(BETA, BETA.test_dirs)]
+    assert select(["config/local.yaml"], repo) == every_suite
+    assert select(["config/testing/marin.yaml"], repo) == every_suite
+
+
 def test_test_data_selects_its_suite_but_experiment_files_and_docs_select_nothing(repo):
     assert select(["lib/alpha/tests/data/sample.txt"], repo) == [Selection(ALPHA, ALPHA.test_dirs)]
     assert select(["experiments/README.md", "docs/index.md"], repo) == []

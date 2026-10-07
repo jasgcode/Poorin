@@ -793,6 +793,18 @@ Plan: `plans/2026-10-05-p1-fleet-operations.md`. Executing on branch `prune/p1-f
 - **Cost if wrong:** None known.
 - **Landed:** `[poorin] Lint only staged files from the Git hook`.
 
+### D63. A change under `config/` runs every suite
+
+- **When:** 2026-10-06, P1 final review. **Status:** Adopted.
+- **Decision:** `tools.affected_tests` treats `config/` as shared test data: any change there
+  selects every suite, as the root `pyproject.toml` and `uv.lock` do.
+- **Why:** P1 made `config/testing/` the cluster fixtures for the rigging, Iris, and root suites,
+  and rigging's default-cluster test reads `config/local.yaml`, but no module imports a YAML file,
+  so a change to either selected no tests and would pass `prune_check` untested.
+- **Alternatives:** A table mapping each data directory to the suites that read it.
+- **Cost if wrong:** A change to `config/external/` pins also runs every suite, about 25 minutes.
+- **Landed:** `[poorin] Run every suite when the cluster configs change`.
+
 ---
 
 ## Deferred

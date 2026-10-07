@@ -12,8 +12,9 @@ A test file is selected when it changed, or when it, a suite-local module it imp
 ``conftest.py`` above it imports a changed module or a module that imports one transitively.
 Imports are read statically, including imports inside functions. A deleted module keeps its name,
 so tests that still import it are selected and fail. Some changes select whole suites: the root
-``pyproject.toml`` or ``uv.lock`` selects every suite, and a library's ``pyproject.toml`` or a
-non-Python file under ``tests/`` or ``lib/<name>/tests`` selects that suite.
+``pyproject.toml``, ``uv.lock``, or anything under ``config/`` selects every suite, and a library's
+``pyproject.toml`` or a non-Python file under ``tests/`` or ``lib/<name>/tests`` selects that
+suite.
 
 Each suite runs in its own pytest process, because the suites' ``conftest.py`` modules collide in
 one process. Tests run on CPU in UTC, as in Marin's CI, with a complete marker expression that
@@ -37,6 +38,9 @@ from tools.changes import changed_files
 from tools.reachability import REPO_ROOT, TOP_LEVEL_PACKAGES, imported_modules, is_test_file, workspace_modules
 
 WORKSPACE_MANIFESTS = frozenset({"pyproject.toml", "uv.lock"})
+# Data that tests in several suites read and no module imports: the cluster configs and their test
+# fixtures. A change under one of these directories runs every suite.
+SHARED_DATA_DIRS = ("config",)
 ROOT_TEST_DIRS = ("tests", "experiments")
 # experiments/ is a source tree that also holds tests: its data files select no tests.
 SOURCE_TREES = frozenset({"experiments"})
@@ -98,9 +102,9 @@ def suites(repo_root: Path) -> list[Suite]:
 def select(changed: Sequence[str], repo_root: Path) -> list[Selection]:
     """The tests each suite must run for ``changed``, a list of repository-relative paths."""
     all_suites = suites(repo_root)
-    if WORKSPACE_MANIFESTS & set(changed):
-        return [Selection(suite, suite.test_dirs) for suite in all_suites]
     paths = [PurePosixPath(path) for path in changed]
+    if WORKSPACE_MANIFESTS & set(changed) or any(path.is_relative_to(d) for path in paths for d in SHARED_DATA_DIRS):
+        return [Selection(suite, suite.test_dirs) for suite in all_suites]
     changed_modules = {name for path in paths if (name := _source_module(path)) is not None}
     modules = workspace_modules(repo_root)
     known = set(modules) | changed_modules
