@@ -8,7 +8,6 @@ import logging
 import os
 import time
 from collections.abc import Callable
-from contextlib import nullcontext
 from dataclasses import dataclass, field, replace
 from enum import StrEnum
 
@@ -43,7 +42,6 @@ from levanter.optim.config import AdamConfig, OptimizerConfig
 from levanter.schedule import BatchSchedule
 from levanter.store.jagged_array import set_jagged_array_read_cache_bytes
 from levanter.trainer import TrainerConfig
-from levanter.training_control import TrainingDashboard
 from levanter.utils.flop_utils import lm_flops_per_token
 from levanter.utils.jax_utils import parameter_count
 from levanter.utils.logging import LoadingTimeTrackerIterator
@@ -729,10 +727,7 @@ def _run_grug_local(config: GrugRunConfig) -> None:
     progress_watchdog = trainer.progress_watchdog.create(process_index=jax.process_index())
 
     checkpointer = trainer.checkpointer.create(run_id) if config.trainer.save_checkpoints else None
-    dashboard = (
-        TrainingDashboard(config, checkpointer.request_checkpoint, run_id) if checkpointer is not None else nullcontext()
-    )
-    with set_mesh(mesh), dashboard:
+    with set_mesh(mesh):
         batch_schedule = trainer.batch_schedule
 
         @jax.jit

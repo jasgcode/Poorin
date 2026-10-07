@@ -22,7 +22,6 @@ import levanter.tracker
 import levanter.callbacks
 import levanter.eval
 from levanter import callbacks
-from levanter.callbacks._iris_status import iris_status_reporter
 from levanter.adaptor import (
     AdaptorConfig,
     AdaptorExportConfig,
@@ -768,12 +767,6 @@ def main(config: TrainDpoConfig):
         trainer.add_hook(
             callbacks.log_performance_stats(Pos.size, trainer.config.batch_schedule, flops_per_example),
             every=1,
-        )
-        trainer.add_hook(
-            iris_status_reporter(
-                Pos.size, trainer.config.batch_schedule, trainer.config.num_train_steps, flops_per_example
-            ),
-            every=10,
         )
 
         if isinstance(train_dataset, MixtureDataset):

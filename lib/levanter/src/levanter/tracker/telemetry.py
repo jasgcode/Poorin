@@ -16,7 +16,6 @@ from typing import Any, Optional
 import jax
 import numpy as np
 from finelog.client import FlushResult
-from iris.runtime import telemetry as runtime_telemetry
 from rigging import telemetry
 from rigging.telemetry.probes import nccl, nccl_client
 
@@ -31,7 +30,6 @@ logger = logging.getLogger(__name__)
 _EVERY_STEP_METRICS = frozenset({"train_loss", "phase", "progress_time_seconds"})
 _STEP_METRICS = frozenset({"step", "global_step"})
 _DETAIL_LOG_INTERVAL = 10
-_TELEMETRY_SERVICE = "levanter"
 
 
 class TrainingPhase(IntEnum):
@@ -247,21 +245,18 @@ class _NonPublishingTelemetryTracker(NoopTracker):
 @TrackerConfig.register_subclass("telemetry")
 @dataclasses.dataclass
 class TelemetryConfig(TrackerConfig):
-    """Configure direct training telemetry."""
+    """Configure direct training telemetry to a Finelog server.
+
+    Without ``finelog_url`` the tracker publishes nothing. With one, process 0 writes the run's
+    metrics there, and a server it cannot reach is an error.
+    """
+
+    finelog_url: Optional[str] = None
 
     def init(self, run_id: Optional[str]) -> Tracker:
         process_index = jax.process_index()
-        runtime_telemetry.configure(
-            _TELEMETRY_SERVICE,
-            run_id=run_id,
-            process_index=process_index,
-        )
-        if process_index == 0:
-            try:
-                writer = LevanterMetricsWriter.from_iris(run_id, process_index)
-            except Exception:
-                logger.warning("could not configure direct Levanter metrics", exc_info=True)
-                return _NonPublishingTelemetryTracker()
-            if writer is not None:
-                return TelemetryTracker(writer)
-        return _NonPublishingTelemetryTracker()
+        if self.finelog_url is None or process_index != 0:
+            return _NonPublishingTelemetryTracker()
+        if run_id is None:
+            raise ValueError("TelemetryConfig needs a run id to name its Finelog table")
+        return TelemetryTracker(LevanterMetricsWriter.connect(self.finelog_url, run_id, process_index))

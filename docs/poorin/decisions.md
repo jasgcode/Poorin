@@ -958,6 +958,19 @@ Plan: `plans/2026-10-07-p4-p7-strip.md`.
   commits between are not individually green on those checks. The kept-root imports and the two
   training runs still gate every commit.
 
+### D74. Telemetry publishes only when given a Finelog URL
+
+- **When:** 2026-10-07, P5b. **Status:** Adopted.
+- **Decision:** `TelemetryConfig.finelog_url` is optional. Without it the telemetry tracker, which
+  the trainer appends to every run, publishes nothing; with it, process 0 writes the run's metrics
+  to that server under Levanter's run ID and `jax.process_index()`, and an unreachable server is
+  an error. The spec's `prune_check` Finelog check (invariant item 5) waits for the cleanup pass
+  after P7.
+- **Why:** The spec asked for an explicit URL that raises when it cannot connect, but the trainer
+  adds telemetry to every run, so a required URL would break every local run. The Finelog check
+  is new work, not stripping (D73).
+- **Cost if wrong:** Local runs keep writing no Finelog metrics until a run sets the URL.
+
 ---
 
 ## Deferred
@@ -980,6 +993,7 @@ Known gaps left open on purpose. Each names where it gets resolved.
 | `--ignore` skips a file found in a directory but not one passed by name, so a change that selects `test_tensorboard.py` through its imports still collects it, and it fails on `tensorboardX` | D56 | D61 |
 | ty's 231 warnings | D54 | Pass 2 |
 | Dependencies only deleted code used, such as `mcp` in `marin-core` | P3 | P8 |
+| `prune_check` starts a local Finelog server and confirms R2's metric rows (spec invariant item 5); R2 needs a way to receive the URL | D74 | Cleanup after P7 |
 | `experiments/rl_data_reviews/publish_review.py` imports the deleted `marina` package; it is unreachable and untested | P1 Task 7 | P2 |
 | Links to deleted skills remain in `experiments/grug/moe/agent.md`, `experiments/grug/fast_track/agent.md`, and `experiments/post_training/cat_count_canary/README.md` | P1 review | P2, P7 |
 | ty's three noisy warning rules could be set per rule, so other warning rules would fail; `tools.lint` prints ty's warnings only when ty fails | P1 review | Pass 2 |

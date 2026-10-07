@@ -34,7 +34,6 @@ from levanter.models.lm_model import LmExample
 from levanter.optim.config import AdamConfig, OptimizerConfig
 from levanter.schedule import BatchSchedule
 from levanter.trainer import TrainerConfig
-from levanter.training_control import TrainingDashboard
 from levanter.utils.flop_utils import lm_flops_per_token
 from levanter.utils.jax_utils import parameter_count
 from levanter.utils.logging import LoadingTimeTrackerIterator
@@ -408,7 +407,7 @@ def _run_grug_local(config: GrugRunConfig) -> None:
         replica_axis_size=config.trainer.replica_axis_size,
     )
     checkpointer = trainer.checkpointer.create(run_id)
-    with set_mesh(mesh), TrainingDashboard(config, checkpointer.request_checkpoint, run_id):
+    with set_mesh(mesh):
         batch_schedule = trainer.batch_schedule
 
         train_dataset = build_train_dataset(

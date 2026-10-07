@@ -46,3 +46,4 @@ date,phase,step,first_party_lines,reachable_lines,reachable_modules,r1_imported_
 2026-10-07,P5,Key kernel caches on installed packages without a lockfile,330976,127663,420,6704,3.62,70.4,28.5,11851481578
 2026-10-07,P5,Remove Iris from Zephyr,330818,127605,421,6705,3.61,70.3,27.1,11851481578
 2026-10-07,P5,Delete Fray's Iris backend,329968,127575,421,6705,3.78,96.7,28.2,11851481578
+2026-10-07,P5,Remove Iris from Levanter,329314,125577,414,6680,3.61,68.3,27.3,11851481578

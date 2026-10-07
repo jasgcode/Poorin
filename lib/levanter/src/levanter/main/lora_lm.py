@@ -15,7 +15,6 @@ import levanter.config
 import levanter.tracker
 import levanter.eval
 from levanter import callbacks
-from levanter.callbacks._iris_status import iris_status_reporter
 from levanter.compat.hf_checkpoints import HFCheckpointConverter
 from levanter.data.text.datasets import LmDataConfig
 from levanter.adaptor.lora import (
@@ -151,10 +150,6 @@ def main(config: LoraLmConfig):
             trainer.add_hook(cb, every=config.trainer.steps_per_eval)
 
         trainer.add_hook(callbacks.log_performance_stats(Pos.size, trainer.config.train_batch_size), every=1)
-        trainer.add_hook(
-            iris_status_reporter(Pos.size, trainer.config.train_batch_size, trainer.config.num_train_steps),
-            every=10,
-        )
         if config.peft_save_path is not None:
             full_save_path = os.path.join(config.peft_save_path, trainer.run_id)
             trainer.add_hook(

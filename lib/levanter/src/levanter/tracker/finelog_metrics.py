@@ -10,7 +10,6 @@ from typing import ClassVar
 import numpy as np
 from finelog.client import FlushResult, LogClient
 from finelog.client.log_client import Table
-from iris.runtime import telemetry as runtime_telemetry
 
 from levanter.tracker.histogram import SummaryStats
 
@@ -68,19 +67,16 @@ class LevanterMetricsWriter:
         self._identity = identity
 
     @classmethod
-    def from_iris(cls, run_id: str | None, process_index: int) -> "LevanterMetricsWriter | None":
-        """Create a writer from the Iris runtime, or return None outside Iris."""
-        runtime = runtime_telemetry.resolve(run_id=run_id, process_index=process_index)
-        if runtime is None:
-            return None
+    def connect(cls, finelog_url: str, run_id: str, process_index: int) -> "LevanterMetricsWriter":
+        """Create a writer for ``run_id`` on the Finelog server at ``finelog_url``."""
         identity = _MetricIdentity(
-            run_id=runtime.attributes["run_id"],
-            execution_uid=runtime.attributes.get("execution_uid"),
-            job_id=runtime.attributes.get("job_id"),
-            node_name=runtime.attributes.get("node_name"),
-            process_index=int(runtime.attributes["process_index"]) if "process_index" in runtime.attributes else None,
+            run_id=run_id,
+            execution_uid=None,
+            job_id=None,
+            node_name=None,
+            process_index=process_index,
         )
-        client = LogClient.connect(runtime.endpoint, resolver=runtime.resolver)
+        client = LogClient.connect(finelog_url)
         namespace = f"{LEVANTER_METRICS_NAMESPACE}.{identity.run_id}"
         table = client.get_table(namespace, LevanterMetricRow)
         return cls(client, table, identity)
