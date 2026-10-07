@@ -8,7 +8,7 @@ from itertools import pairwise
 
 import numpy as np
 import pytest
-from levanter.data.text.formats import ChatProcessor, TextLmDatasetFormat
+from levanter.data.text.formats import ChatProcessor
 from levanter.data.text.trace_chat import (
     TRACE_LABEL_ASSISTANT_TEXT,
     TRACE_LABEL_ASSISTANT_TOOL_CALL,
@@ -17,9 +17,7 @@ from levanter.data.text.trace_chat import (
     TraceChatProcessor,
 )
 from levanter.tokenizers import MarinTokenizer, load_tokenizer
-from marin.datakit.chat_render import render_chat_record, render_marin_chat
 from marin.datakit.chat_template import MARIN_CHAT_TEMPLATE
-from openai_harmony import Author, Message, Role
 from transformers import AutoTokenizer, PreTrainedTokenizer
 
 from experiments.marin_tokenizer import (
@@ -258,181 +256,6 @@ def test_chat_processor_renders_ipython_output(marin_chat_tokenizer: MarinTokeni
     assert result["assistant_masks"].sum() > 0
 
 
-@pytest.mark.parametrize("custom_instructions", ["", "  Keep answers short.\n"])
-@pytest.mark.parametrize("add_generation_prompt", [False, True], ids=["completed", "generation-prefix"])
-@pytest.mark.parametrize(
-    "harmony_messages,inference_messages,template_kwargs",
-    [
-        pytest.param(
-            [
-                Message.from_role_and_content(Role.SYSTEM, "Be concise."),
-                Message.from_role_and_content(Role.USER, "  Hello, café!\n"),
-                Message.from_role_and_content(Role.ASSISTANT, "こんにちは!").with_channel("final"),
-                Message.from_role_and_content(Role.USER, "Again?"),
-                Message.from_role_and_content(Role.ASSISTANT, "Hello again.").with_channel("final"),
-            ],
-            [
-                {"role": "system", "content": "Be concise."},
-                {"role": "user", "content": "  Hello, café!\n"},
-                {"role": "assistant", "content": "こんにちは!"},
-                {"role": "user", "content": "Again?"},
-                {"role": "assistant", "content": "Hello again."},
-            ],
-            {},
-            id="multi-turn-chat",
-        ),
-        pytest.param(
-            [
-                Message.from_role_and_content(Role.USER, "What is 2 + 2?"),
-                Message.from_role_and_content(Role.ASSISTANT, "Add the two numbers.").with_channel("analysis"),
-                Message.from_role_and_content(Role.ASSISTANT, "4").with_channel("final"),
-                Message.from_role_and_content(Role.USER, "And 3 + 3?"),
-                Message.from_role_and_content(Role.ASSISTANT, "Double three.").with_channel("analysis"),
-                Message.from_role_and_content(Role.ASSISTANT, "6").with_channel("final"),
-            ],
-            [
-                {"role": "user", "content": "What is 2 + 2?"},
-                {"role": "assistant", "content": "<|start_think|>Add the two numbers.<|end_think|>4"},
-                {"role": "user", "content": "And 3 + 3?"},
-                {"role": "assistant", "content": "<|start_think|>Double three.<|end_think|>6"},
-            ],
-            {"enable_thinking": True},
-            id="preserve-earlier-reasoning",
-        ),
-        pytest.param(
-            [
-                Message.from_role_and_content(Role.USER, "Calculate 2 + 2."),
-                Message.from_role_and_content(Role.ASSISTANT, "Use the calculator.").with_channel("analysis"),
-                Message.from_role_and_content(Role.ASSISTANT, "Calculating now.").with_channel("commentary"),
-                Message.from_role_and_content(Role.ASSISTANT, '{"expression":"2 + 2"}')
-                .with_channel("commentary")
-                .with_recipient("functions.calculate"),
-                Message.from_author_and_content(Author(role=Role.TOOL, name="functions.calculate"), "4")
-                .with_channel("commentary")
-                .with_recipient("assistant"),
-                Message.from_role_and_content(Role.ASSISTANT, "The answer is 4.").with_channel("final"),
-            ],
-            [
-                {"role": "user", "content": "Calculate 2 + 2."},
-                {
-                    "role": "assistant",
-                    "content": "<|start_think|>Use the calculator.<|end_think|>Calculating now.",
-                    "tool_calls": [
-                        {
-                            "type": "function",
-                            "function": {
-                                "name": "calculate",
-                                "arguments": {"expression": "2 + 2"},
-                            },
-                        }
-                    ],
-                },
-                {"role": "tool", "name": "calculate", "content": "4"},
-                {"role": "assistant", "content": "The answer is 4."},
-            ],
-            {
-                "tools": [
-                    {
-                        "type": "function",
-                        "function": {
-                            "name": "calculate",
-                            "description": "Evaluate an arithmetic expression.",
-                            "parameters": {
-                                "type": "object",
-                                "properties": {
-                                    "expression": {"type": "string"},
-                                },
-                                "required": ["expression"],
-                            },
-                        },
-                    }
-                ]
-            },
-            id="tool-round-trip",
-        ),
-        pytest.param(
-            [
-                Message.from_role_and_content(Role.USER, "Work it out."),
-                Message.from_role_and_content(Role.ASSISTANT, "Still working…").with_channel("analysis"),
-            ],
-            [
-                {"role": "user", "content": "Work it out."},
-                {"role": "assistant", "content": "<|start_think|>Still working…<|end_think|>"},
-            ],
-            {"enable_thinking": False},
-            id="reasoning-only-ending",
-        ),
-        pytest.param(
-            [
-                Message.from_role_and_content(Role.USER, "Run both."),
-                Message.from_role_and_content(Role.ASSISTANT, '{"z": "café <>&", "a": true}')
-                .with_channel("commentary")
-                .with_recipient("functions.first"),
-                Message.from_role_and_content(Role.ASSISTANT, "{}")
-                .with_channel("commentary")
-                .with_recipient("functions.second"),
-            ],
-            [
-                {"role": "user", "content": "Run both."},
-                {
-                    "role": "assistant",
-                    "tool_calls": [
-                        {
-                            "function": {
-                                "name": "first",
-                                "arguments": {"z": "café <>&", "a": True},
-                            }
-                        },
-                        {"function": {"name": "second", "arguments": {}}},
-                    ],
-                },
-            ],
-            {
-                "tools": [
-                    {"name": "first", "parameters": {"type": "object"}},
-                    {"name": "second", "parameters": {"type": "object"}},
-                ]
-            },
-            id="unanswered-call-batch",
-        ),
-    ],
-)
-def test_harmony_rendering_matches_inference_tokens(
-    marin_tokenizer, harmony_messages, inference_messages, template_kwargs, add_generation_prompt, custom_instructions
-):
-    # Generation resumes after the final user/tool message; retain completed
-    # earlier turns so history formatting is checked as well as the prefix.
-    if add_generation_prompt:
-        final_prompt_index = max(
-            i for i, message in enumerate(harmony_messages) if message.author.role in {Role.USER, Role.TOOL}
-        )
-        harmony_messages = harmony_messages[: final_prompt_index + 1]
-        inference_prompt_index = max(
-            i for i, message in enumerate(inference_messages) if message["role"] in {"user", "tool"}
-        )
-        inference_messages = inference_messages[: inference_prompt_index + 1]
-
-    template_kwargs = {**template_kwargs, "custom_instructions": custom_instructions}
-    expected = marin_tokenizer.apply_chat_template(
-        inference_messages,
-        tokenize=True,
-        return_dict=True,
-        add_generation_prompt=add_generation_prompt,
-        **template_kwargs,
-    )
-    rendered = render_marin_chat(
-        harmony_messages,
-        bos_token=marin_tokenizer.bos_token,
-        add_generation_prompt=add_generation_prompt,
-        **template_kwargs,
-    )
-    assert rendered == marin_tokenizer.apply_chat_template(
-        inference_messages, tokenize=False, add_generation_prompt=add_generation_prompt, **template_kwargs
-    )
-    actual = marin_tokenizer.encode(rendered, add_special_tokens=False)
-    assert actual == expected["input_ids"]
-
-
 @pytest.mark.parametrize("arguments", [{"query": "café <>&"}, '{"query": "café <>&"}'])
 def test_agent_turn_retains_reasoning_content_and_parallel_calls(marin_chat_tokenizer, arguments):
     messages = [
@@ -493,23 +316,6 @@ def test_tool_reply_ids_render_like_named_harmony_observations(marin_chat_tokeni
     assert marin_chat_tokenizer.apply_chat_template(prefix + api_replies) == marin_chat_tokenizer.apply_chat_template(
         prefix + named_replies
     )
-
-
-def test_rendered_record_text_tokenizer_adds_one_bos(marin_chat_tokenizer):
-    messages = [
-        Message.from_role_and_content(Role.USER, "Hello"),
-        Message.from_role_and_content(Role.ASSISTANT, "Hi").with_channel("final"),
-    ]
-    record = render_chat_record({"id": "example", "messages": [message.to_dict() for message in messages]})
-    assert not record["text"].startswith("<|begin_of_text|>")
-    processor = TextLmDatasetFormat().build_preprocessor(marin_chat_tokenizer)
-    actual = processor([record])[0]["input_ids"]
-    expected = marin_chat_tokenizer.apply_chat_template(
-        [{"role": "user", "content": "Hello"}, {"role": "assistant", "content": "Hi"}]
-    )
-    # The text path adds its normal document separator after the final chat EOT.
-    expected += marin_chat_tokenizer.encode(" " + marin_chat_tokenizer.eos_token, add_special_tokens=False)
-    assert actual == expected
 
 
 def test_trace_inline_calls_preserve_assistant_turn(marin_chat_tokenizer):

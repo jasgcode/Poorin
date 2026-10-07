@@ -147,36 +147,42 @@ def test_training_progress_and_phase_carry_the_current_step(writer, monkeypatch)
     assert phases[-1] == _MetricWrite("phase", "scalar", 3, value=TrainingPhase.FINISHED)
 
 
-def test_nonprimary_process_does_not_create_a_metrics_writer(monkeypatch):
-    monkeypatch.setattr(tracker_telemetry.jax, "process_index", lambda: 1)
-    monkeypatch.setattr(tracker_telemetry.runtime_telemetry, "configure", lambda *_args, **_kwargs: None)
+def test_telemetry_without_a_finelog_url_publishes_nothing(monkeypatch):
+    monkeypatch.setattr(tracker_telemetry.jax, "process_index", lambda: 0)
     monkeypatch.setattr(
         tracker_telemetry.LevanterMetricsWriter,
-        "from_iris",
-        lambda *_args, **_kwargs: pytest.fail("nonprimary process created a Finelog metrics writer"),
+        "connect",
+        lambda *_args, **_kwargs: pytest.fail("telemetry connected without a Finelog URL"),
     )
     tracker = TelemetryConfig().init("run-42")
+
+    tracker.log({"train/loss": 1.25}, step=3)
+    assert isinstance(tracker, NoopTracker)
+
+
+def test_nonprimary_process_does_not_create_a_metrics_writer(monkeypatch):
+    monkeypatch.setattr(tracker_telemetry.jax, "process_index", lambda: 1)
+    monkeypatch.setattr(
+        tracker_telemetry.LevanterMetricsWriter,
+        "connect",
+        lambda *_args, **_kwargs: pytest.fail("nonprimary process created a Finelog metrics writer"),
+    )
+    tracker = TelemetryConfig(finelog_url="http://127.0.0.1:1").init("run-42")
 
     tracker.log({"train/loss": 1.25, "throughput": 7.0}, step=3)
     assert isinstance(tracker, NoopTracker)
 
 
-def test_metrics_connection_failure_does_not_stop_training(monkeypatch):
+def test_an_unreachable_finelog_server_is_an_error(monkeypatch):
+    # D74: a configured Finelog URL that cannot be reached fails the run instead of dropping metrics.
     def fail_to_connect(*_args, **_kwargs):
         raise ConnectionError("Finelog unavailable")
 
     monkeypatch.setattr(tracker_telemetry.jax, "process_index", lambda: 0)
-    monkeypatch.setattr(tracker_telemetry.runtime_telemetry, "configure", lambda *_args, **_kwargs: None)
-    monkeypatch.setattr(
-        tracker_telemetry.LevanterMetricsWriter,
-        "from_iris",
-        fail_to_connect,
-    )
+    monkeypatch.setattr(tracker_telemetry.LevanterMetricsWriter, "connect", fail_to_connect)
 
-    tracker = TelemetryConfig().init("run-42")
-
-    tracker.log({"train/loss": 1.25}, step=3)
-    assert isinstance(tracker, NoopTracker)
+    with pytest.raises(ConnectionError):
+        TelemetryConfig(finelog_url="http://127.0.0.1:1").init("run-42")
 
 
 def test_non_status_metrics_are_sampled_every_ten_steps_while_status_metrics_are_not(writer):

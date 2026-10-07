@@ -69,42 +69,6 @@ def _run(body: str) -> None:
 
 
 @pytest.mark.timeout(300)
-def test_drop_totals_count_each_assignment_once_when_tokens_skip_the_context_axis():
-    # A context replica must not multiply drop counts for batch-sharded tokens.
-    _run(
-        """
-        from levanter.grug.grug_moe import MoEExpertMlp
-
-        num_experts, hidden_dim, top_k = 4, 16, 2
-        x = jax.random.normal(jax.random.key(3), (16, hidden_dim), dtype=jnp.float32)
-        selected = jax.random.randint(jax.random.key(6), (16, top_k), 0, num_experts, dtype=jnp.int32)
-        weights = jnp.ones((16, top_k), dtype=jnp.float32)
-
-        def dropped(mesh):
-            with set_mesh(mesh):
-                experts = MoEExpertMlp.init(
-                    num_experts=num_experts, hidden_dim=hidden_dim, intermediate_dim=8,
-                    initializer_std=0.1, key=jax.random.key(0),
-                    implementation="fixed_all_to_all", capacity_factor=0.5,
-                )
-
-                def call(experts, tokens, selected, weights):
-                    # Batch axes only: the token dim never touches "context".
-                    tokens = reshard(tokens, P(BATCH_AXES, None))
-                    return experts(tokens, selected, weights, mesh=mesh, report_capacity_overflow=True)[1]
-
-                overflow = jax.jit(call)(experts, x, selected, weights)
-            return int(overflow.sender_dropped) + int(overflow.receiver_dropped)
-
-        context_drops = dropped(mesh_of((1, 1, 2, 2, 1)))
-        reference_drops = dropped(mesh_of((1, 1, 1, 2, 1)))
-        assert reference_drops > 0, "capacity_factor=0.5 must actually drop assignments"
-        assert context_drops == reference_drops, (context_drops, reference_drops)
-        """
-    )
-
-
-@pytest.mark.timeout(300)
 def test_fused_cross_entropy_reduces_over_the_sequence_instead_of_gathering_it():
     # Loss values alone miss a sequence all-gather; check compiled collectives too.
     _run(

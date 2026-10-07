@@ -5,25 +5,14 @@ import logging
 from pathlib import Path
 
 import marin.execution.step_status as step_status
-import pytest
-from iris.cluster.client.job_info import JobInfo, set_job_info
-from iris.cluster.types import JobName
 from marin.execution.step_status import STATUS_RUNNING, StatusFile, should_run, worker_id
 
 
-@pytest.fixture(autouse=True)
-def _reset_job_info():
-    set_job_info(None)
-    yield
-    set_job_info(None)
-
-
-def test_should_run_repeats_active_iris_lock_owner(tmp_path: Path, caplog, monkeypatch):
+def test_should_run_waits_for_an_active_lock_owner_and_logs_it(tmp_path: Path, caplog, monkeypatch):
     output_path = str(tmp_path / "active-lock")
-    iris_task_id = "/larry/executor/0:2"
-    set_job_info(JobInfo(task_id=JobName.from_wire("/larry/executor/0"), attempt_id=2))
+    owner_id = worker_id()
 
-    owner = StatusFile(output_path, worker_id())
+    owner = StatusFile(output_path, owner_id)
     waiter = StatusFile(output_path, "waiting-worker")
     assert owner.try_acquire_lock()
     owner.write_status(STATUS_RUNNING)
@@ -48,7 +37,7 @@ def test_should_run_repeats_active_iris_lock_owner(tmp_path: Path, caplog, monke
     owner_logs = [
         record
         for record in caplog.records
-        if record.name == "marin.execution.step_status" and iris_task_id in record.getMessage()
+        if record.name == "marin.execution.step_status" and owner_id in record.getMessage()
     ]
     assert len(owner_logs) == 2
     assert all(record.levelno == logging.INFO for record in owner_logs)

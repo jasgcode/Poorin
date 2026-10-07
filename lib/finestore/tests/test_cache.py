@@ -6,9 +6,7 @@ import sys
 import textwrap
 
 import finestore.cache as cache_module
-from finestore.admin import drop_table
 from finestore.cache import PersistentKvCache
-from finestore.layout import BlobTables
 from finestore.reader import ReadView
 from finestore.store import DataStore
 from rigging.filesystem.storage_path import StoragePath
@@ -60,18 +58,6 @@ def test_persistent_cache_round_trips_and_supersedes_named_bytes(tmp_path):
     assert reader.load("kernel") == b"second"
     assert reader.load("missing") is None
     reader.close()
-
-
-def test_persistent_cache_keeps_a_loaded_value_in_memory(tmp_path):
-    root = str(tmp_path / "cache")
-    writer = PersistentKvCache.at(root)
-    writer.store("kernel", b"object-code")
-    writer.close()
-
-    reader = PersistentKvCache.at(root)
-    assert reader.load("kernel") == b"object-code"
-    drop_table(root, BlobTables.DESCRIPTORS)
-    assert reader.load("kernel") == b"object-code"
 
 
 def test_cache_reads_an_archive_without_its_format_marker_and_the_next_store_recreates_it(tmp_path):

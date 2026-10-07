@@ -269,5 +269,3 @@ def test_memory_store_rejects_pipeline_with_shuffle(local_client, tmp_path):
     with memory_store_context(local_client, tmp_path) as context:
         with pytest.raises(ValueError):
             _load_store(context, dataset, name="shuffled")
-
-

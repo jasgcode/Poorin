@@ -1,8 +1,6 @@
 # Copyright The Levanter Authors
 # SPDX-License-Identifier: Apache-2.0
 
-from types import SimpleNamespace
-
 import jax.numpy as jnp
 from finelog.client import FlushResult, schema_from_dataclass
 from finelog.rpc import finelog_stats_pb2
@@ -50,26 +48,11 @@ def test_writer_uses_run_alias_and_writes_typed_rows(monkeypatch):
     table = _Table()
     client = _Client(table)
     monkeypatch.setattr(
-        "levanter.tracker.finelog_metrics.runtime_telemetry.resolve",
-        lambda **_kwargs: SimpleNamespace(
-            endpoint="/system/log-server",
-            resolver=lambda endpoint: endpoint,
-            attributes={
-                "run_id": "run/+long/name",
-                "execution_uid": "attempt-1",
-                "job_id": "/job",
-                "node_name": "node",
-                "process_index": "0",
-            },
-        ),
-    )
-    monkeypatch.setattr(
         "levanter.tracker.finelog_metrics.LogClient.connect",
-        lambda *_args, **_kwargs: client,
+        lambda url: client if url == "http://finelog" else None,
     )
 
-    writer = LevanterMetricsWriter.from_iris("run/+long/name", 0)
-    assert writer is not None
+    writer = LevanterMetricsWriter.connect("http://finelog", "run/+long/name", 0)
     assert client.namespace == "levanter.metrics.run/+long/name"
     assert client.schema is LevanterMetricRow
 
@@ -92,11 +75,3 @@ def test_writer_uses_run_alias_and_writes_typed_rows(monkeypatch):
 
     writer.close()
     assert client.closed
-
-
-def test_writer_is_absent_outside_an_iris_runtime(monkeypatch):
-    monkeypatch.setattr(
-        "levanter.tracker.finelog_metrics.runtime_telemetry.resolve",
-        lambda **_kwargs: None,
-    )
-    assert LevanterMetricsWriter.from_iris("run", 0) is None

@@ -971,6 +971,27 @@ Plan: `plans/2026-10-07-p4-p7-strip.md`.
   is new work, not stripping (D73).
 - **Cost if wrong:** Local runs keep writing no Finelog metrics until a run sets the URL.
 
+## Cleanup after the strip: 2026-10-07
+
+### D75. Tests and configs of stripped code go; mixed files lose only the stripped cases
+
+- **When:** 2026-10-07, cleanup (D73). **Status:** Adopted.
+- **Decision:** A test file that tested only deleted code was deleted: 126 files. Three Levanter
+  benchmark scripts and `scripts/wandb_tensorboard_profile.py` went with them. A file that mixed
+  deleted and kept code lost only the deleted cases; for example, `test_distributed.py` keeps only
+  the SLURM node-list test, and `test_finelog_metrics.py` tests `LevanterMetricsWriter.connect`.
+  Levanter configs naming a deleted model type (Backpack, Gemma, Mistral, Mixtral, Whisper,
+  Hyena, MPT) were deleted. So were `marin.testing`, whose only caller was a deleted cluster test,
+  the docs-only remains of `experiments/grug/moe/`, and the fast-track variant's agent guide,
+  which drove its deleted launcher on Iris. The fast-track README keeps its results and the files
+  the Delphi recipe uses.
+- **Why:** The stripped tree should pass ty, `tools.lint --all-files`, and every suite. After the
+  cleanup it does: ty reports no errors, lint passes, and all nine suites pass (3,150 tests). One
+  full `prune_check` run on the final tree verifies the cleanup's four commits, and its metrics
+  row is committed with the last of them.
+- **Cost if wrong:** A deleted test or config is recoverable from `upstream-baseline`.
+
+
 ---
 
 ## Deferred
@@ -995,7 +1016,7 @@ Known gaps left open on purpose. Each names where it gets resolved.
 | Dependencies only deleted code used, such as `mcp` in `marin-core` | P3 | P8 |
 | `prune_check` starts a local Finelog server and confirms R2's metric rows (spec invariant item 5); R2 needs a way to receive the URL | D74 | Cleanup after P7 |
 | `experiments/rl_data_reviews/publish_review.py` imports the deleted `marina` package; it is unreachable and untested | P1 Task 7 | P2 |
-| Links to deleted skills remain in `experiments/grug/moe/agent.md`, `experiments/grug/fast_track/agent.md`, and `experiments/post_training/cat_count_canary/README.md` | P1 review | P2, P7 |
+| Links to deleted skills remain in `experiments/grug/moe/agent.md`, `experiments/grug/fast_track/agent.md`, and `experiments/post_training/cat_count_canary/README.md` | P1 review | P2, P7, D75 |
 | ty's three noisy warning rules could be set per rule, so other warning rules would fail; `tools.lint` prints ty's warnings only when ty fails | P1 review | Pass 2 |
 | 26 code comments name pyrefly as the reason for a workaround | P1 review | Pass 2 |
 | ty does not check `lib/dupekit/src`, which D47 keeps | P1 review | Open |

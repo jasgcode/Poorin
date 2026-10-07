@@ -1,20 +1,18 @@
 # fast_track — dense vs MoE scaling ladder (H100, 16k BPE)
 
-Self-contained grug variant with 16k vocab size for fast iteration. Dense and MoE baselines shown
-below from 9.4e16 to 4.3e19 FLOPs.
+Marin's grug variant with a 16k vocabulary for fast iteration. Dense and MoE baselines are shown
+below from 9.4e16 to 4.3e19 FLOPs. Poorin keeps only the variant's optimizer and its scaling
+heuristic, which the Delphi recipe uses; the model, trainer, and launcher remain at the
+`upstream-baseline` tag.
 
 ## Files
 
 | file | contents |
 |------|----------|
-| [`launch.py`](launch.py) | ladder rungs, budget resolution (`--match`), Iris/W&B wiring |
-| [`model.py`](model.py) | the transformer: attention, GatedNorm, SConv, QB-routed MoE |
-| [`train.py`](train.py) | trainer/eval/loss wiring and runtime (XLA) defaults |
 | [`optimizer.py`](optimizer.py) | MuonH optimizer config: LR groups + hyperball step |
 | [`grugmuon_stacked.py`](grugmuon_stacked.py) | Newton-Schulz orthogonalization (Muon direction) |
 | [`adamh.py`](adamh.py) | AdamH scale transform (the `adamh` LR group) |
 | [`heuristic.py`](heuristic.py) | compute-scaling LR / beta2 / epsilon fit |
-| [`router_metrics.py`](router_metrics.py) | routing-stats telemetry (logging-only) |
 
 ## Results
 
@@ -71,63 +69,3 @@ the irreducible floor pinned at **L∞ = 1.2**:
 
 **Compute efficiency:** the MoE recipe (60 TPP) reaches the same Paloma loss as the compute-optimal
 dense recipe (20 TPP) with **~4.2× less compute**.
-
-## Launch commands
-
-Set `$WANDB_API_KEY` in your shell.
-
-`fast-track` is the single entry point. Run it locally to print the lowered plan for inspection; add
-`--submit` to launch it as an 8×H100 Iris job:
-
-```bash
-# inspect the plan locally — nothing is submitted
-uv run fast-track --run-id dense-d768 --size d768 --dense --version 2026.09.17
-
-# submit it as an Iris H100 job
-uv run fast-track --submit --run-id dense-d768 --size d768 --dense --version 2026.09.17
-```
-
-`--submit` wraps the launcher in `iris job run … -- python -m …launch … --run` and forwards
-`$WANDB_API_KEY` to the job. Iris selects an H100 cluster by default.
-Add `--target-cluster cw-us-east-02a` or `--target-cluster cw-rno2a` to select a specific cluster.
-
-Pick a size and variant; the budget defaults to **data-matching** that variant's baseline (dense at
-20 TPP, MoE at 60 TPP) at the rung's baseline batch (128 for d512/d768, 256 for d1024/d1280). Steps
-are derived automatically. Use `--match compute` to FLOP-match instead, `--batch-size` to change the
-batch (steps rescale to hold the match), or `--num-steps` to set the count explicitly.
-
-Dense (data-match baseline):
-
-```bash
-uv run fast-track --submit --run-id dense-d768 --size d768 --dense --version 2026.09.17
-```
-
-MoE (data-match baseline; bump the batch — steps halve to hold tokens):
-
-```bash
-uv run fast-track --submit --run-id moe-d768 --size d768 --batch-size 256 --version 2026.09.17
-```
-
-MFU probe (any size, quick — explicit short budget):
-
-```bash
-uv run fast-track --submit --run-id probe-d1280 --size d1280 --num-steps 20 --no-eval --version 2026.09.17
-```
-
-### Useful flags (all on `launch.py`)
-
-| flag | effect |
-|------|--------|
-| `--run-id` | **required** run identifier for artifact + W&B names |
-| `--size` | **required** `d512` / `d768` / `d1024` / `d1280` |
-| `--dense` | dense 3×hidden SwiGLU, no MoE (expert=1, normal eval) |
-| `--match` | `data` (default) tokens-match or `compute` FLOP-match the variant baseline |
-| `--batch-size` | override the rung's baseline batch (steps rescale to hold the match) |
-| `--num-steps N` | set the step budget explicitly (ignores `--match`) |
-| `--no-eval` | skip eval (clean MFU probes) |
-| `--save-checkpoints` | save a permanent final checkpoint to S3 (off by default) |
-| `--submit` | Submit as an Iris H100 job. Omit to print the plan locally. |
-| `--target-cluster` | Select a specific Iris cluster for submission. Omit to let Iris select an H100 cluster. |
-
-Results land in W&B `marin-community/marin_moe`; eval bpb keys are `eval/paloma/macro_bpb`,
-`eval/uncheatable_eval/macro_bpb` (MoE dropless eval logs under the normal `eval/` prefix).

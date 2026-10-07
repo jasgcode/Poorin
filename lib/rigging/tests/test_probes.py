@@ -8,14 +8,13 @@ import stat
 import subprocess
 import sys
 import threading
-import time
 from collections.abc import Iterator
 from pathlib import Path
 from typing import cast
 
 import pytest
 from rigging import telemetry
-from rigging.telemetry.probes import nccl, nccl_client, nccl_ras, nvidia
+from rigging.telemetry.probes import nccl, nccl_client, nccl_ras
 from rigging.telemetry.probes.runner import MAX_OUTPUT_BYTES, BoundedCommandRunner, CommandStatus
 from rigging.testing import RecordingTelemetryTransport, nccl_ras_payload
 
@@ -353,31 +352,6 @@ def test_nccl_collection_preserves_complete_reduced_report_above_default_limit(
     )
 
 
-def test_nvidia_probe_emits_only_stable_hardware_evidence(
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
-) -> None:
-    nvidia_row = (
-        "GPU-f81d4fae, 00000000:17:00.0, NVIDIA H100 80GB HBM3, 580.65.06, "
-        "81559, Default, Disabled, 700.00, 96.00.68.00.01, 2, 5, 1, Yes, 3, 4, Yes, No"
-    )
-    _install_commands(
-        monkeypatch,
-        tmp_path,
-        nvidia_source=f"print({nvidia_row!r})",
-        nccl_source=_nccl_source(nccl_ras_payload()),
-    )
-    transport = _configure(monkeypatch)
-
-    session = nvidia.start()
-    inventory = transport.record("hardware_inventory", {"gpu_uuid": "GPU-f81d4fae"})
-    session.shutdown()
-
-    assert inventory["attributes"]["pci_bus_id"] == "00000000:17:00.0"
-    assert inventory["attributes"]["source_temporality"] == telemetry.CURRENT_SNAPSHOT
-    assert not any(record["name"] == "communicators" for record in transport.records)
-
-
 def test_nccl_probe_emits_only_communicator_evidence(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
@@ -409,43 +383,6 @@ def test_nccl_probe_emits_only_communicator_evidence(
     assert poll_duration["kind"] == "histogram"
     assert not any(record["name"] == "hardware_inventory" for record in transport.records)
     assert not any(record["name"] == "collective_operations" for record in transport.records)
-
-
-def test_nvidia_probe_summarizes_healthy_devices_without_zero_error_rows(
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
-) -> None:
-    nvidia_row = (
-        "GPU-f81d4fae, 00000000:17:00.0, NVIDIA H100 80GB HBM3, 580.65.06, "
-        "81559, Default, Disabled, 700.00, 96.00.68.00.01, 0, 0, 0, No, 0, 0, No, No"
-    )
-    _install_commands(
-        monkeypatch,
-        tmp_path,
-        nvidia_source=f"print({nvidia_row!r})",
-        nccl_source="raise SystemExit(2)",
-    )
-    transport = _configure(monkeypatch)
-
-    session = nvidia.start()
-    available = transport.record("nvidia_health_available", {"outcome": "success"})
-    healthy = transport.record("gpu_devices", {"device_state": "healthy"})
-    session.shutdown()
-
-    assert available["value"] == 1
-    assert healthy["value"] == 1
-    assert not any(
-        record["name"]
-        in {
-            "gpu_ecc_uncorrected_errors",
-            "gpu_retired_pages",
-            "gpu_retired_pages_pending",
-            "gpu_row_remapped_rows",
-            "gpu_row_remap_pending",
-            "gpu_row_remap_failures",
-        }
-        for record in transport.records
-    )
 
 
 def test_nccl_probe_records_unavailable_service(
@@ -495,50 +432,6 @@ def test_nccl_probe_records_outer_deadline(
     assert not any(record["name"] == "communicators" for record in transport.records)
 
 
-def test_nvidia_probe_falls_back_to_stable_inventory_fields(
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
-) -> None:
-    baseline = "GPU-f81d4fae, 00000000:17:00.0, NVIDIA H100 80GB HBM3, 580.65.06, 81559"
-    nvidia_source = f"""
-import sys
-if 'compute_mode' in sys.argv[1]:
-    raise SystemExit(2)
-print({baseline!r})
-"""
-    _install_commands(monkeypatch, tmp_path, nvidia_source=nvidia_source, nccl_source="raise SystemExit(2)")
-    transport = _configure(monkeypatch)
-
-    session = nvidia.start()
-    memory = transport.record("gpu_memory_total_bytes", {"gpu_uuid": "GPU-f81d4fae"})
-    available = transport.record("nvidia_health_available", {"outcome": "success_baseline"})
-    session.shutdown()
-
-    assert memory["value"] == 81_559 * 1024**2
-    assert available["value"] == 1
-
-
-def test_output_limit_drops_one_probe_without_blocking_its_peer(
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
-) -> None:
-    _install_commands(
-        monkeypatch,
-        tmp_path,
-        nvidia_source="import os\nos.write(1, b'x' * 300_000)",
-        nccl_source=_nccl_source(nccl_ras_payload()),
-    )
-    transport = _configure(monkeypatch)
-
-    nvidia_session = nvidia.start()
-    nccl_session = nccl.start()
-    transport.record("communicators", {})
-    nvidia_session.shutdown()
-    nccl_session.shutdown()
-
-    assert not any(record["name"] == "hardware_inventory" for record in transport.records)
-
-
 def test_nccl_parent_output_limit_records_which_boundary_failed(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
@@ -560,52 +453,11 @@ def test_nccl_parent_output_limit_records_which_boundary_failed(
     assert result.client_output.limit_bytes == MAX_OUTPUT_BYTES
 
 
-def test_shutdown_cancels_and_reaps_active_probe_processes(
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
-) -> None:
-    nvidia_pid = tmp_path / "nvidia.pid"
-    nccl_pid = tmp_path / "nccl.pid"
-    blocking_source = """
-import os
-import pathlib
-import threading
-pathlib.Path(os.environ['PROBE_PID_PATH']).write_text(str(os.getpid()))
-threading.Event().wait(60)
-"""
-    _executable(tmp_path / "nvidia-smi", blocking_source)
-    _executable(tmp_path / "nccl-client", blocking_source)
-    monkeypatch.setattr(nccl, "_CLIENT_COMMAND", (str(tmp_path / "nccl-client"),))
-    monkeypatch.setenv("PATH", f"{tmp_path}:{os.environ['PATH']}")
-    monkeypatch.setenv("PROBE_PID_PATH", str(nvidia_pid))
-
-    # Give each command a distinct output path while retaining the real process boundary.
-    nccl_command = tmp_path / "nccl-client"
-    nccl_command.write_text(nccl_command.read_text().replace("PROBE_PID_PATH", "NCCL_PID_PATH"))
-    monkeypatch.setenv("NCCL_PID_PATH", str(nccl_pid))
-
-    nvidia_session = nvidia.start()
-    nccl_session = nccl.start()
-    deadline = time.monotonic() + 2
-    while not (nvidia_pid.exists() and nccl_pid.exists()) and time.monotonic() < deadline:
-        threading.Event().wait(0.001)
-    assert nvidia_pid.exists() and nccl_pid.exists()
-
-    started = time.monotonic()
-    nvidia_session.shutdown(0.5)
-    nccl_session.shutdown(0.5)
-
-    assert time.monotonic() - started < 1.2
-    for path in (nvidia_pid, nccl_pid):
-        with pytest.raises(ProcessLookupError):
-            os.kill(int(path.read_text()), 0)
-
-
 def test_import_does_not_start_probe_threads() -> None:
     code = """
 import threading
 before = {thread.ident for thread in threading.enumerate()}
-from rigging.telemetry.probes import nccl, nvidia
+from rigging.telemetry.probes import nccl
 after = [thread for thread in threading.enumerate() if thread.ident not in before]
 assert after == [], after
 """

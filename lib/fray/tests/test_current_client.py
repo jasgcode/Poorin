@@ -3,7 +3,6 @@
 
 """Tests for current_client() and set_current_client()."""
 
-
 import pytest
 from fray.current_client import current_client, set_current_client
 from fray.local_backend import LocalClient
@@ -28,5 +27,3 @@ def test_set_current_client_restores_on_exception():
         with set_current_client(explicit):
             raise RuntimeError("boom")
     assert current_client() is not explicit
-
-
