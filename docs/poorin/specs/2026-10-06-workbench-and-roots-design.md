@@ -76,6 +76,7 @@ unchanged, and `tools.*` joins in P1.
 | Evaluation | `levanter.main.eval_lm`, `levanter.eval_harness`, `levanter.main.perplexity_gap`, `experiments.evals.task_configs`, and `marin.evaluation.lm_eval`, `records`, `eval_stats`, `eval_measurements`, `metric_selection`, `rollouts`, `model_config`, `model_identity`, `eval_env`, `trace_labeled_eval` |
 | Scaling laws and the Delphi recipe | `marin.scaling_laws` and its submodules, `experiments.references.completed_adamh`, `experiments.grug.fast_track.heuristic` (which keeps fast-track's AdamH and MuonH) |
 | Post-training kit (D9) | `levanter.main.train_dpo`, `lora_lm`, `lora_dpo`, `sample_lm` |
+| SkyRL integration hooks (D68, added in P2) | `levanter.compat.hf_checkpoints`, `levanter.main.export_lm_to_hf`, `marin.datakit.chat_template` |
 | Plugin registries | `levanter.optim.*`, `levanter.data.text.*`, `levanter.tracker` (`tracker`, `wandb`, `json_logger`, `json_file`, `telemetry`), `levanter.models.llama` |
 
 The `static_only` list becomes empty: its two entries belonged to Harbor.

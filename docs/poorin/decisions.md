@@ -868,18 +868,21 @@ Plan: `plans/2026-10-07-p2-rl-stack.md`.
 - **Decision:** Marin's SkyRL glue goes (D6), but Poorin treats RL post-training through the
   owner's SkyRL fork as first-class. The fork (`skyrl-train`, the JAX backend `skyrl-tx`,
   `skyrl-gym` environments) imports nothing from Poorin, so Poorin keeps the hooks it plugs into:
-  Hugging Face export of Levanter and grug checkpoints (`levanter.compat.hf_checkpoints`), the chat
-  template (`marin.datakit.chat_template`), dispatch through the executor and Fray, Levanter's
-  inference engine and `sample_lm`, and evaluation records and rollouts. The first two become kept
-  roots, since nothing else guarantees they survive P7 and Pass 2; the others already are roots
-  or reached from them. A later sub-project designs the integration: launching SkyRL runs from the
-  executor, and moving checkpoints both ways.
+  Hugging Face export of Levanter checkpoints, during training (`hf_save_path`, through
+  `levanter.compat.hf_checkpoints`) or afterwards (`levanter.main.export_lm_to_hf`); the chat
+  template (`marin.datakit.chat_template`); dispatch through the executor and Fray; Levanter's
+  inference engine and `sample_lm`; and evaluation records and rollouts. The first three become
+  kept roots, since nothing else guarantees they survive P7 and Pass 2; the others already are
+  roots or reached from them. Grug models have no Hugging Face mapping yet (only the MoE variants
+  P7 deletes had one). A later sub-project designs the integration: a grug mapping, launching
+  SkyRL runs from the executor, and moving checkpoints both ways.
 - **Why:** The owner, 2026-10-07: delete Marin's integration directly, "but assume we have first
   class support."
 - **Alternatives:** Keep Verifyit's graders for RL rewards; the fork brings its own environments
   and rewards in `skyrl-gym`.
-- **Cost if wrong:** Two kept roots that keep `transformers` reachable.
-- **Landed:** `[poorin] Keep the hooks a SkyRL integration needs as roots`.
+- **Cost if wrong:** Three kept roots that keep `transformers` reachable.
+- **Landed:** `[poorin] Keep the hooks a SkyRL integration needs as roots`; the export entry point
+  joined after P2's final review.
 
 ### D69. Verifyit leaves with Harbor and Evalchemy in P3
 
@@ -908,7 +911,8 @@ Known gaps left open on purpose. Each names where it gets resolved.
 | The cross-attention case in `test_attention.py` is non-causal, so it never exercises the `q_len != k_len` guard in `_fa4_supports` | P0 review | Open |
 | `test_append_metrics_row_rejects_a_row_with_missing_columns` is a guard test under `TESTING.md` | P0 review | Open |
 | About 125 MB of untracked `logs/` and `wandb/` entries from P0's check runs sit in the checkout | P0 | Open; delete on request |
-| Set up `projects/` as a git-ignored, nested uv workspace member for `looped-diffusion-lm`, and scan `projects/*` for prune roots | D52 | The phase after P1 |
+| Set up `projects/` as a git-ignored, nested uv workspace member for `looped-diffusion-lm`, and scan `projects/*` for prune roots | D52 | When `looped-diffusion-lm` has code (D67) |
+| Design the SkyRL integration: a Hugging Face mapping for grug, launching the owner's SkyRL fork from the executor, and moving checkpoints both ways | D68 | A later sub-project |
 | `tools.lint --all-files` reports two files under `infra/`: a TypeScript config with comments, and the old linter's own conflict-marker strings | P1 Task 2 | P1 Task 7 |
 | `--ignore` skips a file found in a directory but not one passed by name, so a change that selects `test_tensorboard.py` through its imports still collects it, and it fails on `tensorboardX` | D56 | D61 |
 | ty's 231 warnings | D54 | Pass 2 |

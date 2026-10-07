@@ -59,9 +59,10 @@ modules = [
     "levanter.main.lora_lm",
     "levanter.main.lora_dpo",
     "levanter.main.sample_lm",
-    # Hooks for RL post-training through the owner's SkyRL fork (D68): it loads Poorin checkpoints
-    # as Hugging Face weights and renders chats with Marin's template.
+    # Hooks for RL post-training through the owner's SkyRL fork (D68): Hugging Face export of
+    # Levanter checkpoints, during training or after it, and Marin's chat template.
     "levanter.compat.hf_checkpoints",
+    "levanter.main.export_lm_to_hf",
     "marin.datakit.chat_template",
     # Plugin registry members: draccus finds these by name, so static imports do not reach them.
     "levanter.optim.*",

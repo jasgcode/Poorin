@@ -89,7 +89,7 @@ can proceed in parallel with 7a. 4 needs 3 and 7a.
 | `finelog` | Log and metrics store: typed tables, SQL queries, process logs, Parquet storage on disk or object storage, forwarding between servers. Python client in the repository; server written in Rust. | Trimmed in P6 to its Python client; the server comes from the published `marin-finelog-server` wheel |
 | `ducky` | DuckDB SQL service for object-store Parquet | Deleted in P4 |
 | `dupekit` | Rust text-deduplication kernels | Kept: normalize, dedup, and decontamination import it (amendment of 2026-10-06) |
-| `verifyit`, `shellbox`, `taskcompendium` | Grading, sandboxed shell environments, and task presentation for RL | Deleted in P2 |
+| `verifyit`, `shellbox`, `taskcompendium` | Grading, sandboxed shell environments, and task presentation for RL | Deleted in P2; Verifyit in P3 (D69) |
 
 ### Spike 0 results that shape this design
 
@@ -255,8 +255,8 @@ them with `tools/reachability.py`.
 |---|---|---|
 | P0 Setup | Tag `upstream-baseline`. Delete `.github/workflows` (37 workflows and a README; the fork is public and has Actions enabled). Add the tools and roots file. Add the `rtx5090x1` device to R1 and an RTX 5090 entry to `fray.device_flops`. Make R2 local-first. Apply the spike fixes assigned to P0 below. Add the spike note. Record the baseline metrics row. | adds ~0.5k |
 | P1 Fleet operations | Delete `infra/`, `scripts/`, `docker/`, and `etc/`. Replace `infra/pre-commit.py` with a root-level lint entry point (see below). Replace `config/marin.yaml` and `config/coreweave.yaml` with `config/local.yaml`, which declares no region buckets, and change the default of `MARIN_CLUSTER` in `rigging.filesystem.cluster_config` from `marin` to `local`. `MARIN_PREFIX` keeps pointing outputs at local disk. Rewrite `AGENTS.md` and prune `.agents/skills/` (see below). P1 also deleted the ferries, the GitHub configuration, the Makefile, and Marin's agent notes; replaced pyrefly with ty and black with ruff format (D49, D50); moved Marin's cluster configs to `config/testing/` as test fixtures; and replaced the kept roots (D47, D48). See `docs/poorin/plans/2026-10-05-p1-fleet-operations.md`. | ~87k |
-| P2 RL stack | `marin.rl`, `experiments/post_training`, `lib/verifyit`, `lib/shellbox`, `lib/taskcompendium` | ~47k |
-| P3 LLM serving and evaluation orchestration | `marin.inference` (after moving `types.py`), the fleet orchestration and cohort-policy modules of `marin.evaluation`, `marin.experiment.evaluation`, `marin.mcp`, `eval_policy/`, the Python files of `experiments/evaluation` (its `configs/` stay); see "Deleted regardless of reachability" for the edges to cut | ~19k |
+| P2 RL stack | `marin.rl`, `experiments/post_training`, `lib/shellbox`, `lib/taskcompendium`. Verifyit moved to P3 (D69). P2 also made the hooks a SkyRL integration needs kept roots (D68). See `docs/poorin/plans/2026-10-07-p2-rl-stack.md`. | ~47k |
+| P3 LLM serving and evaluation orchestration | `lib/verifyit` (D69), `marin.inference` (after moving `types.py`), the fleet orchestration and cohort-policy modules of `marin.evaluation`, `marin.experiment.evaluation`, `marin.mcp`, `eval_policy/`, the Python files of `experiments/evaluation` (its `configs/` stay); see "Deleted regardless of reachability" for the edges to cut | ~19k |
 | P4 Data services | `lib/ducky` (Dupekit stays; see the amendment) | ~4k |
 | P5 Iris | Three steps, P5a to P5c; see the next section | ~151k (84k source, 67k tests) |
 | P6 Orphans and Finelog trim | Code that only Iris kept reachable. Trim `lib/finelog` to its Python client (`client/`, `rpc/`, top-level modules, and their tests): delete `rust/` (69k lines of Rust), `deploy/`, `benchmarks/`, `dashboard/`, and its operations docs. Pin `marin-finelog-server==0.2.46.dev33324331711`, the version installed at baseline. | ~7k Python, 69k Rust |

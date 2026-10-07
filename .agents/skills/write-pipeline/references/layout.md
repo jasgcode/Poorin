@@ -6,7 +6,7 @@ Use these examples for the decision they illustrate, not as templates to copy wh
 | --- | --- | --- |
 | Reusable tokenization behavior and its result type | `lib/marin/src/marin/processing/tokenize/` | `tokenize.py` provides the work function and `TokenizedCache`. |
 | Dataset identity, source pins, and selection | `experiments/datasets/` | `nemotron.py` builds keyed handles; mixture weights belong to the consuming experiment. |
-| Experiment-specific DAG and tests | Beside the experiment | `experiments/grug/base/launch.py` builds its training run as a lazy artifact; `tests/test_grug_variant_contracts.py` checks every grug variant's contract. |
+| Experiment-specific DAG and tests | Beside the experiment | None today. The nearest is `experiments/grug/base/launch.py`, which builds one training artifact; `tests/test_grug_variant_contracts.py` in the root `tests/` checks it with every other grug variant. |
 | Custom analysis and training stages | `experiments/` for binding; `lib/` for reusable work | `experiments/references/reference_scaling_suite.py` declares dependencies, versions, resources, and a result-dependent training config. |
 
 `experiments/references/reference_training_pipeline.py` shows a two-pass workflow when the second graph depends on data discovered by the first. Do not make every pipeline two-pass. The reference pipeline keeps workflow decisions in `experiments/**`, but also contains concrete work tied to one experiment; promote that work only when it has a real reuse case.
