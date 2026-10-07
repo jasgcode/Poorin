@@ -359,9 +359,7 @@ def test_start_controller_creates_controller_resources():
     assert {
         "name": "local-state",
         "persistentVolumeClaim": {"claimName": _CONTROLLER_STATE_PVC_NAME},
-    } in deploy_spec[
-        "template"
-    ]["spec"]["volumes"]
+    } in deploy_spec["template"]["spec"]["volumes"]
 
     pvc = k8s.get_json(K8sResource.PERSISTENT_VOLUME_CLAIMS, _CONTROLLER_STATE_PVC_NAME)
     assert pvc["spec"]["accessModes"] == ["ReadWriteOnce"]

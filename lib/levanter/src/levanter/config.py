@@ -169,7 +169,6 @@ def _maybe_get_config_path_and_cmdline_args(args: List[str]):
         config_path_index -= 1
 
         while config_path_index < len(args) and not args[config_path_index].startswith("-"):
-
             config_path = args[config_path_index]
 
             if urllib.parse.urlparse(config_path).scheme:

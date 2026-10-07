@@ -24,9 +24,9 @@ def test_apply_rotary_pos_emb(test_seq_len):
     hf_rotate_half = modeling_llama.rotate_half
 
     def assert_equal_out(hax_out, torch_out: torch.Tensor):
-        assert np.isclose(
-            torch_out.numpy(), np.array(hax_out.array), rtol=1e-2, atol=1e-2
-        ).all(), f"{torch_out} != {hax_out}"
+        assert np.isclose(torch_out.numpy(), np.array(hax_out.array), rtol=1e-2, atol=1e-2).all(), (
+            f"{torch_out} != {hax_out}"
+        )
 
     def named_array_to_tensor(named_array):
         return torch.from_numpy(np.array(named_array.array))

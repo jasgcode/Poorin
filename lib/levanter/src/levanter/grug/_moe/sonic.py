@@ -148,8 +148,7 @@ else:
 def _require_sonic_deps() -> None:
     if jt is None or _sonic_token_gather_sum_kernel is None or _sonic_token_gather_sum_bwd_kernel is None:
         raise ImportError(
-            "implementation='sonic' requires jax-triton and triton; install the gpu extra for marin-levanter "
-            "or marin."
+            "implementation='sonic' requires jax-triton and triton; install the gpu extra for marin-levanter or marin."
         )
     if not os.environ.get("TRITON_CACHE_DIR"):
         os.environ["TRITON_CACHE_DIR"] = _DEFAULT_TRITON_CACHE_DIR

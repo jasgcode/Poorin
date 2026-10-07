@@ -56,8 +56,7 @@ GSM8K_COT_FEWSHOT_EXAMPLES: tuple[tuple[str, str], ...] = (
         "So he gave Denny 20 - 12 = 8. The answer is 8.",
     ),
     (
-        "Shawn has five toys. For Christmas, he got two toys each from his mom and dad. "
-        "How many toys does he have now?",
+        "Shawn has five toys. For Christmas, he got two toys each from his mom and dad. How many toys does he have now?",
         "Shawn started with 5 toys. If he got 2 toys each from his mom and dad, then that is 4 more toys. "
         "5 + 4 = 9. The answer is 9.",
     ),

@@ -6,6 +6,7 @@ Imported by the ``generate_*.py`` scripts under the same directory. This
 module is not a PEP 723 script itself — the importing scripts pull in the
 runtime deps via their ``# /// script`` blocks.
 """
+
 import argparse
 import gzip
 import io

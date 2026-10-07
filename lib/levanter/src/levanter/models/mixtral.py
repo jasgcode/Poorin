@@ -118,14 +118,12 @@ class MixtralConfig(MistralConfig):
 
     def __post_init__(self):
         super().__post_init__()
-        assert (
-            self.num_experts_per_tok <= self.n_routed_experts
-        ), f"num_experts_per_tok={self.num_experts_per_tok} greater than by n_routed_experts={self.n_routed_experts}."
+        assert self.num_experts_per_tok <= self.n_routed_experts, (
+            f"num_experts_per_tok={self.num_experts_per_tok} greater than by n_routed_experts={self.n_routed_experts}."
+        )
 
     # config-reuse subclass narrows to its own HF config/model type (LSP narrowing; pyrefly flags the same)
-    def hf_checkpoint_converter(
-        self, ref_checkpoint: Optional[str] = None
-    ) -> HFCheckpointConverter["MixtralConfig"]:  # type: ignore
+    def hf_checkpoint_converter(self, ref_checkpoint: Optional[str] = None) -> HFCheckpointConverter["MixtralConfig"]:  # type: ignore
         return HFCheckpointConverter(
             self.__class__,
             reference_checkpoint=self.reference_checkpoint if ref_checkpoint is None else ref_checkpoint,
@@ -155,9 +153,7 @@ class MixtralConfig(MistralConfig):
             lbl_coef=hf_config.router_aux_loss_coef,
         )
 
-    def to_hf_config(
-        self, vocab_size: int, config_overrides: Optional[Dict] = None
-    ) -> HfMixtralConfig:  # ty: ignore[invalid-method-override]
+    def to_hf_config(self, vocab_size: int, config_overrides: Optional[Dict] = None) -> HfMixtralConfig:  # ty: ignore[invalid-method-override]
         """Convert to HuggingFace's MistralConfig
 
         Args:

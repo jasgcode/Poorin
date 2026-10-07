@@ -953,8 +953,7 @@ class TaskAttempt:
                         )
                         self._append_log(
                             source=INJECTED_ERROR_SOURCE,
-                            data=f"iris: TPU bad-node signature detected ({tpu_pattern!r}); "
-                            "reporting as worker failure",
+                            data=f"iris: TPU bad-node signature detected ({tpu_pattern!r}); reporting as worker failure",
                         )
                         return _TaskOutcome(
                             job_pb2.TASK_STATE_WORKER_FAILED,

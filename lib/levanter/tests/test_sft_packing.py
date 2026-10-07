@@ -7,6 +7,7 @@ documents cannot attend across segment boundaries, that the per-token loss weigh
 charges exactly the shifted `{% generation %}` spans, and that packing a batch does
 not change the per-document next-token loss.
 """
+
 from __future__ import annotations
 
 import asyncio

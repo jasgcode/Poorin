@@ -1282,7 +1282,9 @@ def _task_update_from_pod(entry: RunningTaskEntry, pod: dict, workload: dict | N
         error=(
             None
             if new_state == job_pb2.TASK_STATE_SUCCEEDED
-            else terminal_reason if new_state == job_pb2.TASK_STATE_PREEMPTED else _extract_error(pod)
+            else terminal_reason
+            if new_state == job_pb2.TASK_STATE_PREEMPTED
+            else _extract_error(pod)
         ),
         status_message="",
         terminal_reason=terminal_reason,

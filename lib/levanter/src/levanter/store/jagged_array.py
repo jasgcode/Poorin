@@ -173,7 +173,6 @@ def _prepare_batch(arrays, item_rank):
     if item_rank > 1:
         shapes = np.array([data.shape[:-1] for data in arrays], dtype=np.int64)
     else:
-
         shapes = None
 
     # check shapes

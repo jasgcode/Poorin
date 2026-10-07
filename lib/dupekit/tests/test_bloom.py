@@ -165,9 +165,9 @@ def test_chunked_write() -> None:
     huge_bloom.save(huge_tracker)
 
     # With 32MB chunks, a ~115MB filter should have 4+ writes (1 for k + 3+ chunks)
-    assert (
-        len(huge_tracker.write_calls) >= 4
-    ), f"Expected 4+ writes for large filter, got {len(huge_tracker.write_calls)}"
+    assert len(huge_tracker.write_calls) >= 4, (
+        f"Expected 4+ writes for large filter, got {len(huge_tracker.write_calls)}"
+    )
 
     # Verify each chunk after k value is <= 32MB
     CHUNK_SIZE = 32 * 1024 * 1024

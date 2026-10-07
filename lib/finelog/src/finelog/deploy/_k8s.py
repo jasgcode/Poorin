@@ -77,8 +77,7 @@ def _s3_env(cfg: FinelogConfig) -> dict[str, str]:
     k8s = cfg.deployment.k8s
     if not k8s.object_storage_endpoint:
         raise click.ClickException(
-            f"finelog config {cfg.name!r}: remote_log_dir is s3:// but "
-            "deployment.k8s.object_storage_endpoint is unset"
+            f"finelog config {cfg.name!r}: remote_log_dir is s3:// but deployment.k8s.object_storage_endpoint is unset"
         )
     key_id = os.environ.get("R2_KEY_ID")
     key_secret = os.environ.get("R2_KEY_SECRET")

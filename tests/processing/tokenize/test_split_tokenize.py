@@ -7,6 +7,7 @@ Unit tests cover the pure helpers (``attach_id``, ``IdPreservingPreprocessor``).
 The integration test exercises the A→B pipeline end-to-end against the legacy
 ``tokenize()`` path on a tiny local parquet fixture.
 """
+
 import json
 import os
 
@@ -259,7 +260,6 @@ def test_split_pipeline_matches_legacy_tokenize(tmp_path, monkeypatch):
     raw_dir.mkdir()
     raw_path = raw_dir / "data.jsonl"
     with open(raw_path, "w") as f:
-
         for t in texts:
             f.write(json.dumps({"text": t}) + "\n")
 

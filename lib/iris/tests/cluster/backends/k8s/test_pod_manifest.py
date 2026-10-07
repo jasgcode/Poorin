@@ -341,9 +341,9 @@ def test_pod_annotation_preserves_full_task_id_for_node_metrics():
 def test_pod_name_different_tasks_never_collide():
     task_a = JobName.from_wire("/a" * 40 + "-suffix-1")
     task_b = JobName.from_wire("/a" * 40 + "-suffix-2")
-    assert _pod_name(task_a, 1) != _pod_name(
-        task_b, 1
-    ), "sibling tasks with the same long prefix must have different pod names"
+    assert _pod_name(task_a, 1) != _pod_name(task_b, 1), (
+        "sibling tasks with the same long prefix must have different pod names"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -886,9 +886,9 @@ def test_cache_env_points_at_mounted_cache_volumes():
     # anywhere else lands on the container layer and re-downloads every task.
     for var in ("UV_CACHE_DIR", "UV_PYTHON_INSTALL_DIR", "HF_HUB_CACHE", "CARGO_HOME", "CARGO_TARGET_DIR"):
         value = env[var]
-        assert any(
-            value == mount or value.startswith(f"{mount}/") for mount in cache_mounts
-        ), f"{var}={value} is not under a cache mount ({cache_mounts}); it would land on the container layer"
+        assert any(value == mount or value.startswith(f"{mount}/") for mount in cache_mounts), (
+            f"{var}={value} is not under a cache mount ({cache_mounts}); it would land on the container layer"
+        )
 
     # HF_HOME carries the submitter's HF_TOKEN, so it must NOT be redirected onto
     # a node-shared cache directory that every other task on the node can read.

@@ -19,96 +19,161 @@ from . import query_pb2 as query__pb2
 
 
 class ControllerService(Protocol):
-    async def launch_job(self, request: controller__pb2.Controller.LaunchJobRequest, ctx: RequestContext) -> controller__pb2.Controller.LaunchJobResponse:
+    async def launch_job(
+        self, request: controller__pb2.Controller.LaunchJobRequest, ctx: RequestContext
+    ) -> controller__pb2.Controller.LaunchJobResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def get_job_status(self, request: controller__pb2.Controller.GetJobStatusRequest, ctx: RequestContext) -> controller__pb2.Controller.GetJobStatusResponse:
+    async def get_job_status(
+        self, request: controller__pb2.Controller.GetJobStatusRequest, ctx: RequestContext
+    ) -> controller__pb2.Controller.GetJobStatusResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def get_job_state(self, request: controller__pb2.Controller.GetJobStateRequest, ctx: RequestContext) -> controller__pb2.Controller.GetJobStateResponse:
+    async def get_job_state(
+        self, request: controller__pb2.Controller.GetJobStateRequest, ctx: RequestContext
+    ) -> controller__pb2.Controller.GetJobStateResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def terminate_job(self, request: controller__pb2.Controller.TerminateJobRequest, ctx: RequestContext) -> job__pb2.Empty:
+    async def terminate_job(
+        self, request: controller__pb2.Controller.TerminateJobRequest, ctx: RequestContext
+    ) -> job__pb2.Empty:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def complete_job(self, request: controller__pb2.Controller.CompleteJobRequest, ctx: RequestContext) -> job__pb2.Empty:
+    async def complete_job(
+        self, request: controller__pb2.Controller.CompleteJobRequest, ctx: RequestContext
+    ) -> job__pb2.Empty:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def list_jobs(self, request: controller__pb2.Controller.ListJobsRequest, ctx: RequestContext) -> controller__pb2.Controller.ListJobsResponse:
+    async def list_jobs(
+        self, request: controller__pb2.Controller.ListJobsRequest, ctx: RequestContext
+    ) -> controller__pb2.Controller.ListJobsResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def get_task_status(self, request: controller__pb2.Controller.GetTaskStatusRequest, ctx: RequestContext) -> controller__pb2.Controller.GetTaskStatusResponse:
+    async def get_task_status(
+        self, request: controller__pb2.Controller.GetTaskStatusRequest, ctx: RequestContext
+    ) -> controller__pb2.Controller.GetTaskStatusResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def list_tasks(self, request: controller__pb2.Controller.ListTasksRequest, ctx: RequestContext) -> controller__pb2.Controller.ListTasksResponse:
+    async def list_tasks(
+        self, request: controller__pb2.Controller.ListTasksRequest, ctx: RequestContext
+    ) -> controller__pb2.Controller.ListTasksResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def kick_tasks(self, request: controller__pb2.Controller.KickTasksRequest, ctx: RequestContext) -> controller__pb2.Controller.KickTasksResponse:
+    async def kick_tasks(
+        self, request: controller__pb2.Controller.KickTasksRequest, ctx: RequestContext
+    ) -> controller__pb2.Controller.KickTasksResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def register(self, request: controller__pb2.Controller.RegisterRequest, ctx: RequestContext) -> controller__pb2.Controller.RegisterResponse:
+    async def register(
+        self, request: controller__pb2.Controller.RegisterRequest, ctx: RequestContext
+    ) -> controller__pb2.Controller.RegisterResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def list_workers(self, request: controller__pb2.Controller.ListWorkersRequest, ctx: RequestContext) -> controller__pb2.Controller.ListWorkersResponse:
+    async def list_workers(
+        self, request: controller__pb2.Controller.ListWorkersRequest, ctx: RequestContext
+    ) -> controller__pb2.Controller.ListWorkersResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def mint_endpoint_token(self, request: controller__pb2.Controller.MintEndpointTokenRequest, ctx: RequestContext) -> controller__pb2.Controller.MintEndpointTokenResponse:
+    async def mint_endpoint_token(
+        self, request: controller__pb2.Controller.MintEndpointTokenRequest, ctx: RequestContext
+    ) -> controller__pb2.Controller.MintEndpointTokenResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def get_autoscaler_status(self, request: controller__pb2.Controller.GetAutoscalerStatusRequest, ctx: RequestContext) -> controller__pb2.Controller.GetAutoscalerStatusResponse:
+    async def get_autoscaler_status(
+        self, request: controller__pb2.Controller.GetAutoscalerStatusRequest, ctx: RequestContext
+    ) -> controller__pb2.Controller.GetAutoscalerStatusResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def list_users(self, request: controller__pb2.Controller.ListUsersRequest, ctx: RequestContext) -> controller__pb2.Controller.ListUsersResponse:
+    async def list_users(
+        self, request: controller__pb2.Controller.ListUsersRequest, ctx: RequestContext
+    ) -> controller__pb2.Controller.ListUsersResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def profile_task(self, request: job__pb2.ProfileTaskRequest, ctx: RequestContext) -> job__pb2.ProfileTaskResponse:
+    async def profile_task(
+        self, request: job__pb2.ProfileTaskRequest, ctx: RequestContext
+    ) -> job__pb2.ProfileTaskResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def exec_in_container(self, request: controller__pb2.Controller.ExecInContainerRequest, ctx: RequestContext) -> controller__pb2.Controller.ExecInContainerResponse:
+    async def exec_in_container(
+        self, request: controller__pb2.Controller.ExecInContainerRequest, ctx: RequestContext
+    ) -> controller__pb2.Controller.ExecInContainerResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def get_worker_status(self, request: controller__pb2.Controller.GetWorkerStatusRequest, ctx: RequestContext) -> controller__pb2.Controller.GetWorkerStatusResponse:
+    async def get_worker_status(
+        self, request: controller__pb2.Controller.GetWorkerStatusRequest, ctx: RequestContext
+    ) -> controller__pb2.Controller.GetWorkerStatusResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def begin_checkpoint(self, request: controller__pb2.Controller.BeginCheckpointRequest, ctx: RequestContext) -> controller__pb2.Controller.BeginCheckpointResponse:
+    async def begin_checkpoint(
+        self, request: controller__pb2.Controller.BeginCheckpointRequest, ctx: RequestContext
+    ) -> controller__pb2.Controller.BeginCheckpointResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def get_process_status(self, request: job__pb2.GetProcessStatusRequest, ctx: RequestContext) -> job__pb2.GetProcessStatusResponse:
+    async def get_process_status(
+        self, request: job__pb2.GetProcessStatusRequest, ctx: RequestContext
+    ) -> job__pb2.GetProcessStatusResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def get_current_user(self, request: job__pb2.GetCurrentUserRequest, ctx: RequestContext) -> job__pb2.GetCurrentUserResponse:
+    async def get_current_user(
+        self, request: job__pb2.GetCurrentUserRequest, ctx: RequestContext
+    ) -> job__pb2.GetCurrentUserResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def get_kubernetes_cluster_status(self, request: controller__pb2.Controller.GetKubernetesClusterStatusRequest, ctx: RequestContext) -> controller__pb2.Controller.GetKubernetesClusterStatusResponse:
+    async def get_kubernetes_cluster_status(
+        self, request: controller__pb2.Controller.GetKubernetesClusterStatusRequest, ctx: RequestContext
+    ) -> controller__pb2.Controller.GetKubernetesClusterStatusResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def execute_raw_query(self, request: query__pb2.RawQueryRequest, ctx: RequestContext) -> query__pb2.RawQueryResponse:
+    async def execute_raw_query(
+        self, request: query__pb2.RawQueryRequest, ctx: RequestContext
+    ) -> query__pb2.RawQueryResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def set_user_budget(self, request: controller__pb2.Controller.SetUserBudgetRequest, ctx: RequestContext) -> controller__pb2.Controller.SetUserBudgetResponse:
+    async def set_user_budget(
+        self, request: controller__pb2.Controller.SetUserBudgetRequest, ctx: RequestContext
+    ) -> controller__pb2.Controller.SetUserBudgetResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def get_user_budget(self, request: controller__pb2.Controller.GetUserBudgetRequest, ctx: RequestContext) -> controller__pb2.Controller.GetUserBudgetResponse:
+    async def get_user_budget(
+        self, request: controller__pb2.Controller.GetUserBudgetRequest, ctx: RequestContext
+    ) -> controller__pb2.Controller.GetUserBudgetResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def list_user_budgets(self, request: controller__pb2.Controller.ListUserBudgetsRequest, ctx: RequestContext) -> controller__pb2.Controller.ListUserBudgetsResponse:
+    async def list_user_budgets(
+        self, request: controller__pb2.Controller.ListUserBudgetsRequest, ctx: RequestContext
+    ) -> controller__pb2.Controller.ListUserBudgetsResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def get_scheduler_state(self, request: controller__pb2.Controller.GetSchedulerStateRequest, ctx: RequestContext) -> controller__pb2.Controller.GetSchedulerStateResponse:
+    async def get_scheduler_state(
+        self, request: controller__pb2.Controller.GetSchedulerStateRequest, ctx: RequestContext
+    ) -> controller__pb2.Controller.GetSchedulerStateResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def list_backends(self, request: controller__pb2.Controller.ListBackendsRequest, ctx: RequestContext) -> controller__pb2.Controller.ListBackendsResponse:
+    async def list_backends(
+        self, request: controller__pb2.Controller.ListBackendsRequest, ctx: RequestContext
+    ) -> controller__pb2.Controller.ListBackendsResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def list_peers(self, request: controller__pb2.Controller.ListPeersRequest, ctx: RequestContext) -> controller__pb2.Controller.ListPeersResponse:
+    async def list_peers(
+        self, request: controller__pb2.Controller.ListPeersRequest, ctx: RequestContext
+    ) -> controller__pb2.Controller.ListPeersResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def federation_sync(self, request: controller__pb2.Controller.FederationSyncRequest, ctx: RequestContext) -> controller__pb2.Controller.FederationSyncResponse:
+    async def federation_sync(
+        self, request: controller__pb2.Controller.FederationSyncRequest, ctx: RequestContext
+    ) -> controller__pb2.Controller.FederationSyncResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
 
 class ControllerServiceASGIApplication(ConnectASGIApplication[ControllerService]):
-    def __init__(self, service: ControllerService | AsyncGenerator[ControllerService], *, interceptors: Iterable[Interceptor]=(), read_max_bytes: int | None = None, compressions: Iterable[Compression] | None = None) -> None:
+    def __init__(
+        self,
+        service: ControllerService | AsyncGenerator[ControllerService],
+        *,
+        interceptors: Iterable[Interceptor] = (),
+        read_max_bytes: int | None = None,
+        compressions: Iterable[Compression] | None = None,
+    ) -> None:
         super().__init__(
             service=service,
             endpoints=lambda svc: {
@@ -996,20 +1061,32 @@ class ControllerServiceClient(ConnectClient):
         )
 
 
-
 class EndpointService(Protocol):
-    async def register_endpoint(self, request: controller__pb2.Controller.RegisterEndpointRequest, ctx: RequestContext) -> controller__pb2.Controller.RegisterEndpointResponse:
+    async def register_endpoint(
+        self, request: controller__pb2.Controller.RegisterEndpointRequest, ctx: RequestContext
+    ) -> controller__pb2.Controller.RegisterEndpointResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def unregister_endpoint(self, request: controller__pb2.Controller.UnregisterEndpointRequest, ctx: RequestContext) -> job__pb2.Empty:
+    async def unregister_endpoint(
+        self, request: controller__pb2.Controller.UnregisterEndpointRequest, ctx: RequestContext
+    ) -> job__pb2.Empty:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def list_endpoints(self, request: controller__pb2.Controller.ListEndpointsRequest, ctx: RequestContext) -> controller__pb2.Controller.ListEndpointsResponse:
+    async def list_endpoints(
+        self, request: controller__pb2.Controller.ListEndpointsRequest, ctx: RequestContext
+    ) -> controller__pb2.Controller.ListEndpointsResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
 
 class EndpointServiceASGIApplication(ConnectASGIApplication[EndpointService]):
-    def __init__(self, service: EndpointService | AsyncGenerator[EndpointService], *, interceptors: Iterable[Interceptor]=(), read_max_bytes: int | None = None, compressions: Iterable[Compression] | None = None) -> None:
+    def __init__(
+        self,
+        service: EndpointService | AsyncGenerator[EndpointService],
+        *,
+        interceptors: Iterable[Interceptor] = (),
+        read_max_bytes: int | None = None,
+        compressions: Iterable[Compression] | None = None,
+    ) -> None:
         super().__init__(
             service=service,
             endpoints=lambda svc: {
@@ -1118,68 +1195,156 @@ class EndpointServiceClient(ConnectClient):
 
 
 class ControllerServiceSync(Protocol):
-    def launch_job(self, request: controller__pb2.Controller.LaunchJobRequest, ctx: RequestContext) -> controller__pb2.Controller.LaunchJobResponse:
+    def launch_job(
+        self, request: controller__pb2.Controller.LaunchJobRequest, ctx: RequestContext
+    ) -> controller__pb2.Controller.LaunchJobResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-    def get_job_status(self, request: controller__pb2.Controller.GetJobStatusRequest, ctx: RequestContext) -> controller__pb2.Controller.GetJobStatusResponse:
+
+    def get_job_status(
+        self, request: controller__pb2.Controller.GetJobStatusRequest, ctx: RequestContext
+    ) -> controller__pb2.Controller.GetJobStatusResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-    def get_job_state(self, request: controller__pb2.Controller.GetJobStateRequest, ctx: RequestContext) -> controller__pb2.Controller.GetJobStateResponse:
+
+    def get_job_state(
+        self, request: controller__pb2.Controller.GetJobStateRequest, ctx: RequestContext
+    ) -> controller__pb2.Controller.GetJobStateResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-    def terminate_job(self, request: controller__pb2.Controller.TerminateJobRequest, ctx: RequestContext) -> job__pb2.Empty:
+
+    def terminate_job(
+        self, request: controller__pb2.Controller.TerminateJobRequest, ctx: RequestContext
+    ) -> job__pb2.Empty:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-    def complete_job(self, request: controller__pb2.Controller.CompleteJobRequest, ctx: RequestContext) -> job__pb2.Empty:
+
+    def complete_job(
+        self, request: controller__pb2.Controller.CompleteJobRequest, ctx: RequestContext
+    ) -> job__pb2.Empty:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-    def list_jobs(self, request: controller__pb2.Controller.ListJobsRequest, ctx: RequestContext) -> controller__pb2.Controller.ListJobsResponse:
+
+    def list_jobs(
+        self, request: controller__pb2.Controller.ListJobsRequest, ctx: RequestContext
+    ) -> controller__pb2.Controller.ListJobsResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-    def get_task_status(self, request: controller__pb2.Controller.GetTaskStatusRequest, ctx: RequestContext) -> controller__pb2.Controller.GetTaskStatusResponse:
+
+    def get_task_status(
+        self, request: controller__pb2.Controller.GetTaskStatusRequest, ctx: RequestContext
+    ) -> controller__pb2.Controller.GetTaskStatusResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-    def list_tasks(self, request: controller__pb2.Controller.ListTasksRequest, ctx: RequestContext) -> controller__pb2.Controller.ListTasksResponse:
+
+    def list_tasks(
+        self, request: controller__pb2.Controller.ListTasksRequest, ctx: RequestContext
+    ) -> controller__pb2.Controller.ListTasksResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-    def kick_tasks(self, request: controller__pb2.Controller.KickTasksRequest, ctx: RequestContext) -> controller__pb2.Controller.KickTasksResponse:
+
+    def kick_tasks(
+        self, request: controller__pb2.Controller.KickTasksRequest, ctx: RequestContext
+    ) -> controller__pb2.Controller.KickTasksResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-    def register(self, request: controller__pb2.Controller.RegisterRequest, ctx: RequestContext) -> controller__pb2.Controller.RegisterResponse:
+
+    def register(
+        self, request: controller__pb2.Controller.RegisterRequest, ctx: RequestContext
+    ) -> controller__pb2.Controller.RegisterResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-    def list_workers(self, request: controller__pb2.Controller.ListWorkersRequest, ctx: RequestContext) -> controller__pb2.Controller.ListWorkersResponse:
+
+    def list_workers(
+        self, request: controller__pb2.Controller.ListWorkersRequest, ctx: RequestContext
+    ) -> controller__pb2.Controller.ListWorkersResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-    def mint_endpoint_token(self, request: controller__pb2.Controller.MintEndpointTokenRequest, ctx: RequestContext) -> controller__pb2.Controller.MintEndpointTokenResponse:
+
+    def mint_endpoint_token(
+        self, request: controller__pb2.Controller.MintEndpointTokenRequest, ctx: RequestContext
+    ) -> controller__pb2.Controller.MintEndpointTokenResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-    def get_autoscaler_status(self, request: controller__pb2.Controller.GetAutoscalerStatusRequest, ctx: RequestContext) -> controller__pb2.Controller.GetAutoscalerStatusResponse:
+
+    def get_autoscaler_status(
+        self, request: controller__pb2.Controller.GetAutoscalerStatusRequest, ctx: RequestContext
+    ) -> controller__pb2.Controller.GetAutoscalerStatusResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-    def list_users(self, request: controller__pb2.Controller.ListUsersRequest, ctx: RequestContext) -> controller__pb2.Controller.ListUsersResponse:
+
+    def list_users(
+        self, request: controller__pb2.Controller.ListUsersRequest, ctx: RequestContext
+    ) -> controller__pb2.Controller.ListUsersResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
+
     def profile_task(self, request: job__pb2.ProfileTaskRequest, ctx: RequestContext) -> job__pb2.ProfileTaskResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-    def exec_in_container(self, request: controller__pb2.Controller.ExecInContainerRequest, ctx: RequestContext) -> controller__pb2.Controller.ExecInContainerResponse:
+
+    def exec_in_container(
+        self, request: controller__pb2.Controller.ExecInContainerRequest, ctx: RequestContext
+    ) -> controller__pb2.Controller.ExecInContainerResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-    def get_worker_status(self, request: controller__pb2.Controller.GetWorkerStatusRequest, ctx: RequestContext) -> controller__pb2.Controller.GetWorkerStatusResponse:
+
+    def get_worker_status(
+        self, request: controller__pb2.Controller.GetWorkerStatusRequest, ctx: RequestContext
+    ) -> controller__pb2.Controller.GetWorkerStatusResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-    def begin_checkpoint(self, request: controller__pb2.Controller.BeginCheckpointRequest, ctx: RequestContext) -> controller__pb2.Controller.BeginCheckpointResponse:
+
+    def begin_checkpoint(
+        self, request: controller__pb2.Controller.BeginCheckpointRequest, ctx: RequestContext
+    ) -> controller__pb2.Controller.BeginCheckpointResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-    def get_process_status(self, request: job__pb2.GetProcessStatusRequest, ctx: RequestContext) -> job__pb2.GetProcessStatusResponse:
+
+    def get_process_status(
+        self, request: job__pb2.GetProcessStatusRequest, ctx: RequestContext
+    ) -> job__pb2.GetProcessStatusResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-    def get_current_user(self, request: job__pb2.GetCurrentUserRequest, ctx: RequestContext) -> job__pb2.GetCurrentUserResponse:
+
+    def get_current_user(
+        self, request: job__pb2.GetCurrentUserRequest, ctx: RequestContext
+    ) -> job__pb2.GetCurrentUserResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-    def get_kubernetes_cluster_status(self, request: controller__pb2.Controller.GetKubernetesClusterStatusRequest, ctx: RequestContext) -> controller__pb2.Controller.GetKubernetesClusterStatusResponse:
+
+    def get_kubernetes_cluster_status(
+        self, request: controller__pb2.Controller.GetKubernetesClusterStatusRequest, ctx: RequestContext
+    ) -> controller__pb2.Controller.GetKubernetesClusterStatusResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
+
     def execute_raw_query(self, request: query__pb2.RawQueryRequest, ctx: RequestContext) -> query__pb2.RawQueryResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-    def set_user_budget(self, request: controller__pb2.Controller.SetUserBudgetRequest, ctx: RequestContext) -> controller__pb2.Controller.SetUserBudgetResponse:
+
+    def set_user_budget(
+        self, request: controller__pb2.Controller.SetUserBudgetRequest, ctx: RequestContext
+    ) -> controller__pb2.Controller.SetUserBudgetResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-    def get_user_budget(self, request: controller__pb2.Controller.GetUserBudgetRequest, ctx: RequestContext) -> controller__pb2.Controller.GetUserBudgetResponse:
+
+    def get_user_budget(
+        self, request: controller__pb2.Controller.GetUserBudgetRequest, ctx: RequestContext
+    ) -> controller__pb2.Controller.GetUserBudgetResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-    def list_user_budgets(self, request: controller__pb2.Controller.ListUserBudgetsRequest, ctx: RequestContext) -> controller__pb2.Controller.ListUserBudgetsResponse:
+
+    def list_user_budgets(
+        self, request: controller__pb2.Controller.ListUserBudgetsRequest, ctx: RequestContext
+    ) -> controller__pb2.Controller.ListUserBudgetsResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-    def get_scheduler_state(self, request: controller__pb2.Controller.GetSchedulerStateRequest, ctx: RequestContext) -> controller__pb2.Controller.GetSchedulerStateResponse:
+
+    def get_scheduler_state(
+        self, request: controller__pb2.Controller.GetSchedulerStateRequest, ctx: RequestContext
+    ) -> controller__pb2.Controller.GetSchedulerStateResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-    def list_backends(self, request: controller__pb2.Controller.ListBackendsRequest, ctx: RequestContext) -> controller__pb2.Controller.ListBackendsResponse:
+
+    def list_backends(
+        self, request: controller__pb2.Controller.ListBackendsRequest, ctx: RequestContext
+    ) -> controller__pb2.Controller.ListBackendsResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-    def list_peers(self, request: controller__pb2.Controller.ListPeersRequest, ctx: RequestContext) -> controller__pb2.Controller.ListPeersResponse:
+
+    def list_peers(
+        self, request: controller__pb2.Controller.ListPeersRequest, ctx: RequestContext
+    ) -> controller__pb2.Controller.ListPeersResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-    def federation_sync(self, request: controller__pb2.Controller.FederationSyncRequest, ctx: RequestContext) -> controller__pb2.Controller.FederationSyncResponse:
+
+    def federation_sync(
+        self, request: controller__pb2.Controller.FederationSyncRequest, ctx: RequestContext
+    ) -> controller__pb2.Controller.FederationSyncResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
 
 class ControllerServiceWSGIApplication(ConnectWSGIApplication):
-    def __init__(self, service: ControllerServiceSync, interceptors: Iterable[InterceptorSync]=(), read_max_bytes: int | None = None, compressions: Iterable[Compression] | None = None) -> None:
+    def __init__(
+        self,
+        service: ControllerServiceSync,
+        interceptors: Iterable[InterceptorSync] = (),
+        read_max_bytes: int | None = None,
+        compressions: Iterable[Compression] | None = None,
+    ) -> None:
         super().__init__(
             endpoints={
                 "/iris.cluster.ControllerService/LaunchJob": EndpointSync.unary(
@@ -2065,17 +2230,32 @@ class ControllerServiceClientSync(ConnectClientSync):
             timeout_ms=timeout_ms,
         )
 
+
 class EndpointServiceSync(Protocol):
-    def register_endpoint(self, request: controller__pb2.Controller.RegisterEndpointRequest, ctx: RequestContext) -> controller__pb2.Controller.RegisterEndpointResponse:
+    def register_endpoint(
+        self, request: controller__pb2.Controller.RegisterEndpointRequest, ctx: RequestContext
+    ) -> controller__pb2.Controller.RegisterEndpointResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-    def unregister_endpoint(self, request: controller__pb2.Controller.UnregisterEndpointRequest, ctx: RequestContext) -> job__pb2.Empty:
+
+    def unregister_endpoint(
+        self, request: controller__pb2.Controller.UnregisterEndpointRequest, ctx: RequestContext
+    ) -> job__pb2.Empty:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-    def list_endpoints(self, request: controller__pb2.Controller.ListEndpointsRequest, ctx: RequestContext) -> controller__pb2.Controller.ListEndpointsResponse:
+
+    def list_endpoints(
+        self, request: controller__pb2.Controller.ListEndpointsRequest, ctx: RequestContext
+    ) -> controller__pb2.Controller.ListEndpointsResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
 
 class EndpointServiceWSGIApplication(ConnectWSGIApplication):
-    def __init__(self, service: EndpointServiceSync, interceptors: Iterable[InterceptorSync]=(), read_max_bytes: int | None = None, compressions: Iterable[Compression] | None = None) -> None:
+    def __init__(
+        self,
+        service: EndpointServiceSync,
+        interceptors: Iterable[InterceptorSync] = (),
+        read_max_bytes: int | None = None,
+        compressions: Iterable[Compression] | None = None,
+    ) -> None:
         super().__init__(
             endpoints={
                 "/iris.cluster.EndpointService/RegisterEndpoint": EndpointSync.unary(

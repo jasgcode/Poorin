@@ -240,7 +240,7 @@ def _add_layout_key(batch: pa.RecordBatch) -> pa.RecordBatch:
     names = batch.column(batch.schema.get_field_index("name")).to_pylist()
     timestamps = batch.column(batch.schema.get_field_index("ts")).to_pylist()
     keys = [
-        (f"{group}|{_principal(group, run, worker, cluster)}|{name}|" f"{int(timestamp.timestamp() * 1000):013d}")
+        (f"{group}|{_principal(group, run, worker, cluster)}|{name}|{int(timestamp.timestamp() * 1000):013d}")
         for group, run, worker, cluster, name, timestamp in zip(
             groups,
             runs,
@@ -1611,7 +1611,7 @@ def _rollup_sql(
     where_clauses = [] if partial_states else ["source != 'errors'"]
     if time_bounds is not None:
         start_ms, end_ms = time_bounds
-        where_clauses.append(f"ts >= to_timestamp_millis({start_ms}) " f"AND ts < to_timestamp_millis({end_ms})")
+        where_clauses.append(f"ts >= to_timestamp_millis({start_ms}) AND ts < to_timestamp_millis({end_ms})")
     where = f"WHERE {' AND '.join(where_clauses)}" if where_clauses else ""
     return f"""
 SELECT {dimensions},
@@ -1788,9 +1788,7 @@ def run_rollup_candidates(
         )
         differences = _rollup_difference_count(materialized, compacted)
         if differences:
-            raise RuntimeError(
-                f"{resolution} rollup methods differ in {differences} " "fixed-dimension aggregate states"
-            )
+            raise RuntimeError(f"{resolution} rollup methods differ in {differences} fixed-dimension aggregate states")
         materializer_path = work_dir / f"{resolution}-materializer.parquet"
         compaction_path = work_dir / f"{resolution}-compaction.parquet"
         pq.write_table(
@@ -1834,10 +1832,10 @@ def run_rollup_candidates(
                     "process_index",
                 ],
                 "omitted_labels": (
-                    "all labels except le, method, status, error_code, device, " "user, project, model, and component"
+                    "all labels except le, method, status, error_code, device, user, project, model, and component"
                 ),
             },
-            "materializer_definition": "one day-bounded Finelog query per input day over the completed " "source store",
+            "materializer_definition": "one day-bounded Finelog query per input day over the completed source store",
             "compaction_time_proxy_definition": (
                 "aggregate each existing local Parquet segment independently, then merge "
                 "associative states; this is not production compactor instrumentation"

@@ -60,9 +60,9 @@ def test_mixtral_config():
     for k in new_hf_config.__dict__.keys():
         if k in ["_commit_hash", "transformers_version"]:
             continue
-        assert getattr(new_hf_config, k) == getattr(
-            hf_config, k
-        ), f"{k} {getattr(new_hf_config, k)} != {getattr(hf_config, k)}"
+        assert getattr(new_hf_config, k) == getattr(hf_config, k), (
+            f"{k} {getattr(new_hf_config, k)} != {getattr(hf_config, k)}"
+        )
 
 
 def _tiny_moe_config(dense_router_gradient: bool) -> MixtralConfig:

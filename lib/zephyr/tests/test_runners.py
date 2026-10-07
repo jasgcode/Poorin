@@ -320,9 +320,9 @@ def test_finelog_stats_emitted(local_client, tmp_path, finelog_server, monkeypat
     running_mem_current = [
         v for v, m in zip(worker_rows.column("mem_current_bytes").to_pylist(), running_mask, strict=True) if m
     ]
-    assert all(
-        v > 0 for v in running_mem_current
-    ), f"RUNNING rows have non-positive mem_current_bytes: {running_mem_current}"
+    assert all(v > 0 for v in running_mem_current), (
+        f"RUNNING rows have non-positive mem_current_bytes: {running_mem_current}"
+    )
 
     # ---- cross-validation: stage aggregates must match worker END rows ----
     # Single-stage pipeline: exactly one stage row expected.
@@ -331,19 +331,19 @@ def test_finelog_stats_emitted(local_client, tmp_path, finelog_server, monkeypat
 
     # Items and bytes are SUM across shards.
     assert sum(end_items) == stage["items"], f"sum(worker END items)={sum(end_items)} != stage items={stage['items']}"
-    assert (
-        sum(end_bytes) == stage["bytes_processed"]
-    ), f"sum(worker END bytes)={sum(end_bytes)} != stage bytes_processed={stage['bytes_processed']}"
+    assert sum(end_bytes) == stage["bytes_processed"], (
+        f"sum(worker END bytes)={sum(end_bytes)} != stage bytes_processed={stage['bytes_processed']}"
+    )
 
     # Memory peak is MAX across shards.
-    assert (
-        max(end_mem_peak) == stage["mem_peak_bytes_max"]
-    ), f"max(worker END mem_peak_bytes)={max(end_mem_peak)} != stage mem_peak_bytes_max={stage['mem_peak_bytes_max']}"
+    assert max(end_mem_peak) == stage["mem_peak_bytes_max"], (
+        f"max(worker END mem_peak_bytes)={max(end_mem_peak)} != stage mem_peak_bytes_max={stage['mem_peak_bytes_max']}"
+    )
 
     # CPU time is SUM across shards (float arithmetic, allow tiny rounding).
-    assert sum(end_cpu_time) == pytest.approx(
-        stage["cpu_time_total"], rel=1e-4
-    ), f"sum(worker END cpu_time_total)={sum(end_cpu_time)} != stage cpu_time_total={stage['cpu_time_total']}"
+    assert sum(end_cpu_time) == pytest.approx(stage["cpu_time_total"], rel=1e-4), (
+        f"sum(worker END cpu_time_total)={sum(end_cpu_time)} != stage cpu_time_total={stage['cpu_time_total']}"
+    )
 
     # Average CPU% and RSS are weighted by each shard's sample count. The
     # aggregate must therefore lie within the final per-shard averages.

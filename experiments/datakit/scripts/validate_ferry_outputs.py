@@ -133,8 +133,7 @@ def _validate_normalize(base: str, download_rows: int) -> int:
         raise SystemExit(f"Normalize: expected >= {NORMALIZE_MIN_ROWS} rows, got {rows}")
     if rows > download_rows:
         raise SystemExit(
-            f"Normalize: {rows} rows > download {download_rows} rows — "
-            "normalize cannot produce more rows than download"
+            f"Normalize: {rows} rows > download {download_rows} rows — normalize cannot produce more rows than download"
         )
 
     logger.info("Normalize OK: %d files, %d rows (%.1f%% of download)", len(files), rows, 100 * rows / download_rows)
@@ -195,8 +194,7 @@ def _validate_verified_fuzzy_dups(base: str, normalize_rows: int, candidate_comp
     verified = read_artifact(prefix_join(base, "verify_fuzzy_dups"), VerifiedFuzzyDupsAttrData)
     if len(verified.sources) != FUZZY_DUPS_EXPECTED_SOURCES:
         raise SystemExit(
-            f"Verified fuzzy dups: expected exactly {FUZZY_DUPS_EXPECTED_SOURCES} source, "
-            f"got {len(verified.sources)}"
+            f"Verified fuzzy dups: expected exactly {FUZZY_DUPS_EXPECTED_SOURCES} source, got {len(verified.sources)}"
         )
     (per_source,) = verified.sources.values()
     files = _list_parquet(per_source.attr_dir)

@@ -23,10 +23,14 @@ class ActorService(Protocol):
     async def health_check(self, request: actor__pb2.Empty, ctx: RequestContext) -> actor__pb2.HealthResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def list_methods(self, request: actor__pb2.ListMethodsRequest, ctx: RequestContext) -> actor__pb2.ListMethodsResponse:
+    async def list_methods(
+        self, request: actor__pb2.ListMethodsRequest, ctx: RequestContext
+    ) -> actor__pb2.ListMethodsResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def list_actors(self, request: actor__pb2.ListActorsRequest, ctx: RequestContext) -> actor__pb2.ListActorsResponse:
+    async def list_actors(
+        self, request: actor__pb2.ListActorsRequest, ctx: RequestContext
+    ) -> actor__pb2.ListActorsResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
     async def start_operation(self, request: actor__pb2.ActorCall, ctx: RequestContext) -> actor__pb2.Operation:
@@ -40,7 +44,14 @@ class ActorService(Protocol):
 
 
 class ActorServiceASGIApplication(ConnectASGIApplication[ActorService]):
-    def __init__(self, service: ActorService | AsyncGenerator[ActorService], *, interceptors: Iterable[Interceptor]=(), read_max_bytes: int | None = None, compressions: Iterable[Compression] | None = None) -> None:
+    def __init__(
+        self,
+        service: ActorService | AsyncGenerator[ActorService],
+        *,
+        interceptors: Iterable[Interceptor] = (),
+        read_max_bytes: int | None = None,
+        compressions: Iterable[Compression] | None = None,
+    ) -> None:
         super().__init__(
             service=service,
             endpoints=lambda svc: {
@@ -271,22 +282,36 @@ class ActorServiceClient(ConnectClient):
 class ActorServiceSync(Protocol):
     def call(self, request: actor__pb2.ActorCall, ctx: RequestContext) -> actor__pb2.ActorResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
+
     def health_check(self, request: actor__pb2.Empty, ctx: RequestContext) -> actor__pb2.HealthResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-    def list_methods(self, request: actor__pb2.ListMethodsRequest, ctx: RequestContext) -> actor__pb2.ListMethodsResponse:
+
+    def list_methods(
+        self, request: actor__pb2.ListMethodsRequest, ctx: RequestContext
+    ) -> actor__pb2.ListMethodsResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
+
     def list_actors(self, request: actor__pb2.ListActorsRequest, ctx: RequestContext) -> actor__pb2.ListActorsResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
+
     def start_operation(self, request: actor__pb2.ActorCall, ctx: RequestContext) -> actor__pb2.Operation:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
+
     def get_operation(self, request: actor__pb2.OperationId, ctx: RequestContext) -> actor__pb2.Operation:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
+
     def cancel_operation(self, request: actor__pb2.OperationId, ctx: RequestContext) -> actor__pb2.Operation:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
 
 class ActorServiceWSGIApplication(ConnectWSGIApplication):
-    def __init__(self, service: ActorServiceSync, interceptors: Iterable[InterceptorSync]=(), read_max_bytes: int | None = None, compressions: Iterable[Compression] | None = None) -> None:
+    def __init__(
+        self,
+        service: ActorServiceSync,
+        interceptors: Iterable[InterceptorSync] = (),
+        read_max_bytes: int | None = None,
+        compressions: Iterable[Compression] | None = None,
+    ) -> None:
         super().__init__(
             endpoints={
                 "/iris.actor.ActorService/Call": EndpointSync.unary(

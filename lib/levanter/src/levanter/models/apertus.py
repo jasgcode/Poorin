@@ -106,9 +106,7 @@ class ApertusConfig(LlamaConfig):
     reference_checkpoint: str = "swiss-ai/Apertus-8B-2509"
 
     # config-reuse subclass narrows to its own HF config/model type (LSP narrowing; pyrefly flags the same)
-    def hf_checkpoint_converter(
-        self, ref_checkpoint: Optional[str] = None
-    ) -> HFCheckpointConverter["ApertusConfig"]:  # ty: ignore[invalid-method-override]
+    def hf_checkpoint_converter(self, ref_checkpoint: Optional[str] = None) -> HFCheckpointConverter["ApertusConfig"]:  # ty: ignore[invalid-method-override]
         return HFCheckpointConverter(
             self.__class__,
             reference_checkpoint=self.reference_checkpoint if ref_checkpoint is None else ref_checkpoint,
@@ -147,9 +145,7 @@ class ApertusConfig(LlamaConfig):
             use_qk_norm=getattr(hf_config, "qk_norm", True),
         )
 
-    def to_hf_config(
-        self, vocab_size: int, config_overrides: Optional[Dict] = None
-    ) -> HfApertusConfig:  # ty: ignore[invalid-method-override]
+    def to_hf_config(self, vocab_size: int, config_overrides: Optional[Dict] = None) -> HfApertusConfig:  # ty: ignore[invalid-method-override]
         if config_overrides is None:
             config_overrides = {}
 

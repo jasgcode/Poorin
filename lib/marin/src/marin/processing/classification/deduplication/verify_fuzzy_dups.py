@@ -249,8 +249,7 @@ def _candidate_documents(shards: list[VerificationShard]) -> Iterator[tuple[tupl
                 source = next(normalized, None)
             if source is None or source["id"] != candidate["id"]:
                 raise ValueError(
-                    f"{shard.candidate_path} contains ID {candidate['id']!r} "
-                    f"that is absent from {shard.normalized_path}"
+                    f"{shard.candidate_path} contains ID {candidate['id']!r} that is absent from {shard.normalized_path}"
                 )
             yield (shard.file_idx, candidate["id"]), source["text"] or ""
             candidate = next(candidates, None)
@@ -278,8 +277,7 @@ def _joined_cluster_members(shards: list[VerificationShard]) -> Iterator[dict[st
                 minhash = next(minhash_rows, None)
             if minhash is None or minhash["id"] != candidate["id"]:
                 raise ValueError(
-                    f"{shard.candidate_path} contains ID {candidate['id']!r} "
-                    f"that is absent from {shard.minhash_path}"
+                    f"{shard.candidate_path} contains ID {candidate['id']!r} that is absent from {shard.minhash_path}"
                 )
             counters.pipeline.update_counter(f"{_COUNTER_PREFIX}/candidate_members", 1)
             yield {

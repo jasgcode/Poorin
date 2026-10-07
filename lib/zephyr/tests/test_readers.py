@@ -3,7 +3,6 @@
 
 """Tests for parquet reader (load_parquet)."""
 
-
 import itertools
 import sys
 

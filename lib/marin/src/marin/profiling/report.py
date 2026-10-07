@@ -114,9 +114,7 @@ def build_markdown_report(summary: ProfileSummary, *, top_k: int = 10) -> str:
     lines.append("")
     lines.append("## Semantic Families")
     lines.append("_Note: FLOP proxy metrics are relative scaling heuristics from trace shapes, not hardware MFU._")
-    lines.append(
-        "| Family | Count | Exclusive | Share | Avg Exclusive | FLOP Proxy Total | " "FLOP Proxy/s | Example Op |"
-    )
+    lines.append("| Family | Count | Exclusive | Share | Avg Exclusive | FLOP Proxy Total | FLOP Proxy/s | Example Op |")
     lines.append("|---|---:|---:|---:|---:|---:|---:|---|")
     for family in summary.semantic_families[:top_k]:
         lines.append(

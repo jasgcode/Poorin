@@ -188,7 +188,7 @@ def test_dw_is_at_least_as_accurate_as_the_reference(shape):
     want_err = np.max(np.abs(np.asarray(jax.device_get(want_dw), np.float64) - oracle))
     scale = max(np.max(np.abs(oracle)), 1e-30)
     assert got_err <= max(want_err * 1.5, 0.02 * scale), (
-        f"kernel dw error {got_err:.3e} materially worse than reference {want_err:.3e} " f"(oracle scale {scale:.3e})"
+        f"kernel dw error {got_err:.3e} materially worse than reference {want_err:.3e} (oracle scale {scale:.3e})"
     )
 
 

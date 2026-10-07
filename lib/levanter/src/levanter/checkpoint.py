@@ -1322,9 +1322,9 @@ class CheckpointerConfig:
         for interval in self.keep or []:
             if prev_interval is not None:
                 assert prev_interval["until"] is not None, "Only the last checkpoint interval can be None"
-                assert (
-                    interval["until"] is None or interval["until"] > prev_interval["until"]
-                ), "Checkpoint intervals must be monotonic"
+                assert interval["until"] is None or interval["until"] > prev_interval["until"], (
+                    "Checkpoint intervals must be monotonic"
+                )
             prev_interval = interval
 
         self.debug.validate()

@@ -487,9 +487,9 @@ def test_marin_style_lifecycle():
         "tpu-16vm": 0,
     }
     for name, expected in expected_slices.items():
-        assert (
-            groups[name].slice_count() == expected
-        ), f"{name}: expected {expected} slices, got {groups[name].slice_count()}"
+        assert groups[name].slice_count() == expected, (
+            f"{name}: expected {expected} slices, got {groups[name].slice_count()}"
+        )
 
 
 # ---------------------------------------------------------------------------

@@ -359,9 +359,9 @@ class TestPreemptionReassignment:
         for wid in slice3_workers:
             if wid == trigger_wid:
                 continue
-            assert (
-                _tpu_used(usage_after_fail, wid) == CHIPS_PER_VM
-            ), f"slice-3 sibling on {wid} must keep its reservation until heartbeat finalizes the attempt"
+            assert _tpu_used(usage_after_fail, wid) == CHIPS_PER_VM, (
+                f"slice-3 sibling on {wid} must keep its reservation until heartbeat finalizes the attempt"
+            )
 
         # Without the old decommit, the scheduler does not see free capacity:
         # only one worker on slice-3 has freed up, but a coscheduled gang needs
@@ -520,15 +520,15 @@ class TestPreemptionReassignment:
         trigger = tasks[0]
         _worker_fail_one_task(state, trigger)
         usage = _read_usage_by_worker(state)
-        assert (
-            _tpu_used(usage, trigger.current_worker_id) == 0
-        ), f"trigger worker {trigger.current_worker_id} must be released by its terminal heartbeat"
+        assert _tpu_used(usage, trigger.current_worker_id) == 0, (
+            f"trigger worker {trigger.current_worker_id} must be released by its terminal heartbeat"
+        )
         for wid in slice1_wids:
             if wid == trigger.current_worker_id:
                 continue
-            assert (
-                _tpu_used(usage, wid) == CHIPS_PER_VM
-            ), f"sibling worker {wid} must keep its reservation until its own terminal heartbeat lands"
+            assert _tpu_used(usage, wid) == CHIPS_PER_VM, (
+                f"sibling worker {wid} must keep its reservation until its own terminal heartbeat lands"
+            )
 
         # Synthesize terminal heartbeats for the bounced sibling attempts —
         # what the worker would emit after reconcile auto-kills the stale

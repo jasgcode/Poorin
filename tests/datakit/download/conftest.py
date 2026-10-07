@@ -73,9 +73,9 @@ def verify_success_files():
             List of SUCCESS file paths found
         """
         success_files = list(output_dir.glob("*.SUCCESS"))
-        assert (
-            len(success_files) >= min_count
-        ), f"Expected at least {min_count} SUCCESS file(s), found {len(success_files)}"
+        assert len(success_files) >= min_count, (
+            f"Expected at least {min_count} SUCCESS file(s), found {len(success_files)}"
+        )
         return success_files
 
     return _verify

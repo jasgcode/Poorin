@@ -203,7 +203,7 @@ def schema_from_dataclass(cls: type) -> Schema:
     for field in dataclasses.fields(cls):
         if field.name == IMPLICIT_SEQ_COLUMN:
             raise SchemaValidationError(
-                f"dataclass {cls.__name__}: field {field.name!r} is reserved " f"(server-assigned implicit column)"
+                f"dataclass {cls.__name__}: field {field.name!r} is reserved (server-assigned implicit column)"
             )
         annotation = type_hints.get(field.name, field.type)
         # Every column is registered nullable regardless of whether the field is
@@ -1003,7 +1003,7 @@ def _rows_to_record_batch(rows: list[Any], arrow_schema: pa.Schema, schema: Sche
             arr = pa.array(values, type=field.type, from_pandas=False)
         except (pa.ArrowInvalid, pa.ArrowTypeError, TypeError, ValueError) as exc:
             raise SchemaValidationError(
-                f"column {col.name!r}: failed to encode batch as " f"{stats_pb2.ColumnType.Name(col.type)}: {exc}"
+                f"column {col.name!r}: failed to encode batch as {stats_pb2.ColumnType.Name(col.type)}: {exc}"
             ) from exc
         columns.append(arr)
     return pa.RecordBatch.from_arrays(columns, schema=arrow_schema)

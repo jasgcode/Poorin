@@ -31,6 +31,7 @@ Run with::
 
     HF_TOKEN=... uv run tests/.../parser_variants/generate_same_site_distinct_bodies.py [--dry-run]
 """
+
 import sys
 from collections.abc import Iterator
 from pathlib import Path

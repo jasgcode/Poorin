@@ -60,8 +60,7 @@ def _validate_data_region(wandb_dict: dict, cluster: str) -> None:
             continue
         if data_region != cluster_region:
             mismatches.append(
-                f"  - component {name!r}: bucket {bucket_name!r} is in {data_region}, "
-                f"but cluster is in {cluster_region}"
+                f"  - component {name!r}: bucket {bucket_name!r} is in {data_region}, but cluster is in {cluster_region}"
             )
 
     if mismatches:

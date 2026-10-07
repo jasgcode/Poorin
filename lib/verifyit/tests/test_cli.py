@@ -70,9 +70,7 @@ def test_pytest_setup_failure_opt_in_clears_previous_reward(tmp_path):
     (workspace / "test_candidate.py").write_text("def test_ok():\n    assert True\n")
     spec = tmp_path / "verifier.toml"
     spec.write_text(
-        'mode = "pytest"\npaths = ["test_candidate.py"]\n'
-        f'python = "{sys.executable}"\n'
-        "setup_failure_is_infra = true\n"
+        f'mode = "pytest"\npaths = ["test_candidate.py"]\npython = "{sys.executable}"\nsetup_failure_is_infra = true\n'
     )
     logs = tmp_path / "logs"
     assert main([str(spec), "--logs-dir", str(logs), "--workspace", str(workspace)]) == 0

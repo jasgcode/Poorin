@@ -727,8 +727,7 @@ def test_normal_text_unchanged_by_splitter(backend_tokenizer):
     direct = inner.encode(text, add_special_tokens=False).ids
 
     assert via_split == direct, (
-        f"splitter changed tokenization on normal text: "
-        f"{len(via_split)} tokens via splitter vs {len(direct)} direct"
+        f"splitter changed tokenization on normal text: {len(via_split)} tokens via splitter vs {len(direct)} direct"
     )
 
 

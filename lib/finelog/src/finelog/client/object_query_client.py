@@ -225,7 +225,7 @@ class ObjectQueryClient:
         if pin.object_uris:
             files = ", ".join(f"'{uri.replace(chr(39), chr(39) * 2)}'" for uri in pin.object_uris)
             connection.execute(
-                f'CREATE VIEW "{escaped_namespace}" AS ' f"SELECT * FROM read_parquet([{files}], union_by_name=true)"
+                f'CREATE VIEW "{escaped_namespace}" AS SELECT * FROM read_parquet([{files}], union_by_name=true)'
             )
             return
         columns = _empty_columns(pin.columns)

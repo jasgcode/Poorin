@@ -2026,17 +2026,17 @@ def test_mixed_variant_cluster_many_jobs_all_scheduled(state):
         job_name = str(task_id.parent)
         worker = _query_worker(state, worker_id)
         if "v5litepod-4" in job_name:
-            assert (
-                worker.device_variant == "v5litepod-4"
-            ), f"Job {job_name} assigned to {worker.device_variant}, expected v5litepod-4"
+            assert worker.device_variant == "v5litepod-4", (
+                f"Job {job_name} assigned to {worker.device_variant}, expected v5litepod-4"
+            )
         elif "v5litepod-8" in job_name:
-            assert (
-                worker.device_variant == "v5litepod-8"
-            ), f"Job {job_name} assigned to {worker.device_variant}, expected v5litepod-8"
+            assert worker.device_variant == "v5litepod-8", (
+                f"Job {job_name} assigned to {worker.device_variant}, expected v5litepod-8"
+            )
         elif "v5litepod-16" in job_name:
-            assert (
-                worker.device_variant == "v5litepod-16"
-            ), f"Job {job_name} assigned to {worker.device_variant}, expected v5litepod-16"
+            assert worker.device_variant == "v5litepod-16", (
+                f"Job {job_name} assigned to {worker.device_variant}, expected v5litepod-16"
+            )
 
 
 # =============================================================================

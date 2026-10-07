@@ -583,9 +583,9 @@ def test_vm_create_wait_true_polls_operation_and_describes() -> None:
     urls = [str(r.url) for r in recorded]
 
     assert methods[0] == "POST", f"First call should be the insert POST, got: {list(zip(methods, urls, strict=True))}"
-    assert any(
-        "/operations/" in u for u in urls
-    ), f"Expected a zone-operation poll GET, got: {list(zip(methods, urls, strict=True))}"
+    assert any("/operations/" in u for u in urls), (
+        f"Expected a zone-operation poll GET, got: {list(zip(methods, urls, strict=True))}"
+    )
     assert info.status == "RUNNING"
     assert info.internal_ip == "10.0.0.1"
 
@@ -666,9 +666,9 @@ def test_vm_slice_advances_from_creating_to_ready() -> None:
 
     # Still BOOTSTRAPPING because the bootstrap thread hasn't completed yet
     status = handle.describe()
-    assert (
-        status.state == CloudSliceState.BOOTSTRAPPING
-    ), f"Expected BOOTSTRAPPING after VM is RUNNING but before bootstrap completes, got {status.state}"
+    assert status.state == CloudSliceState.BOOTSTRAPPING, (
+        f"Expected BOOTSTRAPPING after VM is RUNNING but before bootstrap completes, got {status.state}"
+    )
 
     # Simulate bootstrap thread completing
     handle.bootstrap.mark_ready()

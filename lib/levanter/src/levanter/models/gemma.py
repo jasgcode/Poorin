@@ -177,9 +177,9 @@ class GemmaConfig(HFCompatConfig):
     HeadSize = property(lambda self: Axis(name="head_size", size=self.head_dim))
 
     def __post_init__(self):
-        assert (
-            self.num_heads % self.num_kv_heads == 0
-        ), f"num_heads={self.num_heads} not divisible by num_kv_heads={self.num_kv_heads}."
+        assert self.num_heads % self.num_kv_heads == 0, (
+            f"num_heads={self.num_heads} not divisible by num_kv_heads={self.num_kv_heads}."
+        )
 
     def hf_checkpoint_converter(self, ref_checkpoint: str = "google/gemma-2b") -> HFCheckpointConverter["GemmaConfig"]:  # type: ignore
         return HFCheckpointConverter(
@@ -244,9 +244,9 @@ class GemmaConfig(HFCompatConfig):
             config_overrides = {}
 
         rope = self.rope
-        assert isinstance(
-            rope, DefaultRotaryEmbeddingsConfig
-        ), "Only DefaultRotaryEmbeddingsConfig is supported for Gemma."
+        assert isinstance(rope, DefaultRotaryEmbeddingsConfig), (
+            "Only DefaultRotaryEmbeddingsConfig is supported for Gemma."
+        )
         rope_theta, rope_scaling = rope.to_hf_config()
 
         config = hf_config_from_kwargs(
@@ -555,9 +555,9 @@ class Gemma2Config(GemmaConfig):
 
         # ───── RoPE settings ────────────────────────────────────────────────
         rope = self.rope
-        assert isinstance(
-            rope, DefaultRotaryEmbeddingsConfig
-        ), "Only DefaultRotaryEmbeddingsConfig is supported for Gemma2."
+        assert isinstance(rope, DefaultRotaryEmbeddingsConfig), (
+            "Only DefaultRotaryEmbeddingsConfig is supported for Gemma2."
+        )
         rope_theta, rope_scaling = rope.to_hf_config()
 
         # ───── Common hyper-parameters (mostly shared with Gemma1) ──────────

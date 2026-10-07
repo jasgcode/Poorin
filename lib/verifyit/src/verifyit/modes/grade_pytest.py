@@ -94,8 +94,7 @@ def grade(spec: PytestSpec, tests_dir: Path, workspace: Path) -> Reward:
                 )
             if not report_path.is_file():
                 raise RuntimeError(
-                    f"pytest wrote no json report (exit {result.returncode}): "
-                    f"{_tail(result.stderr or result.stdout)}"
+                    f"pytest wrote no json report (exit {result.returncode}): {_tail(result.stderr or result.stdout)}"
                 )
             report = json.loads(read_text(report_path))
             if result.returncode == 5:

@@ -18,30 +18,49 @@ from . import worker_pb2 as worker__pb2
 
 
 class WorkerService(Protocol):
-    async def get_task_status(self, request: worker__pb2.Worker.GetTaskStatusRequest, ctx: RequestContext) -> job__pb2.TaskStatus:
+    async def get_task_status(
+        self, request: worker__pb2.Worker.GetTaskStatusRequest, ctx: RequestContext
+    ) -> job__pb2.TaskStatus:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def list_tasks(self, request: worker__pb2.Worker.ListTasksRequest, ctx: RequestContext) -> worker__pb2.Worker.ListTasksResponse:
+    async def list_tasks(
+        self, request: worker__pb2.Worker.ListTasksRequest, ctx: RequestContext
+    ) -> worker__pb2.Worker.ListTasksResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
     async def health_check(self, request: job__pb2.Empty, ctx: RequestContext) -> worker__pb2.Worker.HealthResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def profile_task(self, request: job__pb2.ProfileTaskRequest, ctx: RequestContext) -> job__pb2.ProfileTaskResponse:
+    async def profile_task(
+        self, request: job__pb2.ProfileTaskRequest, ctx: RequestContext
+    ) -> job__pb2.ProfileTaskResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def get_process_status(self, request: job__pb2.GetProcessStatusRequest, ctx: RequestContext) -> job__pb2.GetProcessStatusResponse:
+    async def get_process_status(
+        self, request: job__pb2.GetProcessStatusRequest, ctx: RequestContext
+    ) -> job__pb2.GetProcessStatusResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def exec_in_container(self, request: worker__pb2.Worker.ExecInContainerRequest, ctx: RequestContext) -> worker__pb2.Worker.ExecInContainerResponse:
+    async def exec_in_container(
+        self, request: worker__pb2.Worker.ExecInContainerRequest, ctx: RequestContext
+    ) -> worker__pb2.Worker.ExecInContainerResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def reconcile(self, request: worker__pb2.Worker.ReconcileRequest, ctx: RequestContext) -> worker__pb2.Worker.ReconcileResponse:
+    async def reconcile(
+        self, request: worker__pb2.Worker.ReconcileRequest, ctx: RequestContext
+    ) -> worker__pb2.Worker.ReconcileResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
 
 class WorkerServiceASGIApplication(ConnectASGIApplication[WorkerService]):
-    def __init__(self, service: WorkerService | AsyncGenerator[WorkerService], *, interceptors: Iterable[Interceptor]=(), read_max_bytes: int | None = None, compressions: Iterable[Compression] | None = None) -> None:
+    def __init__(
+        self,
+        service: WorkerService | AsyncGenerator[WorkerService],
+        *,
+        interceptors: Iterable[Interceptor] = (),
+        read_max_bytes: int | None = None,
+        compressions: Iterable[Compression] | None = None,
+    ) -> None:
         super().__init__(
             service=service,
             endpoints=lambda svc: {
@@ -270,24 +289,46 @@ class WorkerServiceClient(ConnectClient):
 
 
 class WorkerServiceSync(Protocol):
-    def get_task_status(self, request: worker__pb2.Worker.GetTaskStatusRequest, ctx: RequestContext) -> job__pb2.TaskStatus:
+    def get_task_status(
+        self, request: worker__pb2.Worker.GetTaskStatusRequest, ctx: RequestContext
+    ) -> job__pb2.TaskStatus:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-    def list_tasks(self, request: worker__pb2.Worker.ListTasksRequest, ctx: RequestContext) -> worker__pb2.Worker.ListTasksResponse:
+
+    def list_tasks(
+        self, request: worker__pb2.Worker.ListTasksRequest, ctx: RequestContext
+    ) -> worker__pb2.Worker.ListTasksResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
+
     def health_check(self, request: job__pb2.Empty, ctx: RequestContext) -> worker__pb2.Worker.HealthResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
+
     def profile_task(self, request: job__pb2.ProfileTaskRequest, ctx: RequestContext) -> job__pb2.ProfileTaskResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-    def get_process_status(self, request: job__pb2.GetProcessStatusRequest, ctx: RequestContext) -> job__pb2.GetProcessStatusResponse:
+
+    def get_process_status(
+        self, request: job__pb2.GetProcessStatusRequest, ctx: RequestContext
+    ) -> job__pb2.GetProcessStatusResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-    def exec_in_container(self, request: worker__pb2.Worker.ExecInContainerRequest, ctx: RequestContext) -> worker__pb2.Worker.ExecInContainerResponse:
+
+    def exec_in_container(
+        self, request: worker__pb2.Worker.ExecInContainerRequest, ctx: RequestContext
+    ) -> worker__pb2.Worker.ExecInContainerResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-    def reconcile(self, request: worker__pb2.Worker.ReconcileRequest, ctx: RequestContext) -> worker__pb2.Worker.ReconcileResponse:
+
+    def reconcile(
+        self, request: worker__pb2.Worker.ReconcileRequest, ctx: RequestContext
+    ) -> worker__pb2.Worker.ReconcileResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
 
 class WorkerServiceWSGIApplication(ConnectWSGIApplication):
-    def __init__(self, service: WorkerServiceSync, interceptors: Iterable[InterceptorSync]=(), read_max_bytes: int | None = None, compressions: Iterable[Compression] | None = None) -> None:
+    def __init__(
+        self,
+        service: WorkerServiceSync,
+        interceptors: Iterable[InterceptorSync] = (),
+        read_max_bytes: int | None = None,
+        compressions: Iterable[Compression] | None = None,
+    ) -> None:
         super().__init__(
             endpoints={
                 "/iris.cluster.WorkerService/GetTaskStatus": EndpointSync.unary(

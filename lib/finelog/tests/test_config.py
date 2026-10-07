@@ -329,6 +329,6 @@ def test_bundled_forwarding_configs_use_node_local_k8s_storage() -> None:
     for name, cfg in _bundled_configs().items():
         if cfg.forwarding is not None:
             assert cfg.deployment.k8s is not None, f"{name}: forwards but deploys on gcp"
-            assert (
-                cfg.deployment.k8s.cache_storage is K8sCacheStorage.NODE_LOCAL
-            ), f"{name}: forwarding cache uses shared persistent storage"
+            assert cfg.deployment.k8s.cache_storage is K8sCacheStorage.NODE_LOCAL, (
+                f"{name}: forwarding cache uses shared persistent storage"
+            )

@@ -136,8 +136,7 @@ def test_claim_and_run_processes_every_target_exactly_once(num_workers, num_targ
         def run(target: SweepTarget) -> None:
             with claim_lock:
                 assert target.target_id not in claimed, (
-                    f"{target.target_id} already claimed by {claimed.get(target.target_id)}, "
-                    f"now also by {worker_name}"
+                    f"{target.target_id} already claimed by {claimed.get(target.target_id)}, now also by {worker_name}"
                 )
                 claimed[target.target_id] = worker_name
 

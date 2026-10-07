@@ -250,10 +250,7 @@ def main() -> int:
         print(f"\n{case}: lhs[{args.rows}, {m}] x rhs[{args.rows}, {n}] -> [{args.experts}, {m}, {n}]")
         case_results = _run_case(case, args.rows, args.experts, m, n, args.sweep)
         for r in case_results:
-            print(
-                f"  {r.variant:<44} {r.seconds * 1e3:8.3f} ms  {r.tflops:7.1f} TFLOP/s  "
-                f"max_err {r.max_rel_err:.2e}"
-            )
+            print(f"  {r.variant:<44} {r.seconds * 1e3:8.3f} ms  {r.tflops:7.1f} TFLOP/s  max_err {r.max_rel_err:.2e}")
         results.extend(case_results)
 
     if args.json:

@@ -74,9 +74,9 @@ def test_gemma_config():
         if k in ["hidden_act", "hidden_activation"]:
             continue
 
-        assert getattr(new_hf_config, k) == getattr(
-            hf_config, k
-        ), f"{k} {getattr(new_hf_config, k)} != {getattr(hf_config, k)}"
+        assert getattr(new_hf_config, k) == getattr(hf_config, k), (
+            f"{k} {getattr(new_hf_config, k)} != {getattr(hf_config, k)}"
+        )
 
 
 def test_gemma_param_counts_dont_change_with_seqlen():
@@ -124,9 +124,9 @@ def test_gemma_rms_norm(gemma_version):
     out = ln(x)
     hf_out = hf_ln(x_torch)
 
-    assert np.isclose(
-        hf_out.detach().cpu().numpy(), np.array(out.array), rtol=1e-6, atol=1e-6
-    ).all(), f"{hf_out} != {out}"
+    assert np.isclose(hf_out.detach().cpu().numpy(), np.array(out.array), rtol=1e-6, atol=1e-6).all(), (
+        f"{hf_out} != {out}"
+    )
 
 
 @skip_if_no_torch

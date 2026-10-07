@@ -1,14 +1,14 @@
 # Copyright The Marin Authors
 # SPDX-License-Identifier: Apache-2.0
 
-"""Behavior tests for tools.lint's file checks. Ruff, black, and ty are not run here."""
+"""Behavior tests for tools.lint's file checks. Ruff and ty are not run here."""
 
 import json
 from pathlib import Path
 
 import pytest
 
-from tools.lint import file_problems, is_excluded, lint, python_style
+from tools.lint import file_problems, is_excluded, lint, ruff_config
 
 MARIN = "# Copyright The Marin Authors\n# SPDX-License-Identifier: Apache-2.0\n"
 HALIAX = "# Copyright The Levanter Authors\n#\n# SPDX-License-Identifier: Apache-2.0\n"
@@ -38,21 +38,12 @@ def test_each_library_requires_its_own_license_header(tmp_path):
     assert file_problems(tmp_path, marin_header_in_haliax, fix=False) == ["missing license header"]
 
 
-def test_black_uses_each_library_configuration():
-    assert python_style("lib/levanter/src/levanter/main/train_lm.py").black_config == "lib/levanter/pyproject.toml"
-    assert python_style("lib/haliax/tests/test_axis.py").black_config == "lib/haliax/pyproject.toml"
-    assert python_style("lib/marin/src/marin/experiment/cli.py").black_config == "pyproject.toml"
-    assert python_style("tools/lint.py").black_config == "pyproject.toml"
-
-
 def test_ruff_checks_marin_with_its_own_configuration_as_marin_did():
     # Ruff's per-file discovery classifies first-party imports differently from an explicit
     # --config for lib/marin, so Marin passed it explicitly; everything else uses discovery.
-    assert python_style("lib/marin/src/marin/testing/inference/snowball_checkpoint.py").ruff_config == (
-        "lib/marin/pyproject.toml"
-    )
-    assert python_style("lib/levanter/src/levanter/main/train_lm.py").ruff_config is None
-    assert python_style("tools/lint.py").ruff_config is None
+    assert ruff_config("lib/marin/src/marin/testing/inference/snowball_checkpoint.py") == "lib/marin/pyproject.toml"
+    assert ruff_config("lib/levanter/src/levanter/main/train_lm.py") is None
+    assert ruff_config("tools/lint.py") is None
 
 
 def test_trailing_whitespace_and_a_missing_final_newline_are_fixed(tmp_path):

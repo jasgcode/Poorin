@@ -26,7 +26,7 @@ ROOT = Path(__file__).resolve().parents[1]
 EVALCHEMY_CONFIGS = ROOT / "experiments/evaluation/configs/evalchemy"
 HARBOR_CONFIGS = ROOT / "experiments/evaluation/configs/harbor"
 HARBOR_REGISTRY_16 = (
-    "https://raw.githubusercontent.com/marin-community/harbor/" "7b18505a56e5624f55887e3b20f4de452f698a7a/registry.json"
+    "https://raw.githubusercontent.com/marin-community/harbor/7b18505a56e5624f55887e3b20f4de452f698a7a/registry.json"
 )
 POLICY_CONFIGS_24 = frozenset({"mmlu-pro", "gpqa-diamond", "cruxeval", "ifbench", "mrcr", "nupa"})
 

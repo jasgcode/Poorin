@@ -92,12 +92,12 @@ def test_basic_equivalence(test_data):
     )
 
     # Assert that the losses are close
-    assert hax.all(
-        hax.isclose(loss_full, loss_block, atol=1e-3, rtol=1e-3)
-    ), "Block-wise loss does not match full loss."
-    assert hax.all(
-        hax.isclose(loss_full + 0.25 * (logz_full**2), loss_block_penalty, atol=1e-3, rtol=1e-3)
-    ), "Logsumexp penalty does not match full loss."
+    assert hax.all(hax.isclose(loss_full, loss_block, atol=1e-3, rtol=1e-3)), (
+        "Block-wise loss does not match full loss."
+    )
+    assert hax.all(hax.isclose(loss_full + 0.25 * (logz_full**2), loss_block_penalty, atol=1e-3, rtol=1e-3)), (
+        "Logsumexp penalty does not match full loss."
+    )
 
 
 def test_fused_loss_returns_argmax(test_data):
@@ -149,9 +149,9 @@ def test_single_block(test_data):
         )
 
     # Assert that the losses are close
-    assert hax.all(
-        hax.isclose(loss_full, loss_block, atol=1e-3, rtol=1e-3)
-    ), "Single block-wise loss does not match full loss."
+    assert hax.all(hax.isclose(loss_full, loss_block, atol=1e-3, rtol=1e-3)), (
+        "Single block-wise loss does not match full loss."
+    )
 
 
 def _compute_full(Vocab, pred_embeddings, pred_lm_head, true_ids):
@@ -184,9 +184,9 @@ def test_multiple_blocks(test_data):
     )
 
     # Assert that the losses are close
-    assert hax.all(
-        hax.isclose(loss_full, loss_block, atol=1e-3, rtol=1e-3)
-    ), "Multiple block-wise loss does not match full loss."
+    assert hax.all(hax.isclose(loss_full, loss_block, atol=1e-3, rtol=1e-3)), (
+        "Multiple block-wise loss does not match full loss."
+    )
 
 
 def test_block_size_not_dividing_vocab(test_data):
@@ -216,9 +216,9 @@ def test_block_size_not_dividing_vocab(test_data):
     )
 
     # Assert that the losses are close
-    assert hax.all(
-        hax.isclose(loss_full, loss_block, atol=1e-3, rtol=1e-3)
-    ), "Block-wise loss does not match full loss."
+    assert hax.all(hax.isclose(loss_full, loss_block, atol=1e-3, rtol=1e-3)), (
+        "Block-wise loss does not match full loss."
+    )
 
 
 def test_vocab_size_less_than_block_size(test_data):
@@ -297,9 +297,9 @@ def test_large_vocab():
     )
 
     # Assert that the losses are close
-    assert hax.all(
-        hax.isclose(loss_full, loss_block, atol=1e-3, rtol=1e-3)
-    ), "Large vocab block-wise loss does not match full loss."
+    assert hax.all(hax.isclose(loss_full, loss_block, atol=1e-3, rtol=1e-3)), (
+        "Large vocab block-wise loss does not match full loss."
+    )
 
 
 @pytest.mark.parametrize("block_size", [3])
@@ -329,9 +329,7 @@ def test_gradient_block_cross_entropy(block_size, test_data):
     (
         g_embed,
         g_head,
-    ) = equinox.filter_grad(
-        custom_fn
-    )((pred_embeddings, pred_lm_head))
+    ) = equinox.filter_grad(custom_fn)((pred_embeddings, pred_lm_head))
 
     # compute directly
 
@@ -344,9 +342,9 @@ def test_gradient_block_cross_entropy(block_size, test_data):
 
     g_embed_direct, g_head_direct = equinox.filter_grad(direct_fn)((pred_embeddings, pred_lm_head))
 
-    assert hax.all(
-        hax.isclose(g_embed, g_embed_direct, atol=1e-3, rtol=1e-3)
-    ), "Gradient of embeddings does not match."
+    assert hax.all(hax.isclose(g_embed, g_embed_direct, atol=1e-3, rtol=1e-3)), (
+        "Gradient of embeddings does not match."
+    )
     assert hax.all(hax.isclose(g_head, g_head_direct, atol=1e-3, rtol=1e-3)), "Gradient of lm_head does not match."
 
 
@@ -376,9 +374,7 @@ def test_grad_loss_without_logz(test_data):
     (
         g_embed,
         g_head,
-    ) = equinox.filter_grad(
-        custom_fn
-    )((pred_embeddings, pred_lm_head))
+    ) = equinox.filter_grad(custom_fn)((pred_embeddings, pred_lm_head))
 
     # compute directly
 
@@ -391,7 +387,7 @@ def test_grad_loss_without_logz(test_data):
 
     g_embed_direct, g_head_direct = equinox.filter_grad(direct_fn)((pred_embeddings, pred_lm_head))
 
-    assert hax.all(
-        hax.isclose(g_embed, g_embed_direct, atol=1e-3, rtol=1e-3)
-    ), "Gradient of embeddings does not match."
+    assert hax.all(hax.isclose(g_embed, g_embed_direct, atol=1e-3, rtol=1e-3)), (
+        "Gradient of embeddings does not match."
+    )
     assert hax.all(hax.isclose(g_head, g_head_direct, atol=1e-3, rtol=1e-3)), "Gradient of lm_head does not match."

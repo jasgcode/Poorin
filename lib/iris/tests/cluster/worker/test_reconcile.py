@@ -371,9 +371,9 @@ def test_terminal_attempt_not_in_desired_is_not_observed(worker, mock_runtime):
 
     obs = _observations_by_uid(response)
     assert live_uid in obs, "Live attempt in desired set must be observed"
-    assert (
-        finished_uid not in obs
-    ), "Terminal attempt outside desired set must NOT be observed (this is the prod waste case)"
+    assert finished_uid not in obs, (
+        "Terminal attempt outside desired set must NOT be observed (this is the prod waste case)"
+    )
     # The terminal task is still retained locally — only the observation is suppressed.
     assert worker.task_by_uid(finished_uid) is finished
 

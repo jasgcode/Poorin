@@ -479,9 +479,9 @@ class SegmentedFlashAttentionBackwardSm80:
         # Always keep stream as the last parameter (EnvStream: obtained implicitly via TVM FFI).
         stream: cuda.CUstream = None,
     ):
-        assert (
-            mdQ_semaphore is None and mdK_semaphore is None and mdV_semaphore is None
-        ), "determinism not supported yet for Sm80"
+        assert mdQ_semaphore is None and mdK_semaphore is None and mdV_semaphore is None, (
+            "determinism not supported yet for Sm80"
+        )
         # Get the data type and check if it is fp16 or bf16
         self._check_type(
             *(

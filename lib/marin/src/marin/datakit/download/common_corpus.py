@@ -3,7 +3,6 @@
 
 """Download, filter, and normalize PleIAs/common_corpus from HuggingFace."""
 
-
 from fray.types import ResourceConfig
 from rigging.filesystem.storage_path import prefix_join
 from zephyr import counters

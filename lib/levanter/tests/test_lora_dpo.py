@@ -68,9 +68,9 @@ def test_unwrap_lora_modules_returns_base_model():
     base_out = model(input_tokens, attn_mask=attn_mask)
     unwrapped_out = unwrapped(input_tokens, attn_mask=attn_mask)
 
-    assert jnp.allclose(
-        base_out.array, unwrapped_out.array, atol=1e-5
-    ), "Unwrapped model output should match the original base model"
+    assert jnp.allclose(base_out.array, unwrapped_out.array, atol=1e-5), (
+        "Unwrapped model output should match the original base model"
+    )
 
 
 def test_unwrap_lora_modules_no_lora_linear_nodes():
@@ -146,9 +146,9 @@ def test_lora_dpo_trainable_filter_only_lora_params():
 
     assert trainable_count > 0, "Should have some trainable (LoRA) parameters"
     assert non_trainable_count > 0, "Should have some frozen (base) parameters"
-    assert (
-        non_trainable_count > trainable_count
-    ), f"Non-trainable ({non_trainable_count}) should outnumber trainable ({trainable_count})"
+    assert non_trainable_count > trainable_count, (
+        f"Non-trainable ({non_trainable_count}) should outnumber trainable ({trainable_count})"
+    )
 
 
 class _CapturingConverter:
@@ -210,9 +210,9 @@ def test_unwrap_lora_modules_with_stacked():
     input_vec = hax.random.normal(k0, (In,))
     original_out = module.fold(input_vec)
     unwrapped_out = unwrapped.fold(input_vec)
-    assert jnp.allclose(
-        original_out.array, unwrapped_out.array, atol=1e-5
-    ), "Unwrapped stacked model should match the original"
+    assert jnp.allclose(original_out.array, unwrapped_out.array, atol=1e-5), (
+        "Unwrapped stacked model should match the original"
+    )
 
 
 def test_zero_init_b_makes_lora_identity():
@@ -231,9 +231,9 @@ def test_zero_init_b_makes_lora_identity():
     base_out = model(input_tokens, attn_mask=attn_mask)
     lora_out = loraized(input_tokens, attn_mask=attn_mask)
 
-    assert jnp.allclose(
-        base_out.array, lora_out.array, atol=1e-5
-    ), "With zero_init_b=True, loraized model should produce identical output to base model"
+    assert jnp.allclose(base_out.array, lora_out.array, atol=1e-5), (
+        "With zero_init_b=True, loraized model should produce identical output to base model"
+    )
 
 
 def test_zero_init_b_dpo_loss_starts_near_log2():
@@ -264,6 +264,6 @@ def test_zero_init_b_dpo_loss_starts_near_log2():
     # With zero_init_b, policy = reference, so delta_pi = delta_ref,
     # and DPO loss = -log(sigmoid(0)) = log(2) ≈ 0.693
     assert jnp.isfinite(loss), f"Loss should be finite, got {loss}"
-    assert (
-        jnp.abs(loss - jnp.log(2.0)) < 0.01
-    ), f"With zero_init_b, initial DPO loss should be ~ln(2)=0.693, got {float(loss):.4f}"
+    assert jnp.abs(loss - jnp.log(2.0)) < 0.01, (
+        f"With zero_init_b, initial DPO loss should be ~ln(2)=0.693, got {float(loss):.4f}"
+    )

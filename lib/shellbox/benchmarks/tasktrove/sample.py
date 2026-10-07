@@ -16,7 +16,7 @@ import pyarrow.parquet as pq
 
 DATASET_REVISION = "9065fa568394f286dab0081e43dc76fc87c48984"
 PARQUET_URL = (
-    "https://huggingface.co/datasets/open-athena/task-trove/resolve/" f"{DATASET_REVISION}/data/part-00000.parquet"
+    f"https://huggingface.co/datasets/open-athena/task-trove/resolve/{DATASET_REVISION}/data/part-00000.parquet"
 )
 ROW_GROUP = 0
 SEED = 20260924

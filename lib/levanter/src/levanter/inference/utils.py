@@ -40,7 +40,9 @@ def masked_set(dest: NamedArray, axis, start, src, num_to_copy) -> NamedArray:
     return dest.at[{axis: dest_arange}].set(src[axis, src_arange], mode="drop")
 
 
-def is_stop_signal(tail_tokens: ht.i32[NamedArray, "position"], stop_sequences: ht.i32[NamedArray, "seq position"], invalid=INVALID) -> ht.bool_[NamedArray, ""]:  # type: ignore
+def is_stop_signal(
+    tail_tokens: ht.i32[NamedArray, "position"], stop_sequences: ht.i32[NamedArray, "seq position"], invalid=INVALID
+) -> ht.bool_[NamedArray, ""]:  # type: ignore
     """
     Check if tail_tokens ends with any of the stop sequences.
     Stop sequences are **left padded** to the tokens.

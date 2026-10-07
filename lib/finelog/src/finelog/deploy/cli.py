@@ -639,7 +639,7 @@ def gcs_query_cmd(
     table = conn.execute(sql).fetch_arrow_table()
     if table.num_rows > max_rows:
         raise click.UsageError(
-            f"query returned {table.num_rows} rows, exceeds --max-rows={max_rows} " f"(add a LIMIT or raise the cap)"
+            f"query returned {table.num_rows} rows, exceeds --max-rows={max_rows} (add a LIMIT or raise the cap)"
         )
     _PRINTERS[OutputFormat(output_format)](table)
 

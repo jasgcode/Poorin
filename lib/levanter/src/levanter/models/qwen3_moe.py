@@ -117,9 +117,7 @@ class Qwen3MoeConfig(LlamaConfig):
             raise NotImplementedError("Qwen3 MoE decoder_sparse_step values other than 1 are not supported yet.")
 
     # config-reuse subclass narrows to its own HF config/model type (LSP narrowing; pyrefly flags the same)
-    def hf_checkpoint_converter(
-        self, ref_checkpoint: Optional[str] = None
-    ) -> HFCheckpointConverter["Qwen3MoeConfig"]:  # type: ignore
+    def hf_checkpoint_converter(self, ref_checkpoint: Optional[str] = None) -> HFCheckpointConverter["Qwen3MoeConfig"]:  # type: ignore
         return HFCheckpointConverter(
             self.__class__,
             reference_checkpoint=self.reference_checkpoint if ref_checkpoint is None else ref_checkpoint,
@@ -159,9 +157,7 @@ class Qwen3MoeConfig(LlamaConfig):
             rope=rope_config,
         )
 
-    def to_hf_config(
-        self, vocab_size: int, config_overrides: Optional[Dict] = None
-    ) -> HfQwen3MoeConfig:  # ty: ignore[invalid-method-override]
+    def to_hf_config(self, vocab_size: int, config_overrides: Optional[Dict] = None) -> HfQwen3MoeConfig:  # ty: ignore[invalid-method-override]
         if config_overrides is None:
             config_overrides = {}
 

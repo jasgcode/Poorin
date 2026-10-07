@@ -201,7 +201,8 @@ def connected_components(
                 lambda x: x["source_id_norm"],
                 reducer=_build_adjacency,
                 num_output_shards=num_reduce_shards,
-            ).write_parquet(f"{output_dir}/it_0/part-{{shard:05d}}.parquet"),
+            )
+            .write_parquet(f"{output_dir}/it_0/part-{{shard:05d}}.parquet"),
             verbose=True,
             map_task_resources=map_task_resources,
             reduce_task_resources=reduce_task_resources,

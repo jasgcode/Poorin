@@ -181,7 +181,6 @@ def test_best_effort_sharding_uses_context_and_expert_for_checkpoint_staging():
 
 
 def test_tree_broadcast_to_simple():
-
     # Test with simple nested dicts
     prefix = {"a": 1, "b": 2}
     target = {"a": {"x": 10, "y": 20}, "b": {"z": 30}}
@@ -205,7 +204,6 @@ def test_tree_broadcast_to_simple():
 
 
 def test_tree_broadcast_to_mixed_types():
-
     # Test with mixed types
     prefix = {"a": 1, "b": 2}
     target = {"a": [10, 20], "b": {"x": 30, "y": 40}}
@@ -248,7 +246,6 @@ def test_tree_broadcast_to_with_equinox():
 
 
 def test_tree_broadcast_to_edge_cases():
-
     # Test with empty trees
     prefix = None
     target = {"a": {}, "b": {}}

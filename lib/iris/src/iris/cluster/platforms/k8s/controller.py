@@ -1017,9 +1017,7 @@ class K8sControllerProvider:
                 if reason in self._CRASH_LOOP_REASONS and restart_count >= self._CRASH_LOOP_MIN_RESTARTS:
                     log_tail = self._kubectl.logs(pod_name, container=container_name, tail=30, previous=True)
                     raise InfraError(
-                        f"Controller Pod {pod_name} is in {reason} "
-                        f"(restarts={restart_count}).\n"
-                        f"Last logs:\n{log_tail}"
+                        f"Controller Pod {pod_name} is in {reason} (restarts={restart_count}).\nLast logs:\n{log_tail}"
                     )
 
             conditions = status.get("conditions", [])
@@ -1084,7 +1082,7 @@ class K8sControllerProvider:
 
                     if count >= 10:
                         raise InfraError(
-                            f"Controller Pod {pod_name} has fatal event: " f"{reason}: {message} (repeated {count}x)"
+                            f"Controller Pod {pod_name} has fatal event: {reason}: {message} (repeated {count}x)"
                         )
 
                 if reason in self._FATAL_EVENT_REASONS:

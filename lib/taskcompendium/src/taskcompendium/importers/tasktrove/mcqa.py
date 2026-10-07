@@ -24,8 +24,7 @@ _PREFIX = (
     "---\n\n"
 )
 _FORMAT_PREFIX = (
-    "Answer the following multiple choice question. The last line of your response "
-    "should be in the following format: "
+    "Answer the following multiple choice question. The last line of your response should be in the following format: "
 )
 
 

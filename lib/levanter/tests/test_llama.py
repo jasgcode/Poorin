@@ -52,9 +52,9 @@ def test_llama_config():
     for k in new_hf_config.__dict__.keys():
         if k in ["_commit_hash", "transformers_version", "_attn_implementation_internal"]:
             continue
-        assert getattr(new_hf_config, k) == getattr(
-            hf_config, k
-        ), f"{k} {getattr(new_hf_config, k)} != {getattr(hf_config, k)}"
+        assert getattr(new_hf_config, k) == getattr(hf_config, k), (
+            f"{k} {getattr(new_hf_config, k)} != {getattr(hf_config, k)}"
+        )
 
 
 def test_llama_flops():
@@ -166,9 +166,9 @@ def test_llama_rms_norm():
     out = ln(x)
     hf_out = hf_ln(x_torch)
 
-    assert np.isclose(
-        hf_out.detach().cpu().numpy(), np.array(out.array), rtol=1e-6, atol=1e-6
-    ).all(), f"{hf_out} != {out}"
+    assert np.isclose(hf_out.detach().cpu().numpy(), np.array(out.array), rtol=1e-6, atol=1e-6).all(), (
+        f"{hf_out} != {out}"
+    )
 
 
 @skip_if_no_torch

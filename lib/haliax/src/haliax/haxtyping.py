@@ -79,7 +79,7 @@ else:
                 # Delegate non‑NamedArray to jaxtyping
                 if base is not NamedArray:
                     # e.g. use jt.Float32 for jnp.float32
-                    jaxt = getattr(jt, f"Float{dtype.itemsize*8}") if hasattr(dtype, "itemsize") else jt.Float
+                    jaxt = getattr(jt, f"Float{dtype.itemsize * 8}") if hasattr(dtype, "itemsize") else jt.Float
                     return jaxt[base, axes_spec]
 
                 # Handle NamedArray path

@@ -1770,6 +1770,6 @@ def test_loop_local_zeros_sites_prevent_cse():
         return fill, fill
 
     assert _optimized_hlo_opcode_count(distinct_sites, MINIMUM_OPCODE) == 2
-    assert (
-        _optimized_hlo_opcode_count(repeated_site, MINIMUM_OPCODE) == 1
-    ), "the CSE probe no longer merges repeated sites, so this test can no longer detect a site collision"
+    assert _optimized_hlo_opcode_count(repeated_site, MINIMUM_OPCODE) == 1, (
+        "the CSE probe no longer merges repeated sites, so this test can no longer detect a site collision"
+    )

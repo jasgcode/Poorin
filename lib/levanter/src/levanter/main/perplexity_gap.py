@@ -576,8 +576,7 @@ def _check_finite_losses(label: str, losses: np.ndarray) -> None:
         return
 
     raise ValueError(
-        f"Non-finite losses while scoring {label}. "
-        "This usually means the checkpoint and tokenizer are incompatible."
+        f"Non-finite losses while scoring {label}. This usually means the checkpoint and tokenizer are incompatible."
     )
 
 

@@ -102,7 +102,7 @@ def _fetch_gcp_secret(ref: str) -> str | None:
         from google.cloud import secretmanager  # noqa: PLC0415  # optional dep
     except ImportError as exc:
         raise SecretResolutionError(
-            f"{ref!r}: resolving a gcp-secret reference needs the optional dependency; " "install marin-rigging[secrets]"
+            f"{ref!r}: resolving a gcp-secret reference needs the optional dependency; install marin-rigging[secrets]"
         ) from exc
     from google.api_core.exceptions import GoogleAPICallError, NotFound  # noqa: PLC0415  # optional dep
 

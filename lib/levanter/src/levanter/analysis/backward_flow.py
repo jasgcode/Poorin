@@ -1033,14 +1033,14 @@ def _edge_path(
         x2 = end_x
         y2 = end_y + node_height / 2
         ctrl_dx = max(50, (x2 - x1) / 2)
-        return f"M{x1:.1f},{y1:.1f} " f"C{x1 + ctrl_dx:.1f},{y1:.1f} {x2 - ctrl_dx:.1f},{y2:.1f} {x2:.1f},{y2:.1f}"
+        return f"M{x1:.1f},{y1:.1f} C{x1 + ctrl_dx:.1f},{y1:.1f} {x2 - ctrl_dx:.1f},{y2:.1f} {x2:.1f},{y2:.1f}"
 
     x1 = start_x + node_width / 2
     y1 = start_y + node_height
     x2 = end_x + node_width / 2
     y2 = end_y
     ctrl_dy = max(12.0, abs(y2 - y1) / 2)
-    return f"M{x1:.1f},{y1:.1f} " f"C{x1:.1f},{y1 + ctrl_dy:.1f} {x2:.1f},{y2 - ctrl_dy:.1f} {x2:.1f},{y2:.1f}"
+    return f"M{x1:.1f},{y1:.1f} C{x1:.1f},{y1 + ctrl_dy:.1f} {x2:.1f},{y2 - ctrl_dy:.1f} {x2:.1f},{y2:.1f}"
 
 
 def _residual_back_gains(

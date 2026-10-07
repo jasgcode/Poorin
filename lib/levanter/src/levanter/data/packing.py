@@ -9,6 +9,7 @@ sequence length (or the maximum number of segments), then start a new pack.
 
 This achieves about a 90% "real token" rate, compared to like 10% without packing.
 """
+
 import asyncio
 import time
 from dataclasses import dataclass
@@ -96,9 +97,9 @@ def _segment_membership(packed_example: LmExample, max_Segments: hax.Axis) -> tu
     if isinstance(segment_ids, tuple):
         segment_ids = segment_ids[0]
 
-    assert (
-        segment_ids.ndim == 1
-    ), f"Expected segment_ids to be 1D, got {segment_ids.ndim}. Use vmap if you have multiple examples"
+    assert segment_ids.ndim == 1, (
+        f"Expected segment_ids to be 1D, got {segment_ids.ndim}. Use vmap if you have multiple examples"
+    )
 
     unique_segment_ids = _unique_segment_ids(max_Segments, segment_ids)
     segment_mask = unique_segment_ids == segment_ids.broadcast_axis(max_Segments)

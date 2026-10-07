@@ -42,6 +42,7 @@ Consider a simple model with two parameters, attention and mlp. That might look 
    ```
  which just grounds out into a call to [equinox.combine][]
 """
+
 import dataclasses
 import functools
 import json
@@ -247,7 +248,6 @@ class LoraLinear(ModuleWithStateDictSerialization):
             k1, k2 = jax.random.split(key)
             return self.lora(x, key=k2) + self.wrapped(x, key=k1)
         else:
-
             return self.lora(x) + self.wrapped(x)
 
     def merge(self):

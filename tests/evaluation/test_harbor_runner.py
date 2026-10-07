@@ -654,7 +654,6 @@ def test_harbor_executor_fails_when_too_few_trials_were_graded(tmp_path, monkeyp
 
 
 def test_harbor_executor_counts_agent_failure_without_verifier_as_zero_reward(tmp_path, monkeypatch):
-
     def run_driver(_config, overlay, _driver_env, _backend_state) -> None:
         job_dir = Path(overlay.jobs_dir) / overlay.job_name
         _write_job_record(job_dir, 20, _config)
@@ -787,7 +786,6 @@ def test_harbor_executor_preserves_scored_errors(tmp_path, monkeypatch, exceptio
 
 
 def test_preflight_benchmark_count_matches_job_metadata(tmp_path, monkeypatch):
-
     def run_driver(_config, overlay, _driver_env, _backend_state) -> None:
         job_dir = Path(overlay.jobs_dir) / overlay.job_name
         _write_job_record(job_dir, 4, _config)

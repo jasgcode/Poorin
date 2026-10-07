@@ -137,7 +137,6 @@ def main(config: VizLmConfig):
             comparison_model = typing.cast(LmHeadModel, inference_mode(comparison_model, True))
 
         for name, dataset in validation_sets.items():
-
             if config.data_seed is not None:
                 dataset = dataset.shuffle(jax.random.PRNGKey(config.data_seed))
 

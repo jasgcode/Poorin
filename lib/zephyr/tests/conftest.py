@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 """Pytest fixtures for zephyr tests."""
+
 import atexit
 import os
 import sys
@@ -158,7 +159,7 @@ def _thread_cleanup():
 
     thread_info = [f"{t.name} (daemon={t.daemon}, ident={t.ident})" for t in leaked]
     warnings.warn(
-        f"Threads leaked from test: {thread_info}\n" "All threads should be stopped via shutdown() or similar cleanup.",
+        f"Threads leaked from test: {thread_info}\nAll threads should be stopped via shutdown() or similar cleanup.",
         stacklevel=1,
     )
 

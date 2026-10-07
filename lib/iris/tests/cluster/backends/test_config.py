@@ -694,9 +694,9 @@ scale_groups:
             for name, sg in config.scale_groups.items():
                 template = sg.slice_template
                 if template.platform_kind() == "gcp" and template.gcp.zone:
-                    assert (
-                        template.gcp.zone in KNOWN_GCP_ZONES
-                    ), f"Scale group '{name}': zone '{template.gcp.zone}' not in KNOWN_GCP_ZONES"
+                    assert template.gcp.zone in KNOWN_GCP_ZONES, (
+                        f"Scale group '{name}': zone '{template.gcp.zone}' not in KNOWN_GCP_ZONES"
+                    )
 
 
 def _valid_scale_group() -> ScaleGroupConfig:

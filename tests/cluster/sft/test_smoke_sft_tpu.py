@@ -17,6 +17,7 @@ controller as the current Fray client, so ``StepRunner`` submits there. Launch i
 
 PYTEST_DONT_REWRITE: the step dispatches serialized remote functions that must not depend on pytest.
 """
+
 from __future__ import annotations
 
 import dataclasses

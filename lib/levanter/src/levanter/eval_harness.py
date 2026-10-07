@@ -785,7 +785,7 @@ class LevanterHarnessLM(TemplateLM):
         # Error out on multihost JAX - Engine doesn't support it yet
         if jax.process_count() > 1:
             raise NotImplementedError(
-                "InferenceEngine does not yet support multihost JAX. " "Please use a single host for generation tasks."
+                "InferenceEngine does not yet support multihost JAX. Please use a single host for generation tasks."
             )
 
         # print(f'len(requests)={len(requests)}')
@@ -937,7 +937,9 @@ class LevanterHarnessLM(TemplateLM):
 
                 # Post-process the generated text using the imported utility function
                 text = postprocess_generated_text(
-                    text, gen_kwargs.get("until"), None  # think_end_token - could be made configurable if needed
+                    text,
+                    gen_kwargs.get("until"),
+                    None,  # think_end_token - could be made configurable if needed
                 )  # ty: ignore[call-non-callable]
                 outputs.append(text)
                 output_idx += 1  # consume one generation per request

@@ -864,9 +864,9 @@ def test_gang_requeue_bounces_assigned_sibling_off_old_generation(state):
             [TaskUpdate(task_id=task_ids[1], attempt_id=0, new_state=job_pb2.TASK_STATE_WORKER_FAILED)],
             now=Timestamp.now(),
         )
-    assert all(
-        s == job_pb2.TASK_STATE_PENDING for s in _states(state, task_ids)
-    ), "the ASSIGNED sibling must not be stranded on the old generation"
+    assert all(s == job_pb2.TASK_STATE_PENDING for s in _states(state, task_ids)), (
+        "the ASSIGNED sibling must not be stranded on the old generation"
+    )
 
     # Re-drain: every sibling re-promotes to attempt 1 together; nothing is redriven on
     # attempt 0 (which would mean a split pod-group generation).

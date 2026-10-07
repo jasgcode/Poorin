@@ -1298,8 +1298,7 @@ class TestGpuScaleGroupBugs:
         autoscaler.run_once([], vm_status_map, ts)
 
         assert group.slice_count() == 2, (
-            "Freshly-ready slices should be protected by idle_threshold (300s). "
-            f"Got slice_count={group.slice_count()}"
+            f"Freshly-ready slices should be protected by idle_threshold (300s). Got slice_count={group.slice_count()}"
         )
 
 

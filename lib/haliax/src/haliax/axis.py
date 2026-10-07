@@ -321,7 +321,9 @@ def without_axes(axis_spec: ShapeDict, to_remove: AxisSelection, allow_mismatche
 
 
 @typing.overload
-def without_axes(axis_spec: Sequence[Axis], to_remove: AxisSelection, allow_mismatched_sizes=False) -> tuple[Axis, ...]:  # type: ignore
+def without_axes(
+    axis_spec: Sequence[Axis], to_remove: AxisSelection, allow_mismatched_sizes=False
+) -> tuple[Axis, ...]:  # type: ignore
     ...
 
 
@@ -336,12 +338,15 @@ def without_axes(axis_spec: AxisSelection, to_remove: AxisSelection, allow_misma
 
 
 @typing.overload
-def without_axes(axis_spec: Sequence[AxisSelector], to_remove: AxisSelection, allow_mismatched_sizes=False) -> tuple[AxisSpec, ...]:  # type: ignore
-    ...
+def without_axes(  # type: ignore
+    axis_spec: Sequence[AxisSelector], to_remove: AxisSelection, allow_mismatched_sizes=False
+) -> tuple[AxisSpec, ...]: ...
 
 
 @typing.overload
-def without_axes(axis_spec: PartialShapeDict, to_remove: AxisSelection, allow_mismatched_sizes=False) -> PartialShapeDict:  # type: ignore
+def without_axes(
+    axis_spec: PartialShapeDict, to_remove: AxisSelection, allow_mismatched_sizes=False
+) -> PartialShapeDict:  # type: ignore
     ...
 
 

@@ -31,7 +31,7 @@ def raise_parse_error(message: str, expression: str, pos: int | tuple[int, int] 
     fmt = f"Error while parsing:\n    {expression}"
     if pos is not None:
         if isinstance(pos, int):
-            fmt += f'\n    {" " * pos}^'
+            fmt += f"\n    {' ' * pos}^"
         else:
             fmt += f"\n    {' ' * pos[0]}{'^' * max(1, pos[1] - pos[0])}"
 

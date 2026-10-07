@@ -560,9 +560,7 @@ def test_index():
 
     named1 = hax.random.uniform(PRNGKey(0), (H, W, D))
 
-    assert jnp.all(
-        jnp.equal(hax.index(named1, {"H": slice(0, 10, 2)}).array, named1.array[0:10:2, :, :])
-    )  # type: ignore
+    assert jnp.all(jnp.equal(hax.index(named1, {"H": slice(0, 10, 2)}).array, named1.array[0:10:2, :, :]))  # type: ignore
     assert hax.index(named1, {"H": slice(0, 10, 2)}).axes == (Axis("H", 5), W, D)  # type: ignore
 
     # try indexing syntax

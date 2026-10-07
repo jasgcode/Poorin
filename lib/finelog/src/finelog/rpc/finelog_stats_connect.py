@@ -17,39 +17,66 @@ from . import finelog_stats_pb2 as finelog__stats__pb2
 
 
 class StatsService(Protocol):
-    async def register_table(self, request: finelog__stats__pb2.RegisterTableRequest, ctx: RequestContext) -> finelog__stats__pb2.RegisterTableResponse:
+    async def register_table(
+        self, request: finelog__stats__pb2.RegisterTableRequest, ctx: RequestContext
+    ) -> finelog__stats__pb2.RegisterTableResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def write_rows(self, request: finelog__stats__pb2.WriteRowsRequest, ctx: RequestContext) -> finelog__stats__pb2.WriteRowsResponse:
+    async def write_rows(
+        self, request: finelog__stats__pb2.WriteRowsRequest, ctx: RequestContext
+    ) -> finelog__stats__pb2.WriteRowsResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def query(self, request: finelog__stats__pb2.QueryRequest, ctx: RequestContext) -> finelog__stats__pb2.QueryResponse:
+    async def query(
+        self, request: finelog__stats__pb2.QueryRequest, ctx: RequestContext
+    ) -> finelog__stats__pb2.QueryResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def drop_table(self, request: finelog__stats__pb2.DropTableRequest, ctx: RequestContext) -> finelog__stats__pb2.DropTableResponse:
+    async def drop_table(
+        self, request: finelog__stats__pb2.DropTableRequest, ctx: RequestContext
+    ) -> finelog__stats__pb2.DropTableResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def list_namespaces(self, request: finelog__stats__pb2.ListNamespacesRequest, ctx: RequestContext) -> finelog__stats__pb2.ListNamespacesResponse:
+    async def list_namespaces(
+        self, request: finelog__stats__pb2.ListNamespacesRequest, ctx: RequestContext
+    ) -> finelog__stats__pb2.ListNamespacesResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def get_table_schema(self, request: finelog__stats__pb2.GetTableSchemaRequest, ctx: RequestContext) -> finelog__stats__pb2.GetTableSchemaResponse:
+    async def get_table_schema(
+        self, request: finelog__stats__pb2.GetTableSchemaRequest, ctx: RequestContext
+    ) -> finelog__stats__pb2.GetTableSchemaResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def get_table_status(self, request: finelog__stats__pb2.GetTableStatusRequest, ctx: RequestContext) -> finelog__stats__pb2.GetTableStatusResponse:
+    async def get_table_status(
+        self, request: finelog__stats__pb2.GetTableStatusRequest, ctx: RequestContext
+    ) -> finelog__stats__pb2.GetTableStatusResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def abort_table_migration(self, request: finelog__stats__pb2.AbortTableMigrationRequest, ctx: RequestContext) -> finelog__stats__pb2.AbortTableMigrationResponse:
+    async def abort_table_migration(
+        self, request: finelog__stats__pb2.AbortTableMigrationRequest, ctx: RequestContext
+    ) -> finelog__stats__pb2.AbortTableMigrationResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def report_relay_status(self, request: finelog__stats__pb2.ReportRelayStatusRequest, ctx: RequestContext) -> finelog__stats__pb2.ReportRelayStatusResponse:
+    async def report_relay_status(
+        self, request: finelog__stats__pb2.ReportRelayStatusRequest, ctx: RequestContext
+    ) -> finelog__stats__pb2.ReportRelayStatusResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def list_relay_status(self, request: finelog__stats__pb2.ListRelayStatusRequest, ctx: RequestContext) -> finelog__stats__pb2.ListRelayStatusResponse:
+    async def list_relay_status(
+        self, request: finelog__stats__pb2.ListRelayStatusRequest, ctx: RequestContext
+    ) -> finelog__stats__pb2.ListRelayStatusResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
 
 class StatsServiceASGIApplication(ConnectASGIApplication[StatsService]):
-    def __init__(self, service: StatsService | AsyncGenerator[StatsService], *, interceptors: Iterable[Interceptor]=(), read_max_bytes: int | None = None, compressions: Iterable[Compression] | None = None) -> None:
+    def __init__(
+        self,
+        service: StatsService | AsyncGenerator[StatsService],
+        *,
+        interceptors: Iterable[Interceptor] = (),
+        read_max_bytes: int | None = None,
+        compressions: Iterable[Compression] | None = None,
+    ) -> None:
         super().__init__(
             service=service,
             endpoints=lambda svc: {
@@ -368,30 +395,63 @@ class StatsServiceClient(ConnectClient):
 
 
 class StatsServiceSync(Protocol):
-    def register_table(self, request: finelog__stats__pb2.RegisterTableRequest, ctx: RequestContext) -> finelog__stats__pb2.RegisterTableResponse:
+    def register_table(
+        self, request: finelog__stats__pb2.RegisterTableRequest, ctx: RequestContext
+    ) -> finelog__stats__pb2.RegisterTableResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-    def write_rows(self, request: finelog__stats__pb2.WriteRowsRequest, ctx: RequestContext) -> finelog__stats__pb2.WriteRowsResponse:
+
+    def write_rows(
+        self, request: finelog__stats__pb2.WriteRowsRequest, ctx: RequestContext
+    ) -> finelog__stats__pb2.WriteRowsResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
+
     def query(self, request: finelog__stats__pb2.QueryRequest, ctx: RequestContext) -> finelog__stats__pb2.QueryResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-    def drop_table(self, request: finelog__stats__pb2.DropTableRequest, ctx: RequestContext) -> finelog__stats__pb2.DropTableResponse:
+
+    def drop_table(
+        self, request: finelog__stats__pb2.DropTableRequest, ctx: RequestContext
+    ) -> finelog__stats__pb2.DropTableResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-    def list_namespaces(self, request: finelog__stats__pb2.ListNamespacesRequest, ctx: RequestContext) -> finelog__stats__pb2.ListNamespacesResponse:
+
+    def list_namespaces(
+        self, request: finelog__stats__pb2.ListNamespacesRequest, ctx: RequestContext
+    ) -> finelog__stats__pb2.ListNamespacesResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-    def get_table_schema(self, request: finelog__stats__pb2.GetTableSchemaRequest, ctx: RequestContext) -> finelog__stats__pb2.GetTableSchemaResponse:
+
+    def get_table_schema(
+        self, request: finelog__stats__pb2.GetTableSchemaRequest, ctx: RequestContext
+    ) -> finelog__stats__pb2.GetTableSchemaResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-    def get_table_status(self, request: finelog__stats__pb2.GetTableStatusRequest, ctx: RequestContext) -> finelog__stats__pb2.GetTableStatusResponse:
+
+    def get_table_status(
+        self, request: finelog__stats__pb2.GetTableStatusRequest, ctx: RequestContext
+    ) -> finelog__stats__pb2.GetTableStatusResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-    def abort_table_migration(self, request: finelog__stats__pb2.AbortTableMigrationRequest, ctx: RequestContext) -> finelog__stats__pb2.AbortTableMigrationResponse:
+
+    def abort_table_migration(
+        self, request: finelog__stats__pb2.AbortTableMigrationRequest, ctx: RequestContext
+    ) -> finelog__stats__pb2.AbortTableMigrationResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-    def report_relay_status(self, request: finelog__stats__pb2.ReportRelayStatusRequest, ctx: RequestContext) -> finelog__stats__pb2.ReportRelayStatusResponse:
+
+    def report_relay_status(
+        self, request: finelog__stats__pb2.ReportRelayStatusRequest, ctx: RequestContext
+    ) -> finelog__stats__pb2.ReportRelayStatusResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-    def list_relay_status(self, request: finelog__stats__pb2.ListRelayStatusRequest, ctx: RequestContext) -> finelog__stats__pb2.ListRelayStatusResponse:
+
+    def list_relay_status(
+        self, request: finelog__stats__pb2.ListRelayStatusRequest, ctx: RequestContext
+    ) -> finelog__stats__pb2.ListRelayStatusResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
 
 class StatsServiceWSGIApplication(ConnectWSGIApplication):
-    def __init__(self, service: StatsServiceSync, interceptors: Iterable[InterceptorSync]=(), read_max_bytes: int | None = None, compressions: Iterable[Compression] | None = None) -> None:
+    def __init__(
+        self,
+        service: StatsServiceSync,
+        interceptors: Iterable[InterceptorSync] = (),
+        read_max_bytes: int | None = None,
+        compressions: Iterable[Compression] | None = None,
+    ) -> None:
         super().__init__(
             endpoints={
                 "/finelog.stats.StatsService/RegisterTable": EndpointSync.unary(

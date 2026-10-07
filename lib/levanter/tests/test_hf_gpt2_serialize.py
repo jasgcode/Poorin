@@ -192,9 +192,9 @@ def _compare_gpt2_checkpoint_gradients(model_id, revision, config: Optional[Gpt2
             assert key == "token_out_embeddings"
             continue
         torch_p = state_dict[key]
-        assert np.isclose(
-            jax_p, torch_p.detach().cpu().numpy(), rtol=1e-3, atol=2e-3
-        ).all(), f"{key}: {np.linalg.norm(jax_p - torch_p.detach().cpu().numpy(), ord=np.inf)}"
+        assert np.isclose(jax_p, torch_p.detach().cpu().numpy(), rtol=1e-3, atol=2e-3).all(), (
+            f"{key}: {np.linalg.norm(jax_p - torch_p.detach().cpu().numpy(), ord=np.inf)}"
+        )
 
 
 def test_hf_save_to_fs_spec():

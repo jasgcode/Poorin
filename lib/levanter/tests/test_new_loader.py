@@ -31,7 +31,6 @@ def test_local_batched_data_loading_model_axis_2():
     model_axis_size = 2
 
     with use_test_mesh(tensor_parallelism=model_axis_size) as mesh, haliax.axis_mapping({"batch": ResourceAxis.DATA}):
-
         seq_len = 128
         cache = _small_dataset(seq_len)
         loader = DataLoader(cache, len(devices), max_buffered_batches=10, mesh=mesh, axis_resources=None)
@@ -46,7 +45,6 @@ def test_local_batched_data_loading_model_axis_1():
     model_axis_size = 1
 
     with use_test_mesh(tensor_parallelism=model_axis_size) as mesh, haliax.axis_mapping({"batch": ResourceAxis.DATA}):
-
         seq_len = 128
         cache = _small_dataset(seq_len)
         loader = DataLoader(cache, len(devices), max_buffered_batches=10, mesh=mesh, axis_resources=None)

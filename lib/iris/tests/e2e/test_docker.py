@@ -103,9 +103,9 @@ def test_oom_detection(docker_cluster):
     log_text = "\n".join(logs)
 
     if "OOM" in error:
-        assert (
-            "OOM killed" in log_text or "OOM" in error
-        ), f"Expected OOM in logs when oom_killed detected. Logs: {log_text[-500:]}"
+        assert "OOM killed" in log_text or "OOM" in error, (
+            f"Expected OOM in logs when oom_killed detected. Logs: {log_text[-500:]}"
+        )
 
 
 @pytest.mark.timeout(180)
@@ -142,7 +142,7 @@ def test_jax_coordinator_address_format(tpu_sim_cluster):
             raise ValueError("TPU_TYPE not set")
         if tpu_accelerator_type != tpu_type:
             raise ValueError(
-                "TPU_ACCELERATOR_TYPE and TPU_TYPE must match " f"(got {tpu_accelerator_type!r} vs {tpu_type!r})"
+                f"TPU_ACCELERATOR_TYPE and TPU_TYPE must match (got {tpu_accelerator_type!r} vs {tpu_type!r})"
             )
 
         # This is the exact parsing that JAX does in distributed.py:107

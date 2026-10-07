@@ -87,9 +87,9 @@ class Olmo3Config(HFCompatConfig):
     HeadSize = property(lambda self: Axis(name="head_size", size=self.actual_head_size))
 
     def __post_init__(self):
-        assert (
-            self.num_heads % self.num_kv_heads == 0
-        ), f"num_heads={self.num_heads} not divisible by num_kv_heads={self.num_kv_heads}."
+        assert self.num_heads % self.num_kv_heads == 0, (
+            f"num_heads={self.num_heads} not divisible by num_kv_heads={self.num_kv_heads}."
+        )
 
     def hf_checkpoint_converter(self, ref_checkpoint: Optional[str] = None) -> HFCheckpointConverter["Olmo3Config"]:  # type: ignore
         return HFCheckpointConverter(

@@ -547,7 +547,7 @@ def check(project: str, controller_sa_id: str, worker_sa_id: str, probe_gcs_path
         click.echo()
         if active_account:
             click.echo(
-                f"Skipping live probes: active gcloud account ({active_account}) " f"!= checked email ({checked_email})"
+                f"Skipping live probes: active gcloud account ({active_account}) != checked email ({checked_email})"
             )
             click.echo(f"To run live probes: gcloud auth login {checked_email}")
         else:

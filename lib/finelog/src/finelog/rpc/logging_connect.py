@@ -17,15 +17,26 @@ from . import logging_pb2 as logging__pb2
 
 
 class LogService(Protocol):
-    async def push_logs(self, request: logging__pb2.PushLogsRequest, ctx: RequestContext) -> logging__pb2.PushLogsResponse:
+    async def push_logs(
+        self, request: logging__pb2.PushLogsRequest, ctx: RequestContext
+    ) -> logging__pb2.PushLogsResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def fetch_logs(self, request: logging__pb2.FetchLogsRequest, ctx: RequestContext) -> logging__pb2.FetchLogsResponse:
+    async def fetch_logs(
+        self, request: logging__pb2.FetchLogsRequest, ctx: RequestContext
+    ) -> logging__pb2.FetchLogsResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
 
 class LogServiceASGIApplication(ConnectASGIApplication[LogService]):
-    def __init__(self, service: LogService | AsyncGenerator[LogService], *, interceptors: Iterable[Interceptor]=(), read_max_bytes: int | None = None, compressions: Iterable[Compression] | None = None) -> None:
+    def __init__(
+        self,
+        service: LogService | AsyncGenerator[LogService],
+        *,
+        interceptors: Iterable[Interceptor] = (),
+        read_max_bytes: int | None = None,
+        compressions: Iterable[Compression] | None = None,
+    ) -> None:
         super().__init__(
             service=service,
             endpoints=lambda svc: {
@@ -106,12 +117,19 @@ class LogServiceClient(ConnectClient):
 class LogServiceSync(Protocol):
     def push_logs(self, request: logging__pb2.PushLogsRequest, ctx: RequestContext) -> logging__pb2.PushLogsResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
+
     def fetch_logs(self, request: logging__pb2.FetchLogsRequest, ctx: RequestContext) -> logging__pb2.FetchLogsResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
 
 class LogServiceWSGIApplication(ConnectWSGIApplication):
-    def __init__(self, service: LogServiceSync, interceptors: Iterable[InterceptorSync]=(), read_max_bytes: int | None = None, compressions: Iterable[Compression] | None = None) -> None:
+    def __init__(
+        self,
+        service: LogServiceSync,
+        interceptors: Iterable[InterceptorSync] = (),
+        read_max_bytes: int | None = None,
+        compressions: Iterable[Compression] | None = None,
+    ) -> None:
         super().__init__(
             endpoints={
                 "/finelog.logging.LogService/PushLogs": EndpointSync.unary(

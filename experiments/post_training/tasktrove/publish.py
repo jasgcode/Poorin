@@ -321,10 +321,10 @@ def render_huggingface_card(manifest: dict, report: str, repo_id: str) -> str:
 # TaskTrove Clean
 
 TaskTrove Clean is a normalized release of
-[`{source['hf_id']}`](https://huggingface.co/datasets/{source['hf_id']}) at revision
-`{source['revision']}`. It contains {manifest['clean_tasks']:,} retained Harbor tasks from
-{manifest['input_tasks']:,} input rows. The graders were built from Marin commit
-`{manifest['verify_tool_ref']}`.
+[`{source["hf_id"]}`](https://huggingface.co/datasets/{source["hf_id"]}) at revision
+`{source["revision"]}`. It contains {manifest["clean_tasks"]:,} retained Harbor tasks from
+{manifest["input_tasks"]:,} input rows. The graders were built from Marin commit
+`{manifest["verify_tool_ref"]}`.
 
 ## How it was made
 

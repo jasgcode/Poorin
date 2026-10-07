@@ -160,7 +160,6 @@ def _profile_attempt(
     dependencies: AttemptDependencies,
     request: job_pb2.ProfileTaskRequest,
 ) -> job_pb2.ProfileTaskResponse:
-
     try:
         target = TaskAttempt.from_wire(request.target)
         target.task_id.require_task()

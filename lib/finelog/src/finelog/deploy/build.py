@@ -52,9 +52,7 @@ def find_marin_root() -> Path:
         if (parent / "lib" / "finelog" / "deploy" / "Dockerfile").is_file():
             return parent
 
-    raise click.ClickException(
-        "Cannot find marin repo root (lib/finelog/deploy/Dockerfile). " "Run from a marin checkout."
-    )
+    raise click.ClickException("Cannot find marin repo root (lib/finelog/deploy/Dockerfile). Run from a marin checkout.")
 
 
 def build_image(

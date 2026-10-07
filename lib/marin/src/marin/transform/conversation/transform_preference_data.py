@@ -80,7 +80,7 @@ def _find_split_files(input_path: str, subset: str | None, split: str, filetype:
         matches.extend(str(match) for match in StoragePath(pattern).glob())
     if not matches:
         raise FileNotFoundError(
-            f"No {filetype} files found for split '{split}' under {input_path}. " f"Tried patterns: {patterns}"
+            f"No {filetype} files found for split '{split}' under {input_path}. Tried patterns: {patterns}"
         )
     return sorted(set(matches))
 

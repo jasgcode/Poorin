@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 """Tests for the SFT checkpoint-preparation step and its wiring into ``sft_step``."""
+
 from __future__ import annotations
 
 import numpy as np

@@ -17,6 +17,7 @@ model vocab. Two inputs are resolved here rather than left implicit:
 - the weights are converted at a given compute dtype (bf16 by default), the dtype the inline
   ``initialize_from_hf`` path loads them in.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass

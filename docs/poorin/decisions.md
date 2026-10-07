@@ -606,7 +606,8 @@ Plan: `plans/2026-10-05-p1-fleet-operations.md`. Executing on branch `prune/p1-f
 
 ### D50. ruff format replaces black
 
-- **When:** 2026-10-06, P1. **Status:** Planned (P1 Task 11).
+- **When:** 2026-10-06, P1. **Status:** Adopted. 209 files changed. Marin's code is still linted
+  with its explicit ruff configuration (D39).
 - **Decision:** Format with ruff 0.14.3's stable style; black and its configuration leave. Each
   library keeps its line length (121 for the root, 119 for Levanter and Haliax). One commit
   reformats every tracked Python file, so `tools.lint --all-files` keeps passing; a follow-up
@@ -615,7 +616,9 @@ Plan: `plans/2026-10-05-p1-fleet-operations.md`. Executing on branch `prune/p1-f
 - **Why:** One tool for linting and formatting.
 - **Alternatives:** Keep black.
 - **Cost if wrong:** About 133 files change once (measured before P1's deletions), and black's
-  preview style is not reproduced exactly.
+  preview style is not reproduced exactly. Unlike black, ruff splits a line that ends in
+  `# type: ignore`; one split pragma in Haliax's `axis.py` was moved back to the line ty reports.
+- **Landed:** `[poorin] Format with ruff instead of black`.
 
 ### D51. Projects run on Marin's executor, not Hydra
 

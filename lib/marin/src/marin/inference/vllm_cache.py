@@ -49,7 +49,7 @@ _CHAT_TEMPLATE_ARG = "--chat-template"
 _CHAT_TEMPLATE_DIGEST_ARG = "--chat-template-sha256"
 _ZIP_TIMESTAMP = (1980, 1, 1, 0, 0, 0)
 _CACHE_ALL_ENTRIES = "-1"
-_TRANSFER_HELPER = "from marin.inference.vllm_cache import _transfer_process_main; " "_transfer_process_main()"
+_TRANSFER_HELPER = "from marin.inference.vllm_cache import _transfer_process_main; _transfer_process_main()"
 _LOCAL_CACHE_ROOT = Path(tempfile.gettempdir()) / "marin-vllm-compilation-cache"
 
 _Digest = Annotated[str, Field(pattern=_DIGEST_PATTERN)]
@@ -600,7 +600,7 @@ class VllmCompilationCache:
                 )
                 return
             logger.info(
-                "Published vLLM compilation cache key=%s entries=%d source_bytes=%d " "archive_bytes=%d duration=%.1fs",
+                "Published vLLM compilation cache key=%s entries=%d source_bytes=%d archive_bytes=%d duration=%.1fs",
                 managed.cache_key,
                 archive.entry_count,
                 archive.source_size,
@@ -686,7 +686,7 @@ class VllmCompilationCache:
             restored_cache_dir.replace(managed.local_cache_dir)
             self._restored_sha256 = manifest.archive_sha256
             logger.info(
-                "Restored vLLM compilation cache key=%s entries=%s source_bytes=%s " "archive_bytes=%s duration=%.1fs",
+                "Restored vLLM compilation cache key=%s entries=%s source_bytes=%s archive_bytes=%s duration=%.1fs",
                 managed.cache_key,
                 manifest.entry_count,
                 manifest.source_size_bytes,

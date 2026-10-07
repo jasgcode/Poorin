@@ -543,8 +543,7 @@ def _resolve_launch_priority(
     if request.priority_band not in _SUBMITTABLE_PRIORITY_BANDS:
         raise ConnectError(
             Code.INVALID_ARGUMENT,
-            f"Unknown priority_band {int(request.priority_band)}; "
-            f"expected one of {sorted(_SUBMITTABLE_PRIORITY_BANDS)}",
+            f"Unknown priority_band {int(request.priority_band)}; expected one of {sorted(_SUBMITTABLE_PRIORITY_BANDS)}",
         )
     inherited_band: int | None = None
     if request.priority_band == job_pb2.PRIORITY_BAND_INHERIT and launch.job_id.parent is not None:

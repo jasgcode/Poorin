@@ -66,8 +66,7 @@ def test_terminal_protocol_keeps_json_responses_and_observations(cohort):
 
     messages = document["messages"]
     assert messages[0]["content"][0]["text"] == (
-        "Respond with JSON containing analysis, plan, commands, and task_complete.\n\n"
-        "Task Description:\nFix the code."
+        "Respond with JSON containing analysis, plan, commands, and task_complete.\n\nTask Description:\nFix the code."
     )
     assert [message["role"] for message in messages] == ["user", "assistant", "assistant", "user", "assistant"]
     assert messages[1]["channel"] == "analysis"

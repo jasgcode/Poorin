@@ -140,9 +140,9 @@ def test_exception_preserves_user_frame(zephyr_ctx):
         chained += str(cur) + "".join(getattr(cur, "__notes__", []))
         cur = cur.__cause__ or cur.__context__
 
-    assert (
-        "buggy_index_lookup" in chained or "tuple index out of range" in chained
-    ), f"user-frame traceback was not preserved through report_error; got: {chained!r}"
+    assert "buggy_index_lookup" in chained or "tuple index out of range" in chained, (
+        f"user-frame traceback was not preserved through report_error; got: {chained!r}"
+    )
 
 
 def test_shared_data(local_client, tmp_path):

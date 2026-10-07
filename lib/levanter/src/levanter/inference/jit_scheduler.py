@@ -673,7 +673,9 @@ class DecodeState(eqx.Module):
         sequences = self.sequences.bump_seq_len_to_next_page(seq_id)
         return dataclasses.replace(self, sequences=sequences)
 
-    def prng_keys_for(self, slot_ids: ht.i32[NamedArray, "position"], pos_ids: ht.i32[NamedArray, "position"]) -> jaxtyping.PRNGKeyArray:  # type: ignore[name-defined]
+    def prng_keys_for(
+        self, slot_ids: ht.i32[NamedArray, "position"], pos_ids: ht.i32[NamedArray, "position"]
+    ) -> jaxtyping.PRNGKeyArray:  # type: ignore[name-defined]
         """
         Get the PRNG keys for the given slot IDs and positions.
         This is used to sample new tokens for the given slot IDs and positions.
@@ -985,9 +987,9 @@ class TokenQueue(eqx.Module):
     ) -> "TokenQueue":
         """Append ``new_tokens`` and ``new_slot_ids`` to the queue."""
         # jax.debug.print("Enqueueing tokens {} {} {} {}", new_tokens, new_slot_ids, new_pos_ids, num_new_tokens)
-        assert (
-            new_tokens.axis_size("position") <= self.max_queued_tokens
-        ), f"Too many new tokens to enqueue {new_tokens.axis_size('position')} > {self.max_queued_tokens}"
+        assert new_tokens.axis_size("position") <= self.max_queued_tokens, (
+            f"Too many new tokens to enqueue {new_tokens.axis_size('position')} > {self.max_queued_tokens}"
+        )
 
         new_q_tokens = masked_set(
             self.queued_tokens,
@@ -1107,7 +1109,6 @@ class TokenQueue(eqx.Module):
         )
 
     def debug_print(self, prefix: str = ""):
-
         def callback(self):
             print(f"{prefix}JitScheduler State:")
             print(f"{prefix}Queued Tokens: {self.queued_tokens}")

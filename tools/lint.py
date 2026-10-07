@@ -11,10 +11,9 @@ Usage (from the repository root):
 
 Every file is checked for size, merge-conflict markers, trailing whitespace, and a final newline.
 Python, TOML, YAML, and JSON files must parse, and notebooks must have no outputs. Python files
-must start with their library's license header and pass ruff and black, and ty checks the
-project when any Python file is linted. Ruff and black run at the versions Marin pinned, with
-each library's own configuration, so switching from Marin's script reformats nothing; ty runs at
-0.0.84.
+must start with their library's license header and pass ruff's linter and formatter, and ty
+checks the project when any Python file is linted. Ruff runs at the version Marin pinned (0.14.3)
+with each library's own configuration; ty runs at 0.0.84.
 
 A check fails when it finds a problem, even when ``--fix`` repaired it, so a fixed file is
 reviewed before it is committed.
@@ -26,8 +25,8 @@ import fnmatch
 import json
 import subprocess
 import tomllib
+from collections import defaultdict
 from collections.abc import Sequence
-from dataclasses import dataclass
 from pathlib import Path
 
 import yaml
@@ -36,7 +35,7 @@ from tools.changes import changed_files
 from tools.reachability import REPO_ROOT
 
 RUFF = ("uvx", "ruff@0.14.3", "check")
-BLACK = ("uvx", "black@25.9.0")
+RUFF_FORMAT = ("uvx", "ruff@0.14.3", "format")
 # Errors fail the check; warnings are reported without failing it.
 TY = ("uvx", "ty@0.0.84", "check", "--exit-zero-on-warning")
 MAX_FILE_BYTES = 500 * 1024
@@ -69,26 +68,15 @@ LEVANTER_HEADER = ("Copyright The Levanter Authors", "SPDX-License-Identifier: A
 HALIAX_HEADER = ("Copyright The Levanter Authors", "", "SPDX-License-Identifier: Apache-2.0")
 
 
-@dataclass(frozen=True)
-class PythonStyle:
-    """How Python under ``prefix`` is checked: black's configuration, the license header, and an
-    explicit ruff configuration, or None to let ruff find the nearest one."""
-
-    prefix: str
-    black_config: str
-    header: tuple[str, ...]
-    ruff_config: str | None = None
-
-
-# Levanter and Haliax keep the formatting and headers they had as separate projects. Marin's code
-# is checked with its own ruff configuration passed explicitly: ruff's discovery would classify its
-# first-party imports differently.
-PYTHON_STYLES = (
-    PythonStyle("lib/levanter/", "lib/levanter/pyproject.toml", LEVANTER_HEADER),
-    PythonStyle("lib/haliax/", "lib/haliax/pyproject.toml", HALIAX_HEADER),
-    PythonStyle("lib/marin/", "pyproject.toml", MARIN_HEADER, ruff_config="lib/marin/pyproject.toml"),
-    PythonStyle("", "pyproject.toml", MARIN_HEADER),
+# Levanter and Haliax keep the license headers they had as separate projects.
+LICENSE_HEADERS = (
+    ("lib/levanter/", LEVANTER_HEADER),
+    ("lib/haliax/", HALIAX_HEADER),
+    ("", MARIN_HEADER),
 )
+# Marin's code is linted with its own ruff configuration passed explicitly, as Marin did: ruff's
+# discovery would classify its first-party imports differently. Everything else uses discovery.
+RUFF_CONFIGS = (("lib/marin/", "lib/marin/pyproject.toml"),)
 
 
 class _ConfigLoader(yaml.SafeLoader):
@@ -102,9 +90,15 @@ def _include(loader: yaml.SafeLoader, node: yaml.ScalarNode) -> str:
 _ConfigLoader.add_constructor("!include", _include)
 
 
-def python_style(path: str) -> PythonStyle:
-    """The style for a repository-relative Python path."""
-    return next(style for style in PYTHON_STYLES if path.startswith(style.prefix))
+def license_header(path: str) -> tuple[str, ...]:
+    """The license header a repository-relative Python path must start with."""
+    return next(header for prefix, header in LICENSE_HEADERS if path.startswith(prefix))
+
+
+def ruff_config(path: str) -> str | None:
+    """The configuration ruff's linter is given for a repository-relative path, or None to let
+    ruff find the nearest one."""
+    return next((config for prefix, config in RUFF_CONFIGS if path.startswith(prefix)), None)
 
 
 def is_excluded(path: str) -> bool:
@@ -148,7 +142,7 @@ def file_problems(repo_root: Path, rel: str, fix: bool) -> list[str]:
                 cell["execution_count"] = None
             fixed = json.dumps(notebook, indent=1, ensure_ascii=False, sort_keys=True) + "\n"
     if path.suffix == ".py":
-        with_header = _with_header(fixed, python_style(rel).header)
+        with_header = _with_header(fixed, license_header(rel))
         if with_header is not None:
             problems.append("missing license header")
             fixed = with_header
@@ -202,25 +196,25 @@ def _tool_output(command: Sequence[str], repo_root: Path) -> str | None:
 
 
 def python_tool_problems(paths: Sequence[str], fix: bool, repo_root: Path) -> list[str]:
-    """Ruff and black once per library style, and ty over the project."""
+    """Ruff's linter and formatter over every file, each file under its nearest configuration
+    unless ``ruff_config`` names one, and ty over the project."""
     if not paths:
         return []
     problems = []
-    for style in PYTHON_STYLES:
-        members = [path for path in paths if python_style(path) == style]
-        if not members:
-            continue
-        ruff_config = ("--config", style.ruff_config) if style.ruff_config else ()
-        ruff_fix = ("--fix", "--exit-non-zero-on-fix") if fix else ()
-        ruff = _tool_output([*RUFF, *ruff_config, *ruff_fix, *members], repo_root)
+    by_config: dict[str | None, list[str]] = defaultdict(list)
+    for path in paths:
+        by_config[ruff_config(path)].append(path)
+    ruff_fix = ("--fix", "--exit-non-zero-on-fix") if fix else ()
+    for config, members in by_config.items():
+        config_args = ("--config", config) if config else ()
+        ruff = _tool_output([*RUFF, *config_args, *ruff_fix, *members], repo_root)
         if ruff is not None:
             problems.append(f"ruff:\n{ruff}")
-        config = ("--config", style.black_config)
-        black = _tool_output([*BLACK, "--check", *config, *members], repo_root)
-        if black is not None:
-            problems.append(f"black ({style.black_config}):\n{black}")
-            if fix:
-                _tool_output([*BLACK, *config, *members], repo_root)
+    formatting = _tool_output([*RUFF_FORMAT, "--check", *paths], repo_root)
+    if formatting is not None:
+        problems.append(f"ruff format:\n{formatting}")
+        if fix:
+            _tool_output([*RUFF_FORMAT, *paths], repo_root)
     ty = _tool_output(TY, repo_root)
     if ty is not None:
         problems.append(f"ty:\n{ty}")

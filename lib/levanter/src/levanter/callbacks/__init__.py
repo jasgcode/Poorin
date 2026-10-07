@@ -51,7 +51,6 @@ from levanter.utils.jax_utils import barrier_sync
 def eval_loss_loop(
     loss_fn: LossFunctionWithMetrics, model, dataset, max_batches: Optional[int] = None, name: Optional[str] = None
 ) -> tuple[float, dict[str, float]]:
-
     total_loss = 0.0
     total_load_time = 0.0
     total_loss_time = 0.0

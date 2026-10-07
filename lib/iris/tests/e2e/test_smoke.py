@@ -393,7 +393,7 @@ def test_dashboard_job_expand(smoke_cluster, smoke_page, smoke_screenshot):
 
     # After clicking, children should appear (wait for the child names to render)
     smoke_page.wait_for_function(
-        "() => document.body.textContent.includes('child-a') && " "document.body.textContent.includes('child-b')",
+        "() => document.body.textContent.includes('child-a') && document.body.textContent.includes('child-b')",
         timeout=10000,
     )
 
@@ -1098,13 +1098,13 @@ def test_capacity_type_propagates_to_worker_attributes(smoke_cluster):
 
         # Smoke cluster: TPU groups are preemptible, CPU groups are on-demand
         if device_type == "tpu":
-            assert (
-                preemptible_attr.string_value == "true"
-            ), f"TPU worker {w.worker_id} should be preemptible=true, got {preemptible_attr.string_value}"
+            assert preemptible_attr.string_value == "true", (
+                f"TPU worker {w.worker_id} should be preemptible=true, got {preemptible_attr.string_value}"
+            )
         else:
-            assert (
-                preemptible_attr.string_value == "false"
-            ), f"CPU worker {w.worker_id} should be preemptible=false, got {preemptible_attr.string_value}"
+            assert preemptible_attr.string_value == "false", (
+                f"CPU worker {w.worker_id} should be preemptible=false, got {preemptible_attr.string_value}"
+            )
 
 
 # ============================================================================

@@ -354,9 +354,9 @@ def test_heartbeat_finalizes_stranded_attempt_after_producer_terminal(harness):
     post = _query_attempt(harness.state, task.task_id, attempt_id)
     assert post is not None
     assert post.finished_at_ms is not None, "stranded attempt should be finalized by heartbeat"
-    assert (
-        _query_task(harness.state, task.task_id).state == pre_task_state
-    ), "task's terminal state must not be rewritten by the late heartbeat"
+    assert _query_task(harness.state, task.task_id).state == pre_task_state, (
+        "task's terminal state must not be rewritten by the late heartbeat"
+    )
 
 
 def test_cancel_job_preserves_kill_worker_mapping_after_clearing_tasks(harness):
@@ -1325,9 +1325,9 @@ def test_worker_failure_drives_coscheduled_job_terminal(state, fail_both):
 
     job_id, _ = tasks[0].task_id.require_task()
     job = _query_job(state, job_id)
-    assert (
-        job.state == job_pb2.JOB_STATE_WORKER_FAILED
-    ), f"job stranded in state {job.state}; expected terminal WORKER_FAILED"
+    assert job.state == job_pb2.JOB_STATE_WORKER_FAILED, (
+        f"job stranded in state {job.state}; expected terminal WORKER_FAILED"
+    )
 
 
 def test_coscheduled_cascade_holds_sibling_resources_until_heartbeat(state):
@@ -1379,9 +1379,9 @@ def test_coscheduled_cascade_holds_sibling_resources_until_heartbeat(state):
     # heartbeats arrive (or worker-failure synthesis stamps finished_at_ms).
     for i in range(1, 4):
         usage = _usage_for_worker(state, WorkerId(f"w{i}"))
-        assert (
-            usage.cpu_millicores == 2000
-        ), f"w{i} sibling must keep its reservation until terminal heartbeat: usage={usage}"
+        assert usage.cpu_millicores == 2000, (
+            f"w{i} sibling must keep its reservation until terminal heartbeat: usage={usage}"
+        )
         assert usage.memory_bytes == 1024**3
 
 
@@ -1713,9 +1713,9 @@ def test_coscheduled_bounced_job_recoschedules_to_single_slice(state):
     result = scheduler.find_assignments(ctx)
 
     assignments = {tid: wid for tid, wid in result.assignments}
-    assert set(assignments.keys()) == {
-        t.task_id for t in tasks
-    }, f"expected all 4 tasks scheduled, got {assignments.keys()}"
+    assert set(assignments.keys()) == {t.task_id for t in tasks}, (
+        f"expected all 4 tasks scheduled, got {assignments.keys()}"
+    )
     chosen_tpu_names = {
         ctx.capacities[wid].attributes[WellKnownAttribute.TPU_NAME].value for wid in assignments.values()
     }

@@ -26,7 +26,7 @@ def test_terminal_empty_commands_preserve_wait_and_observation(adapter, completi
         "conversations": [
             {
                 "role": "user",
-                "content": "Return a JSON command object.\n\n" "Task Description:\nWait for the process to finish.",
+                "content": "Return a JSON command object.\n\nTask Description:\nWait for the process to finish.",
             },
             {
                 "role": "assistant",

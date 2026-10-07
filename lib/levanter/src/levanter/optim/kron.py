@@ -301,9 +301,9 @@ def scale_by_kron(
 
         # check that there is a PartitionSpec for every param
         if params_sharding_ is not None:
-            assert len(jax.tree.leaves(params_sharding_)) == len(
-                jax.tree.leaves(params)
-            ), "There must be a PartitionSpec for every parameter in PSGD Kron."
+            assert len(jax.tree.leaves(params_sharding_)) == len(jax.tree.leaves(params)), (
+                "There must be a PartitionSpec for every parameter in PSGD Kron."
+            )
         # check that preconditioner sharding length is at least 1
         if preconditioner_sharding is not None:
             assert len(preconditioner_sharding) > 0, (

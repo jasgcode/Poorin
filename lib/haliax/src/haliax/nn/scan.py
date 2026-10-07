@@ -704,9 +704,9 @@ class Stacked(ModuleWithStateDictSerialization, Generic[M]):
                 else:
                     return tuple(x for _ in range(self.Block.size))
             elif haliax.jax_utils.is_jax_array_like(x):
-                assert (
-                    x.shape[0] == self.Block.size
-                ), f"Expected first dimension to be {self.Block.size}, got {x.shape[0]}"
+                assert x.shape[0] == self.Block.size, (
+                    f"Expected first dimension to be {self.Block.size}, got {x.shape[0]}"
+                )
                 return tuple(x[i] for i in range(self.Block.size))
             else:
                 return tuple(x for _ in range(self.Block.size))

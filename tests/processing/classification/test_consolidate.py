@@ -73,12 +73,12 @@ def test_dedupe_consolidate_integration(fox_corpus):
     dup_2_text = consolidated_by_id["test_gray_dup_2"]["text"].strip()
     dup_3_text = consolidated_by_id["test_gray_dup_3"]["text"].strip()
     original_text = next(d["text"] for d in test_docs if d["id"] == "test_gray_dup_2")
-    assert (
-        len(dup_2_text) < len(original_text) / 2
-    ), f"Expected test_gray_dup_2 to have most content removed, but got: {dup_2_text}"
-    assert (
-        len(dup_3_text) < len(original_text) / 2
-    ), f"Expected test_gray_dup_3 to have most content removed, but got: {dup_3_text}"
+    assert len(dup_2_text) < len(original_text) / 2, (
+        f"Expected test_gray_dup_2 to have most content removed, but got: {dup_2_text}"
+    )
+    assert len(dup_3_text) < len(original_text) / 2, (
+        f"Expected test_gray_dup_3 to have most content removed, but got: {dup_3_text}"
+    )
 
     # Unique documents should be unchanged
     for doc_id in ["test_unique_1", "test_unique_2", "test_unique_3"]:

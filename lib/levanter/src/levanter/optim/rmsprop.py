@@ -96,7 +96,6 @@ def scale_by_rmsprop_momentum(
         )
 
     def update_fn(updates, state, params=None):
-
         count_inc = optax.safe_increment(state.count)
         # 1) Update the mean of squared gradients
         new_mean_square = jax.tree_map(

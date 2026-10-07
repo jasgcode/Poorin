@@ -114,8 +114,7 @@ def migrate(raw_conn) -> None:
         # user_budgets: rebuild without the users FK.
         raw_conn.execute(_USER_BUDGETS_NEW_DDL)
         raw_conn.execute(
-            f"INSERT INTO user_budgets_new ({_USER_BUDGETS_COLUMNS}) "
-            f"SELECT {_USER_BUDGETS_COLUMNS} FROM user_budgets"
+            f"INSERT INTO user_budgets_new ({_USER_BUDGETS_COLUMNS}) SELECT {_USER_BUDGETS_COLUMNS} FROM user_budgets"
         )
         raw_conn.execute("DROP TABLE user_budgets")
         raw_conn.execute("ALTER TABLE user_budgets_new RENAME TO user_budgets")

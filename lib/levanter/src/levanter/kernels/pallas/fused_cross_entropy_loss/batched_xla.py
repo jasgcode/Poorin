@@ -170,11 +170,11 @@ def _validate_launch_feasibility(
 ) -> None:
     if not _is_power_of_two(h_block_size):
         raise BatchedXlaUnsupportedError(
-            "h_block_size must be a power of 2 for current GPU Triton lowering; " f"got h_block_size={h_block_size}."
+            f"h_block_size must be a power of 2 for current GPU Triton lowering; got h_block_size={h_block_size}."
         )
     if not _is_power_of_two(v_block_size):
         raise BatchedXlaUnsupportedError(
-            "v_block_size must be a power of 2 for current GPU Triton lowering; " f"got v_block_size={v_block_size}."
+            f"v_block_size must be a power of 2 for current GPU Triton lowering; got v_block_size={v_block_size}."
         )
 
     device_kind = _device_kind()

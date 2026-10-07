@@ -93,9 +93,9 @@ def _assert_valid_emitted_token(
 ) -> None:
     assert emitted_token_id in actual_logprobs, f"{case_id} rank {backend_rank}: emitted token missing from logprobs"
     maximum_actual_logprob = max(actual_logprobs.values())
-    assert (
-        actual_logprobs[emitted_token_id] == maximum_actual_logprob
-    ), f"{case_id} rank {backend_rank}: emitted token does not have maximum returned logprob"
+    assert actual_logprobs[emitted_token_id] == maximum_actual_logprob, (
+        f"{case_id} rank {backend_rank}: emitted token does not have maximum returned logprob"
+    )
 
 
 def assert_same_rank_repeatability(
@@ -105,9 +105,9 @@ def assert_same_rank_repeatability(
     """Require exact emitted tokens and returned logprobs per rank across waves."""
     first_by_rank = _observations_by_rank(first_wave)
     second_by_rank = _observations_by_rank(second_wave)
-    assert (
-        first_by_rank.keys() == second_by_rank.keys()
-    ), f"repeat waves covered different ranks: {sorted(first_by_rank)} != {sorted(second_by_rank)}"
+    assert first_by_rank.keys() == second_by_rank.keys(), (
+        f"repeat waves covered different ranks: {sorted(first_by_rank)} != {sorted(second_by_rank)}"
+    )
     for rank, first_observation in first_by_rank.items():
         second_observation = second_by_rank[rank]
         assert first_observation == second_observation, (

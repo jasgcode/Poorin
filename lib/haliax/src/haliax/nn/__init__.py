@@ -70,14 +70,14 @@ def one_hot(x: NamedArray | int, class_axis: Axis, *, dtype=None) -> NamedArray:
 
     x_array = jnp.asarray(x)
     if x_array.ndim != 0:
-        raise TypeError("one_hot expects a scalar integer or NamedArray, " f"but got array with shape {x_array.shape}")
+        raise TypeError(f"one_hot expects a scalar integer or NamedArray, but got array with shape {x_array.shape}")
 
     if isinstance(x, numbers.Integral):
         assert class_axis.size > x >= -class_axis.size
     else:
         if not (jnp.issubdtype(x_array.dtype, jnp.integer) or jnp.issubdtype(x_array.dtype, jnp.bool_)):
             raise TypeError(
-                "one_hot expects an integer scalar or NamedArray, " f"but got value with dtype {x_array.dtype}"
+                f"one_hot expects an integer scalar or NamedArray, but got value with dtype {x_array.dtype}"
             )
 
     one = 1

@@ -1293,8 +1293,7 @@ class ZephyrCoordinator:
                 active = sum(1 for r in self._executions.values() if not r.done)
                 if active >= self._max_concurrent_pipelines:
                     raise RuntimeError(
-                        f"Coordinator already runs {active} concurrent pipelines "
-                        f"(max {self._max_concurrent_pipelines})"
+                        f"Coordinator already runs {active} concurrent pipelines (max {self._max_concurrent_pipelines})"
                     )
                 run = _PipelineExecution(
                     execution_id=execution_id,

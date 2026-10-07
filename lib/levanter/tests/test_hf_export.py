@@ -182,7 +182,7 @@ def test_save_tokenizer_pretrained_exports_portable_generic_fast_tokenizer(tmp_p
     )
     tokenizer.add_tokens(["portable"])
     tokenizer.chat_template = (
-        "{% for message in messages %}{{ message['role'] }}: " "{{ message['content'] }}{{ eos_token }}{% endfor %}"
+        "{% for message in messages %}{{ message['role'] }}: {{ message['content'] }}{{ eos_token }}{% endfor %}"
     )
 
     text = "HELLO portable mystery"

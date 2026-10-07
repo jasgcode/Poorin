@@ -739,7 +739,7 @@ def main() -> None:
         reference_markers = _verified_rows(args.reference_verified_prefix)
         if args.expected_reference_markers is not None and len(reference_markers) != args.expected_reference_markers:
             raise AssertionError(
-                f"Reference contains {len(reference_markers)} markers; " f"expected {args.expected_reference_markers}"
+                f"Reference contains {len(reference_markers)} markers; expected {args.expected_reference_markers}"
             )
         if actual_markers != reference_markers:
             unexpected = sorted(actual_markers.keys() - reference_markers.keys())

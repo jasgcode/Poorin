@@ -176,9 +176,9 @@ def insert_job_and_config(
     stored verbatim. A child ignores it and inherits its root's stored value, so a
     federated subtree keeps the root's submitter no matter who spawns each child.
     """
-    assert (
-        priority_band != job_pb2.PRIORITY_BAND_INHERIT
-    ), f"Job {job_id} would store an unresolved priority band; resolve it at ingestion"
+    assert priority_band != job_pb2.PRIORITY_BAND_INHERIT, (
+        f"Job {job_id} would store an unresolved priority band; resolve it at ingestion"
+    )
 
     submitted_ms = ts.epoch_ms()
 

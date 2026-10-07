@@ -205,7 +205,6 @@ class FeistelPermutation(Permutation):
     def __call__(self, indices: np.ndarray | jnp.ndarray) -> np.ndarray: ...
 
     def __call__(self, indices):
-
         was_int = False
         # Ensure we work with a numpy array of uint64.
         if isinstance(indices, jnp.ndarray):

@@ -66,7 +66,7 @@ def _write_direct_sample_zip(path: Path) -> None:
         "filename": "22745259_8925078337028777334",
         "uri": "https://example.org/table-source",
     }
-    csv_text = '"country","value","missing"\n' '"france","3.14159265358979323846",""\n' '"japan","1e-30","NA"\n'
+    csv_text = '"country","value","missing"\n"france","3.14159265358979323846",""\n"japan","1e-30","NA"\n'
     with zipfile.ZipFile(path, "w") as archive:
         archive.writestr("sample10/22745259_0_4052170081208609462.csv", csv_text)
         archive.writestr("sample10/22745259_1580946025980243333.json", json.dumps(metadata))
@@ -109,7 +109,7 @@ def test_stage_web_data_commons_preserves_direct_csv_and_metadata(tmp_path: Path
     records = _read_staged_records(output_dir)
     record = records[0]
     assert record["text"] == (
-        '"country","value","missing"\n' '"france","3.14159265358979323846",""\n' '"japan","1e-30","NA"\n'
+        '"country","value","missing"\n"france","3.14159265358979323846",""\n"japan","1e-30","NA"\n'
     )
     assert record["provenance"]["sample_name"] == "sample10"
     assert record["provenance"]["uri"] == "https://example.org/table-source"

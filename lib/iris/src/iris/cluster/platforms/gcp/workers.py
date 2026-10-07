@@ -178,7 +178,7 @@ def _wait_for_queued_resource_activation(
                 )
         elif assign_deadline.expired():
             raise InfraError(
-                f"Queued resource {handle.slice_id} did not enter PROVISIONING " f"within {RESERVED_TPU_ASSIGN_TIMEOUT}s"
+                f"Queued resource {handle.slice_id} did not enter PROVISIONING within {RESERVED_TPU_ASSIGN_TIMEOUT}s"
             )
 
         logger.info("Queued resource %s is %s, waiting...", handle.slice_id, qr.state)
@@ -980,8 +980,7 @@ def _run_tpu_bootstrap(
         )
         _fetch_bootstrap_logs(gcp_service, handle)
         raise InfraError(
-            f"TPU slice {handle.slice_id} bootstrap timed out: "
-            f"{len(healthy_workers)}/{len(worker_urls)} workers healthy"
+            f"TPU slice {handle.slice_id} bootstrap timed out: {len(healthy_workers)}/{len(worker_urls)} workers healthy"
         )
 
     logger.info("Bootstrap completed for TPU slice %s (%d workers)", handle.slice_id, len(workers))

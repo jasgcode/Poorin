@@ -186,7 +186,9 @@ class SkipStepConfig:
             )
 
             new_inner_opt_state = jax.tree.map(
-                lambda x, y: jnp.where(step_factor == 0.0, x, y), inner_opt_state, new_inner_opt_state  # type: ignore
+                lambda x, y: jnp.where(step_factor == 0.0, x, y),
+                inner_opt_state,
+                new_inner_opt_state,  # type: ignore
             )
 
             return actual_updates, SkipStepState(

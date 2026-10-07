@@ -12,6 +12,7 @@ pre-sorted by expert (varlen_m via ``cu_seqlens_m``; no A_idx gather).
 
 A[M,K] @ B[E,K,2N]  -> (per expert group) -> SwiGLU -> PostAct[M,N]
 """
+
 from __future__ import annotations
 
 import jax

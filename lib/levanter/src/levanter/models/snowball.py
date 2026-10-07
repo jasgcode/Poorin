@@ -324,9 +324,7 @@ class SnowballConfig(HFCompatConfig):
             config.update(config_overrides)
         return GrugMoeHfConfig(**config)
 
-    def hf_checkpoint_converter(
-        self, ref_checkpoint: Optional[str] = None
-    ) -> HFCheckpointConverter["SnowballConfig"]:  # type: ignore[type-var]
+    def hf_checkpoint_converter(self, ref_checkpoint: Optional[str] = None) -> HFCheckpointConverter["SnowballConfig"]:  # type: ignore[type-var]
         ref = self.reference_checkpoint if ref_checkpoint is None else ref_checkpoint
         return HFCheckpointConverter(
             self.__class__,

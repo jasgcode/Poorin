@@ -237,11 +237,6 @@ name = "pytorch-cpu-fallback"
 url = "https://download.pytorch.org/whl/cpu/torch/"
 format = "flat"
 
-[tool.black]
-line-length = 121
-target-version = ["py312"]
-preview = true
-
 [tool.ruff]
 line-length = 121
 target-version = "py312"

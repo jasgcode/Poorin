@@ -726,7 +726,6 @@ def _print_plan(original_ops: list, plan: PhysicalPlan) -> None:
 
     logger.info("\nPhysical stages:")
     for i, stage in enumerate(plan.stages, 1):
-
         stage_desc = _get_stage_description(stage)
         logger.info(f"  {i}. {stage_desc}")
 

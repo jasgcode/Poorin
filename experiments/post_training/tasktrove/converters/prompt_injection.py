@@ -162,9 +162,7 @@ def main():
 
 if __name__ == "__main__":
     raise SystemExit(main())
-'''.replace(
-    "__DATA_NAME__", DATA_NAME
-)
+'''.replace("__DATA_NAME__", DATA_NAME)
 
 SOLVE_SH_TEXT = f"#!/bin/bash\nset -e\nmkdir -p /app\ncat > /app/answer.txt <<'EOF'\n{ORACLE_REPLY}\nEOF\n"
 

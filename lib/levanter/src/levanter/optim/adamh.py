@@ -48,7 +48,6 @@ class AdamHConfig(OptimizerConfig):
 
         # indirection makes it work with optax.inject_hyperparams so we can log the learning rate
         def optimizer(learning_rate, adam_lr):
-
             def adamh_transform():
                 components = []
                 if self.max_grad_norm:

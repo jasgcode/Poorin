@@ -92,7 +92,6 @@ def microbatched(
 
     @functools.wraps(fn)
     def wrapped_fn(*args, **kwargs):
-
         # first, determine the shape and make accumulator arrays
         r_shape = eqx.filter_eval_shape(fn, *args, **kwargs)
         acc = zeros_like_tree(r_shape, accum_axis_mapping, accum_dtype)

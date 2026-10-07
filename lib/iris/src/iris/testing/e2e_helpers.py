@@ -7,6 +7,7 @@ All methods use logging as the primary communication channel. They are
 serialized via cloudpickle (Entrypoint.from_callable) so static methods
 work fine — cloudpickle pickles bytecode, not import paths.
 """
+
 import logging
 import os
 import time

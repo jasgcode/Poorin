@@ -3,7 +3,6 @@
 
 """Test whether vLLM can generate simple completions"""
 
-
 import pytest
 from marin.inference.config import InferenceModelConfig
 from marin.inference.vllm_server import resolve_model_name_or_path

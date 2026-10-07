@@ -475,11 +475,10 @@ class TestWaterfallRouting:
         # and NOT cascade to zone 1 or zone 2.
         routed_groups = [name for name, entries in result.routed_entries.items() if entries]
         assert len(routed_groups) == 1, (
-            f"Expected demand routed to exactly 1 group, but routed to {routed_groups}. "
-            f"launch={result.group_to_launch}"
+            f"Expected demand routed to exactly 1 group, but routed to {routed_groups}. launch={result.group_to_launch}"
         )
         assert routed_groups[0] == "cpu-zone-0", (
-            f"Expected demand routed to cpu-zone-0 (has booting slice), " f"but routed to {routed_groups[0]}"
+            f"Expected demand routed to cpu-zone-0 (has booting slice), but routed to {routed_groups[0]}"
         )
         # No new slices should be launched — zone 0 already has capacity incoming
         assert result.group_to_launch.get("cpu-zone-0", 0) == 0
@@ -1443,7 +1442,7 @@ class TestAllocationTierBlocking:
     ) -> list[ScalingGroup]:
         """Create a list of scaling groups in the same quota_pool with ascending tiers."""
         if variants is None:
-            variants = [f"v5p-{8 * (2 ** i)}" for i in range(len(tiers))]
+            variants = [f"v5p-{8 * (2**i)}" for i in range(len(tiers))]
         groups = []
         for tier, variant in zip(tiers, variants, strict=True):
             config = make_scale_group_config(

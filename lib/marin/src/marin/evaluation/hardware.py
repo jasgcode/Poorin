@@ -94,7 +94,7 @@ class HardwarePolicy:
             return replace(choice, geometry=serving_geometry(model.serve, choice))
         if hint.hbm_gb is None:
             raise ValueError(
-                f"model {model.name!r} sets neither resource_hint.hbm_gb nor resource_hint.gpu; " "cannot size a slice"
+                f"model {model.name!r} sets neither resource_hint.hbm_gb nor resource_hint.gpu; cannot size a slice"
             )
         if platform is Platform.GPU:
             choice = _select_gpu(hint.hbm_gb, self)

@@ -131,7 +131,7 @@ def test_junit_duplicate_failure_cannot_be_overwritten_by_later_pass(tmp_path):
         name="a.xml",
     )
     (workspace / "b.xml").write_text(
-        '<testsuite><testcase classname="Suite" name="same"/>' '<testcase classname="Other" name="same"/></testsuite>'
+        '<testsuite><testcase classname="Suite" name="same"/><testcase classname="Other" name="same"/></testsuite>'
     )
     inputs = json.loads((workspace / "report-input.json").read_text())
     inputs["b.xml"] = (workspace / "b.xml").read_text()

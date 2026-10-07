@@ -62,7 +62,6 @@ class CliConfig:
     """
 
     def env_for_accel(self, accel_type: str) -> dict[str, str]:
-
         base_env = self.env.copy()
 
         if "-" in accel_type:

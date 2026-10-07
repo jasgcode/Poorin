@@ -157,7 +157,6 @@ def main(config: SampleLmConfig):
 
         # Optionally enable JAX profiler; no Perfetto link
         with ExitStack() as stack:
-
             for r in range(config.n_rounds):
                 if config.profile:
                     # skip round 0 b/c of compilation unless we're only doing one round

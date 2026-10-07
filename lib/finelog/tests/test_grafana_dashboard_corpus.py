@@ -40,7 +40,7 @@ def test_dashboard_corpus_renders_nested_sql_targets_with_fixed_inputs(tmp_path:
     path = tmp_path / "dashboard.json"
     _write_dashboard(
         path,
-        "SELECT ${__interval_ms}, {{from}}, {{to}}, now() " "FROM telemetry_v1 WHERE cluster IN (${cluster:sqlstring})",
+        "SELECT ${__interval_ms}, {{from}}, {{to}}, now() FROM telemetry_v1 WHERE cluster IN (${cluster:sqlstring})",
     )
 
     corpus = load_dashboard_corpus(
@@ -113,6 +113,5 @@ def test_render_sql_resolves_scalar_and_multivalue_dashboard_variables() -> None
     )
 
     assert rendered == (
-        "SELECT 'job_id' AS kind FROM telemetry_v1 "
-        "WHERE job_id IN ('/job-a','quoted''job') AND node_name IN ('node-a')"
+        "SELECT 'job_id' AS kind FROM telemetry_v1 WHERE job_id IN ('/job-a','quoted''job') AND node_name IN ('node-a')"
     )

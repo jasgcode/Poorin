@@ -133,7 +133,7 @@ def test_marin_temp_bucket_uses_source_prefix_region():
             ttl_days=14,
             prefix="checkpoints-temp/marin-us-east5/experiments/grug/run/checkpoints",
             source_prefix="gs://marin-us-east5/experiments/grug/run",
-        ) == ("gs://marin-us-east5/tmp/ttl=14d/" "checkpoints-temp/marin-us-east5/experiments/grug/run/checkpoints")
+        ) == ("gs://marin-us-east5/tmp/ttl=14d/checkpoints-temp/marin-us-east5/experiments/grug/run/checkpoints")
 
 
 def test_marin_temp_bucket_uses_source_prefix_region_from_local_launcher():
@@ -145,7 +145,7 @@ def test_marin_temp_bucket_uses_source_prefix_region_from_local_launcher():
             ttl_days=14,
             prefix="checkpoints-temp/marin-us-east5/experiments/grug/run/checkpoints",
             source_prefix="gs://marin-us-east5/experiments/grug/run",
-        ) == ("gs://marin-us-east5/tmp/ttl=14d/" "checkpoints-temp/marin-us-east5/experiments/grug/run/checkpoints")
+        ) == ("gs://marin-us-east5/tmp/ttl=14d/checkpoints-temp/marin-us-east5/experiments/grug/run/checkpoints")
 
 
 def test_marin_temp_bucket_r2_uses_bucket_root_ttl_path():

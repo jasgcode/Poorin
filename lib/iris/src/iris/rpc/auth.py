@@ -120,8 +120,7 @@ def authorize_method(identity: VerifiedIdentity, method_name: str) -> None:
     if identity.role == DASHBOARD_ROLE and method_name not in DASHBOARD_READABLE_RPCS:
         raise ConnectError(
             Code.PERMISSION_DENIED,
-            f"Read-only dashboard access cannot call {method_name}; "
-            "this identity is not provisioned for write access",
+            f"Read-only dashboard access cannot call {method_name}; this identity is not provisioned for write access",
         )
     if (
         identity.role == FEDERATION_PEER_ROLE

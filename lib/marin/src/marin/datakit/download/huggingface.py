@@ -270,8 +270,7 @@ def stream_file_to_fsspec(task: FileDownloadTask) -> dict:
                 # Validate file size BEFORE atomic_rename commits the file
                 if task.expected_size is not None and bytes_written != task.expected_size:
                     raise ValueError(
-                        f"Size mismatch for {file_path}: expected {task.expected_size} bytes, "
-                        f"got {bytes_written} bytes"
+                        f"Size mismatch for {file_path}: expected {task.expected_size} bytes, got {bytes_written} bytes"
                     )
 
             logger.info(f"Streamed {file_path} successfully to {fsspec_file_path} ({bytes_written} bytes)")
@@ -323,7 +322,6 @@ def stream_file_to_fsspec(task: FileDownloadTask) -> dict:
 
 
 def download_hf(cfg: DownloadConfig) -> None:
-
     configure_logging(level=logging.INFO)
 
     # Set cfg.append_sha_to_path=True to mimic the older behavior of writing to gcs_output_path/<revision>.

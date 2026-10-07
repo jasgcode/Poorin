@@ -94,9 +94,9 @@ def test_olmo2_rms_norm():
     out = ln(x)
     hf_out = hf_ln(x_torch)
 
-    assert np.isclose(
-        hf_out.detach().cpu().numpy(), np.array(out.array), rtol=1e-6, atol=1e-6
-    ).all(), f"{hf_out} != {out}"
+    assert np.isclose(hf_out.detach().cpu().numpy(), np.array(out.array), rtol=1e-6, atol=1e-6).all(), (
+        f"{hf_out} != {out}"
+    )
 
 
 @pytest.mark.parametrize("num_kv_heads", [1, 2, 4])

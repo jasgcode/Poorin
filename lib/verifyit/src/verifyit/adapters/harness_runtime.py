@@ -140,7 +140,9 @@ def corpus_config_profile(config: Mapping[str, Any]) -> str | None:
         else (
             {"word_perplexity", "byte_perplexity", "bits_per_byte"}
             if output == "loglikelihood_rolling"
-            else {"perplexity", "acc"} if output == "loglikelihood" else set()
+            else {"perplexity", "acc"}
+            if output == "loglikelihood"
+            else set()
         )
     )
     definitions = config.get("metric_list")
@@ -159,7 +161,9 @@ def corpus_config_profile(config: Mapping[str, Any]) -> str | None:
         expected = (
             "weighted_perplexity"
             if name in {"word_perplexity", "byte_perplexity"}
-            else "mean" if name == "acc" else name
+            else "mean"
+            if name == "acc"
+            else name
         )
         if definition.get("aggregation") not in (None, expected):
             return None

@@ -59,21 +59,21 @@ def test_reinitialize_some_tokens(local_gpt2_marin_tokenizer):
     for token_id in token_ids:
         old_embed = embeddings.array[token_id]
         new_embed = new_embeddings.array[token_id]
-        assert not jnp.allclose(
-            old_embed, new_embed
-        ), f"Embedding for token {token_id} was not updated: {old_embed} == {new_embed}"
+        assert not jnp.allclose(old_embed, new_embed), (
+            f"Embedding for token {token_id} was not updated: {old_embed} == {new_embed}"
+        )
 
         # check that the lm head got updated
-        assert not jnp.allclose(
-            lm_head.weight.array[:, token_id], new_model.lm_head.weight.array[:, token_id]
-        ), f"LM head for token {token_id} was not updated"
+        assert not jnp.allclose(lm_head.weight.array[:, token_id], new_model.lm_head.weight.array[:, token_id]), (
+            f"LM head for token {token_id} was not updated"
+        )
 
     # Check that other embeddings remain unchanged
     for i in range(vocab_size):
         if i not in token_ids:
-            assert jnp.allclose(
-                embeddings.array[i], new_embeddings.array[i]
-            ), f"Embedding for token {i} was changed when it shouldn't have been"
+            assert jnp.allclose(embeddings.array[i], new_embeddings.array[i]), (
+                f"Embedding for token {i} was changed when it shouldn't have been"
+            )
 
 
 def test_reinitialize_some_tokens_invalid_tokens(local_gpt2_marin_tokenizer):

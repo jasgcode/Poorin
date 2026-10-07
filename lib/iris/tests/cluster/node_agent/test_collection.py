@@ -27,7 +27,7 @@ node_network_transmit_bytes_total{device="eth0"} 2000
 node_boot_time_seconds 1752000000
 """
 _DCGM_IDENTITY = (
-    'gpu="0",UUID="GPU-aaa",pci_bus_id="00000000:1A:00.0",modelName="NVIDIA H100 80GB HBM3",' 'hostname="g83d142"'
+    'gpu="0",UUID="GPU-aaa",pci_bus_id="00000000:1A:00.0",modelName="NVIDIA H100 80GB HBM3",hostname="g83d142"'
 )
 DCGM_TEXT = f"""
 DCGM_FI_DEV_FB_USED{{{_DCGM_IDENTITY},DCGM_FI_DRIVER_VERSION="570.86.15"}} 200

@@ -220,7 +220,7 @@ def test_iap_id_token_provider_mints_from_wif_external_account_adc(monkeypatch):
             "subject_token_type": "urn:ietf:params:oauth:token-type:jwt",
             "token_url": "https://sts.googleapis.com/v1/token",
             "service_account_impersonation_url": (
-                "https://iamcredentials.googleapis.com/v1/" f"projects/-/serviceAccounts/{sa_email}:generateAccessToken"
+                f"https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/{sa_email}:generateAccessToken"
             ),
             "credential_source": {"file": "/tmp/oidc-token.txt"},
         }

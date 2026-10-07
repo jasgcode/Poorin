@@ -544,8 +544,7 @@ def download_checkpoint_to_local(
             connection = sqlite3.connect(str(main_path))
             try:
                 connection.execute(
-                    "INSERT INTO meta(key, value) VALUES (?, ?) "
-                    "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+                    "INSERT INTO meta(key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
                     (CHECKPOINT_EPOCH_META_KEY, source_epoch_ms),
                 )
                 connection.commit()

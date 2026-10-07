@@ -655,7 +655,7 @@ def row_to_doc(row: dict) -> list[dict]:
 
     tools = select_tools(intent, doc_id)
     call_json = render_function_call(call_id, intent, arguments)
-    text = f"Tools: {json.dumps(tools, ensure_ascii=False)}\n" f"Request: {row['utt']}\n" f"tool_call: {call_json}"
+    text = f"Tools: {json.dumps(tools, ensure_ascii=False)}\nRequest: {row['utt']}\ntool_call: {call_json}"
     return [
         {
             "id": doc_id,

@@ -504,7 +504,7 @@ def runtime_environment() -> dict[str, object]:
         "marin_finelog": importlib.metadata.version("marin-finelog"),
         "marin_finelog_server": importlib.metadata.version("marin-finelog-server"),
         "process_cold_definition": (
-            "new Python process, embedded server, and DataFusion metadata cache; " "host page cache unchanged"
+            "new Python process, embedded server, and DataFusion metadata cache; host page cache unchanged"
         ),
         "planning_proxy_definition": "StatsService wall time for EXPLAIN without ANALYZE",
     }

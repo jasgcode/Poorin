@@ -203,10 +203,6 @@ ignore = [
   "E203", "E501", "W605", "F821", "E266", "F722", "E731", "E741"
 ]
 
-[tool.black]
-line-length = 119
-target-version = ["py312"]
-
 [tool.pytest.ini_options]
 addopts = "-n auto -m 'not slow and not torch' --import-mode=importlib"
 pythonpath = ["src", "tests"]

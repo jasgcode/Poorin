@@ -105,8 +105,7 @@ def _attribute_paths_for_filter(input_base: str, input_paths: list[str], filt: F
         path = _resolve_attribute_path(input_base, inp, filt, filetype)
         if path is None:
             raise FileNotFoundError(
-                f"No attribute file for filter '{filt.name}' corresponding to input {inp} "
-                f"under {filt.attribute_path}"
+                f"No attribute file for filter '{filt.name}' corresponding to input {inp} under {filt.attribute_path}"
             )
         resolved.append(path)
     return resolved

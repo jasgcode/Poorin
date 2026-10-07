@@ -429,9 +429,6 @@ def dashboard_goto(page, url: str) -> None:
 def wait_for_dashboard_ready(page) -> None:
     """Wait for the Vue 3 dashboard to mount and render children into #app."""
     page.wait_for_function(
-        "() => {"
-        "  const app = document.getElementById('app');"
-        "  return app !== null && app.children.length > 0;"
-        "}",
+        "() => {  const app = document.getElementById('app');  return app !== null && app.children.length > 0;}",
         timeout=30000,
     )

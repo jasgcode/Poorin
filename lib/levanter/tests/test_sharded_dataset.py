@@ -43,7 +43,6 @@ def test_sniff_format_for_json():
 
 
 def test_sniff_format_for_parquet():
-
     with tempfile.NamedTemporaryFile(suffix=".parquet") as f:
         table = pa.table({"col1": [1, 2, 3], "col2": ["a", "b", "c"]})
         pq.write_table(table, f.name)
@@ -53,7 +52,6 @@ def test_sniff_format_for_parquet():
 
 
 def test_basic_parquet_datasource_read_row():
-
     with tempfile.NamedTemporaryFile(suffix=".parquet", delete=True) as f:
         # Create a simple dataset
         data = {"column1": ["value1", "value2", "value3"], "column2": [10, 20, 30]}

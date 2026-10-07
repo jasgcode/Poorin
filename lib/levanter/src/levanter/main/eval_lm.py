@@ -34,7 +34,6 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class EvalLmConfig:
-
     checkpoint_path: Optional[str] = None
     hf_checkpoint: Optional[RepoRef] = None
     trainer: TrainerConfig = field(default_factory=TrainerConfig)

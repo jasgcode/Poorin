@@ -11,7 +11,6 @@ LLM judge on a miss. This maps onto :class:`JudgeSpec` directly, with ``exact_ga
 reproducing the gate and the tool's own judge replacing ``rewardkit``.
 """
 
-
 from verifyit.spec import JudgeSpec
 
 from experiments.post_training.tasktrove.converters.converted_task import (

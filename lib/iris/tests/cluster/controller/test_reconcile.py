@@ -486,9 +486,9 @@ def test_reconcile_worker_holds_assigned_run_while_preemption_victim_occupies_wo
 
     by_uid = {d.attempt_uid: d for d in plan.request.desired}
     assert by_uid[victim.attempt_uid].stop == worker_pb2.Worker.STOP_REASON_PREEMPTED
-    assert (
-        preemptor.attempt_uid not in by_uid
-    ), "preemptor run-intent must be withheld while the victim occupies the worker"
+    assert preemptor.attempt_uid not in by_uid, (
+        "preemptor run-intent must be withheld while the victim occupies the worker"
+    )
 
 
 def test_reconcile_worker_dispatches_assigned_once_victim_finalized():
@@ -1215,9 +1215,9 @@ def test_coscheduled_sibling_cascade_fires_on_terminal_observation():
         # max_retries_failure=0, so the failure is terminal (not a retry): the
         # coscheduled sibling is terminated, not requeued.
         sibling_state = query_task(state, task_id_2).state
-        assert (
-            sibling_state == job_pb2.TASK_STATE_COSCHED_FAILED
-        ), f"sibling should cascade terminal, got {sibling_state}"
+        assert sibling_state == job_pb2.TASK_STATE_COSCHED_FAILED, (
+            f"sibling should cascade terminal, got {sibling_state}"
+        )
 
 
 # --- UID routing in _observations_to_updates --------------------------------

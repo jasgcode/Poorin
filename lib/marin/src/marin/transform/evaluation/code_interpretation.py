@@ -162,7 +162,7 @@ CODE_INTERPRETATION_TASKS: tuple[CodeInterpretationTask, ...] = (
             "fn-support",
             (
                 (
-                    "def double_then_shift(x):\n" "    value = x * 2\n" "    return value + 3\n" "double_then_shift(5)",
+                    "def double_then_shift(x):\n    value = x * 2\n    return value + 3\ndouble_then_shift(5)",
                     "13",
                 ),
                 (
@@ -203,7 +203,7 @@ CODE_INTERPRETATION_TASKS: tuple[CodeInterpretationTask, ...] = (
             "fn-heldout",
             (
                 (
-                    "def edge_repeat(text):\n" "    return text[0] + text[-1] * 2\n" "edge_repeat('marin')",
+                    "def edge_repeat(text):\n    return text[0] + text[-1] * 2\nedge_repeat('marin')",
                     "mnn",
                 ),
                 (

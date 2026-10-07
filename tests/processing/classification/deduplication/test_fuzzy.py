@@ -252,9 +252,9 @@ def test_fuzzy_dups_multi_source_per_source_attr_trees(fox_corpus):
         assert content_id in test_rows, f"missing test attr row for {shared_text!r}"
         a, b = train_rows[content_id], test_rows[content_id]
         assert a["dup_cluster_id"] == b["dup_cluster_id"], f"{shared_text!r}: dup_cluster_id mismatch"
-        assert (
-            a["is_cluster_canonical"] != b["is_cluster_canonical"]
-        ), f"{shared_text!r}: exactly one canonical expected across pair"
+        assert a["is_cluster_canonical"] != b["is_cluster_canonical"], (
+            f"{shared_text!r}: exactly one canonical expected across pair"
+        )
 
 
 def test_fuzzy_dups_rejects_param_mismatch(fox_corpus):
@@ -319,9 +319,9 @@ def test_fuzzy_dups_canonical_selection_is_deterministic(fox_corpus):
     canonical_per_cluster: dict[str, int] = {}
     for cluster_id, is_canonical in first.values():
         canonical_per_cluster[cluster_id] = canonical_per_cluster.get(cluster_id, 0) + int(is_canonical)
-    assert all(
-        n == 1 for n in canonical_per_cluster.values()
-    ), f"every cluster must have exactly one canonical; got {canonical_per_cluster}"
+    assert all(n == 1 for n in canonical_per_cluster.values()), (
+        f"every cluster must have exactly one canonical; got {canonical_per_cluster}"
+    )
 
 
 def test_fuzzy_dups_capped_does_not_raise_and_emits(fox_corpus):
@@ -412,9 +412,9 @@ def test_text_cap_chars_truncates_mega_docs_only(tmp_path):
     assert set(cap_by_id) == {mega_id, small_id} == set(nocap_by_id)
 
     # Small doc (under cap) → unaffected.
-    assert sorted(cap_by_id[small_id]) == sorted(
-        nocap_by_id[small_id]
-    ), "doc smaller than the cap should produce identical buckets"
+    assert sorted(cap_by_id[small_id]) == sorted(nocap_by_id[small_id]), (
+        "doc smaller than the cap should produce identical buckets"
+    )
     # Mega doc (over cap) → different signature, no band overlap.
     cap_mega = set(cap_by_id[mega_id])
     nocap_mega = set(nocap_by_id[mega_id])
@@ -599,15 +599,15 @@ def test_html_parser_variants_cluster_per_article(tmp_path: Path, parser_variant
         read_cluster = _cluster_id(by_source_id, read_id)
         assert traf_cluster is not None, f"{traf_id} has no attr row (unexpected singleton)"
         assert read_cluster is not None, f"{read_id} has no attr row (unexpected singleton)"
-        assert (
-            traf_cluster == read_cluster
-        ), f"{article}: trafilatura ({traf_cluster!r}) and readability ({read_cluster!r}) did not cluster together"
+        assert traf_cluster == read_cluster, (
+            f"{article}: trafilatura ({traf_cluster!r}) and readability ({read_cluster!r}) did not cluster together"
+        )
         article_to_cluster[article] = traf_cluster
 
     cluster_ids = list(article_to_cluster.values())
-    assert len(set(cluster_ids)) == len(
-        cluster_ids
-    ), f"distinct articles ended up in the same cluster: {article_to_cluster}"
+    assert len(set(cluster_ids)) == len(cluster_ids), (
+        f"distinct articles ended up in the same cluster: {article_to_cluster}"
+    )
 
 
 @pytest.mark.data_integration
@@ -629,9 +629,9 @@ def test_html_parser_variants_all_three_cluster_per_article(
     by_source_id = _run_dedup_on_corpus(tmp_path, parser_variants_docs)
     for article in parser_variants_articles:
         clusters = {_cluster_id(by_source_id, f"{article}__{p}") for p in ("trafilatura", "html2text", "readability")}
-        assert (
-            len(clusters) == 1 and None not in clusters
-        ), f"{article}: parser variants split across clusters: {clusters}"
+        assert len(clusters) == 1 and None not in clusters, (
+            f"{article}: parser variants split across clusters: {clusters}"
+        )
 
 
 @pytest.mark.data_integration
@@ -719,9 +719,9 @@ def test_quote_inclusion_clusters_with_host_not_quoted(tmp_path: Path, quote_inc
 
     assert a_cluster is not None, "article_a should not be a singleton"
     assert a_with_quote_cluster is not None, "article_a_with_quote should not be a singleton"
-    assert (
-        a_cluster == a_with_quote_cluster
-    ), f"host A and A_with_quote did not cluster: {a_cluster!r} vs {a_with_quote_cluster!r}"
+    assert a_cluster == a_with_quote_cluster, (
+        f"host A and A_with_quote did not cluster: {a_cluster!r} vs {a_with_quote_cluster!r}"
+    )
 
     assert b_cluster is None, (
         f"article_b clustered (over-merge with quoter): cluster={b_cluster!r}; "

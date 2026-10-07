@@ -274,7 +274,9 @@ def measurement_from_record(record: EvalRunRecord) -> Measurement | None:
     kind = (
         next(iter(declared_kinds))
         if declared and len(declared_kinds) == 1
-        else MetricKind.BINARY if base_metric(metric) in BINARY_METRICS else MetricKind.CONTINUOUS
+        else MetricKind.BINARY
+        if base_metric(metric) in BINARY_METRICS
+        else MetricKind.CONTINUOUS
     )
     stderr = _combined_stderr([score.stderr for score in scores])
     n_correct = _successes(value, coverage) if kind is MetricKind.BINARY else None

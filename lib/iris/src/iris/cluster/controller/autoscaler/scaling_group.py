@@ -937,7 +937,7 @@ class ScalingGroup:
             quiet_since = state.quiet_since if state is not None else None
             idle_ms = timestamp.epoch_ms() - quiet_since.epoch_ms() if quiet_since is not None else 0
             logger.info(
-                "Scale group %s: scaling down slice %s " "(idle for %dms, ready=%d/%d, pending=%d, target=%d)",
+                "Scale group %s: scaling down slice %s (idle for %dms, ready=%d/%d, pending=%d, target=%d)",
                 self.name,
                 slice_state.handle.slice_id,
                 idle_ms,

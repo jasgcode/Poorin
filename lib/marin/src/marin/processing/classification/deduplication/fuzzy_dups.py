@@ -105,8 +105,7 @@ def _validate_inputs(inputs: list[MinHashAttrData]) -> MinHashParams:
     if mismatched:
         details = "; ".join(f"inputs[{i}]={p}" for i, p in mismatched)
         raise ValueError(
-            f"All MinHashAttrData inputs must share identical MinHash params. "
-            f"inputs[0]={head} but mismatches: {details}"
+            f"All MinHashAttrData inputs must share identical MinHash params. inputs[0]={head} but mismatches: {details}"
         )
 
     seen: dict[str, int] = {}

@@ -99,12 +99,12 @@ def test_fp8_quant_dtype_overrides_reach_dot_operands():
 
     jaxpr = jax.make_jaxpr(eqx.filter_grad(loss))(fp8_linear, x)
     dot_eqns = list(_all_dot_general_eqns(jaxpr.jaxpr))
-    assert any(
-        all(v.aval.dtype == jnp.float8_e5m2 for v in eqn.invars) for eqn in dot_eqns
-    ), "forward dot_general should contract operands quantized to the configured fwd_dtype (here E5M2)"
-    assert any(
-        any(v.aval.dtype == jnp.float8_e4m3fn for v in eqn.invars) for eqn in dot_eqns
-    ), "a backward dot_general should contract the output gradient quantized to the configured rev_dtype (here E4M3)"
+    assert any(all(v.aval.dtype == jnp.float8_e5m2 for v in eqn.invars) for eqn in dot_eqns), (
+        "forward dot_general should contract operands quantized to the configured fwd_dtype (here E5M2)"
+    )
+    assert any(any(v.aval.dtype == jnp.float8_e4m3fn for v in eqn.invars) for eqn in dot_eqns), (
+        "a backward dot_general should contract the output gradient quantized to the configured rev_dtype (here E4M3)"
+    )
 
 
 def _gpu_is_fp8_capable() -> bool:

@@ -347,8 +347,7 @@ def _tpu_splash_attention(
     # KV sequence must not be sharded for splash attention.
     if k_pspec[2] is not None:
         raise NotImplementedError(
-            "Splash attention does not support sharding the KV sequence dimension. "
-            f"Got KV sequence spec: {k_pspec[2]}"
+            f"Splash attention does not support sharding the KV sequence dimension. Got KV sequence spec: {k_pspec[2]}"
         )
 
     head_shards = splash_partition_spec_shard_factor(q_pspec[1], mesh)

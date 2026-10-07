@@ -131,8 +131,7 @@ class FineStoreDirectory:
         self._thread.join(timeout=_EXIT_FLUSH_TIMEOUT)
         if self._thread.is_alive():
             logger.warning(
-                "FineStore directory synchronization did not finish within %.1f seconds; "
-                "abandoning it at process exit",
+                "FineStore directory synchronization did not finish within %.1f seconds; abandoning it at process exit",
                 _EXIT_FLUSH_TIMEOUT,
             )
 

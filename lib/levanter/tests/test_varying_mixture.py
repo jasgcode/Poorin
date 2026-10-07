@@ -72,9 +72,9 @@ async def test_mixture_dataset_gradual_transition():
     # Test second stage
     batch2 = await mixture_ds.get_batch(list(range(20, 40)))
     counts2 = count_sources(batch2)
-    assert (
-        counts2["ds2"] > counts2["ds1"] and counts2["ds2"] > counts2["ds3"]
-    ), f"Unexpected distribution in second stage: {counts2}"
+    assert counts2["ds2"] > counts2["ds1"] and counts2["ds2"] > counts2["ds3"], (
+        f"Unexpected distribution in second stage: {counts2}"
+    )
 
     # Test third stage
     batch3 = await mixture_ds.get_batch(list(range(40, 60)))

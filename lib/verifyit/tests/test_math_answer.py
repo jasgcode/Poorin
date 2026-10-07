@@ -138,7 +138,6 @@ def test_unknown_direct_math_profile_cannot_award_correct_answer():
 
 @pytest.mark.parametrize("profile", ["anchored", "boxed"])
 def test_parser_failure_cannot_trigger_fallback_or_positive_reward(monkeypatch, tmp_path, profile):
-
     def parser_failure(*args, **kwargs):
         raise TimeoutError("parser budget exhausted")
 

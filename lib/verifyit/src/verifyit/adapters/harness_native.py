@@ -125,7 +125,9 @@ def native_config_route(config: dict) -> str | None:
         metrics = (
             [{"metric": "acc"}, {"metric": "acc_norm"}]
             if output == "multiple_choice"
-            else [{"metric": "exact_match"}] if output == "generate_until" else []
+            else [{"metric": "exact_match"}]
+            if output == "generate_until"
+            else []
         )
     if not isinstance(metrics, list) or not metrics:
         return None

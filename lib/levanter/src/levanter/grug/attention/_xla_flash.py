@@ -4,6 +4,7 @@
 
 No Pallas, CUDA, or TPU kernel dependency, so it runs on any XLA backend (including AMD GPUs and CPUs).
 """
+
 from collections.abc import Callable
 
 import haliax as hax

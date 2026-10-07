@@ -126,7 +126,7 @@ def _upgrade_to_catalog_tree(root: Path, catalog_path: Path, *, replace_segment:
     if replace_segment:
         old_segment = catalog["versionSegments"][0]["liveSegments"][0]
         old_segment_id = old_segment["segmentId"]
-        object_id = f"_finelog/tables/{namespace}/objects/v1/l1/content/" "seg_L1_0000000000000000003.parquet"
+        object_id = f"_finelog/tables/{namespace}/objects/v1/l1/content/seg_L1_0000000000000000003.parquet"
         object_path = root / object_id
         pq.write_table(
             pa.table(

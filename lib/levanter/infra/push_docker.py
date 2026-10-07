@@ -9,6 +9,7 @@ Build and deploy the Levanter base image to Artifact Registry or Docker Hub.
 It is not necessary to run this yourself unless you are deploying a new base image: the launch
 script will automatically build and deploy an image based on your current code.
 """
+
 import argparse
 from pathlib import Path
 
