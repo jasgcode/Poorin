@@ -97,14 +97,6 @@ conflicts = [
         { package = "marin-core", extra = "gpu" },
         { package = "marin-levanter", extra = "tpu" },
     ],
-    [
-        { package = "marin-core", extra = "gpu" },
-        { package = "marin-fray", group = "fray_tpu_test" },
-    ],
-    [
-        { package = "marin-levanter", extra = "gpu" },
-        { package = "marin-fray", group = "fray_tpu_test" },
-    ],
 ]
 
 [tool.uv.workspace]
