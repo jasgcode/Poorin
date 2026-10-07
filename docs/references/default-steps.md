@@ -28,13 +28,3 @@ that step's `StepContext` and returning a Levanter `LmDataConfig`.
 ## Training
 
 ::: marin.experiment.train.train_lm
-
-## Evaluation
-
-::: marin.experiment.evaluation.EvalGroup
-
-::: marin.experiment.evaluation.eval_step
-
-::: marin.experiment.evaluation.eval_steps
-
-::: marin.experiment.evaluation.eval_report

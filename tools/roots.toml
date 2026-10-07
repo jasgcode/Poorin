@@ -84,13 +84,6 @@ static_only = []
 modules = [
     "iris",
     "fray.iris_backend",
-    "marin.experiment.evaluation",
-    "marin.evaluation.runner",
-    "marin.evaluation.serving_config",
-    "marin.evaluation.hardware",
-    "marin.evaluation.inference_metrics",
-    "marin.evaluation.eval_policy",
-    "marin.evaluation.eval_policy_sources",
     # marin.inference except types.py, which moves to marin.evaluation in P3
     "marin.inference.backend",
     "marin.inference.broker",

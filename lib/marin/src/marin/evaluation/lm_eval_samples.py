@@ -507,9 +507,8 @@ def _task_keys(
     """The ``metrics`` key each sample file's coverage belongs to.
 
     A run's records key metrics by the task-config directory (``<task_dir>/<model>/<file>``), and
-    namespace them ``<task_dir>/<task>`` when one config evaluated several tasks -- see
-    :meth:`~marin.evaluation.evalchemy.result.EvalchemyResult.task_metrics`. Coverage uses the same
-    keys. Multiple sample files or multiple benchmark metadata entries trigger subtask names.
+    namespace them ``<task_dir>/<task>`` when one config evaluated several tasks. Coverage uses the
+    same keys. Multiple sample files or multiple benchmark metadata entries trigger subtask names.
     """
     by_directory: dict[PurePosixPath, list[str]] = {}
     for relative in sources:

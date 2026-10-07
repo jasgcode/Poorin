@@ -156,9 +156,6 @@ cpu = [
   "torchvision==0.26.0; (sys_platform == 'linux' and platform_machine == 'aarch64') or (sys_platform == 'darwin' and platform_machine == 'arm64')",
 ]
 
-# Evalchemy runs from a commit-pinned uvx environment against a served OpenAI URL, so lm-eval does
-# not share Marin's project environment. See marin.evaluation.evalchemy.runtime.
-
 vizier = [
     "google-vizier[jax]",
 ]
