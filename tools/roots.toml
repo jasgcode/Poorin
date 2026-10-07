@@ -79,7 +79,6 @@ static_only = []
 modules = [
     "iris",
     "fray.iris_backend",
-    "marin.rl",
     "marin.mcp",
     "marin.experiment.evaluation",
     "marin.evaluation.runner",
@@ -116,7 +115,6 @@ modules = [
     "marin.inference.vllm_smoke_test",
     "marin.inference.vllm_wheel_entrypoint",
     "marin.inference.worker",
-    "experiments.post_training",
     "experiments.evaluation",
     "finelog.deploy",
     "finelog.benchmarks",

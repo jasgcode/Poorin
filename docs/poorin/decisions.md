@@ -845,6 +845,25 @@ Plan: `plans/2026-10-05-p1-fleet-operations.md`. Executed on branch `prune/p1-fl
 
 ---
 
+## P2 RL stack: 2026-10-07
+
+Plan: `plans/2026-10-07-p2-rl-stack.md`.
+
+### D67. The remaining prune phases run end to end
+
+- **When:** 2026-10-07, P2. **Status:** Adopted.
+- **Decision:** The owner authorized running P2 to P8 and Pass 2 without reviewing each phase's
+  plan. Each phase still gets a plan in `docs/poorin/plans/`, one branch, the invariant before
+  every commit, a final review by a fresh reviewer, and a local fast-forward merge to `main`.
+  Nothing is pushed. Setting up `projects/` (D52) waits until `looped-diffusion-lm` has code,
+  since it has no imports to protect yet.
+- **Why:** The design covers every phase explicitly; the owner asked to be notified only when a
+  decision needs them.
+- **Cost if wrong:** A phase the owner would have shaped differently lands on local `main`; it can
+  be reverted before anything is pushed.
+
+---
+
 ## Deferred
 
 Known gaps left open on purpose. Each names where it gets resolved.
