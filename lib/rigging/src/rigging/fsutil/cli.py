@@ -72,7 +72,7 @@ class _ProgressDisplay:
     """Throttled stderr output shared by long-running commands."""
 
     def __init__(self) -> None:
-        self._interactive = click.get_text_stream("stderr").isatty()
+        self._interactive = sys.stderr.isatty()
         self._last_update = time.monotonic()
         self._rendered_width = 0
 

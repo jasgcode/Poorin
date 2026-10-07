@@ -692,7 +692,7 @@ class LevanterHarnessLM(TemplateLM):
         missing_points = np.where(~covered_points)[0]
         assert len(missing_points) == 0, f"Missing points: {missing_points}"
 
-        result = list(zip(result_probs, result_greedy))
+        result = [(float(prob), bool(greedy)) for prob, greedy in zip(result_probs, result_greedy)]
         logger.info(f"Finished running {len(requests)} loglikelihoods.")
 
         return result
