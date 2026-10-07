@@ -97,15 +97,14 @@ git diff --no-index experiments/grug/base experiments/grug/<variant>
 ## Environment variables you will likely use
 
 - `WANDB_API_KEY`: required for W&B logging in the default launch config.
-- `GRUG_RUN_ID`: overrides the default run id.
-- `FERRY_DATE`: appended to run id for ferry-style launches.
+- The run ID is `grug-base-<version>`. `--version dev` gives each invocation a fresh timestamped version; the launcher prints it, and `--resume <version>` continues that run.
 
 ## Where outputs show up
 
 - Training/eval metrics: tracker backend (default W&B).
 - Checkpoints: `<output_path>/checkpoints`.
 - Profiler traces (if enabled): `<trainer.log_dir>/<run_id>/profiler`.
-- Backward-flow artifacts: `<trainer.log_dir>/<run_id>/artifacts/backward_flow`, plus `backward_flow/dag` as native HTML media in W&B. Base Grug samples every 50 steps by default; set `trainer.backward_flow.interval=0` to disable.
+- Backward-flow artifacts: `<trainer.log_dir>/<run_id>/artifacts/backward_flow`, plus `backward_flow/dag` as native HTML media in W&B. Base Grug disables it by default (`backward_flow_interval=0` in `base/launch.py`); set a positive interval to sample it.
 - Step outputs: the `ctx.out` root for the step.
 
 ## Logged metrics

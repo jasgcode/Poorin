@@ -20,3 +20,4 @@ date,phase,step,first_party_lines,reachable_lines,reachable_modules,r1_imported_
 2026-10-06,P1,Skip ignored test files that a change selects by name,384638,139315,461,6702,8.68,170.1,59.7,11893054128
 2026-10-06,P1,Make the local machine the default cluster,384632,139309,461,6702,10.77,231.8,66.0,11893054128
 2026-10-06,P1,Keep the workbench tools as roots,384632,127512,420,6702,10.05,186.6,68.4,11893054128
+2026-10-06,P1,Fix stale P0 docs,384632,127512,420,6702,9.9,188.9,69.4,11893054128

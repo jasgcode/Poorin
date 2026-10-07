@@ -1,6 +1,8 @@
 # Sub-project 1: Core prune
 
-Status: approved design, 2026-10-04. Implementation plan: not written yet.
+Status: approved design, 2026-10-04. Implementation plans: one per phase in
+`docs/poorin/plans/`; P0 and P1 are done. Amended by
+`2026-10-06-workbench-and-roots-design.md`.
 
 ## TL;DR
 
@@ -86,7 +88,7 @@ can proceed in parallel with 7a. 4 needs 3 and 7a.
 | `iris` | Multi-tenant cluster scheduler for TPU and GPU fleets | Deleted in P5 |
 | `finelog` | Log and metrics store: typed tables, SQL queries, process logs, Parquet storage on disk or object storage, forwarding between servers. Python client in the repository; server written in Rust. | Trimmed in P6 to its Python client; the server comes from the published `marin-finelog-server` wheel |
 | `ducky` | DuckDB SQL service for object-store Parquet | Deleted in P4 |
-| `dupekit` | Rust text-deduplication kernels | Deleted in P4 |
+| `dupekit` | Rust text-deduplication kernels | Kept: normalize, dedup, and decontamination import it (amendment of 2026-10-06) |
 | `verifyit`, `shellbox`, `taskcompendium` | Grading, sandboxed shell environments, and task presentation for RL | Deleted in P2 |
 
 ### Spike 0 results that shape this design
@@ -126,6 +128,10 @@ against the measured 222 TFLOP/s peak.
 | Run the prune as reachability-driven Pass 1 and Pass 2, then consolidate in 1b. | Pass 1 removes most lines mechanically. Pass 2 forces a reading of each surviving dependency. Consolidation is easier once the survivors are known. |
 
 ## Roots
+
+Amended 2026-10-06: the kept roots are listed in
+[2026-10-06-workbench-and-roots-design.md](2026-10-06-workbench-and-roots-design.md), which
+replaces the "Kept roots" table below.
 
 The roots define what survives. Code reachable from a root through static imports is kept. All
 other code is deleted.
@@ -191,8 +197,8 @@ before each commit. It fails if any check fails.
 2. Every kept root imports.
 3. The default pytest selection for surviving code passes. Tests for deleted code are deleted in
    the same commit.
-4. `uv run pyrefly check` passes, and the lint entry point passes: `./infra/pre-commit.py` until
-   P1, the replacement after P1.
+4. The type checker passes (pyrefly until P1, ty after), and the lint entry point passes:
+   `./infra/pre-commit.py` until P1, `tools/lint.py` after.
 5. R2 logs to W&B in offline mode and to Finelog. `prune_check` starts a local Finelog server in
    a temporary directory for the duration of the check and confirms that R2's metric rows arrived.
    Until P5b, R2's Finelog tracker reads its run identity from Iris, so this check starts in P5b.
@@ -247,11 +253,11 @@ them with `tools/reachability.py`.
 
 | Phase | Content | Python lines removed (approx.) |
 |---|---|---|
-| P0 Setup | Tag `upstream-baseline`. Delete `.github/workflows` (38 workflows; the fork is public and has Actions enabled). Add the tools and roots file. Add the `rtx5090x1` device to R1 and an RTX 5090 entry to `fray.device_flops`. Make R2 local-first. Apply the spike fixes assigned to P0 below. Add the spike note. Record the baseline metrics row. | adds ~0.5k |
-| P1 Fleet operations | Delete `infra/`, `scripts/`, `docker/`, and `etc/`. Replace `infra/pre-commit.py` with a root-level lint entry point (see below). Replace `config/marin.yaml` and `config/coreweave.yaml` with `config/local.yaml`, which declares no region buckets, and change the default of `MARIN_CLUSTER` in `rigging.filesystem.cluster_config` from `marin` to `local`. `MARIN_PREFIX` keeps pointing outputs at local disk. Rewrite `AGENTS.md` and prune `.agents/skills/` (see below). | ~87k |
+| P0 Setup | Tag `upstream-baseline`. Delete `.github/workflows` (37 workflows and a README; the fork is public and has Actions enabled). Add the tools and roots file. Add the `rtx5090x1` device to R1 and an RTX 5090 entry to `fray.device_flops`. Make R2 local-first. Apply the spike fixes assigned to P0 below. Add the spike note. Record the baseline metrics row. | adds ~0.5k |
+| P1 Fleet operations | Delete `infra/`, `scripts/`, `docker/`, and `etc/`. Replace `infra/pre-commit.py` with a root-level lint entry point (see below). Replace `config/marin.yaml` and `config/coreweave.yaml` with `config/local.yaml`, which declares no region buckets, and change the default of `MARIN_CLUSTER` in `rigging.filesystem.cluster_config` from `marin` to `local`. `MARIN_PREFIX` keeps pointing outputs at local disk. Rewrite `AGENTS.md` and prune `.agents/skills/` (see below). P1 also deleted the ferries, the GitHub configuration, the Makefile, and Marin's agent notes; replaced pyrefly with ty and black with ruff format (D49, D50); moved Marin's cluster configs to `config/testing/` as test fixtures; and replaced the kept roots (D47, D48). See `docs/poorin/plans/2026-10-05-p1-fleet-operations.md`. | ~87k |
 | P2 RL stack | `marin.rl`, `experiments/post_training`, `lib/verifyit`, `lib/shellbox`, `lib/taskcompendium` | ~47k |
 | P3 LLM serving and evaluation orchestration | `marin.inference` (after moving `types.py`), the fleet orchestration and cohort-policy modules of `marin.evaluation`, `marin.experiment.evaluation`, `marin.mcp`, `eval_policy/`, the Python files of `experiments/evaluation` (its `configs/` stay); see "Deleted regardless of reachability" for the edges to cut | ~19k |
-| P4 Data services | `lib/ducky`, `lib/dupekit` | ~4k |
+| P4 Data services | `lib/ducky` (Dupekit stays; see the amendment) | ~4k |
 | P5 Iris | Three steps, P5a to P5c; see the next section | ~151k (84k source, 67k tests) |
 | P6 Orphans and Finelog trim | Code that only Iris kept reachable. Trim `lib/finelog` to its Python client (`client/`, `rpc/`, top-level modules, and their tests): delete `rust/` (69k lines of Rust), `deploy/`, `benchmarks/`, `dashboard/`, and its operations docs. Pin `marin-finelog-server==0.2.46.dev33324331711`, the version installed at baseline. | ~7k Python, 69k Rust |
 | P7 Unreachable sweep | One commit per library: `experiments/`, `marin`, `levanter`, `zephyr`, `rigging`, `finestore`, with their tests and docs. Includes code no root reaches, such as the 14 deleted model modules. `haliax` and `fray` have almost no unreachable code left by this point. | ~70k |
@@ -269,6 +275,8 @@ so no file is reformatted: ruff 0.14.3, black 25.9.0, pyrefly (`>=1.0.0,<1.1.0`,
 markers, TOML, YAML, and JSON validity, trailing whitespace, final newline, and notebooks. It
 drops the Marin-specific checks for skill metadata and pre-commit invocations in Markdown, and
 the LLM lint review in `infra/linter.py`.
+
+Amended during P1: after the port, ty replaced pyrefly (D49) and ruff format replaced black (D50).
 
 ## P5: Iris removal
 
