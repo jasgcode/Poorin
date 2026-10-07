@@ -35,8 +35,8 @@ follow-up changes executable behavior or test expectations.
 
 A new `lib/<name>/` package gets its own test suite when it is a workspace member in the root
 `pyproject.toml` and has a `lib/<name>/tests` directory. `tools/affected_tests.py` selects its
-tests from the import graph; nothing else needs registering. A change to the root
-`pyproject.toml` or `uv.lock` runs every suite.
+tests from the import graph; nothing else needs registering. `uv run --no-sync python -m
+tools.affected_tests --all` runs every suite.
 
 ## Core Rule
 

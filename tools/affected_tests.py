@@ -11,17 +11,18 @@ repository root (``tests/`` and ``experiments/``) and every workspace library wi
 A test file is selected when it changed, or when it, a suite-local module it imports, or a
 ``conftest.py`` above it imports a changed module or a module that imports one transitively.
 Imports are read statically, including imports inside functions. A deleted module keeps its name,
-so tests that still import it are selected and fail. Some changes select whole suites: the root
-``pyproject.toml``, ``uv.lock``, or anything under ``config/`` selects every suite, and a library's
-``pyproject.toml`` or a non-Python file under ``tests/`` or ``lib/<name>/tests`` selects that
-suite.
+so tests that still import it are selected and fail. Some changes select whole suites: anything
+under ``config/`` selects every suite, and a library's ``pyproject.toml`` or a non-Python file under
+``tests/`` or ``lib/<name>/tests`` selects that suite. The root ``pyproject.toml`` and ``uv.lock``
+select nothing by themselves; ``--all`` runs every suite, once per phase (D70).
 
 Each suite runs in its own pytest process, because the suites' ``conftest.py`` modules collide in
 one process. Tests run on CPU in UTC, as in Marin's CI, with a complete marker expression that
 leaves out slow, cluster, Docker, manual, and Torch tests.
 
 Usage (from the repository root):
-    uv run --no-sync python -m tools.affected_tests
+    uv run --no-sync python -m tools.affected_tests          # tests affected by the uncommitted change
+    uv run --no-sync python -m tools.affected_tests --all    # every suite
 """
 
 import argparse
@@ -37,7 +38,6 @@ from pathlib import Path, PurePosixPath
 from tools.changes import changed_files
 from tools.reachability import REPO_ROOT, TOP_LEVEL_PACKAGES, imported_modules, is_test_file, workspace_modules
 
-WORKSPACE_MANIFESTS = frozenset({"pyproject.toml", "uv.lock"})
 # Data that tests in several suites read and no module imports: the cluster configs and their test
 # fixtures. A change under one of these directories runs every suite.
 SHARED_DATA_DIRS = ("config",)
@@ -99,11 +99,16 @@ def suites(repo_root: Path) -> list[Suite]:
     return [root, *libraries]
 
 
+def all_suites(repo_root: Path) -> list[Selection]:
+    """Every suite, whole: the full run each phase ends with."""
+    return [Selection(suite, suite.test_dirs) for suite in suites(repo_root)]
+
+
 def select(changed: Sequence[str], repo_root: Path) -> list[Selection]:
     """The tests each suite must run for ``changed``, a list of repository-relative paths."""
     all_suites = suites(repo_root)
     paths = [PurePosixPath(path) for path in changed]
-    if WORKSPACE_MANIFESTS & set(changed) or any(path.is_relative_to(d) for path in paths for d in SHARED_DATA_DIRS):
+    if any(path.is_relative_to(d) for path in paths for d in SHARED_DATA_DIRS):
         return [Selection(suite, suite.test_dirs) for suite in all_suites]
     changed_modules = {name for path in paths if (name := _source_module(path)) is not None}
     modules = workspace_modules(repo_root)
@@ -321,8 +326,11 @@ def _collected_by_name(name: str) -> bool:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    argparse.ArgumentParser(description="Run the unit tests affected by the uncommitted change.").parse_args(argv)
-    run(pytest_runs(select(changed_files(REPO_ROOT), REPO_ROOT), HOST_EXCLUSIONS), REPO_ROOT)
+    parser = argparse.ArgumentParser(description="Run the unit tests affected by the uncommitted change.")
+    parser.add_argument("--all", action="store_true", help="Run every suite instead.")
+    args = parser.parse_args(argv)
+    selections = all_suites(REPO_ROOT) if args.all else select(changed_files(REPO_ROOT), REPO_ROOT)
+    run(pytest_runs(selections, HOST_EXCLUSIONS), REPO_ROOT)
     return 0
 
 

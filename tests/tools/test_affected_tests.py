@@ -9,7 +9,16 @@ from pathlib import Path
 
 import pytest
 
-from tools.affected_tests import HOST_EXCLUSIONS, LOCAL_SAFE_MARKERS, PytestRun, Selection, Suite, pytest_runs, select
+from tools.affected_tests import (
+    HOST_EXCLUSIONS,
+    LOCAL_SAFE_MARKERS,
+    PytestRun,
+    Selection,
+    Suite,
+    all_suites,
+    pytest_runs,
+    select,
+)
 
 FILES = {
     "pyproject.toml": '[tool.uv.workspace]\nmembers = ["lib/alpha", "lib/beta"]\n',
@@ -106,13 +115,19 @@ def test_a_changed_conftest_selects_the_tests_below_it(repo):
     ]
 
 
-def test_workspace_manifests_select_every_member_suite_and_a_library_manifest_its_own(repo):
-    assert select(["uv.lock"], repo) == [
+def test_root_manifests_select_nothing_but_a_library_manifest_selects_its_suite(repo):
+    # The whole tree runs once per phase with --all (D70), not on every manifest change.
+    assert select(["uv.lock"], repo) == []
+    assert select(["pyproject.toml"], repo) == []
+    assert select(["lib/beta/pyproject.toml"], repo) == [Selection(BETA, BETA.test_dirs)]
+
+
+def test_all_suites_selects_every_member_suite_whole(repo):
+    assert all_suites(repo) == [
         Selection(ROOT, ROOT.test_dirs),
         Selection(ALPHA, ALPHA.test_dirs),
         Selection(BETA, BETA.test_dirs),
     ]
-    assert select(["lib/beta/pyproject.toml"], repo) == [Selection(BETA, BETA.test_dirs)]
 
 
 def test_cluster_configs_and_their_test_fixtures_select_every_member_suite(repo):

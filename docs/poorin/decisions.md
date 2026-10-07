@@ -897,6 +897,50 @@ Plan: `plans/2026-10-07-p2-rl-stack.md`.
 
 ---
 
+## P3 serving and evaluation orchestration: 2026-10-07
+
+Plan: `plans/2026-10-07-p3-serving-and-eval-orchestration.md`.
+
+### D70. No lockfile until P8, no all-suite runs per commit, no per-phase review
+
+- **When:** 2026-10-07, P3. **Status:** Adopted.
+- **Decision:** `uv.lock` is deleted. Work continues in the existing environment through
+  `uv run --no-sync`, which needs no lockfile; nothing syncs until P8, which resolves a fresh lock
+  and re-verifies the GPU environment. A change to the root `pyproject.toml` or `uv.lock` no
+  longer selects every suite; `tools.affected_tests --all` runs every suite once per phase,
+  before the merge. Code, tests, and docs that existed only for Marin's CI are deleted wherever
+  they turn up. A phase ends with a self-check instead of a fresh reviewer.
+- **Why:** The owner, 2026-10-07: Iris, Finelog, and P8 will change dependencies heavily, so
+  tracking lock diffs per commit costs more than it catches, and CI-style gating is not needed
+  for one researcher.
+- **Alternatives:** Keep the lock and regenerate it in P8; keep the lock without drift checks.
+- **Cost if wrong:** Between phases' full runs, a commit can break a suite its imports do not
+  reach, and P8's fresh resolve can move JAX or CUDA wheels, which P8 re-verifies on the 5090.
+  Supersedes the spec's "Risks" row on lock regeneration and the per-phase review in D67.
+
+### D71. P3 cuts imports from the record schema, not its types
+
+- **When:** 2026-10-07, P3. **Status:** Adopted.
+- **Decision:** `marin.evaluation.records` stops importing Harbor (it defines the commit-hash
+  pattern itself) but keeps its Harbor, Evalchemy, and speculative-serving reference types.
+- **Why:** `eval_measurements`, `rollouts`, and three kept test files read those types, and the
+  spec says P3 "redesigns nothing, so sub-project 7a starts from Marin's framework as it is."
+- **Cost if wrong:** Dead schema types until sub-project 7a.
+
+### D72. How P3 handled tests and docs that span deleted and kept code
+
+- **When:** 2026-10-07, P3. **Status:** Adopted.
+- **Decision:** `tests/evaluation/test_model_config.py` lost its fleet and serving cases in the
+  first commit, keeping only cases for `marin.evaluation.model_config`; the Iris topology case
+  left with that check. `docs/explanations/evaluation.md` was rewritten once, in the first commit,
+  to describe what P3 keeps. `experiments/evaluation/configs/` held only Evalchemy and Harbor
+  catalogs, so each went with its harness. Verifyit moved into P3 (D69).
+- **Why:** The test file imported modules from four different commits at module level, and the
+  page described paths deleted across six.
+- **Cost if wrong:** A few commits without tests for code deleted later in the same phase.
+
+---
+
 ## Deferred
 
 Known gaps left open on purpose. Each names where it gets resolved.
@@ -916,6 +960,7 @@ Known gaps left open on purpose. Each names where it gets resolved.
 | `tools.lint --all-files` reports two files under `infra/`: a TypeScript config with comments, and the old linter's own conflict-marker strings | P1 Task 2 | P1 Task 7 |
 | `--ignore` skips a file found in a directory but not one passed by name, so a change that selects `test_tensorboard.py` through its imports still collects it, and it fails on `tensorboardX` | D56 | D61 |
 | ty's 231 warnings | D54 | Pass 2 |
+| Dependencies only deleted code used, such as `mcp` in `marin-core` | P3 | P8 |
 | `experiments/rl_data_reviews/publish_review.py` imports the deleted `marina` package; it is unreachable and untested | P1 Task 7 | P2 |
 | Links to deleted skills remain in `experiments/grug/moe/agent.md`, `experiments/grug/fast_track/agent.md`, and `experiments/post_training/cat_count_canary/README.md` | P1 review | P2, P7 |
 | ty's three noisy warning rules could be set per rule, so other warning rules would fail; `tools.lint` prints ty's warnings only when ty fails | P1 review | Pass 2 |

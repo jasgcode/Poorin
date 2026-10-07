@@ -39,3 +39,4 @@ date,phase,step,first_party_lines,reachable_lines,reachable_modules,r1_imported_
 2026-10-07,P3,Delete Verifyit,341568,127649,419,6702,3.59,73.2,30.0,11851482155
 2026-10-07,P3,Move the endpoint types and delete marin.inference,333000,127582,418,6702,5.45,71.5,30.5,11851481578
 2026-10-07,P3,Delete the pinned-fork machinery,332869,127582,418,6702,3.61,68.5,27.0,11851481578
+2026-10-07,P3,Drop the lockfile and per-commit full runs,332877,127590,418,6702,4.54,164.4,42.8,11851481578
