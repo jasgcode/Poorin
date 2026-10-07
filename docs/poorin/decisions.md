@@ -820,6 +820,16 @@ Plan: `plans/2026-10-05-p1-fleet-operations.md`. Executing on branch `prune/p1-f
 - **Cost if wrong:** Every grug change runs the contract test, which compiles each variant.
 - **Landed:** `[poorin] Select the grug variant contract test for any grug change`.
 
+### D65. Lint treats a file with a NUL byte as binary
+
+- **When:** 2026-10-06, P1 final review. **Status:** Adopted.
+- **Decision:** `tools.lint` skips the text checks for a file whose first 8000 bytes contain a
+  NUL, git's own binary test, as well as for a file that is not UTF-8.
+- **Why:** NUL is valid UTF-8, so a small binary file could decode as text, and `--fix` would
+  then strip "trailing whitespace" from it and append a newline, silently corrupting it.
+- **Cost if wrong:** A text file containing a NUL skips the whitespace and newline checks.
+- **Landed:** `[poorin] Treat files with a NUL byte as binary in lint`.
+
 ---
 
 ## Deferred

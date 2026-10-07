@@ -40,6 +40,8 @@ RUFF_FORMAT = ("uvx", "ruff@0.14.3", "format")
 # Errors fail the check; warnings are reported without failing it.
 TY = ("uvx", "ty@0.0.84", "check", "--exit-zero-on-warning")
 MAX_FILE_BYTES = 500 * 1024
+# git treats a file as binary when its first 8000 bytes hold a NUL; NUL is still valid UTF-8.
+BINARY_SNIFF_BYTES = 8000
 # Built at runtime so this file does not contain the markers it looks for.
 CONFLICT_MARKERS = (b"<" * 7, b">" * 7)
 EXCLUDED = (
@@ -119,10 +121,12 @@ def file_problems(repo_root: Path, rel: str, fix: bool) -> list[str]:
         problems.append(f"larger than {MAX_FILE_BYTES // 1024} KB")
     if any(marker in data for marker in CONFLICT_MARKERS):
         problems.append("merge-conflict marker")
+    if b"\0" in data[:BINARY_SNIFF_BYTES]:
+        return problems  # binary: only the byte-level checks apply
     try:
         text = data.decode("utf-8")
     except UnicodeDecodeError:
-        return problems  # binary: only the byte-level checks apply
+        return problems  # not UTF-8: treated as binary too
     fixed = text
     if any(line.rstrip("\r").endswith((" ", "\t")) for line in fixed.split("\n")):
         problems.append("trailing whitespace")

@@ -91,6 +91,14 @@ def test_binary_files_skip_the_text_checks(tmp_path):
     assert file_problems(tmp_path, rel, fix=False) == []
 
 
+def test_a_binary_file_that_decodes_as_utf8_is_left_unchanged_by_fix(tmp_path):
+    # NUL bytes are valid UTF-8; a NUL in the first 8 KB marks a binary file, as git decides.
+    content = b"\x00\x00\x00weights \nno final newline"
+    rel = write(tmp_path, "weights.bin", content)
+    assert file_problems(tmp_path, rel, fix=True) == []
+    assert (tmp_path / rel).read_bytes() == content
+
+
 def test_lock_files_and_images_are_excluded_at_any_depth():
     assert is_excluded("uv.lock")
     assert is_excluded("docs/images/plot.png")
