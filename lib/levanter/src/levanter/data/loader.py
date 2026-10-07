@@ -467,16 +467,16 @@ class DataLoaderIterator(Iterator[Ex]):
                 local_index = global_index - batch.global_data_offset
                 local_index_to_example[local_index] = global_map[global_index]
 
-            out.append(dataclasses.replace(batch, data_by_local_index=local_index_to_example))  # type: ignore
+            out.append(dataclasses.replace(batch, data_by_local_index=local_index_to_example))
 
         return out
 
     def _pspec_for(self, shape_spec: ShapeSpec | NamedShapeSpec) -> PartitionSpec:
-        if isinstance(shape_spec, ShapeSpec):  # type: ignore
+        if isinstance(shape_spec, ShapeSpec):
             batch_name = hax.partitioning.physical_axis_name(self.dl.batch_axis_name, self.dl.axis_resources)
             return PartitionSpec(batch_name, *((None,) * (len(shape_spec.shape) - 1)))
         else:
-            return hax.partitioning.pspec_for_axis(shape_spec.shape, self.dl.axis_resources)  # type: ignore
+            return hax.partitioning.pspec_for_axis(shape_spec.shape, self.dl.axis_resources)
 
     async def run_and_report_slowness(self, coro, description: str):
         threshold = 10.0

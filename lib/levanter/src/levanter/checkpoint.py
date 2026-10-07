@@ -535,7 +535,7 @@ class Checkpointer:
         # ensure that the step_policies are sorted. We could sort, but instead we'll just insist that they are sorted
         # since it's probably a typo if they aren't
         for i in range(1, len(step_policies)):
-            # factor these out so pyrefly can figure it out
+            # Locals let ty narrow away None; it does not narrow `step_policies[i].until` at a computed index.
             prev_until = step_policies[i - 1].until
             until = step_policies[i].until
             if prev_until is None:

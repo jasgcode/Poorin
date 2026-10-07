@@ -272,7 +272,7 @@ class ProfileSummary:
 
     def to_dict(self) -> dict[str, Any]:
         """Convert the summary to a JSON-serializable dictionary."""
-        return cast(dict[str, Any], dataclasses.asdict(self))
+        return dataclasses.asdict(self)
 
     def to_json(self, *, indent: int = 2) -> str:
         """Render the summary as deterministic JSON."""
@@ -297,28 +297,22 @@ def profile_summary_from_dict(data: Mapping[str, Any]) -> ProfileSummary:
     trace_provenance = _parse_trace_provenance(cast(Mapping[str, Any], data.get("trace_provenance", {})))
     step_time = _parse_step_time(cast(Mapping[str, Any], data["step_time"]))
     time_breakdown = _parse_time_breakdown(cast(Mapping[str, Any], data["time_breakdown"]))
-    hot_ops = [_parse_hot_op(cast(Mapping[str, Any], op)) for op in cast(list[Mapping[str, Any]], data["hot_ops"])]
+    hot_ops = [_parse_hot_op(op) for op in cast(list[Mapping[str, Any]], data["hot_ops"])]
     semantic_families = [
-        _parse_semantic_family_aggregate(cast(Mapping[str, Any], family))
+        _parse_semantic_family_aggregate(family)
         for family in cast(list[Mapping[str, Any]], data.get("semantic_families", []))
     ]
-    communication_ops = [
-        _parse_communication_op(cast(Mapping[str, Any], op))
-        for op in cast(list[Mapping[str, Any]], data["communication_ops"])
-    ]
-    gap_before_ops = [
-        _parse_gap_before_op(cast(Mapping[str, Any], op)) for op in cast(list[Mapping[str, Any]], data["gap_before_ops"])
-    ]
+    communication_ops = [_parse_communication_op(op) for op in cast(list[Mapping[str, Any]], data["communication_ops"])]
+    gap_before_ops = [_parse_gap_before_op(op) for op in cast(list[Mapping[str, Any]], data["gap_before_ops"])]
     hierarchical_regions = [
-        _parse_region_aggregate(cast(Mapping[str, Any], region))
-        for region in cast(list[Mapping[str, Any]], data["hierarchical_regions"])
+        _parse_region_aggregate(region) for region in cast(list[Mapping[str, Any]], data["hierarchical_regions"])
     ]
     gap_region_contexts = [
-        _parse_gap_region_context(cast(Mapping[str, Any], context))
+        _parse_gap_region_context(context)
         for context in cast(list[Mapping[str, Any]], data.get("gap_region_contexts", []))
     ]
     optimization_candidates = [
-        _parse_optimization_candidate(cast(Mapping[str, Any], candidate))
+        _parse_optimization_candidate(candidate)
         for candidate in cast(list[Mapping[str, Any]], data["optimization_candidates"])
     ]
 
@@ -397,7 +391,7 @@ def _parse_step_time(data: Mapping[str, Any]) -> StepTimeSummary:
         all_steps=_parse_duration_stats(cast(Mapping[str, Any], data["all_steps"])),
         steady_state_steps=_parse_duration_stats(cast(Mapping[str, Any], data["steady_state_steps"])),
         classes=[
-            _parse_step_class_summary(cast(Mapping[str, Any], step_class))
+            _parse_step_class_summary(step_class)
             for step_class in cast(list[Mapping[str, Any]], data.get("classes", []))
         ],
     )

@@ -29,7 +29,7 @@ def next_token_loss_weight(Pos: hax.Axis, loss_weight: Optional[NamedArray]) -> 
     caller-supplied ``loss_weight`` is multiplied by this mask (in its own dtype); when
     none is given the mask itself is returned as float32.
     """
-    not_last_mask = hax.logical_not(hax.nn.one_hot(-1, Pos, dtype=jnp.bool_))  # type: ignore
+    not_last_mask = hax.logical_not(hax.nn.one_hot(-1, Pos, dtype=jnp.bool_))
     if loss_weight is not None:
         return loss_weight * not_last_mask.astype(loss_weight.dtype)
     return not_last_mask.astype(jnp.float32)
@@ -72,7 +72,7 @@ def maybe_fused_next_token_loss(
         NamedArray: Computed loss.
     """
     # Resolve axes
-    Pos = cast(hax.Axis, pred_embeddings.resolve_axis(Pos.name))
+    Pos = pred_embeddings.resolve_axis(Pos.name)
     Vocab = pred_lm_head.resolve_axis(Vocab)
 
     # Shift target tokens to predict the next token

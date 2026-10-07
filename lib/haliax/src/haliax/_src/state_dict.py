@@ -278,7 +278,7 @@ def to_state_dict(tree: PyTree, prefix: str | None = None) -> StateDict:
 
 
 def default_eqx_module_from_state_dict(mod: Mod, state_dict: StateDict, prefix: str | None = None) -> Mod:
-    key_map: dict[str, str | None] = getattr(mod, "_state_dict_key_map", lambda: {})()  # type: ignore
+    key_map: dict[str, str | None] = getattr(mod, "_state_dict_key_map", lambda: {})()
     names = []
     values = []
     for field in dataclasses.fields(mod):
@@ -309,7 +309,7 @@ def default_eqx_module_to_state_dict(mod: eqx.Module, prefix: str | None = None)
 
     """
     state_dict: StateDict = {}
-    key_map: dict[str, str | None] = getattr(mod, "_state_dict_key_map", lambda: {})()  # type: ignore
+    key_map: dict[str, str | None] = getattr(mod, "_state_dict_key_map", lambda: {})()
     for field in dataclasses.fields(mod):
         if field.metadata.get("static", False):
             continue
@@ -324,13 +324,13 @@ def default_eqx_module_to_state_dict(mod: eqx.Module, prefix: str | None = None)
 # Torch compatible KeyPath formatting. Torch just always uses .
 def _format_key_path_element(path_elem) -> str:
     match path_elem:
-        case SequenceKey(idx):  # type: ignore
+        case SequenceKey(idx):
             return f".{idx}"
-        case DictKey(key):  # type: ignore
+        case DictKey(key):
             return f".{key}"
-        case GetAttrKey():  # type: ignore
+        case GetAttrKey():
             return str(path_elem)
-        case FlattenedIndexKey(idx):  # type: ignore
+        case FlattenedIndexKey(idx):
             return f".{idx}"
         case _:
             # The convention in JAX is to append the separator in the element itself

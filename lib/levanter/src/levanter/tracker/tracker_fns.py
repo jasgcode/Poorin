@@ -13,6 +13,7 @@ from typing import Any, Literal, Optional
 
 import draccus
 import jax
+import jax.experimental
 from jaxtyping import Scalar
 
 from levanter.tracker.helpers import hparams_to_dict

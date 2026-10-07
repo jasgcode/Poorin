@@ -42,7 +42,7 @@ def masked_set(dest: NamedArray, axis, start, src, num_to_copy) -> NamedArray:
 
 def is_stop_signal(
     tail_tokens: ht.i32[NamedArray, "position"], stop_sequences: ht.i32[NamedArray, "seq position"], invalid=INVALID
-) -> ht.bool_[NamedArray, ""]:  # type: ignore
+) -> ht.bool_[NamedArray, ""]:
     """
     Check if tail_tokens ends with any of the stop sequences.
     Stop sequences are **left padded** to the tokens.

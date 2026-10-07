@@ -123,13 +123,13 @@ def key_path_to_str(path: Sequence) -> str:
         return ""
     path_elem = path[-1]
     match path_elem:
-        case SequenceKey(idx):  # type: ignore
+        case SequenceKey(idx):
             out = f"{idx}"
-        case DictKey(key):  # type: ignore
+        case DictKey(key):
             out = f"{key}"
-        case GetAttrKey():  # type: ignore
+        case GetAttrKey():
             out = str(path_elem)
-        case FlattenedIndexKey(idx):  # type: ignore
+        case FlattenedIndexKey(idx):
             out = f"{idx}"
         case _:
             path_elem = str(path_elem)

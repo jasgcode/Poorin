@@ -299,7 +299,7 @@ class GenState(eqx.Module):
             seq_params=seq_params,
         )
 
-        return new_state, child_local_id  # type: ignore
+        return new_state, child_local_id
 
 
 @functools.partial(jax.jit, donate_argnums=0)
@@ -539,12 +539,12 @@ def _run_prefill(
 
 def _handle_clones(
     gen_state: GenState,
-    logits: ht.Float[NamedArray, " position vocab"],  # type: ignore
-    slot_ids: ht.Int[NamedArray, " position"],  # type: ignore
-    pos_ids: ht.Int[NamedArray, " position"],  # type: ignore
+    logits: ht.Float[NamedArray, " position vocab"],
+    slot_ids: ht.Int[NamedArray, " position"],
+    pos_ids: ht.Int[NamedArray, " position"],
     sampler: Sampler,
     outputs: _DecodeOutputs,
-) -> tuple[GenState, _DecodeOutputs]:  # type: ignore
+) -> tuple[GenState, _DecodeOutputs]:
     """
     Sample alternative tokens for the given logits, slot_ids, pos_ids, and clone_targets.
     This is used for the `n>1` case of `n_generations` in the `Request` class.

@@ -6,6 +6,7 @@
 from typing import Any
 
 import fsspec
+import fsspec.config
 
 DEFAULT_LISTINGS_EXPIRY_TIME = 0
 

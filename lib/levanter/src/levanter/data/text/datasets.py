@@ -537,7 +537,7 @@ def dataset_for_component(
             slice_strategy=slice_strategy,
             mask_user_turns=fmt.mask_user_turns,
             block_cross_document_attention=block_cross_document_attention,
-        )  # type: ignore
+        )
     elif isinstance(fmt, PrebuiltLmDatasetFormat):
         return PrebuiltLmDataset(
             cache,

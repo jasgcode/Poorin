@@ -117,7 +117,7 @@ def axis_spec_rearrange(array: NamedArray, axis_spec: PartialAxisSpec) -> NamedA
     for ax in out_axes:
         permute_spec.append(index_of_in[ax])
 
-    out_axes = tuple(array.axes[i] for i in typing.cast(list[int], permute_spec))
+    out_axes = tuple(array.axes[i] for i in permute_spec)
     return NamedArray(jnp.transpose(array.array, permute_spec), out_axes)
 
 
@@ -275,7 +275,7 @@ def _determine_final_transpose_and_reshape(
 
             transposition_order.append(intermediate_axes.index(intermediate_axis))
 
-    return tuple(transposition_order), tuple(final_axes)  # type: ignore
+    return tuple(transposition_order), tuple(final_axes)
 
 
 def _determine_initial_reshape(
@@ -344,9 +344,9 @@ def _determine_initial_reshape(
             if len(covered_axes) < len(array.axes):
                 raise_parse_error(
                     "Not all axes are bound, use ... to skip missing axes", expression, len(expression) - 1
-                )  # type: ignore
+                )
             elif len(covered_axes) > len(array.axes):
-                raise_parse_error("Too many axes are bound", expression, lhs.captures[-1].char_range)  # type: ignore
+                raise_parse_error("Too many axes are bound", expression, lhs.captures[-1].char_range)
 
         # now that we have the bindings, we can figure out the new shapes
         for cpos, capture in enumerate(lhs.captures):
@@ -363,7 +363,7 @@ def _determine_initial_reshape(
                 raise_parse_error(f"Axis {axis} is bound more than once", expression, capture.char_range)
 
             new_axes = _solve_split_axes(axis, capture, aliases, used_new_names, expression)
-            new_shapes[axis_index] = new_axes  # type: ignore
+            new_shapes[axis_index] = new_axes
 
     else:
         # we just need to bind the axes in the lhs to the axes in the array
@@ -400,7 +400,7 @@ def _determine_initial_reshape(
                 raise_parse_error(f"Axis {axis} is bound more than once", expression, capture.char_range)
 
             new_axes = _solve_split_axes(axis, capture, aliases, used_new_names, expression)
-            new_shapes[axis_index] = new_axes  # type: ignore
+            new_shapes[axis_index] = new_axes
 
     for i in range(len(array.axes)):
         if new_shapes[i] is None:

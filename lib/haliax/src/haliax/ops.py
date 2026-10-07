@@ -113,9 +113,7 @@ def where(
         raw = jnp.where(condition.array, _array_if_named(x), _array_if_named(y))
         return NamedArray(raw, condition.axes)
 
-    # The three-argument form of jnp.where always returns an array; pyrefly cannot pick
-    # the right overload because the single-argument form can also return a tuple.
-    return typing.cast(ArrayLike, jnp.where(_array_if_named(condition), _array_if_named(x), _array_if_named(y)))
+    return jnp.where(_array_if_named(condition), _array_if_named(x), _array_if_named(y))
 
 
 def nonzero(array: NamedArray, *, size: Axis, fill_value: int = 0) -> tuple[NamedArray, ...]:
@@ -404,14 +402,11 @@ def unique_values(
 ) -> NamedArray:
     """Shortcut for :func:`unique` that returns only unique values."""
 
-    return typing.cast(
-        NamedArray,
-        unique(
-            array,
-            Unique,
-            axis=axis,
-            fill_value=fill_value,
-        ),
+    return unique(
+        array,
+        Unique,
+        axis=axis,
+        fill_value=fill_value,
     )
 
 
@@ -424,15 +419,12 @@ def unique_counts(
 ) -> tuple[NamedArray, NamedArray]:
     """Shortcut for :func:`unique` that also returns counts."""
 
-    values, counts = typing.cast(
-        tuple[NamedArray, NamedArray],
-        unique(
-            array,
-            Unique,
-            return_counts=True,
-            axis=axis,
-            fill_value=fill_value,
-        ),
+    values, counts = unique(
+        array,
+        Unique,
+        return_counts=True,
+        axis=axis,
+        fill_value=fill_value,
     )
     return values, counts
 
@@ -446,15 +438,12 @@ def unique_inverse(
 ) -> tuple[NamedArray, NamedArray]:
     """Shortcut for :func:`unique` that also returns inverse indices."""
 
-    values, inverse = typing.cast(
-        tuple[NamedArray, NamedArray],
-        unique(
-            array,
-            Unique,
-            return_inverse=True,
-            axis=axis,
-            fill_value=fill_value,
-        ),
+    values, inverse = unique(
+        array,
+        Unique,
+        return_inverse=True,
+        axis=axis,
+        fill_value=fill_value,
     )
     return values, inverse
 

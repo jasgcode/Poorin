@@ -269,7 +269,7 @@ class ArrayStacked(ModuleWithStateDictSerialization, Generic[M]):
 
     def from_state_dict(self, state_dict: StateDict, prefix: str | None = None) -> Self:
         stacked = _stack_state_dict(state_dict, prefix=prefix)
-        return super().from_state_dict(stacked, prefix=prefix)  # type: ignore
+        return super().from_state_dict(stacked, prefix=prefix)
 
 
 def _normalize_axis(axis: int, ndim: int) -> int:

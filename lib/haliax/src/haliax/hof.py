@@ -65,10 +65,10 @@ def vmap(
         for ax in reversed(axes):
             size = axes.get(ax, None)
             if size is not None:
-                ax = Axis(ax, size)  # type: ignore
+                ax = Axis(ax, size)
             mapped = vmap(mapped, ax, default=default, args=args, kwargs=kwargs)
         return mapped
-    elif len(axes) == 1:  # type: ignore
+    elif len(axes) == 1:
         axis = axis_spec_to_tuple(axis)[0]
     else:
         return fn

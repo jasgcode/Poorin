@@ -6,6 +6,7 @@ import dataclasses
 import equinox as eqx
 import haliax as hax
 import jax
+import jax.experimental
 import jaxtyping
 from haliax import NamedArray
 from haliax import haxtyping as ht
@@ -817,14 +818,11 @@ class DecodeState(eqx.Module):
                     raise ValueError("DecodeState was initialized without stop token storage")
                 case (stops, None):
                     # this is fine, just fill this sequence with the pad token
-                    assert stops is not None  # make pyrefly happy
                     new_stop_tokens = stops.at["seq", local_slot_id].set(INVALID)
                     new_state = dataclasses.replace(new_state, stop_tokens=new_stop_tokens)
                 case (stops, seq_stops):
                     # too fancy, but we allow for different stop sequences per sequence etc.
                     # Probably better to do this in python outside of the jit loop
-                    assert stops is not None  # make pyrefly happy
-                    assert seq_stops is not None  # make pyrefly happy
                     seq_num_stops = seq_stops.axis_size("stop_seq")
                     seq_stop_len = seq_stops.axis_size("position")
                     this_row_full = hax.full_like(stops["seq", local_slot_id], INVALID)
@@ -838,11 +836,11 @@ class DecodeState(eqx.Module):
 
     def update_tokens(
         self,
-        new_tokens: ht.i32[NamedArray, " position"],  # type: ignore
-        local_slot_ids: ht.i32[NamedArray, " position"],  # type: ignore
-        new_log_probs: ht.Float[NamedArray, " position"],  # type: ignore
+        new_tokens: ht.i32[NamedArray, " position"],
+        local_slot_ids: ht.i32[NamedArray, " position"],
+        new_log_probs: ht.Float[NamedArray, " position"],
         num_new_tokens: jnp.ndarray | int,
-    ) -> "DecodeState":  # type: ignore
+    ) -> "DecodeState":
         """
         Update the tokens and (optional) log probabilities for the given local slot IDs,
         and enqueue these tokens onto the pending TokenQueue.

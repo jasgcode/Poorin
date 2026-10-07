@@ -102,7 +102,7 @@ class MixtureDataset(AsyncDataset[T]):
             else:
                 self.key = jax.device_put(jax.device_get(key))
 
-        if stop_strategy not in StopStrategy:  # type: ignore
+        if stop_strategy not in StopStrategy:
             raise ValueError(f"Stop strategy {stop_strategy} is not supported.")
         self.stop_strategy = stop_strategy
 

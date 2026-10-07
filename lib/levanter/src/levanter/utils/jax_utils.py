@@ -14,6 +14,7 @@ import equinox as eqx
 import haliax as hax
 import haliax.partitioning
 import jax
+import jax.core
 import jax._src.distributed as jax_distributed
 import numpy as np
 from haliax import is_named_array

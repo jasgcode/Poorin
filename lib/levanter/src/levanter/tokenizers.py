@@ -31,6 +31,8 @@ from typing import Any, NamedTuple, Protocol, runtime_checkable
 
 import jinja2
 import jinja2.ext
+import jinja2.nodes
+import jinja2.parser
 import jinja2.sandbox
 from huggingface_hub import __version__ as _hf_hub_version
 from huggingface_hub import hf_hub_download, snapshot_download
@@ -222,8 +224,8 @@ def _make_jinja_env(extensions: list[type]) -> jinja2.Environment:
         extensions=[jinja2.ext.loopcontrols, *extensions],
     )
     env.filters["tojson"] = _tojson
-    # jinja2 types globals narrowly from its DEFAULT_NAMESPACE; pyrefly rejects assigning
-    # other callables. Update via the mapping interface, which accepts t.Any values.
+    # jinja2 types globals narrowly from its DEFAULT_NAMESPACE, so ty rejects assigning other
+    # callables by key. Update via the mapping interface, which accepts t.Any values.
     env.globals.update(
         {
             "raise_exception": _raise_chat_template_exception,

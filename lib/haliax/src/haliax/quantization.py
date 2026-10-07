@@ -351,15 +351,15 @@ def _quantize_linear_layers(tree: T, config: QuantizationConfig, dot_general_cls
             new_inner = jax.tree_util.tree_map_with_path(
                 functools.partial(
                     quantize_module, path_prefix + (GetAttrKey("stacked"),), batch_dims + (module.Block,)
-                ),  # type: ignore
+                ),
                 module.stacked,
                 is_leaf=_is_special_module,
             )
-            return dataclasses.replace(module, stacked=new_inner)  # type: ignore
+            return dataclasses.replace(module, stacked=new_inner)
         elif isinstance(module, hnn.Linear):
             if _matches_target(path, config):
                 vmapped_dg = _batchify_ctor(dot_general_cls.init, batch_dims)(*args, **kwargs)
-                module = dataclasses.replace(module, dot_general=vmapped_dg)  # type: ignore
+                module = dataclasses.replace(module, dot_general=vmapped_dg)
             return module
         else:
             return module
@@ -388,13 +388,13 @@ def _key_path_to_str(key_path: tuple) -> str:
     out = ""
     for k in key_path:
         match k:
-            case SequenceKey(i):  # type: ignore
+            case SequenceKey(i):
                 out = _join_key(out, str(i))
-            case GetAttrKey(name):  # type: ignore
+            case GetAttrKey(name):
                 out = _join_key(out, name)
-            case DictKey(key):  # type: ignore
+            case DictKey(key):
                 out = _join_key(out, key)
-            case FlattenedIndexKey(i):  # type: ignore
+            case FlattenedIndexKey(i):
                 out = _join_key(out, str(i))
             case _:
                 warnings.warn(f"Unsupported key type {k}")

@@ -119,7 +119,7 @@ class DomainTaggedDataset(AsyncDataset[tuple[T, TagArray]]):
                 lengths = [min(length, self._max_examples_per_dataset) for length in lengths]
             self._offsets = np.cumsum([0] + lengths)
 
-        return self._offsets  # type: ignore
+        return self._offsets
 
     def _compute_tag_arrays(self):
         tag_arrays: list[TagArray] = []

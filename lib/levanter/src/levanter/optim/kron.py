@@ -14,6 +14,7 @@ import optax
 from jax import numpy as jnp
 from jax import vmap
 from jax.sharding import PartitionSpec
+from jax._src.mesh import get_concrete_mesh
 from optax import tree_utils as otu
 from optax._src import base, transform
 from optax._src.combine import chain
@@ -1059,7 +1060,7 @@ def _init_Q_exprs(
                 q_sharding = None
                 if have_qs_sharding:
                     # grab the fsdp axis from the current mesh and shard Q accordingly
-                    mesh = jax._src.mesh.get_concrete_mesh()
+                    mesh = get_concrete_mesh()
                     if mesh.devices.shape == ():
                         mesh = None
                     if mesh is not None:

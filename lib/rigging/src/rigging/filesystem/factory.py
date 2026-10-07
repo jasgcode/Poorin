@@ -15,6 +15,7 @@ import logging
 from typing import Any, cast
 
 import fsspec
+import fsspec.config
 from fsspec.implementations.local import LocalFileSystem
 
 from rigging.filesystem.cross_region import (

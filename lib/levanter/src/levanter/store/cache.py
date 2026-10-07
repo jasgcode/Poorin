@@ -602,7 +602,7 @@ class _ShardedTreeCacheReader(Generic[T_co]):
 
     def __iter__(self) -> Iterator[T_co]:
         for index in range(len(self)):
-            yield cast(T_co, self.get_batch_sync([index])[0])
+            yield self.get_batch_sync([index])[0]
 
     async def get_batch(self, indices: Union[Sequence[int], slice]) -> Sequence[T_co]:
         if isinstance(indices, slice):

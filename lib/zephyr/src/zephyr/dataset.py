@@ -1011,12 +1011,9 @@ class Dataset(Generic[T]):
             >>> count = ctx.execute(ds.count()).results[0]
             50
         """
-        return cast(
-            "Dataset[int]",
-            self.reduce(
-                local_reducer=lambda items: sum(1 for _ in items),
-                global_reducer=sum,
-            ),
+        return self.reduce(
+            local_reducer=lambda items: sum(1 for _ in items),
+            global_reducer=sum,
         )
 
     def sorted_merge_join(

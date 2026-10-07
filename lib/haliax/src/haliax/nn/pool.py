@@ -91,7 +91,7 @@ def pool(
         padding = ((padding, padding),) * len(Window)
 
     if not isinstance(padding, str):
-        padding = tuple(map(tuple, padding))  # type: ignore
+        padding = tuple(map(tuple, padding))
         if len(padding) != len(Window):
             raise ValueError(f"len(padding) ({len(padding)}) != len(Window) ({len(Window)})")
         if not all([len(x) == 2 for x in padding]):

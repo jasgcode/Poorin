@@ -155,7 +155,7 @@ def scale_with_scion(momentum=0.95, steps=5, scion_eps=1e-8, coefficient_type="q
 
             updated_weight = dataclasses.replace(layer.weight, array=updated_weight_array)
 
-            return dataclasses.replace(layer, weight=updated_weight)  # type: ignore
+            return dataclasses.replace(layer, weight=updated_weight)
 
         updates = map_flattened_linear_layers(transform_linear_layer, updates)
 

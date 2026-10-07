@@ -37,6 +37,7 @@ from urllib.parse import urlparse
 
 import aiohttp
 import fsspec
+import fsspec.config
 import s3fs
 from aiobotocore.httpsession import AIOHTTPSession
 

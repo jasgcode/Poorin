@@ -1148,13 +1148,13 @@ Known gaps left open on purpose. Each names where it gets resolved.
 | Design the SkyRL integration: a Hugging Face mapping for grug, launching the owner's SkyRL fork from the executor, and moving checkpoints both ways | D68 | A later sub-project |
 | `tools.lint --all-files` reports two files under `infra/`: a TypeScript config with comments, and the old linter's own conflict-marker strings | P1 Task 2 | P1 Task 7 |
 | `--ignore` skips a file found in a directory but not one passed by name, so a change that selects `test_tensorboard.py` through its imports still collects it, and it fails on `tensorboardX` | D56 | D61 |
-| ty's 231 warnings | D54 | Pass 2 |
+| ty's 231 warnings | D54 | Pass 2: all cleared, ty reports none |
 | Dependencies only deleted code used, such as `mcp` in `marin-core` | P3 | P8 |
 | `prune_check` starts a local Finelog server and confirms R2's metric rows (spec invariant item 5); R2 needs a way to receive the URL | D74 | D77 |
 | `experiments/rl_data_reviews/publish_review.py` imports the deleted `marina` package; it is unreachable and untested | P1 Task 7 | P2 |
 | Links to deleted skills remain in `experiments/grug/moe/agent.md`, `experiments/grug/fast_track/agent.md`, and `experiments/post_training/cat_count_canary/README.md` | P1 review | P2, P7, D75 |
 | ty's three noisy warning rules could be set per rule, so other warning rules would fail; `tools.lint` prints ty's warnings only when ty fails | P1 review | Pass 2 |
-| 26 code comments name pyrefly as the reason for a workaround | P1 review | Pass 2 |
+| 26 code comments name pyrefly as the reason for a workaround | P1 review | Pass 2: workarounds ty does not need removed, the rest name ty |
 | ty does not check `lib/dupekit/src`, which D47 keeps | P1 review | Open |
 | A deletion-only change skips ty in `tools.lint`; `prune_check` runs it regardless | P1 review | Open |
 | `tools.lint PATH` skips a path that does not exist without saying so | P1 review | Open |

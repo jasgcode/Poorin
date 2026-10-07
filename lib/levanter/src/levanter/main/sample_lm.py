@@ -16,6 +16,7 @@ from haliax.partitioning import round_axis_for_partitioning
 import levanter
 import levanter.config
 import levanter.tracker
+import levanter.trainer
 from levanter.callbacks import profile_ctx
 from levanter.checkpoint import latest_checkpoint_path, load_checkpoint
 from levanter.compat.hf_checkpoints import HFCheckpointConverter, RepoRef, load_tokenizer

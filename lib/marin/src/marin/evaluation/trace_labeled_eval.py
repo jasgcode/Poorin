@@ -17,6 +17,7 @@ import jax
 import jmp
 import levanter
 import levanter.tracker
+import levanter.trainer
 from haliax import Axis
 from haliax.partitioning import round_axis_for_partitioning
 from levanter.data.sharded_datasource import FirstRowsShardedDataSource, ShardedDataSource

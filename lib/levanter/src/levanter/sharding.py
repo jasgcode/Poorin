@@ -4,6 +4,7 @@
 """Sharding inspection shared by model code and kernel wrappers."""
 
 import jax
+import jax.core
 from jax.sharding import AbstractMesh, Mesh, PartitionSpec
 
 

@@ -42,7 +42,7 @@ class EmaModelAveraging(ModelAveraging[M]):
     def update(self: S, model: M, step: int) -> S:
         del step
         # 1 - beta because increment_update expects the weight of the new model
-        return dataclasses.replace(self, model=optax.incremental_update(model, self.model, 1 - self.beta))  # type: ignore
+        return dataclasses.replace(self, model=optax.incremental_update(model, self.model, 1 - self.beta))
 
     @property
     def model_params(self) -> M:

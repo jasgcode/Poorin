@@ -100,4 +100,4 @@ class Embedding(eqx.Module, ReparamEnabled):
 
         """
         new_weights = resize_axis(self.weight, self.Vocab, new_size, key=key)
-        return dataclasses.replace(self, Vocab=self.Vocab.resize(new_size), weight=new_weights)  # type: ignore
+        return dataclasses.replace(self, Vocab=self.Vocab.resize(new_size), weight=new_weights)

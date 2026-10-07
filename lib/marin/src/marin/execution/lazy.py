@@ -428,7 +428,7 @@ def run(*handles: "ArtifactStep[T]", max_concurrent: int = 8, force_run_failed: 
         force_run_failed=force_run_failed,
         max_concurrent=max_concurrent,
     )
-    return [cast(T, h.artifact_type.raw_load(h.path())) for h in handles]
+    return [h.artifact_type.raw_load(h.path()) for h in handles]
 
 
 def lower(handle: "ArtifactStep") -> StepSpec:

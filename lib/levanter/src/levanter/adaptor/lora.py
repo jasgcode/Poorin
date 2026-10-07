@@ -647,7 +647,7 @@ def save_merged_hf_model(
     converter.save_pretrained(
         merged_model,
         path,
-        upload_to_hf=upload_to_hf,  # type: ignore
+        upload_to_hf=upload_to_hf,
         generation_config=generation_config,
         **upload_kwargs,
     )

@@ -18,6 +18,7 @@ from haliax.partitioning import named_jit, round_axis_for_partitioning
 import levanter
 import levanter.config
 import levanter.tracker
+import levanter.trainer
 import levanter.callbacks
 import levanter.eval
 from levanter.analysis.entropy import cb_compute_entropies

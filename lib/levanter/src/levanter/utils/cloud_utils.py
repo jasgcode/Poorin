@@ -13,7 +13,7 @@ from typing import Optional
 
 import fsspec
 import jax
-import requests  # type: ignore
+import requests
 from fsspec import AbstractFileSystem
 from haliax.jax_utils import sync_global_devices
 

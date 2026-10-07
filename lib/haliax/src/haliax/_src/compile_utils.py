@@ -22,8 +22,8 @@ def _strip_wrapped_partial(fun):
     return fun
 
 
-internal_caches = []  # type: ignore
-internal_lru_caches = []  # type: ignore
+internal_caches = []
+internal_lru_caches = []
 
 
 def clear_caches():
@@ -50,7 +50,7 @@ def _default_cache_key():
 
 
 def compile_cache(cacheable_fn):
-    cache = weakref.WeakKeyDictionary()  # type: ignore
+    cache = weakref.WeakKeyDictionary()
     internal_caches.append(cache)
 
     def cached_fn_impl(leaves, treedef):
@@ -90,5 +90,5 @@ def compile_cache(cacheable_fn):
         else:
             warnings.warn("Could not delete non-function from cache.")
 
-    wrapped_cacheable_fn.delete = delete  # type: ignore
+    wrapped_cacheable_fn.delete = delete
     return wrapped_cacheable_fn

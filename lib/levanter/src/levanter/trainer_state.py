@@ -131,7 +131,6 @@ class TrainerState(eqx.Module, Generic[M]):
         loss: float | None = None,
         key: PRNGKeyArray,
     ) -> tuple[S, M]:
-        assert isinstance(self, TrainerState)  # make pyrefly happy
         model, opt_state, updates = take_train_step(
             self.optimizer,
             self.model,
@@ -217,9 +216,9 @@ def saveable_training_mask(trainer_state: S, is_trainable_param: FilterTree = Tr
     is_trainable_param = make_floating_point_trainable_filter(is_trainable_param)
 
     trainer_state = jax.tree_util.tree_map(lambda x: True, trainer_state)
-    saveable_state = dataclasses.replace(trainer_state, step=True, training_key=True)  # type: ignore
-    saveable_state = dataclasses.replace(saveable_state, model=is_trainable_param)  # type: ignore
-    return saveable_state  # type: ignore
+    saveable_state = dataclasses.replace(trainer_state, step=True, training_key=True)
+    saveable_state = dataclasses.replace(saveable_state, model=is_trainable_param)
+    return saveable_state
 
 
 def take_train_step(

@@ -150,9 +150,8 @@ class LmExample(eqx.Module):
         return loss_weight
 
 
-# TODO: for some reason, pyrefly doesn't like the discover_packages_path argument?
 @dataclass(frozen=True)
-class LmConfig(draccus.PluginRegistry, abc.ABC, Generic[LmT], discover_packages_path="levanter.models"):  # type: ignore
+class LmConfig(draccus.PluginRegistry, abc.ABC, Generic[LmT], discover_packages_path="levanter.models"):
     max_seq_len: int
 
     @property

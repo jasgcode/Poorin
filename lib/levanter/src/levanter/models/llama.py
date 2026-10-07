@@ -104,7 +104,7 @@ class LlamaConfig(HFCompatConfig):
             f"num_heads={self.num_heads} not divisible by num_kv_heads={self.num_kv_heads}."
         )
 
-    def hf_checkpoint_converter(self, ref_checkpoint: Optional[str] = None) -> HFCheckpointConverter["LlamaConfig"]:  # type: ignore
+    def hf_checkpoint_converter(self, ref_checkpoint: Optional[str] = None) -> HFCheckpointConverter["LlamaConfig"]:
         return HFCheckpointConverter(
             self.__class__,
             reference_checkpoint=self.reference_checkpoint if ref_checkpoint is None else ref_checkpoint,
@@ -408,7 +408,7 @@ class LlamaTransformer(eqx.Module):
         self, x: NamedArray, attn_mask: Optional[NamedArray | AttentionMask], *, key, pos_ids: NamedArray | None = None
     ) -> NamedArray:
         keys = maybe_rng_split(key, self.config.num_layers) if key is not None else None
-        x = cast(NamedArray, self.layers.fold(x, mask=attn_mask, key=keys, pos_ids=pos_ids))
+        x = self.layers.fold(x, mask=attn_mask, key=keys, pos_ids=pos_ids)
         x = self.norm(x)
 
         return x
@@ -440,7 +440,7 @@ class LlamaTransformer(eqx.Module):
 
         for i in range(self.config.num_layers):
             with jax.named_scope("slice layer"):
-                layer = hax.tree_util.tree_map(lambda l: l["layer", i], self.layers.stacked)  # type: ignore
+                layer = hax.tree_util.tree_map(lambda l: l["layer", i], self.layers.stacked)
             with jax.named_scope("slice cache"):
                 this_cache = caches[i]
             x, this_cache = layer.decode(

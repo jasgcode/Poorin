@@ -81,7 +81,7 @@ class Gpt2Config(HFCompatConfig):
     def model_type(self) -> Type["Gpt2LMHeadModel"]:
         return Gpt2LMHeadModel
 
-    def hf_checkpoint_converter(self, ref_checkpoint: Optional[str] = None) -> HFCheckpointConverter["Gpt2Config"]:  # type: ignore
+    def hf_checkpoint_converter(self, ref_checkpoint: Optional[str] = None) -> HFCheckpointConverter["Gpt2Config"]:
         # Pass HfConfigClass explicitly: GPT2 maps to a built-in transformers config, so there is no
         # need to infer it by fetching the reference checkpoint from HF Hub. Honor a configured
         # tokenizer (e.g. a local directory) like the other configs so from-scratch training/export

@@ -13,6 +13,7 @@ import haliax.random
 import levanter
 import levanter.config
 import levanter.tracker
+import levanter.trainer
 import levanter.eval
 from levanter import callbacks
 from levanter.compat.hf_checkpoints import HFCheckpointConverter

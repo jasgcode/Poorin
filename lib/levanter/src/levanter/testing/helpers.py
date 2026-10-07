@@ -80,8 +80,8 @@ class MLP(eqx.Module):
         self.out_size = out_size
         self.width_size = width_size
         self.depth = depth
-        self.activation = activation  # type: ignore
-        self.final_activation = final_activation  # type: ignore
+        self.activation = activation
+        self.final_activation = final_activation
 
     def __call__(self, x, *, key: Optional[PRNGKeyArray] = None):
         """**Arguments:**

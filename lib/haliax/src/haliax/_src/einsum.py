@@ -116,13 +116,13 @@ def _unordered_einsum(arrays, equation, lhs, rhs, axis_aliases):
         # if the lhs has an ellipsis but not the right, we contract all the axes that are not named on the rhs
         out_axes = tuple(rhs_axes)
     else:
-        named_on_left_but_not_right = eliminate_axes(candidate_axes, rhs_axes)  # type: ignore
+        named_on_left_but_not_right = eliminate_axes(candidate_axes, rhs_axes)
         # if neither has an ellipsis, we contract the axes that are named on the lhs but not on the rhs
-        almost_out_axes = eliminate_axes(all_input_axes, named_on_left_but_not_right)  # type: ignore
+        almost_out_axes = eliminate_axes(all_input_axes, named_on_left_but_not_right)
         # we now need to rearrange to be consistent with the rhs order.
         # since there's no ellipsis on the rhs, we arbitrarily insert one at the beginning which is usually
         # what people expect
-        rhs_axes = [Ellipsis] + rhs_axes  # type: ignore
+        rhs_axes = [Ellipsis] + rhs_axes
         out_axes = rearrange_for_partial_order(rhs_axes, almost_out_axes)
     spec = _make_einsum_spec(arrays, out_axes)
     return spec, out_axes
@@ -327,7 +327,7 @@ def _positional_einsum_spec(equation, arrays, lhses, rhs, axis_aliases):
 
 
 def _all_input_axes(arrays):
-    return ensure_tuple(functools.reduce(union_axes, (a.axes for a in arrays), ()))  # type: ignore
+    return ensure_tuple(functools.reduce(union_axes, (a.axes for a in arrays), ()))
 
 
 def _captures_to_axis_names(equation, lhs, aliases) -> tuple[list[str | EllipsisType], bool, set[str]]:

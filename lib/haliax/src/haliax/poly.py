@@ -227,8 +227,8 @@ def polyfit(
         return NamedArray(coeffs, (axis,))
 
     if full:
-        # With full=True, jnp.polyfit returns a tuple; pyrefly resolves the default
-        # (array-returning) overload because `full` is a runtime bool.
+        # jnp.polyfit is typed `Array | tuple[Array, ...]` without overloads on `full`; with
+        # full=True it returns a tuple, so the cast lets ty accept the tuple concatenation below.
         result = cast(tuple, result)
         coeffs = wrap_coeffs(result[0])
         return (coeffs,) + result[1:]

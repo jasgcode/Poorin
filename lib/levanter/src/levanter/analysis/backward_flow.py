@@ -15,6 +15,7 @@ import re
 from typing import Any, Callable, Iterable, Literal, Mapping, TypeAlias, TypeVar, cast
 
 import jax
+import jax.core
 from jax._src.core import Literal as JaxprLiteral
 from jax._src import source_info_util
 import jax.numpy as jnp

@@ -234,7 +234,7 @@ def profile_ctx(
                     s = pstats.Stats(stats_path)
                     s.strip_dirs().sort_stats("cumtime")
                     with open(txt_summary_path, "w") as f:
-                        s.stream = f  # type: ignore
+                        s.stream = f
                         s.print_stats(host_profile_topn)
             except Exception:  # pragma: no cover - optional/diagnostic path
                 logger.warning("Failed to log host profile stats", exc_info=True)

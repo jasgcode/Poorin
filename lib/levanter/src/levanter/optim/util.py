@@ -112,7 +112,7 @@ def flatten_linear_layers(tree: T) -> T:
             In = weight.resolve_axis("__IN__")
             Out = weight.resolve_axis("__OUT__")
 
-            return dataclasses.replace(layer, weight=weight, bias=bias, In=In, Out=Out)  # type: ignore
+            return dataclasses.replace(layer, weight=weight, bias=bias, In=In, Out=Out)
         else:
             return layer
 
@@ -148,7 +148,7 @@ def unflatten_linear_layers(template: T, tree_with_flattened_linears: T) -> T:
             assert template.bias is not None, "Flattened bias but template has no bias"
             bias = bias.rearrange(template.bias.axes)
 
-        return dataclasses.replace(template, weight=weight, bias=bias)  # type: ignore
+        return dataclasses.replace(template, weight=weight, bias=bias)
 
     return jax.tree.map(
         _unflatten_linear, template, tree_with_flattened_linears, is_leaf=lambda x: isinstance(x, Linear)

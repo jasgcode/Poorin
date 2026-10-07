@@ -593,7 +593,7 @@ class HFCheckpointConverter(Generic[LevConfig]):
         HfConfigClass = HFCheckpointConverter._infer_config_class(HfConfigClass, ref, trust_remote_code)
         tokenizer = HFCheckpointConverter._infer_tokenizer(tokenizer, ref, trust_remote_code)
 
-        self.__default_init__(  # type: ignore
+        self.__default_init__(
             LevConfigClass=LevConfigClass,
             reference_checkpoint=ref,
             HfConfigClass=HfConfigClass,
@@ -664,7 +664,7 @@ class HFCheckpointConverter(Generic[LevConfig]):
         if trust_remote_code is not None:
             replacements["trust_remote_code"] = trust_remote_code
 
-        return dataclasses.replace(self, **replacements)  # type: ignore
+        return dataclasses.replace(self, **replacements)
 
     def with_tokenizer_padded_to_match_model(
         self, ref: Optional[Union[str, RepoRef]] = None
@@ -708,7 +708,7 @@ class HFCheckpointConverter(Generic[LevConfig]):
             tokenizer = tokenizer.as_hf_tokenizer()
         tokenizer.add_tokens(dummy_tokens)
 
-        return dataclasses.replace(self, tokenizer=tokenizer)  # type: ignore
+        return dataclasses.replace(self, tokenizer=tokenizer)
 
     def warn_if_tokenizer_mismatch(self, tokenizer) -> None:
         """Log a warning if ``tokenizer`` appears to differ from this converter's tokenizer.
@@ -722,7 +722,7 @@ class HFCheckpointConverter(Generic[LevConfig]):
     def with_config_overrides(self, config_overrides: dict, merge: bool = True) -> "HFCheckpointConverter":
         if self.config_overrides is not None and merge:
             config_overrides = cast(dict, mergedeep.merge({}, self.config_overrides, config_overrides))
-        return dataclasses.replace(self, config_overrides=config_overrides)  # type: ignore
+        return dataclasses.replace(self, config_overrides=config_overrides)
 
     @staticmethod
     def _infer_config_class(hf_config_class, ref, trust_remote_code):
@@ -782,7 +782,7 @@ class HFCheckpointConverter(Generic[LevConfig]):
     def config_from_hf_config(self, hf_config, overrides: Optional[dict] = None) -> LevConfig:
         config = self.LevConfigClass.from_hf_config(hf_config)
         if overrides is not None:
-            config = dataclasses.replace(config, **overrides)  # type: ignore
+            config = dataclasses.replace(config, **overrides)
         return config
 
     def config_from_hf_checkpoint(self, ref: Optional[Union[str, RepoRef]] = None) -> LevConfig:

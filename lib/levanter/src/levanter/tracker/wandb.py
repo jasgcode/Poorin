@@ -551,9 +551,9 @@ class WandbConfig(TrackerConfig):
                 if wandb.run is not None:
                     wandb.run.log_artifact(str(requirements_path), name="requirements.txt", type="requirements")
 
-            wandb.summary["num_devices"] = jax.device_count()  # type: ignore
-            wandb.summary["num_hosts"] = jax.process_count()  # type: ignore
-            wandb.summary["backend"] = jax.default_backend()  # type: ignore
+            wandb.summary["num_devices"] = jax.device_count()
+            wandb.summary["num_hosts"] = jax.process_count()
+            wandb.summary["backend"] = jax.default_backend()
 
             # Only the primary process owns a wandb-core service subprocess whose teardown
             # can wedge. Register the bounded teardown after wandb.init() so it runs before

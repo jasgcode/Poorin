@@ -12,6 +12,7 @@ from typing import Any, Literal, cast
 import equinox as eqx
 import haliax as hax
 import jax
+import jax.experimental.multihost_utils
 import jax.numpy as jnp
 import jmp
 import numpy as np

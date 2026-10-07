@@ -173,7 +173,7 @@ def scale_with_muon(
 
             updated_weight = dataclasses.replace(layer.weight, array=updated_weight_array)
 
-            return dataclasses.replace(layer, weight=updated_weight)  # type: ignore
+            return dataclasses.replace(layer, weight=updated_weight)
 
         updates = map_flattened_linear_layers(transform_linear_layer, updates)
 

@@ -17,6 +17,7 @@ from haliax.partitioning import round_axis_for_partitioning
 import levanter
 import levanter.config
 import levanter.tracker
+import levanter.trainer
 from levanter.analysis.entropy import compute_entropy_histogram, compute_top2_gap_histogram
 from levanter.analysis.tree_stats import summary_statistics_for_tree
 from levanter.compat.hf_checkpoints import RepoRef

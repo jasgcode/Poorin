@@ -25,7 +25,7 @@ import json
 import logging
 import re
 from dataclasses import asdict, dataclass, is_dataclass
-from typing import Self, TypeVar, cast
+from typing import Self, TypeVar
 from urllib.parse import urlparse
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -329,7 +329,7 @@ def read_artifact(output_path: str, schema: type[M]) -> M:
     output_path = _resolved(output_path)
     record = read_record(output_path)
     if record is not None and record.result is not None:
-        return cast(M, schema.model_validate(record.result, context={ARTIFACT_LOAD_CONTEXT_KEY: True}))
+        return schema.model_validate(record.result, context={ARTIFACT_LOAD_CONTEXT_KEY: True})
     raise FileNotFoundError(f"no artifact payload at {output_path}")
 
 

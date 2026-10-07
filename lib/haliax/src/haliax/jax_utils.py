@@ -10,6 +10,7 @@ from typing import Any, Callable, Sequence
 
 import equinox as eqx
 import jax
+import jax.core
 import numpy as np
 import opt_einsum
 from jax import Array
@@ -198,15 +199,15 @@ def named_call(*, name: str | None = None) -> Callable[[F], F]: ...
 
 def named_call(f=_UNSPECIFIED, name: str | None = None):
     if f is _UNSPECIFIED:
-        return lambda f: named_call(f, name)  # type: ignore
+        return lambda f: named_call(f, name)
     else:
         if name is None:
             name = f.__name__
             if name == "__call__":
                 if hasattr(f, "__self__"):
-                    name = f.__self__.__class__.__name__  # type: ignore
+                    name = f.__self__.__class__.__name__
                 else:
-                    name = f.__qualname__.rsplit(".", maxsplit=1)[0]  # type: ignore
+                    name = f.__qualname__.rsplit(".", maxsplit=1)[0]
             else:
                 name = f.__qualname__
 

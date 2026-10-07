@@ -47,7 +47,6 @@ class ActivationFunctionEnum(StrEnum):
         return TO_JAX_FN[self]
 
 
-# type: ignore
 TO_FN: dict[ActivationFunctionEnum, ActivationFunction] = {
     ActivationFunctionEnum.relu: hnn.relu,
     ActivationFunctionEnum.relu2: hnn.relu_squared,

@@ -282,7 +282,7 @@ def scan(
 
 
 def scan(
-    f: Callable,  # : ScanFn[Carry, Args, Y],  This confuses pyrefly too much
+    f: Callable,
     axis: AxisSelector,
     *,
     remat: ScanCheckpointSpec = False,
@@ -312,7 +312,7 @@ def scan(
     checkpoint = ScanCheckpointPolicy._mk(remat)
 
     if isinstance(is_scanned, bool):
-        q = is_scanned  # this is to make pyrefly happy
+        q = is_scanned  # bind the bool: the lambda would otherwise capture the rebound name
         is_scanned = lambda _: q
 
     def is_scanned_with_axis(leaf):

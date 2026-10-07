@@ -16,7 +16,6 @@ from typing import (
     Sequence,
     Type,
     TypeVar,
-    cast,
     overload,
     ParamSpec,
 )
@@ -745,7 +744,7 @@ class Stacked(ModuleWithStateDictSerialization, Generic[M]):
         # this method needs to "vectorize" the blocks, so that we have a single block h.FOO
         # first just do the normal thing with our own dict, which we'll post-process
         stacked = _stack_state_dict(state_dict, prefix=prefix)
-        out = super().from_state_dict(stacked, prefix=prefix)  # type: ignore
+        out = super().from_state_dict(stacked, prefix=prefix)
         return out
 
 
@@ -783,7 +782,7 @@ def _stack_state_dict(state_dict: StateDict, prefix: str | None = None) -> State
 
     # now we have to vectorize the tensors
     for k, tensors in tensors_to_vectorize.items():
-        vectorized_dict[cast(str, with_prefix(prefix, k))] = jnp.stack(tensors, axis=0)
+        vectorized_dict[with_prefix(prefix, k)] = jnp.stack(tensors, axis=0)
 
     return vectorized_dict
 

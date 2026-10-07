@@ -63,7 +63,7 @@ def scan_aware_tree_map(fn, tree, *rest, is_leaf: Callable[[Any], bool] | None =
     def rec_fn(x, *rest):
         if isinstance(x, haliax.nn.Stacked):
             new_inner = haliax.vmap(mapped_fn, x.Block)(x.stacked, *[r.stacked for r in rest])
-            return dataclasses.replace(x, stacked=new_inner)  # type: ignore
+            return dataclasses.replace(x, stacked=new_inner)
 
         if isinstance(x, haliax.nn.ArrayStacked):
             num_layers = x.num_layers
@@ -72,7 +72,7 @@ def scan_aware_tree_map(fn, tree, *rest, is_leaf: Callable[[Any], bool] | None =
                 *[_array_stacked_in_axes(r.stacked, num_layers) for r in rest],
             )
             new_inner = jax.vmap(mapped_fn, in_axes=in_axes)(x.stacked, *[r.stacked for r in rest])
-            return dataclasses.replace(x, stacked=new_inner)  # type: ignore
+            return dataclasses.replace(x, stacked=new_inner)
 
         return fn(x, *rest)
 

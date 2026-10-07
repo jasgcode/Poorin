@@ -20,6 +20,7 @@ from haliax.partitioning import round_axis_for_partitioning
 import levanter
 import levanter.config
 import levanter.tracker
+import levanter.trainer
 from levanter.analysis.model_perplexity import (
     ModelScoreReportBuilder,
     ScoredDocument,

@@ -118,11 +118,10 @@ def axis_spec_to_shape_dict(axis_spec: AxisSpec) -> dict[str, int]:  # type: ign
 
 
 @overload
-def axis_spec_to_shape_dict(axis_spec: AxisSelection) -> dict[str, int | None]:  # type: ignore
-    ...
+def axis_spec_to_shape_dict(axis_spec: AxisSelection) -> dict[str, int | None]: ...
 
 
-def axis_spec_to_shape_dict(axis_spec: AxisSelection) -> dict[str, int | None]:  # type: ignore
+def axis_spec_to_shape_dict(axis_spec: AxisSelection) -> dict[str, int | None]:
     if isinstance(axis_spec, Axis):
         return {axis_name(axis_spec): axis_spec.size}
 
@@ -132,7 +131,7 @@ def axis_spec_to_shape_dict(axis_spec: AxisSelection) -> dict[str, int | None]: 
     if isinstance(axis_spec, Mapping):
         return dict(**axis_spec)
 
-    spec = ensure_tuple(axis_spec)  # type: ignore
+    spec = ensure_tuple(axis_spec)
 
     shape_dict: dict[str, int | None] = {}
     for ax in spec:
@@ -294,7 +293,7 @@ def eliminate_axes(axis_spec: PartialShapeDict, axes: AxisSelection) -> PartialS
     ...
 
 
-def eliminate_axes(axis_spec: AxisSelection, to_remove: AxisSelection) -> AxisSelection:  # type: ignore
+def eliminate_axes(axis_spec: AxisSelection, to_remove: AxisSelection) -> AxisSelection:
     """Returns a new axis spec that is the same as the original, but without any axes in axes.
     Raises if any axis in to_remove is not present in axis_spec"""
 
@@ -316,24 +315,21 @@ def eliminate_axes(axis_spec: AxisSelection, to_remove: AxisSelection) -> AxisSe
 
 
 @typing.overload
-def without_axes(axis_spec: ShapeDict, to_remove: AxisSelection, allow_mismatched_sizes=False) -> ShapeDict:  # type: ignore
-    ...
+def without_axes(axis_spec: ShapeDict, to_remove: AxisSelection, allow_mismatched_sizes=False) -> ShapeDict: ...
 
 
 @typing.overload
 def without_axes(
     axis_spec: Sequence[Axis], to_remove: AxisSelection, allow_mismatched_sizes=False
-) -> tuple[Axis, ...]:  # type: ignore
-    ...
+) -> tuple[Axis, ...]: ...
 
 
 @typing.overload
-def without_axes(axis_spec: AxisSpec, to_remove: AxisSelection, allow_mismatched_sizes=False) -> AxisSpec:  # type: ignore
-    ...
+def without_axes(axis_spec: AxisSpec, to_remove: AxisSelection, allow_mismatched_sizes=False) -> AxisSpec: ...
 
 
 @typing.overload
-def without_axes(axis_spec: AxisSelection, to_remove: AxisSelection, allow_mismatched_sizes=False) -> AxisSelection:  # type: ignore
+def without_axes(axis_spec: AxisSelection, to_remove: AxisSelection, allow_mismatched_sizes=False) -> AxisSelection:
     """As eliminate_axes, but does not raise if any axis in to_remove is not present in axis_spec"""
 
 
@@ -346,11 +342,10 @@ def without_axes(  # type: ignore
 @typing.overload
 def without_axes(
     axis_spec: PartialShapeDict, to_remove: AxisSelection, allow_mismatched_sizes=False
-) -> PartialShapeDict:  # type: ignore
-    ...
+) -> PartialShapeDict: ...
 
 
-def without_axes(axis_spec: AxisSelection, to_remove: AxisSelection, allow_mismatched_sizes=False) -> AxisSelection:  # type: ignore
+def without_axes(axis_spec: AxisSelection, to_remove: AxisSelection, allow_mismatched_sizes=False) -> AxisSelection:
     """
     As eliminate_axes, but does not raise if any axis in to_remove is not present in axis_spec.
 
@@ -410,7 +405,7 @@ def unsize_axes(axis_spec: AxisSelection, to_unsize: AxisSelection | None = None
     was_dict = isinstance(axis_spec, Mapping)
 
     to_unsize = axis_spec_to_shape_dict(to_unsize)
-    axis_spec_dict: dict[str, int | None] = axis_spec_to_shape_dict(axis_spec)  # type: ignore
+    axis_spec_dict: dict[str, int | None] = axis_spec_to_shape_dict(axis_spec)
     for ax in to_unsize:
         name = axis_name(ax)
         if name not in axis_spec_dict:
@@ -472,13 +467,11 @@ def intersect_axes(ax1: tuple[AxisSelector, ...], ax2: AxisSpec) -> tuple[Axis, 
 
 
 @overload
-def intersect_axes(ax1: tuple[AxisSelector, ...], ax2: AxisSelection) -> tuple[AxisSelector, ...]:  # type: ignore
-    ...
+def intersect_axes(ax1: tuple[AxisSelector, ...], ax2: AxisSelection) -> tuple[AxisSelector, ...]: ...
 
 
 @overload
-def intersect_axes(ax1: AxisSpec, ax2: AxisSelection) -> AxisSpec:  # type: ignore
-    ...
+def intersect_axes(ax1: AxisSpec, ax2: AxisSelection) -> AxisSpec: ...
 
 
 def intersect_axes(ax1: AxisSelection, ax2: AxisSelection) -> AxisSelection:
@@ -506,13 +499,11 @@ def intersect_axes(ax1: AxisSelection, ax2: AxisSelection) -> AxisSelection:
 
 
 @overload
-def axis_name(ax: AxisSelector) -> str:  # type: ignore
-    ...
+def axis_name(ax: AxisSelector) -> str: ...
 
 
 @overload
-def axis_name(ax: Sequence[AxisSelector]) -> tuple[str, ...]:  # type: ignore
-    ...
+def axis_name(ax: Sequence[AxisSelector]) -> tuple[str, ...]: ...
 
 
 def axis_name(ax: AxisSelection) -> str | tuple[str, ...]:
@@ -666,7 +657,7 @@ def rearrange_for_partial_order(partial_order: PartialAxisSpec, axes: tuple[Ax, 
         if spec[ax_name] is None:
             return ax_name  # type: ignore
         else:
-            return Axis(ax_name, spec[ax_name])  # type: ignore
+            return Axis(ax_name, spec[ax_name])
 
     if Ellipsis not in partial_order:
         pa: tuple[AxisSelector, ...] = partial_order  # type: ignore

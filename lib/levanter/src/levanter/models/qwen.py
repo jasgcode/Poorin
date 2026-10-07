@@ -3,7 +3,7 @@
 
 import dataclasses
 from dataclasses import dataclass
-from typing import Dict, Optional, Type, cast
+from typing import Dict, Optional, Type
 
 import equinox as eqx
 import jax.random as jrandom
@@ -77,7 +77,7 @@ class QwenConfig(LlamaConfig):
             use_bias=not getattr(hf_config, "no_bias", True),
         )
 
-    # config-reuse subclass narrows to its own HF config/model type (LSP narrowing; pyrefly flags the same)
+    # config-reuse subclass narrows to its own HF config/model type (LSP narrowing)
     def to_hf_config(self, vocab_size: int, config_overrides: Optional[Dict] = None) -> HfQwenConfig:  # ty: ignore[invalid-method-override]
         if config_overrides is None:
             config_overrides = {}
@@ -191,7 +191,7 @@ class QwenDecoderLayer(eqx.Module):
 # Modified transformer for Qwen
 class QwenTransformer(LlamaTransformer):
     # config-reuse: QwenTransformer reuses LlamaTransformer but narrows config/layers to its own
-    # Qwen types (LSP narrowing; pyrefly flags the same)
+    # Qwen types (LSP narrowing)
     config: QwenConfig = eqx.field(static=True)
     layers: BlockFoldable[QwenDecoderLayer]
     norm: hnn.RmsNorm
@@ -216,7 +216,7 @@ class QwenTransformer(LlamaTransformer):
         self, x: NamedArray, attn_mask: Optional[NamedArray | AttentionMask], *, key, pos_ids: NamedArray | None = None
     ) -> NamedArray:
         keys = maybe_rng_split(key, self.config.num_layers) if key is not None else None
-        x = cast(NamedArray, self.layers.fold(x, mask=attn_mask, key=keys, pos_ids=pos_ids))
+        x = self.layers.fold(x, mask=attn_mask, key=keys, pos_ids=pos_ids)
         x = self.norm(x)
         return x
 

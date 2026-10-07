@@ -128,7 +128,7 @@ class AttentionMask(eqx.Module):
                     QPos.resize(q_slice.size),
                     KPos.resize(k_slice.size),
                     q_slice.start,
-                    shifted_k_start,  # type: ignore
+                    shifted_k_start,
                 )
             else:
                 causal = causal_mask(

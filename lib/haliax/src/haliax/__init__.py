@@ -318,7 +318,7 @@ def concatenate(axis: AxisSelector, arrays: Sequence[NamedArray]) -> NamedArray:
     same order as the first, with the selected axis extended by the sum of the sizes of the selected axes in the
     concatenated arrays."""
     aname = axis_name(axis)
-    total_size: int = _sum(a.resolve_axis(aname).size for a in arrays)  # type: ignore
+    total_size: int = _sum(a.resolve_axis(aname).size for a in arrays)
     if isinstance(axis, str):
         axis = Axis(axis, total_size)
     elif total_size != axis.size:
@@ -865,7 +865,7 @@ def add(x1: NamedOrNumeric, x2: NamedOrNumeric, /) -> NamedOrNumeric:
     """
     Named version of [jax.numpy.add](https://jax.readthedocs.io/en/latest/_autosummary/jax.numpy.add.html)
     """
-    return jnp.add(x1, x2)  # type: ignore
+    return jnp.add(x1, x2)
 
 
 @wrap_elemwise_binary
@@ -873,7 +873,7 @@ def arctan2(x1: NamedOrNumeric, x2: NamedOrNumeric, /) -> NamedOrNumeric:
     """
     Named version of [jax.numpy.arctan2](https://jax.readthedocs.io/en/latest/_autosummary/jax.numpy.arctan2.html)
     """
-    return jnp.arctan2(x1, x2)  # type: ignore
+    return jnp.arctan2(x1, x2)
 
 
 @wrap_elemwise_binary
@@ -881,7 +881,7 @@ def bitwise_and(x1: NamedOrNumeric, x2: NamedOrNumeric, /) -> NamedOrNumeric:
     """
     Named version of [jax.numpy.bitwise_and](https://jax.readthedocs.io/en/latest/_autosummary/jax.numpy.bitwise_and.html)
     """
-    return jnp.bitwise_and(x1, x2)  # type: ignore
+    return jnp.bitwise_and(x1, x2)
 
 
 @wrap_elemwise_binary
@@ -889,7 +889,7 @@ def bitwise_left_shift(x1: NamedOrNumeric, x2: NamedOrNumeric, /) -> NamedOrNume
     """
     Named version of [jax.numpy.bitwise_left_shift](https://jax.readthedocs.io/en/latest/_autosummary/jax.numpy.bitwise_left_shift.html)
     """
-    return jnp.bitwise_left_shift(x1, x2)  # type: ignore
+    return jnp.bitwise_left_shift(x1, x2)
 
 
 @wrap_elemwise_binary
@@ -897,7 +897,7 @@ def bitwise_or(x1: NamedOrNumeric, x2: NamedOrNumeric, /) -> NamedOrNumeric:
     """
     Named version of [jax.numpy.bitwise_or](https://jax.readthedocs.io/en/latest/_autosummary/jax.numpy.bitwise_or.html)
     """
-    return jnp.bitwise_or(x1, x2)  # type: ignore
+    return jnp.bitwise_or(x1, x2)
 
 
 @wrap_elemwise_binary
@@ -905,7 +905,7 @@ def bitwise_right_shift(x1: NamedOrNumeric, x2: NamedOrNumeric, /) -> NamedOrNum
     """
     Named version of [jax.numpy.bitwise_right_shift](https://jax.readthedocs.io/en/latest/_autosummary/jax.numpy.bitwise_right_shift.html)
     """
-    return jnp.bitwise_right_shift(x1, x2)  # type: ignore
+    return jnp.bitwise_right_shift(x1, x2)
 
 
 @wrap_elemwise_binary
@@ -913,7 +913,7 @@ def bitwise_xor(x1: NamedOrNumeric, x2: NamedOrNumeric, /) -> NamedOrNumeric:
     """
     Named version of [jax.numpy.bitwise_xor](https://jax.readthedocs.io/en/latest/_autosummary/jax.numpy.bitwise_xor.html)
     """
-    return jnp.bitwise_xor(x1, x2)  # type: ignore
+    return jnp.bitwise_xor(x1, x2)
 
 
 @wrap_elemwise_binary
@@ -921,7 +921,7 @@ def divide(x1: NamedOrNumeric, x2: NamedOrNumeric, /) -> NamedOrNumeric:
     """
     Named version of [jax.numpy.divide](https://jax.readthedocs.io/en/latest/_autosummary/jax.numpy.divide.html)
     """
-    return jnp.divide(x1, x2)  # type: ignore
+    return jnp.divide(x1, x2)
 
 
 @wrap_elemwise_binary
@@ -937,7 +937,7 @@ def equal(x1: NamedOrNumeric, x2: NamedOrNumeric, /) -> NamedOrNumeric:
     """
     Named version of [jax.numpy.equal](https://jax.readthedocs.io/en/latest/_autosummary/jax.numpy.equal.html)
     """
-    return jnp.equal(x1, x2)  # type: ignore
+    return jnp.equal(x1, x2)
 
 
 @wrap_elemwise_binary
@@ -945,7 +945,7 @@ def float_power(x1: NamedOrNumeric, x2: NamedOrNumeric, /) -> NamedOrNumeric:
     """
     Named version of [jax.numpy.float_power](https://jax.readthedocs.io/en/latest/_autosummary/jax.numpy.float_power.html)
     """
-    return jnp.float_power(x1, x2)  # type: ignore
+    return jnp.float_power(x1, x2)
 
 
 @wrap_elemwise_binary
@@ -953,7 +953,7 @@ def floor_divide(x1: NamedOrNumeric, x2: NamedOrNumeric, /) -> NamedOrNumeric:
     """
     Named version of [jax.numpy.floor_divide](https://jax.readthedocs.io/en/latest/_autosummary/jax.numpy.floor_divide.html)
     """
-    return jnp.floor_divide(x1, x2)  # type: ignore
+    return jnp.floor_divide(x1, x2)
 
 
 @wrap_elemwise_binary
@@ -961,7 +961,7 @@ def fmax(x1: NamedOrNumeric, x2: NamedOrNumeric, /) -> NamedOrNumeric:
     """
     Named version of [jax.numpy.fmax](https://jax.readthedocs.io/en/latest/_autosummary/jax.numpy.fmax.html)
     """
-    return jnp.fmax(x1, x2)  # type: ignore
+    return jnp.fmax(x1, x2)
 
 
 @wrap_elemwise_binary
@@ -969,7 +969,7 @@ def fmin(x1: NamedOrNumeric, x2: NamedOrNumeric, /) -> NamedOrNumeric:
     """
     Named version of [jax.numpy.fmin](https://jax.readthedocs.io/en/latest/_autosummary/jax.numpy.fmin.html)
     """
-    return jnp.fmin(x1, x2)  # type: ignore
+    return jnp.fmin(x1, x2)
 
 
 @wrap_elemwise_binary
@@ -977,7 +977,7 @@ def fmod(x1: NamedOrNumeric, x2: NamedOrNumeric, /) -> NamedOrNumeric:
     """
     Named version of [jax.numpy.fmod](https://jax.readthedocs.io/en/latest/_autosummary/jax.numpy.fmod.html)
     """
-    return jnp.fmod(x1, x2)  # type: ignore
+    return jnp.fmod(x1, x2)
 
 
 @wrap_elemwise_binary
@@ -985,7 +985,7 @@ def greater(x1: NamedOrNumeric, x2: NamedOrNumeric, /) -> NamedOrNumeric:
     """
     Named version of [jax.numpy.greater](https://jax.readthedocs.io/en/latest/_autosummary/jax.numpy.greater.html)
     """
-    return jnp.greater(x1, x2)  # type: ignore
+    return jnp.greater(x1, x2)
 
 
 @wrap_elemwise_binary
@@ -993,7 +993,7 @@ def greater_equal(x1: NamedOrNumeric, x2: NamedOrNumeric, /) -> NamedOrNumeric:
     """
     Named version of [jax.numpy.greater_equal](https://jax.readthedocs.io/en/latest/_autosummary/jax.numpy.greater_equal.html)
     """
-    return jnp.greater_equal(x1, x2)  # type: ignore
+    return jnp.greater_equal(x1, x2)
 
 
 @wrap_elemwise_binary
@@ -1001,7 +1001,7 @@ def hypot(x1: NamedOrNumeric, x2: NamedOrNumeric, /) -> NamedOrNumeric:
     """
     Named version of [jax.numpy.hypot](https://jax.readthedocs.io/en/latest/_autosummary/jax.numpy.hypot.html)
     """
-    return jnp.hypot(x1, x2)  # type: ignore
+    return jnp.hypot(x1, x2)
 
 
 @wrap_elemwise_binary
@@ -1009,7 +1009,7 @@ def left_shift(x1: NamedOrNumeric, x2: NamedOrNumeric, /) -> NamedOrNumeric:
     """
     Named version of [jax.numpy.left_shift](https://jax.readthedocs.io/en/latest/_autosummary/jax.numpy.left_shift.html)
     """
-    return jnp.left_shift(x1, x2)  # type: ignore
+    return jnp.left_shift(x1, x2)
 
 
 @wrap_elemwise_binary
@@ -1017,7 +1017,7 @@ def less(x1: NamedOrNumeric, x2: NamedOrNumeric, /) -> NamedOrNumeric:
     """
     Named version of [jax.numpy.less](https://jax.readthedocs.io/en/latest/_autosummary/jax.numpy.less.html)
     """
-    return jnp.less(x1, x2)  # type: ignore
+    return jnp.less(x1, x2)
 
 
 @wrap_elemwise_binary
@@ -1025,7 +1025,7 @@ def less_equal(x1: NamedOrNumeric, x2: NamedOrNumeric, /) -> NamedOrNumeric:
     """
     Named version of [jax.numpy.less_equal](https://jax.readthedocs.io/en/latest/_autosummary/jax.numpy.less_equal.html)
     """
-    return jnp.less_equal(x1, x2)  # type: ignore
+    return jnp.less_equal(x1, x2)
 
 
 @wrap_elemwise_binary
@@ -1033,82 +1033,82 @@ def logaddexp(x1: NamedOrNumeric, x2: NamedOrNumeric, /) -> NamedOrNumeric:
     """
     Named version of [jax.numpy.logaddexp](https://jax.readthedocs.io/en/latest/_autosummary/jax.numpy.logaddexp.html)
     """
-    return jnp.logaddexp(x1, x2)  # type: ignore
+    return jnp.logaddexp(x1, x2)
 
 
 @wrap_elemwise_binary
 def logaddexp2(x1: NamedOrNumeric, x2: NamedOrNumeric, /) -> NamedOrNumeric:
-    return jnp.logaddexp2(x1, x2)  # type: ignore
+    return jnp.logaddexp2(x1, x2)
 
 
 @wrap_elemwise_binary
 def logical_and(x1: NamedOrNumeric, x2: NamedOrNumeric, /) -> NamedOrNumeric:
-    return jnp.logical_and(x1, x2)  # type: ignore
+    return jnp.logical_and(x1, x2)
 
 
 @wrap_elemwise_binary
 def logical_or(x1: NamedOrNumeric, x2: NamedOrNumeric, /) -> NamedOrNumeric:
-    return jnp.logical_or(x1, x2)  # type: ignore
+    return jnp.logical_or(x1, x2)
 
 
 @wrap_elemwise_binary
 def logical_xor(x1: NamedOrNumeric, x2: NamedOrNumeric, /) -> NamedOrNumeric:
-    return jnp.logical_xor(x1, x2)  # type: ignore
+    return jnp.logical_xor(x1, x2)
 
 
 @wrap_elemwise_binary
 def maximum(x1: NamedOrNumeric, x2: NamedOrNumeric, /) -> NamedOrNumeric:
-    return jnp.maximum(x1, x2)  # type: ignore
+    return jnp.maximum(x1, x2)
 
 
 @wrap_elemwise_binary
 def minimum(x1: NamedOrNumeric, x2: NamedOrNumeric, /) -> NamedOrNumeric:
-    return jnp.minimum(x1, x2)  # type: ignore
+    return jnp.minimum(x1, x2)
 
 
 @wrap_elemwise_binary
 def mod(x1: NamedOrNumeric, x2: NamedOrNumeric, /) -> NamedOrNumeric:
-    return jnp.mod(x1, x2)  # type: ignore
+    return jnp.mod(x1, x2)
 
 
 @wrap_elemwise_binary
 def multiply(x1: NamedOrNumeric, x2: NamedOrNumeric, /) -> NamedOrNumeric:
-    return jnp.multiply(x1, x2)  # type: ignore
+    return jnp.multiply(x1, x2)
 
 
 @wrap_elemwise_binary
 def nextafter(x1: NamedOrNumeric, x2: NamedOrNumeric, /) -> NamedOrNumeric:
-    return jnp.nextafter(x1, x2)  # type: ignore
+    return jnp.nextafter(x1, x2)
 
 
 @wrap_elemwise_binary
 def not_equal(x1: NamedOrNumeric, x2: NamedOrNumeric, /) -> NamedOrNumeric:
-    return jnp.not_equal(x1, x2)  # type: ignore
+    return jnp.not_equal(x1, x2)
 
 
 @wrap_elemwise_binary
 def power(x1: NamedOrNumeric, x2: NamedOrNumeric, /) -> NamedOrNumeric:
-    return jnp.power(x1, x2)  # type: ignore
+    return jnp.power(x1, x2)
 
 
 @wrap_elemwise_binary
 def remainder(x1: NamedOrNumeric, x2: NamedOrNumeric, /) -> NamedOrNumeric:
-    return jnp.remainder(x1, x2)  # type: ignore
+    return jnp.remainder(x1, x2)
 
 
 @wrap_elemwise_binary
 def right_shift(x1: NamedOrNumeric, x2: NamedOrNumeric, /) -> NamedOrNumeric:
-    return jnp.right_shift(x1, x2)  # type: ignore
+    return jnp.right_shift(x1, x2)
 
 
 @wrap_elemwise_binary
 def subtract(x1: NamedOrNumeric, x2: NamedOrNumeric, /) -> NamedOrNumeric:
-    return jnp.subtract(x1, x2)  # type: ignore
+    return jnp.subtract(x1, x2)
 
 
 @wrap_elemwise_binary
 def true_divide(x1: NamedOrNumeric, x2: NamedOrNumeric, /) -> NamedOrNumeric:
-    return jnp.true_divide(x1, x2)  # type: ignore
+    return jnp.true_divide(x1, x2)
 
 
 # deprecated name

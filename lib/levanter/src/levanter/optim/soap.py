@@ -14,6 +14,7 @@ import optax
 import optax.tree_utils as otu
 from chex import Numeric
 from jax.sharding import PartitionSpec
+from jax._src.mesh import get_concrete_mesh
 from jaxtyping import Array
 from optax import GradientTransformation, Updates
 from optax._src.utils import canonicalize_dtype
@@ -678,7 +679,7 @@ def scale_by_soap(
 
         return updates, new_state
 
-    return optax.GradientTransformation(init_fn, update_fn)  # type: ignore
+    return optax.GradientTransformation(init_fn, update_fn)
 
 
 def update_preconditioner(
@@ -688,7 +689,7 @@ def update_preconditioner(
     precision: jax.lax.PrecisionLike = jax.lax.Precision.HIGHEST,
 ) -> List[Union[Array, None]]:
     if grad.ndim == 1:
-        return [lerp(GG[0], jnp.matmul(grad[:, None], grad[None, :], precision=precision), 1 - beta)]  # type: ignore
+        return [lerp(GG[0], jnp.matmul(grad[:, None], grad[None, :], precision=precision), 1 - beta)]
 
     def update_gg(idx, gg):
         if gg is None:
@@ -824,7 +825,7 @@ def init_conditioner(p_shape, max_precond_dim: int, dtype: Optional[Union[str, j
         return ([jnp.zeros((p_shape[0], p_shape[0]), dtype=dtype)], [PartitionSpec()])
 
     # sharding purpose
-    mesh = jax._src.mesh.get_concrete_mesh()
+    mesh = get_concrete_mesh()
     if mesh.devices.shape == ():
         mesh = None
     # get fsdp mesh axis

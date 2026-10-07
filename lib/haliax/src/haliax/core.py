@@ -14,6 +14,7 @@ from types import EllipsisType
 from typing import Any, Callable, Mapping, Sequence, TypeAlias, overload
 
 import jax
+import jax.core
 import jax._src.pretty_printer as pp
 import jax.numpy as jnp
 import numpy as np
@@ -349,12 +350,10 @@ class NamedArray(metaclass=NamedArrayMeta):
                 return name_set == spec_set
 
     @overload
-    def axis_size(self, axis: AxisSelector) -> int:  # type: ignore
-        ...
+    def axis_size(self, axis: AxisSelector) -> int: ...
 
     @overload
-    def axis_size(self, axis: Sequence[AxisSelector]) -> tuple[int, ...]:  # type: ignore
-        ...
+    def axis_size(self, axis: Sequence[AxisSelector]) -> tuple[int, ...]: ...
 
     def axis_size(self, axis: AxisSelection) -> int | tuple[int, ...]:
         """
@@ -436,8 +435,7 @@ class NamedArray(metaclass=NamedArrayMeta):
             return pp.text(str(self))
 
     @overload
-    def _lookup_indices(self, axis: AxisSelector) -> int | None:  # type: ignore
-        ...
+    def _lookup_indices(self, axis: AxisSelector) -> int | None: ...
 
     @overload
     def _lookup_indices(self, axis: AxisSelection) -> tuple[int | None, ...]: ...
@@ -456,8 +454,7 @@ class NamedArray(metaclass=NamedArrayMeta):
         return self.axis_indices(axis)
 
     @overload
-    def axis_indices(self, axis: AxisSelector) -> int | None:  # type: ignore
-        ...
+    def axis_indices(self, axis: AxisSelector) -> int | None: ...
 
     @overload
     def axis_indices(self, axis: Sequence[AxisSelector]) -> tuple[int | None, ...]: ...
@@ -1232,7 +1229,7 @@ def _compute_new_axes_and_slices_for_index(
             return int(value.item())
         return value
 
-    ordered_slices: list = [py_slice(None, None, None)] * len(array.axes)  # type: ignore
+    ordered_slices: list = [py_slice(None, None, None)] * len(array.axes)
     kept_axes = [True] * len(array.axes)
     array_slice_indices = []
     index_axis_names = set()
@@ -1476,7 +1473,7 @@ def flatten_axes(array: NamedArray, old_axes: AxisSelection, new_axis: AxisSelec
     pass
 
 
-def flatten_axes(  # type: ignore
+def flatten_axes(
     # array: NamedArray | AxisSpec, old_axes: AxisSelection, new_axis: AxisSelector
     *args,
     **kwargs,
@@ -1566,7 +1563,7 @@ def _flatten_axis_spec(axes: AxisSpec, old_axes: AxisSelection, new_axis: AxisSe
         assert isinstance(new_axis, str)
         new_axis = Axis(new_axis, total_axis_size)
 
-    if len(old_axes) == 0:  # type: ignore
+    if len(old_axes) == 0:
         return (new_axis,) + axes
 
     # ensure that the old_axes are contiguous
@@ -1578,7 +1575,7 @@ def _flatten_axis_spec(axes: AxisSpec, old_axes: AxisSelection, new_axis: AxisSe
         if ax in old_axes:  # type: ignore
             if index_of_first_old_axis is None:
                 index_of_first_old_axis = i
-                intermediate_axes.extend(old_axes)  # type: ignore
+                intermediate_axes.extend(old_axes)
                 new_axes.append(new_axis)
             else:
                 continue
@@ -1717,8 +1714,6 @@ def broadcast_to(
     if not isinstance(a, NamedArray):
         a = named(jnp.asarray(a), ())
 
-    assert isinstance(a, NamedArray)  # pyrefly gets confused
-
     a_axes_dict = axis_spec_to_shape_dict(a.axes)
 
     # fill in missing sizes and check for mismatches
@@ -1753,7 +1748,7 @@ def broadcast_to(
     if ensure_order and not _is_subsequence(axes_tuple_complete, all_axes):
         a = a.rearrange(axes_tuple_complete + extra_axes)
 
-    return typing.cast(NamedArray, a)
+    return a
 
 
 def _is_subsequence(needle, haystack):
@@ -1859,7 +1854,7 @@ def broadcast_arrays_and_return_axes(
     if len(all_axes) == 0:
         return (arrays, ())
 
-    full_axes = ft.reduce(lambda a, b: _broadcast_axes(a, b, require_subset) if a is not None else None, all_axes)  # type: ignore
+    full_axes = ft.reduce(lambda a, b: _broadcast_axes(a, b, require_subset) if a is not None else None, all_axes)
     if full_axes is None:
         raise ValueError(f"Cannot broadcast arrays {arrays}: no subset relationship")
 
@@ -1895,7 +1890,7 @@ def check_shape(jnp_shape: Sequence[int], hax_axes: AxisSelection) -> tuple[Axis
         if isinstance(ax, Axis):
             if ax.size != jnp_shape[i]:
                 raise ValueError(f"Shape mismatch: jnp_shape={jnp_shape} hax_axes={hax_axes}")
-            result_axes.append(ax)  # type: ignore
+            result_axes.append(ax)
         elif isinstance(ax, str):
             result_axes.append(Axis(ax, jnp_shape[i]))
         else:

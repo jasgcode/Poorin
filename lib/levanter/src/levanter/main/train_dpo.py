@@ -19,6 +19,7 @@ from jaxtyping import PRNGKeyArray
 import levanter
 import levanter.config
 import levanter.tracker
+import levanter.trainer
 import levanter.callbacks
 import levanter.eval
 from levanter import callbacks

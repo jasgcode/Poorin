@@ -14,6 +14,7 @@ from typing import Any, Callable, ContextManager, Mapping, Optional, ParamSpec, 
 
 import equinox as eqx
 import jax
+import jax.core
 from equinox import is_array, module_update_wrapper
 from jax import shard_map as jax_shard_map
 from jax._src.mesh import get_concrete_mesh
@@ -549,7 +550,7 @@ def named_jit(
 
     if fn is None:
         return functools.partial(  # type: ignore
-            named_jit,  # type: ignore
+            named_jit,
             axis_resources=axis_resources,
             in_axis_resources=in_axis_resources,
             out_axis_resources=out_axis_resources,
@@ -903,8 +904,8 @@ def shard_map(
             this_out_specs = pspec_for(out_shape, axis_mapping)
 
         # `inner` is `def inner(args, kwargs)`, so the shard_map'd callable takes the packed
-        # (args, kwargs) tuple+dict positionally; pyrefly mis-binds jax.shard_map's ParamSpec
-        # through functools.partial.
+        # (args, kwargs) tuple+dict positionally; ty mis-binds jax.shard_map's ParamSpec through
+        # functools.partial and expects one positional argument.
         out = almost_shmap(out_specs=this_out_specs)(args, kwargs)  # ty: ignore[too-many-positional-arguments]
         return out
 
