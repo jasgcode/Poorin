@@ -120,22 +120,32 @@ def pytest_runs(selections: Iterable[Selection], exclusions: Sequence[str]) -> l
     """One CPU pytest invocation per selected suite, skipping the tests ``exclusions`` name.
 
     ``exclusions`` are ``--ignore`` and ``--deselect`` options with repository-relative paths, such
-    as ``HOST_EXCLUSIONS``; each suite gets the ones under its test directories.
+    as ``HOST_EXCLUSIONS``; each suite gets the ones under its test directories. pytest collects a
+    file passed by name even when ``--ignore`` names it, so ignored paths also leave the selection,
+    and a suite left with nothing selected does not run.
     """
     runs = []
     for selection in selections:
         suite = selection.suite
         own_prefixes = tuple(f"{test_dir}/" for test_dir in suite.test_dirs)
-        own = [
-            _suite_relative(option, suite) for option in exclusions if option.split("=", 1)[1].startswith(own_prefixes)
-        ]
+        own = [option for option in exclusions if option.split("=", 1)[1].startswith(own_prefixes)]
+        ignored = tuple(option.removeprefix("--ignore=") for option in own if option.startswith("--ignore="))
+        paths = tuple(path for path in selection.paths if not _under_any(path, ignored))
+        if not paths:
+            continue
+        options = [_suite_relative(option, suite) for option in own]
         runs.append(
             PytestRun(
-                args=("uv", "run", "--no-sync", "pytest", "-m", LOCAL_SAFE_MARKERS, *own, *selection.paths),
+                args=("uv", "run", "--no-sync", "pytest", "-m", LOCAL_SAFE_MARKERS, *options, *paths),
                 env={**TEST_ENV, **SUITE_ENV.get(suite.config_dir, {})},
             )
         )
     return runs
+
+
+def _under_any(path: str, roots: Sequence[str]) -> bool:
+    """Whether ``path`` is one of ``roots`` or lies under one."""
+    return any(path == root or path.startswith(f"{root}/") for root in roots)
 
 
 def _suite_relative(option: str, suite: Suite) -> str:

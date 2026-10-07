@@ -17,3 +17,4 @@ date,phase,step,first_party_lines,reachable_lines,reachable_modules,r1_imported_
 2026-10-06,P1,Format with ruff,384628,139305,461,6702,9.94,185.6,67.3,11893054128
 2026-10-06,P1,Skip the reformat in git blame,384628,139305,461,6702,9.57,183.8,62.2,11893054128
 2026-10-06,P1,Give the MoE pipeline equivalence test three minutes,384628,139305,461,6702,9.2,171.4,59.2,11893054128
+2026-10-06,P1,Skip ignored test files that a change selects by name,384638,139315,461,6702,8.68,170.1,59.7,11893054128

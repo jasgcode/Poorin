@@ -758,6 +758,18 @@ Plan: `plans/2026-10-05-p1-fleet-operations.md`. Executing on branch `prune/p1-f
   pipeline.
 - **Landed:** `[grug] Give the MoE pipeline equivalence test three minutes`.
 
+### D61. A selected file that a host exclusion ignores leaves the selection
+
+- **When:** 2026-10-06, P1 Task 12. **Status:** Adopted. Resolves the gap D56 deferred.
+- **Decision:** `pytest_runs` drops selected paths that an `--ignore` exclusion names, and skips a
+  suite left with no paths.
+- **Why:** pytest collects a file passed by name even when `--ignore` names it. Task 12 changes
+  rigging's cluster configuration, which Levanter's TensorBoard tracker imports, so the selector
+  passed `test_tensorboard.py` by name and it failed on the missing `tensorboardX`. A suite with
+  no paths left must not run: pytest would collect everything under the repository root.
+- **Cost if wrong:** None known.
+- **Landed:** `[poorin] Skip ignored test files that a change selects by name`.
+
 ---
 
 ## Deferred
@@ -776,5 +788,5 @@ Known gaps left open on purpose. Each names where it gets resolved.
 | About 125 MB of untracked `logs/` and `wandb/` entries from P0's check runs sit in the checkout | P0 | Open; delete on request |
 | Set up `projects/` as a git-ignored, nested uv workspace member for `looped-diffusion-lm`, and scan `projects/*` for prune roots | D52 | The phase after P1 |
 | `tools.lint --all-files` reports two files under `infra/`: a TypeScript config with comments, and the old linter's own conflict-marker strings | P1 Task 2 | P1 Task 7 |
-| `--ignore` skips a file found in a directory but not one passed by name, so a change that selects `test_tensorboard.py` through its imports still collects it, and it fails on `tensorboardX` | D56 | P7 deletes the TensorBoard tracker |
+| `--ignore` skips a file found in a directory but not one passed by name, so a change that selects `test_tensorboard.py` through its imports still collects it, and it fails on `tensorboardX` | D56 | D61 |
 | ty's 231 warnings | D54 | Pass 2 |

@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from tools.affected_tests import HOST_EXCLUSIONS, LOCAL_SAFE_MARKERS, Selection, Suite, pytest_runs, select
+from tools.affected_tests import HOST_EXCLUSIONS, LOCAL_SAFE_MARKERS, PytestRun, Selection, Suite, pytest_runs, select
 
 FILES = {
     "pyproject.toml": '[tool.uv.workspace]\nmembers = ["lib/alpha", "lib/beta"]\n',
@@ -151,20 +151,53 @@ def test_host_exclusions_skip_their_tests_when_a_library_with_its_own_pytest_con
         ),
         "lib/alpha/tests/test_broken.py": "import missing_module\n",
     }
-    for rel, text in files.items():
-        (tmp_path / rel).parent.mkdir(parents=True, exist_ok=True)
-        (tmp_path / rel).write_text(text)
+    write_files(tmp_path, files)
     exclusions = (
         "--deselect=lib/alpha/tests/test_host.py::test_needs_another_host",
         "--ignore=lib/alpha/tests/test_broken.py",
     )
     [run] = pytest_runs([Selection(ALPHA, ALPHA.test_dirs)], exclusions)
+    result = run_pytest(run, tmp_path)
+    assert result.returncode == 0, result.stdout
+    assert "1 passed, 1 deselected" in result.stdout
+
+
+def test_an_ignored_test_file_is_skipped_when_the_change_selects_it_by_name(tmp_path):
+    # pytest collects a file passed on the command line even when --ignore names it.
+    write_files(
+        tmp_path,
+        {
+            "lib/alpha/pyproject.toml": "[tool.pytest.ini_options]\n",
+            "lib/alpha/tests/test_runs.py": "def test_runs():\n    pass\n",
+            "lib/alpha/tests/test_broken.py": "import missing_module\n",
+        },
+    )
+    exclusions = ("--ignore=lib/alpha/tests/test_broken.py",)
+    selected = ("lib/alpha/tests/test_broken.py", "lib/alpha/tests/test_runs.py")
+    [run] = pytest_runs([Selection(ALPHA, selected)], exclusions)
+    result = run_pytest(run, tmp_path)
+    assert result.returncode == 0, result.stdout
+    assert "1 passed" in result.stdout
+
+
+def test_a_suite_whose_only_selected_tests_are_ignored_does_not_run():
+    # With no paths, pytest would collect everything under the repository root.
+    selected = ("lib/alpha/tests/test_broken.py",)
+    assert pytest_runs([Selection(ALPHA, selected)], ("--ignore=lib/alpha/tests/test_broken.py",)) == []
+
+
+def write_files(root: Path, files: dict[str, str]) -> None:
+    for rel, text in files.items():
+        (root / rel).parent.mkdir(parents=True, exist_ok=True)
+        (root / rel).write_text(text)
+
+
+def run_pytest(run: PytestRun, cwd: Path) -> subprocess.CompletedProcess[str]:
+    """Run ``run``'s pytest arguments with this interpreter's pytest, from ``cwd``."""
     pytest_args = run.args[run.args.index("pytest") + 1 :]
-    result = subprocess.run(
+    return subprocess.run(
         [sys.executable, "-m", "pytest", "-p", "no:cacheprovider", *pytest_args],
-        cwd=tmp_path,
+        cwd=cwd,
         capture_output=True,
         text=True,
     )
-    assert result.returncode == 0, result.stdout
-    assert "1 passed, 1 deselected" in result.stdout
