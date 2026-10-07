@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "marin-root"
+name = "poorin-root"
 version = "0.1.0"
 description = "Marin workspace root and experiments"
 license = { file = "LICENSE" }
@@ -13,7 +13,7 @@ dependencies = [
     "poorin-fray",
     "marin-haliax",
     "marin-levanter",
-    "marin-core",
+    "poorin",
     "poorin-rigging",
     "marin-zephyr",
     # poorin-finelog is Finelog's Python client, a workspace member. Its server is the published
@@ -69,14 +69,14 @@ conflicts = [
     # together.
     [
         { package = "marin-levanter", extra = "gpu" },
-        { package = "marin-core", extra = "cpu" },
+        { package = "poorin", extra = "cpu" },
     ],
     [
         { package = "marin-levanter", extra = "gpu" },
-        { package = "marin-core", extra = "tpu" },
+        { package = "poorin", extra = "tpu" },
     ],
     [
-        { package = "marin-core", extra = "gpu" },
+        { package = "poorin", extra = "gpu" },
         { package = "marin-levanter", extra = "tpu" },
     ],
 ]
@@ -88,7 +88,7 @@ members = [
     "lib/dupekit",
     "lib/haliax",
     "lib/levanter",
-    "lib/marin",
+    "lib/poorin",
     "lib/poorin_rigging",
     "lib/zephyr",
     "lib/finestore",
@@ -106,7 +106,7 @@ poorin-finelog = { workspace = true }
 marin-dupekit = { workspace = true }
 marin-haliax = { workspace = true }
 marin-levanter = { workspace = true }
-marin-core = { workspace = true }
+poorin = { workspace = true }
 poorin-rigging = { workspace = true }
 marin-zephyr = { workspace = true }
 marin-finestore = { workspace = true }
@@ -173,7 +173,7 @@ ignore = ["F722", "B008", "UP015", "UP046", "UP047", "A005", "E741"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["experiments"]
-known-third-party = ["wandb", "marin"]
+known-third-party = ["wandb", "poorin"]
 
 
 # ty type checker configuration (D49). ty runs through uvx at the version pinned in
@@ -185,7 +185,7 @@ python-version = "3.12"
 
 [tool.ty.src]
 include = [
-    "lib/marin/src",
+    "lib/poorin/src",
     "lib/levanter/src",
     "lib/haliax/src",
     "lib/poorin_fray/src",
@@ -252,4 +252,4 @@ pythonpath = ["."]
 # manual tests are run by hand (e.g. live TPU smokes in a custom container).
 # All but manual are run from dedicated CI workflows. Tests that need a TPU carry
 # @skip_if_no_tpu (tests/test_utils.py) and skip themselves when none is present.
-addopts = "-p marin.pytest_timeout_guard --session-timeout=600 -n auto --dist=worksteal -m 'not slow and not integration and not data_integration and not cluster and not requires_cluster and not docker and not manual' --import-mode=importlib"
+addopts = "-p poorin.pytest_timeout_guard --session-timeout=600 -n auto --dist=worksteal -m 'not slow and not integration and not data_integration and not cluster and not requires_cluster and not docker and not manual' --import-mode=importlib"

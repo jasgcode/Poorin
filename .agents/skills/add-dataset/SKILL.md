@@ -8,13 +8,13 @@ description: Register a named Hugging Face dataset for Marin by inspecting its s
 Inspect the schema without downloading the full dataset:
 
 ```sh
-uv run lib/marin/tools/get_hf_dataset_schema.py <dataset_name> [options]
+uv run lib/poorin/tools/get_hf_dataset_schema.py <dataset_name> [options]
 ```
 
 For programmatic inspection:
 
 ```python
-from marin.tools.get_hf_dataset_schema import get_schema
+from poorin.tools.get_hf_dataset_schema import get_schema
 
 schema = get_schema(dataset_name="wikitext", config_name="wikitext-103-v1")
 ```
@@ -36,7 +36,7 @@ to verify the content; it may be empty for some datasets. The result also
 reports `splits`, `text_field_candidates`, and `features`.
 
 Add a leaf module under `experiments/datasets/` using the lazy builders in
-`marin.experiment.data`:
+`poorin.experiment.data`:
 
 - expose `<name>_dataset()` for one corpus;
 - expose `<name>_datasets() -> dict[str, ...]` for a keyed family;

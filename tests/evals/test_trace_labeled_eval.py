@@ -7,8 +7,8 @@ from levanter.data.sharded_datasource import FirstRowsShardedDataSource, Sharded
 from levanter.data.text.datasets import UrlDatasetSourceConfig
 from levanter.data.text.trace_chat import TraceChatEvaluationFormat
 from levanter.tokenizers import load_tokenizer
-from marin.datakit.chat_template import MARIN_CHAT_TEMPLATE
-from marin.evaluation.trace_labeled_eval import (
+from poorin.datakit.chat_template import MARIN_CHAT_TEMPLATE
+from poorin.evaluation.trace_labeled_eval import (
     DEFAULT_OUTCOME_JUDGE_PROMPT,
     TraceLabeledEvalDatasetConfig,
     TraceRowAdapterConfig,

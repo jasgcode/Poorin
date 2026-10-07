@@ -4,7 +4,7 @@
 import time
 from types import SimpleNamespace
 
-import marin.execution.step_runner as step_runner_module
+import poorin.execution.step_runner as step_runner_module
 import pytest
 
 

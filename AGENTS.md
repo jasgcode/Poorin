@@ -12,7 +12,7 @@ measurements per prune commit.
 Library manuals:
 
 - `lib/levanter/AGENTS.md` — Levanter (JAX training library)
-- `lib/marin/AGENTS.md` — Marin (experiment executor and pipelines)
+- `lib/poorin/AGENTS.md` — Marin (experiment executor and pipelines)
 - `lib/zephyr/AGENTS.md` — Zephyr (dataset processing)
 - `lib/poorin_fray/AGENTS.md` — Fray (job dispatch)
 - `lib/haliax/AGENTS.md` — Haliax (named tensors)
@@ -152,12 +152,12 @@ Watch for and eliminate these patterns in generated code:
 
 Before writing any utility function, helper, or data structure:
 1. Search the codebase for existing implementations
-2. Check the libraries: `lib/marin/src/marin/`, `lib/levanter/src/levanter/`, `lib/poorin_rigging/src/poorin_rigging/`
+2. Check the libraries: `lib/poorin/src/poorin/`, `lib/levanter/src/levanter/`, `lib/poorin_rigging/src/poorin_rigging/`
 3. Check `pyproject.toml` for available third-party packages before adding new ones
 
 If a suitable implementation exists, use it. Do not create parallel implementations.
 
-Dependency direction: `haliax` → {`levanter`, `zephyr`} → `marin`. Each layer may only import
+Dependency direction: `haliax` → {`levanter`, `zephyr`} → `poorin`. Each layer may only import
 from layers to its left. Never introduce reverse dependencies (e.g., levanter importing from
 marin).
 

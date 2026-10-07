@@ -6,7 +6,7 @@ import os
 import re
 from collections import defaultdict
 
-from marin.processing.classification.deduplication.connected_components import CCInput, connected_components
+from poorin.processing.classification.deduplication.connected_components import CCInput, connected_components
 from zephyr.context import ZephyrContext
 from zephyr.dataset import Dataset
 

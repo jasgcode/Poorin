@@ -6,8 +6,8 @@ import json
 from pathlib import Path
 
 from levanter.utils.profile_dirs import RunTarget, normalize_run_target
-from marin.profiling.ingest import summarize_trace
-from marin.profiling.tracking import (
+from poorin.profiling.ingest import summarize_trace
+from poorin.profiling.tracking import (
     RegressionThresholds,
     append_regression_record,
     assess_profile_regression,

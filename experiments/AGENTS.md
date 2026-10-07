@@ -14,7 +14,7 @@ experiment-specific tests beside the experiment, outside root `tests/**` and
 
 All dataset definitions live under `experiments/datasets/`, one leaf module per
 dataset (or dataset family), built with the lazy data builders in
-`marin.experiment.data` (`tokenized`, `hf_download`, `pretokenized`, ...).
+`poorin.experiment.data` (`tokenized`, `hf_download`, `pretokenized`, ...).
 
 - A single-corpus dataset exposes `<name>_dataset() -> ArtifactStep[TokenizedCache]`.
 - A keyed family exposes `<name>_datasets() -> dict[str, ArtifactStep[TokenizedCache]]`,
@@ -35,7 +35,7 @@ dataset (or dataset family), built with the lazy data builders in
 
 - Do not hardcode `gs://...` paths in experiment configs unless there is no viable alternative.
 - Prefer artifact dependencies resolved at run time via `ctx.artifact_path(dep)` inside a recipe's `build_config`, so paths stay region-aware and reproducible.
-- To reference a pre-existing external output, use `ArtifactStep.adopt(name, version, source)` (see `marin.execution.lazy`) instead of a raw `gs://` URL.
+- To reference a pre-existing external output, use `ArtifactStep.adopt(name, version, source)` (see `poorin.execution.lazy`) instead of a raw `gs://` URL.
 - If a referenced artifact may come from another region, point its source at a `mirror://...` path so reads are local-first and copied once when needed.
 
 ## Cross-Region Large Artifacts

@@ -3,8 +3,8 @@
 
 """Tests for the FineWeb-Edu canonical pipeline."""
 
-from marin.datakit.canonical.fineweb_edu import download
-from marin.datakit.normalize import normalize_step
+from poorin.datakit.canonical.fineweb_edu import download
+from poorin.datakit.normalize import normalize_step
 
 
 def test_normalize_subset_distinct_cache_keys():

@@ -14,9 +14,9 @@ import json
 
 import fsspec
 import pytest
-from marin.execution.lazy import ArtifactStep, resolve
-from marin.experiment.sweep import grid, sweep
-from marin.training.training import LevanterCheckpoint
+from poorin.execution.lazy import ArtifactStep, resolve
+from poorin.experiment.sweep import grid, sweep
+from poorin.training.training import LevanterCheckpoint
 
 
 def _write_metrics(config: dict) -> None:

@@ -16,8 +16,8 @@ from levanter.infra.cli_helpers import CliConfig
 from levanter.main import train_lm
 from levanter.main.train_dpo import TrainDpoConfig
 from levanter.trainer import TrainerConfig
-from marin.processing.tokenize import tokenized_cache_stats_path
-from marin.training.training import (
+from poorin.processing.tokenize import tokenized_cache_stats_path
+from poorin.training.training import (
     GPU_NCCL_TERMINATION_TIMEOUT_FLAG,
     TrainDpoOnPodConfig,
     TrainLmOnPodConfig,
@@ -113,7 +113,7 @@ def test_apply_output_path_sets_run_specific_temp_checkpoints(trainer_config):
 
 def test_apply_output_path_does_not_enable_adapter_hf_export_without_steps(trainer_config):
     with patch(
-        "marin.training.training.marin_temp_bucket",
+        "poorin.training.training.marin_temp_bucket",
         return_value="gs://tmp/ttl=14d/checkpoints-temp/example-run",
     ):
         updated = apply_output_path(
@@ -131,7 +131,7 @@ def test_apply_output_path_does_not_enable_adapter_hf_export_without_steps(train
 
 def test_apply_output_path_routes_adapter_hf_export_to_peft(trainer_config):
     with patch(
-        "marin.training.training.marin_temp_bucket",
+        "poorin.training.training.marin_temp_bucket",
         return_value="gs://tmp/ttl=14d/checkpoints-temp/example-run",
     ):
         updated = apply_output_path(
@@ -323,7 +323,7 @@ def test_resolve_training_env_adds_collective_watchdog_for_gpu():
         "JAX_COMPILATION_CACHE_DIR": "/tmp/cache",  # preset skips the temp-bucket lookup
         "XLA_FLAGS": "--xla_gpu_enable_latency_hiding_scheduler=true",
     }
-    with patch("marin.training.training._cli_helpers_module") as mod:
+    with patch("poorin.training.training._cli_helpers_module") as mod:
         mod.return_value.load_config.return_value = CliConfig()
         gpu_flags = resolve_training_env(dict(base), ResourceConfig.with_gpu("H100", count=8))["XLA_FLAGS"]
         cpu_flags = resolve_training_env(dict(base), ResourceConfig.with_cpu())["XLA_FLAGS"]
@@ -349,7 +349,7 @@ def test_resolve_training_env_adds_collective_watchdog_for_gpu():
 )
 def test_resolve_training_env_bounds_stalled_tensorstore_requests(overrides, expected_time, expected_limit):
     base = {"JAX_COMPILATION_CACHE_DIR": "/tmp/cache", **overrides}
-    with patch("marin.training.training._cli_helpers_module") as mod:
+    with patch("poorin.training.training._cli_helpers_module") as mod:
         mod.return_value.load_config.return_value = CliConfig()
         env = resolve_training_env(base, ResourceConfig.with_gpu("H100", count=8))
 

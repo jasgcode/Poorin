@@ -14,9 +14,9 @@ Before you begin, ensure you have the following installed:
 
 1. Install the documentation dependencies:
    ```bash
-   uv sync --package marin-core --group dev
+   uv sync --package poorin --group dev
    ```
-   The `marin-core` `dev` group includes the docs tooling, and this is the same install
+   The `poorin` `dev` group includes the docs tooling, and this is the same install
    command used by the docs CI workflow and the general contributor setup.
 
 ## Building Documentation

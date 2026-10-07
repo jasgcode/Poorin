@@ -1,7 +1,7 @@
 # Copyright The Marin Authors
 # SPDX-License-Identifier: Apache-2.0
 
-"""Behaviour tests for the artifact-step runtime (``marin.execution.lazy``).
+"""Behaviour tests for the artifact-step runtime (``poorin.execution.lazy``).
 
 Drives the hardest path — a config that references its own output path AND a dependency's
 output path — end-to-end through the real ``StepRunner``, plus the ``apply`` sugar, the
@@ -12,9 +12,9 @@ import os
 from dataclasses import dataclass
 
 import pytest
-from marin.execution.artifact import Artifact, ArtifactTypeMismatchError
-from marin.execution.lazy import OUT, ArtifactStep, StepContext, apply, lower, materialized_config, resolve, run
-from marin.execution.remote import remote
+from poorin.execution.artifact import Artifact, ArtifactTypeMismatchError
+from poorin.execution.lazy import OUT, ArtifactStep, StepContext, apply, lower, materialized_config, resolve, run
+from poorin.execution.remote import remote
 from poorin_fray.types import ResourceConfig
 
 # --- Toy configs/fns standing in for tokenize + train --------------------------

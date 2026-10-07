@@ -84,10 +84,10 @@ You can check out the [full script](https://github.com/marin-community/marin/blo
 ```python
 from poorin_fray.cluster import ResourceConfig
 from levanter.optim.config import AdamConfig
-from marin.execution.lazy import lower
-from marin.execution.step_runner import StepRunner
-from marin.experiment.data import tokenized
-from marin.experiment.train import train_lm
+from poorin.execution.lazy import lower
+from poorin.execution.step_runner import StepRunner
+from poorin.experiment.data import tokenized
+from poorin.experiment.train import train_lm
 
 from experiments.llama import llama_nano
 from experiments.marin_tokenizer import marin_tokenizer

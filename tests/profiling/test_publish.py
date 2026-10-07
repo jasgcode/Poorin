@@ -5,8 +5,8 @@ import gzip
 import json
 from pathlib import Path
 
-from marin.profiling.ingest import summarize_trace
-from marin.profiling.publish import (
+from poorin.profiling.ingest import summarize_trace
+from poorin.profiling.publish import (
     PROFILE_SUMMARY_ARTIFACT_TYPE,
     build_profile_summary_artifact_metadata,
     default_profile_summary_artifact_name,

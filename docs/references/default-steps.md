@@ -11,20 +11,20 @@ that step's `StepContext` and returning a Levanter `LmDataConfig`.
 
 ## Download
 
-::: marin.experiment.data.hf_download
+::: poorin.experiment.data.hf_download
 
-::: marin.experiment.data.raw_download
+::: poorin.experiment.data.raw_download
 
 ## Tokenization
 
-::: marin.experiment.data.tokenized
+::: poorin.experiment.data.tokenized
 
-::: marin.experiment.data.pretokenized
+::: poorin.experiment.data.pretokenized
 
 ## Mixture assembly
 
-::: marin.experiment.data.mixture
+::: poorin.experiment.data.mixture
 
 ## Training
 
-::: marin.experiment.train.train_lm
+::: poorin.experiment.train.train_lm

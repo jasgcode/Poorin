@@ -10,30 +10,30 @@ at it. A local orchestrator that does this for you is planned
 
 ## Evaluation modes
 
-- **In-loop training evals**: [`train_lm`][marin.experiment.train.train_lm] runs periodic
+- **In-loop training evals**: [`train_lm`][poorin.experiment.train.train_lm] runs periodic
   multiple-choice evaluations through Levanter's lm-evaluation-harness integration
   (`levanter.eval_harness`, scored from JAX log-probabilities, no server) when an `EvalSuite` is
   provided, and logs to W&B. Levanter also reports validation loss on held-out sets
   (`levanter.eval`); scaling-law fits use it.
-- **Post-hoc lm-eval against a served model**: `marin.evaluation.lm_eval.run_lm_eval` takes a
+- **Post-hoc lm-eval against a served model**: `poorin.evaluation.lm_eval.run_lm_eval` takes a
   `RunningModel` (an OpenAI-compatible endpoint and its tokenizer), runs lm-evaluation-harness in
   an isolated, version-pinned `uv` environment, and persists metrics and samples.
 - **Bits per byte across datasets**: `levanter.main.perplexity_gap` scores two models' per-byte
   loss on the same text slices.
-- **Labeled loss on agent traces**: `marin.evaluation.trace_labeled_eval` runs Levanter's loss
+- **Labeled loss on agent traces**: `poorin.evaluation.trace_labeled_eval` runs Levanter's loss
   evaluation on OpenAI-style conversation traces.
 
 ## Records
 
-One evaluation writes one `record.json` (`marin.evaluation.records`): what model was evaluated,
+One evaluation writes one `record.json` (`poorin.evaluation.records`): what model was evaluated,
 on what hardware, whether it succeeded, and the per-task metrics it produced. The record is the
-source of truth for a run. `marin.evaluation.model_config` validates the model description a
-record carries, and `marin.evaluation.model_identity` gives two configurations of the same model
+source of truth for a run. `poorin.evaluation.model_config` validates the model description a
+record carries, and `poorin.evaluation.model_identity` gives two configurations of the same model
 one comparison identity.
 
 ## Normalized rollout table
 
-`marin.evaluation.rollouts` builds the versioned `rollouts_v1` table from normalized sample and
+`poorin.evaluation.rollouts` builds the versioned `rollouts_v1` table from normalized sample and
 step rows. It stores one ordered conversation part per row, keyed by
 `(task, doc_id, trial_id, turn_id, part_id)`: `task`, `doc_id`, and `trial_id` identify one model
 attempt, `turn_id` orders turns, and `part_id` orders content within a turn.
@@ -48,10 +48,10 @@ attempt, `turn_id` orders turns, and `part_id` orders content within a turn.
 ## Statistics
 
 A benchmark score is a mean over a finite item set, and a run does not always grade every item.
-`marin.evaluation.eval_stats` carries both facts as one `Measurement` and derives intervals on
+`poorin.evaluation.eval_stats` carries both facts as one `Measurement` and derives intervals on
 read: Wilson intervals for binary scores, bounds that account for ungraded items, and intervals
-for the difference between two runs. `marin.evaluation.eval_measurements` turns records into
-measurements, and `marin.evaluation.metric_selection` picks the metric and extraction filter
+for the difference between two runs. `poorin.evaluation.eval_measurements` turns records into
+measurements, and `poorin.evaluation.metric_selection` picks the metric and extraction filter
 presented as primary for each lm-eval task.
 
 ## Task sets

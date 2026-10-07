@@ -5,8 +5,8 @@ import json
 from pathlib import Path
 
 import pytest
-from marin.datakit.source_key import DatakitArtifactPath, datakit_source_key, datakit_source_path
-from marin.execution.artifact import read_artifact, write_artifact
+from poorin.datakit.source_key import DatakitArtifactPath, datakit_source_key, datakit_source_path
+from poorin.execution.artifact import read_artifact, write_artifact
 from pydantic import BaseModel
 
 

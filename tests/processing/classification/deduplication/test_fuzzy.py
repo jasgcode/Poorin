@@ -11,9 +11,9 @@ import dupekit
 import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
-from marin.datakit.normalize import NormalizedData, generate_id, normalize_to_parquet
-from marin.processing.classification.deduplication.fuzzy_dups import compute_fuzzy_dups_attrs
-from marin.processing.classification.deduplication.fuzzy_minhash import (
+from poorin.datakit.normalize import NormalizedData, generate_id, normalize_to_parquet
+from poorin.processing.classification.deduplication.fuzzy_dups import compute_fuzzy_dups_attrs
+from poorin.processing.classification.deduplication.fuzzy_minhash import (
     MinHashAttrData,
     MinHashParams,
     _minhash_batch,

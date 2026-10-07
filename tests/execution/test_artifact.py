@@ -13,7 +13,7 @@ import json
 import logging
 
 import pytest
-from marin.execution.artifact import (
+from poorin.execution.artifact import (
     Artifact,
     FingerprintMismatchError,
     StepRecordIdentity,
@@ -22,7 +22,7 @@ from marin.execution.artifact import (
     write_artifact,
     write_step_record,
 )
-from marin.execution.lazy import ArtifactStep, run
+from poorin.execution.lazy import ArtifactStep, run
 from pydantic import BaseModel
 
 # A frozen calendar version for the toy artifacts these tests build.

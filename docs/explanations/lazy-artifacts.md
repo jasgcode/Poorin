@@ -18,14 +18,14 @@ materialized result type produced when the step runs:
   checkpoint (consumed by `train_lm`'s `init_from`).
 
 The result types are `Artifact` subclasses that live with their producers:
-`TokenizedCache` in `marin.processing.tokenize.tokenize`, `LevanterCheckpoint` in
-`marin.training.training`. They describe the materialized result, not the handle itself.
-Import the handle from `marin.execution.lazy`:
+`TokenizedCache` in `poorin.processing.tokenize.tokenize`, `LevanterCheckpoint` in
+`poorin.training.training`. They describe the materialized result, not the handle itself.
+Import the handle from `poorin.execution.lazy`:
 
 ```python
-from marin.execution.lazy import ArtifactStep              # the handle
-from marin.processing.tokenize.tokenize import TokenizedCache
-from marin.training.training import LevanterCheckpoint     # materialized result types
+from poorin.execution.lazy import ArtifactStep              # the handle
+from poorin.processing.tokenize.tokenize import TokenizedCache
+from poorin.training.training import LevanterCheckpoint     # materialized result types
 ```
 
 A handle's storage address is its explicit `{prefix}/{name}/{version}` path. There is no
@@ -47,7 +47,7 @@ experiment step. New library code should not construct
 `ArtifactStep` or `StepSpec` objects, compose a graph, or refer to specific artifact handles
 or output locations. Library tests continue to cover reusable behavior.
 
-`marin.experiment.data` and `marin.experiment.train` currently provide library builders that
+`poorin.experiment.data` and `poorin.experiment.train` currently provide library builders that
 construct handles. They remain supported APIs, but do not establish a location for new
 pipeline builders. The `Artifact` and `ArtifactStep` types themselves remain in the
 execution framework.
@@ -119,7 +119,7 @@ artifact**, in argument order — so the driver gets the resolved values directl
 read. `resolve(handle)` is `run` for a single handle, returning its one artifact.
 
 ```python
-from marin.execution.lazy import resolve
+from poorin.execution.lazy import resolve
 
 checkpoint = build()                      # returns ArtifactStep[LevanterCheckpoint]; nothing runs yet
 result = resolve(checkpoint)              # materializes deps, runs training, returns LevanterCheckpoint
@@ -167,8 +167,8 @@ of the cache entirely and always rebuild.
 without moving or recomputing it:
 
 ```python
-from marin.execution.lazy import ArtifactStep
-from marin.processing.tokenize.tokenize import TokenizedCache
+from poorin.execution.lazy import ArtifactStep
+from poorin.processing.tokenize.tokenize import TokenizedCache
 
 dclm_tokenized = ArtifactStep.adopt(
     "tokenized/dclm-baseline",
@@ -191,7 +191,7 @@ in the dependency graph with full provenance tracking.
 
 ## Data builders
 
-`marin.experiment.data` provides concise builders that return `ArtifactStep[TokenizedCache]`
+`poorin.experiment.data` provides concise builders that return `ArtifactStep[TokenizedCache]`
 handles:
 
 - `tokenized(name, *, tokenizer, version, source=…, paths=…, raw=…, glob=…)` — tokenize a
@@ -208,7 +208,7 @@ For a custom single step (a filter, conversion, or format change), construct an
 `ArtifactStep(...)` directly, or use `apply` for the common keyword-input shape:
 
 ```python
-from marin.execution.lazy import OUT, apply
+from poorin.execution.lazy import OUT, apply
 
 # fn receives the resolved inputs as keyword arguments; OUT resolves to the output path,
 # and any ArtifactStep input is resolved to its output path automatically.

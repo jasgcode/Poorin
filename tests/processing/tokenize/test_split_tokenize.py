@@ -17,21 +17,21 @@ import pyarrow.parquet as pq
 import pytest
 from levanter.data.text.formats import PrebuiltLmDatasetFormat, TextLmDatasetFormat
 from levanter.store.cache import CacheLedger, TreeCache
-from marin.datakit.normalize import NormalizedData, generate_id
-from marin.processing.tokenize import _core as tokenize_core
-from marin.processing.tokenize._core import IdPreservingPreprocessor, attach_id, split_oversized_token_record
-from marin.processing.tokenize.attributes import (
+from poorin.datakit.normalize import NormalizedData, generate_id
+from poorin.processing.tokenize import _core as tokenize_core
+from poorin.processing.tokenize._core import IdPreservingPreprocessor, attach_id, split_oversized_token_record
+from poorin.processing.tokenize.attributes import (
     TokenizeAttributesConfig,
     TokenizedAttrData,
     tokenize_attributes,
     tokenize_attributes_step,
 )
-from marin.processing.tokenize.store_builder import (
+from poorin.processing.tokenize.store_builder import (
     BuildLevanterStoreConfig,
     build_levanter_store,
     build_levanter_store_step,
 )
-from marin.processing.tokenize.tokenize import TokenizeConfig, tokenize
+from poorin.processing.tokenize.tokenize import TokenizeConfig, tokenize
 
 
 class _FakeProcessor:

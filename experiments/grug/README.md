@@ -32,7 +32,7 @@ Variant-specific guidance lives in `experiments/grug/variants.md`.
 
 ## Quickstart launch
 
-The launcher takes the shared experiment CLI (`marin.experiment.cli`): `--version` sets the
+The launcher takes the shared experiment CLI (`poorin.experiment.cli`): `--version` sets the
 checkpoint version and is required, and `--run` builds the trial (without it the lowered plan is
 printed and nothing runs). Use `--version dev` for normal experiments, diagnostics, ablations, and
 sweeps. A `dev` version rebuilds on each invocation and prefixes the artifact name with

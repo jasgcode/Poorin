@@ -30,9 +30,9 @@ from levanter.layers.rotary import Llama3RotaryEmbeddingsConfig
 from levanter.models.llama import LlamaConfig
 from levanter.models.qwen import Qwen3Config
 from levanter.optim.adamh import AdamHConfig
-from marin.processing.tokenize.data_configs import get_vocab_size_for_tokenizer
-from marin.scaling_laws import CandidateConfig
-from marin.scaling_laws.tpu_utils import V4_SPEC
+from poorin.processing.tokenize.data_configs import get_vocab_size_for_tokenizer
+from poorin.scaling_laws import CandidateConfig
+from poorin.scaling_laws.tpu_utils import V4_SPEC
 
 # --- Constants ---
 SEQ_LEN: int = 4096

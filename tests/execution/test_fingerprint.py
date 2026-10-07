@@ -16,10 +16,10 @@ from enum import Enum
 from pathlib import Path
 
 import jax.numpy as jnp
-import marin.execution.fingerprint as fingerprint_module
 import numpy as np
+import poorin.execution.fingerprint as fingerprint_module
 import pytest
-from marin.execution.fingerprint import canonical_json, fingerprint_hash, register_fingerprint, set_strict
+from poorin.execution.fingerprint import canonical_json, fingerprint_hash, register_fingerprint, set_strict
 
 
 @pytest.fixture(autouse=True)

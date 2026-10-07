@@ -189,7 +189,7 @@ requires the owner to quiesce and seal its writers first.
 `marin-finestore` contains storage, transactions, read views, compaction, generic cache adapters,
 and the versioned `finestore.eval` schema and table API. Harbor and Evalchemy map their own native
 formats into that contract and use the table API to write dashboard-ready `samples` and `steps`
-without depending on `marin-core`. The contract also defines evaluator-neutral `rollouts_vN` rows
+without depending on `poorin`. The contract also defines evaluator-neutral `rollouts_vN` rows
 keyed by evaluation identity, turn, and part; Marin converts the evaluator-owned rows into the table
 for the current schema version.
 Evaldash reads the same schemas. FineStore contains no evaluator conversion policy, Finelog

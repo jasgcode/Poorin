@@ -1,14 +1,14 @@
 # Copyright The Marin Authors
 # SPDX-License-Identifier: Apache-2.0
 
-"""Behaviour tests for deferred artifact versions (``marin.execution.build_context``).
+"""Behaviour tests for deferred artifact versions (``poorin.execution.build_context``).
 
 Covers the resolution contract (explicit wins, codex fallback, no-context error), context nesting
 and restoration on exception, and the unused-override signal that guards against typos.
 """
 
 import pytest
-from marin.execution.build_context import (
+from poorin.execution.build_context import (
     BuildContext,
     VersionCodex,
     build_context,

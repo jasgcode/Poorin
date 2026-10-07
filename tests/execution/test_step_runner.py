@@ -6,9 +6,9 @@ import json
 import os
 from pathlib import Path
 
-import marin.execution.step_runner as step_runner_module
+import poorin.execution.step_runner as step_runner_module
 import pytest
-from marin.execution.artifact import (
+from poorin.execution.artifact import (
     FINGERPRINT_KEY,
     VERSION_KEY,
     Artifact,
@@ -16,10 +16,10 @@ from marin.execution.artifact import (
     read_record,
     write_artifact,
 )
-from marin.execution.remote import RemoteCallable, remote
-from marin.execution.step_runner import StepRunner
-from marin.execution.step_spec import StepSpec
-from marin.execution.step_status import STATUS_SUCCESS, StatusFile, worker_id
+from poorin.execution.remote import RemoteCallable, remote
+from poorin.execution.step_runner import StepRunner
+from poorin.execution.step_spec import StepSpec
+from poorin.execution.step_status import STATUS_SUCCESS, StatusFile, worker_id
 from poorin_fray.current_client import current_client, set_current_client
 from poorin_fray.types import ResourceConfig
 from pydantic import BaseModel

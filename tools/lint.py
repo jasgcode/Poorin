@@ -79,7 +79,7 @@ LICENSE_HEADERS = (
 )
 # Marin's code is linted with its own ruff configuration passed explicitly, as Marin did: ruff's
 # discovery would classify its first-party imports differently. Everything else uses discovery.
-RUFF_CONFIGS = (("lib/marin/", "lib/marin/pyproject.toml"),)
+RUFF_CONFIGS = (("lib/poorin/", "lib/poorin/pyproject.toml"),)
 
 
 class _ConfigLoader(yaml.SafeLoader):

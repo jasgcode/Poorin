@@ -1,7 +1,7 @@
 # Copyright The Marin Authors
 # SPDX-License-Identifier: Apache-2.0
 
-from marin.profiling.semantics import estimate_flop_proxy
+from poorin.profiling.semantics import estimate_flop_proxy
 
 
 def test_estimate_flop_proxy_attention_handles_nonpositive_dims() -> None:

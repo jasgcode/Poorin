@@ -7,7 +7,7 @@ import textwrap
 
 import pytest
 from draccus.utils import ParsingError
-from marin.evaluation.model_config import (
+from poorin.evaluation.model_config import (
     ServeBackend,
     ServeConfig,
     load_model_config,

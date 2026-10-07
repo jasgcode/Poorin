@@ -7,8 +7,8 @@ import re
 from collections.abc import Callable
 from typing import TypeVar
 
-from marin.training.run_environment import extras_for_resources
-from marin.training.training import resolve_training_env
+from poorin.training.run_environment import extras_for_resources
+from poorin.training.training import resolve_training_env
 from poorin_fray.cluster import ResourceConfig
 from poorin_fray.current_client import current_client
 from poorin_fray.types import Entrypoint, JobRequest, create_environment

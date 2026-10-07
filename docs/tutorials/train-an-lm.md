@@ -14,10 +14,10 @@ A Marin training script builds a lazy `ArtifactStep[LevanterCheckpoint]` handle,
 a runnable step graph, and passes it to `StepRunner`. Nothing executes at import time.
 
 ```python
-from marin.execution.lazy import ArtifactStep, lower
-from marin.execution.step_runner import StepRunner
-from marin.experiment.train import train_lm
-from marin.training.training import LevanterCheckpoint
+from poorin.execution.lazy import ArtifactStep, lower
+from poorin.execution.step_runner import StepRunner
+from poorin.experiment.train import train_lm
+from poorin.training.training import LevanterCheckpoint
 
 def build() -> ArtifactStep[LevanterCheckpoint]:
     ...  # assemble the checkpoint handle
@@ -72,10 +72,10 @@ weighted = {handle: 1.0 for handle in train.values()}
 Nemotron-CC quality split. It defines no mixture weights; this example weights every split
 equally. The splits tokenize a raw Nemotron-CC download that must already exist under
 `MARIN_PREFIX`; `experiments/datasets/nemotron.py` names the path. To tokenize a custom
-dataset instead, use `tokenized` from `marin.experiment.data`:
+dataset instead, use `tokenized` from `poorin.experiment.data`:
 
 ```python
-from marin.experiment.data import tokenized
+from poorin.experiment.data import tokenized
 from experiments.marin_tokenizer import marin_tokenizer
 
 my_data = tokenized(
@@ -94,10 +94,10 @@ of them. The complete `build()` function:
 ```python
 from poorin_fray.cluster import ResourceConfig
 from levanter.optim.config import AdamConfig
-from marin.execution.lazy import ArtifactStep, lower
-from marin.execution.step_runner import StepRunner
-from marin.experiment.train import EvalSuite, train_lm
-from marin.training.training import LevanterCheckpoint
+from poorin.execution.lazy import ArtifactStep, lower
+from poorin.execution.step_runner import StepRunner
+from poorin.experiment.train import EvalSuite, train_lm
+from poorin.training.training import LevanterCheckpoint
 from experiments.datasets.nemotron import nemotron_datasets
 from experiments.datasets.paloma import paloma_datasets
 from experiments.datasets.uncheatable import uncheatable_datasets

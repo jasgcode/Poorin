@@ -7,8 +7,8 @@ import json
 
 import pytest
 from huggingface_hub.errors import HfHubHTTPError
-from marin.datakit.download import huggingface as hf_download
-from marin.datakit.download.huggingface import (
+from poorin.datakit.download import huggingface as hf_download
+from poorin.datakit.download.huggingface import (
     DownloadConfig,
     FileDownloadTask,
     _relative_path_in_source,

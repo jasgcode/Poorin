@@ -55,7 +55,7 @@ extra:
 
 watch:
   - docs/
-  - lib/marin/src/
+  - lib/poorin/src/
 
 # Specs, plans, and the decision log under docs/poorin/ link into the repository, not the site.
 exclude_docs: |
@@ -120,7 +120,7 @@ plugins:
       default_handler: python
       handlers:
         python:
-          paths: [".", "lib/marin/src"]
+          paths: [".", "lib/poorin/src"]
           inventories:
             - https://docs.python.org/3/objects.inv
             - https://jax.readthedocs.io/en/latest/objects.inv

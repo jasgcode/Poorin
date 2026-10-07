@@ -6,8 +6,8 @@
 import math
 
 import pytest
-from marin.evaluation.eval_measurements import measurement_from_record, task_item_count
-from marin.evaluation.eval_stats import (
+from poorin.evaluation.eval_measurements import measurement_from_record, task_item_count
+from poorin.evaluation.eval_stats import (
     AggregationProtocol,
     CohortMode,
     Completeness,
@@ -25,7 +25,7 @@ from marin.evaluation.eval_stats import (
     select,
     wilson_interval,
 )
-from marin.evaluation.records import (
+from poorin.evaluation.records import (
     BenchmarkMetadataRef,
     BenchmarkMetricRef,
     EvalchemyRef,

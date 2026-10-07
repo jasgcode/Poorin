@@ -7,16 +7,16 @@ from random import Random
 
 import pyarrow.parquet as pq
 import pytest
-from marin.datakit.normalize import NormalizedData
-from marin.datakit.source_key import datakit_source_key
-from marin.processing.classification.deduplication.fuzzy_dups import FuzzyDupsAttrData, FuzzyDupsPerSource
-from marin.processing.classification.deduplication.fuzzy_minhash import MinHashAttrData, MinHashParams
-from marin.processing.classification.deduplication.fuzzy_verification import FuzzyVerificationParams
-from marin.processing.classification.deduplication.verify_fuzzy_dups import (
+from poorin.datakit.normalize import NormalizedData
+from poorin.datakit.source_key import datakit_source_key
+from poorin.processing.classification.deduplication.fuzzy_dups import FuzzyDupsAttrData, FuzzyDupsPerSource
+from poorin.processing.classification.deduplication.fuzzy_minhash import MinHashAttrData, MinHashParams
+from poorin.processing.classification.deduplication.fuzzy_verification import FuzzyVerificationParams
+from poorin.processing.classification.deduplication.verify_fuzzy_dups import (
     FuzzyVerificationStoreConfig,
     LocalRepresentativeParams,
 )
-from marin.processing.classification.deduplication.verify_fuzzy_dups import (
+from poorin.processing.classification.deduplication.verify_fuzzy_dups import (
     verify_fuzzy_dups as _verify_fuzzy_dups,
 )
 from poorin_fray.current_client import set_current_client

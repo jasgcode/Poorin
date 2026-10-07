@@ -5,9 +5,9 @@ import gzip
 import json
 from pathlib import Path
 
-from marin.profiling.compare_bundle import run_profile_comparison_bundle
-from marin.profiling.ingest import summarize_trace
-from marin.profiling.tracking import RegressionThresholds, summarize_regression_history
+from poorin.profiling.compare_bundle import run_profile_comparison_bundle
+from poorin.profiling.ingest import summarize_trace
+from poorin.profiling.tracking import RegressionThresholds, summarize_regression_history
 
 
 def test_run_profile_comparison_bundle_writes_expected_outputs(tmp_path: Path) -> None:

@@ -11,7 +11,7 @@ from pathlib import Path
 import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
-from marin.datakit.decon import (
+from poorin.datakit.decon import (
     EvalBloom,
     NGramConfig,
     _bloom_hash,
@@ -23,7 +23,7 @@ from marin.datakit.decon import (
     decon_to_parquet,
     merge_eval_blooms,
 )
-from marin.datakit.normalize import NormalizedData
+from poorin.datakit.normalize import NormalizedData
 from poorin_fray.current_client import set_current_client
 from poorin_fray.local_backend import LocalClient
 

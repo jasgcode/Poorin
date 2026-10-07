@@ -7,9 +7,9 @@ The llama3-tokenized cache is pinned to its existing location so referencing it
 never re-tokenizes the corpus (~55B tokens).
 """
 
-from marin.execution.lazy import ArtifactStep
-from marin.experiment.data import dataset_main, tokenized
-from marin.processing.tokenize.tokenize import TokenizedCache
+from poorin.execution.lazy import ArtifactStep
+from poorin.experiment.data import dataset_main, tokenized
+from poorin.processing.tokenize.tokenize import TokenizedCache
 
 from experiments.llama import llama3_tokenizer
 

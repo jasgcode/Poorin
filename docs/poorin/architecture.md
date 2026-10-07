@@ -52,7 +52,7 @@ Modules marked "(review)" below, grouped by why they look vestigial on a one-GPU
 - **NCCL stall diagnostics:** `poorin_rigging.telemetry.probes` and its `nccl`, `nccl_client`,
   `nccl_ras`, and `runner` modules, with `poorin_rigging.telemetry.metrics` and the fixtures in
   `poorin_rigging.testing`. A single-GPU run has no NCCL communicators.
-- **Evaluation leftovers from the deleted serving flow:** `marin.evaluation.eval_env`,
+- **Evaluation leftovers from the deleted serving flow:** `poorin.evaluation.eval_env`,
   `model_config`, `model_identity`, and most of `lm_eval_samples`;
   `finestore.migrations.m0001_manifest`, which upgrades upstream archives.
 - **Code that no longer serves its purpose:** `levanter.recovery` and `levanter.recovery.types`,
@@ -64,7 +64,7 @@ Modules marked "(review)" below, grouped by why they look vestigial on a one-GPU
   backward-compatibility shims (AGENTS.md: no backward compatibility); `poorin_finelog.client`
   re-exports `object_query_client` and `remote_log_handler`, which nothing else uses.
 - **TPU-only code kept on purpose** (D81): `levanter.kernels.pallas.splash_attention`, the
-  `pallas_tpu` fused cross-entropy, and `marin.scaling_laws.tpu_utils`.
+  `pallas_tpu` fused cross-entropy, and `poorin.scaling_laws.tpu_utils`.
 
 ## Modules
 
@@ -306,7 +306,7 @@ Modules marked "(review)" below, grouped by why they look vestigial on a one-GPU
 | `levanter.utils.jax_utils` | JAX helpers: CPU-device contexts, multihost sync and barriers, tree key paths, sharding | R1 |
 | `levanter.utils.logging` | Logging setup via poorin_rigging, loading-time iterator, transformers warning suppression | R2 |
 | `levanter.utils.mesh` | MeshConfig and JAX mesh construction from ICI and DCN axis sizes | R1 |
-| `levanter.utils.profile_dirs` | Resolves and mirrors profiler output directories for a W&B run | `marin.profiling.cli` |
+| `levanter.utils.profile_dirs` | Resolves and mirrors profiler output directories for a W&B run | `poorin.profiling.cli` |
 | `levanter.utils.py_utils` | CPU core count, dataclass default init, global RNG seeding, fail-safe JSON encoder | R1 |
 | `levanter.utils.stat_utils` | RunningMean accumulator for evaluation metrics | R2 |
 | `levanter.utils.thread_utils` | Blocking wait on coroutines from sync code; async iterator wrapper | R1 |
@@ -317,95 +317,95 @@ Modules marked "(review)" below, grouped by why they look vestigial on a one-GPU
 
 | Module | Purpose | Reached from |
 |---|---|---|
-| `marin` | Package marker | package |
-| `marin.datakit` | Datakit package: standard Parquet format notes and `part-NNNNN-of-MMMMM` filename helper | R1 |
-| `marin.datakit.canonical` | Package marker | package |
-| `marin.datakit.canonical.fineweb_edu` | FineWeb-Edu download step from Hugging Face at a pinned revision | `marin.datakit.canonical.fineweb_edu` |
-| `marin.datakit.chat_template` | Marin chat template string shared by tokenizer export and Datakit rendering | R1 |
-| `marin.datakit.copartitioned` | Co-partitioned input/output shard layout and source manifest for Datakit stages | `marin.processing.classification.deduplication.fuzzy_dups` |
-| `marin.datakit.decon` | Bloom-filter n-gram decontamination of normalized data against eval text, emitting attributes | `marin.datakit.decon` |
-| `marin.datakit.download` | Package marker | R1 |
-| `marin.datakit.download.http_session` | Retrying `requests.Session` factory for HTTP downloaders | `marin.datakit.download.nemotron_v1` |
-| `marin.datakit.download.huggingface` | Streams a Hugging Face dataset repo to an fsspec path; download step builder | R1 |
-| `marin.datakit.download.nemotron_v1` | Nemotron-CC v1 download from Common Crawl and per-split normalize steps | `marin.datakit.download.nemotron_v1` |
-| `marin.datakit.download.uncheatable_eval` | Downloads and normalizes the latest Uncheatable Eval dumps from GitHub | `experiments.datasets.uncheatable` |
-| `marin.datakit.download.zstd_jsonl` | Streaming reader for zstd-compressed JSONL download sources | `marin.datakit.download.nemotron_v1` |
-| `marin.datakit.normalize` | Normalizes raw JSONL/Parquet into Datakit Parquet with content ids, dedup, sorted partitions | R1 |
-| `marin.datakit.source_key` | Strips Marin bucket and prefix roots to give Datakit artifacts stable source keys | R1 |
-| `marin.evaluation` | Package marker | R1 |
-| `marin.evaluation.endpoint` | OpenAI-compatible endpoint and tokenizer types for a served model under evaluation | `marin.evaluation.lm_eval` |
-| `marin.evaluation.eval_env` | Env-var allowlist an eval orchestrator forwards to serve and harness jobs (review) | `marin.evaluation.eval_env` |
-| `marin.evaluation.eval_measurements` | Converts eval run records into statistics-engine measurements; owns harness output shapes | `marin.evaluation.eval_measurements` |
-| `marin.evaluation.eval_stats` | Eval statistics: measurements, coverage, Wilson and attrition-widened intervals, cohort selection | `marin.evaluation.eval_stats` |
-| `marin.evaluation.evaluation_config` | `EvalTaskConfig` lm-eval task spec, results-directory identity, Levanter task conversion | R1 |
-| `marin.evaluation.lm_eval` | Runs lm-evaluation-harness in an isolated uv env against an OpenAI-compatible endpoint | `marin.evaluation.lm_eval` |
-| `marin.evaluation.lm_eval_samples` | Exports lm-eval sample archives and summarizes Evalchemy output into task coverage (review) | `marin.evaluation.eval_measurements` |
-| `marin.evaluation.metric_selection` | Picks the primary lm-eval metric and extraction filter for a task | `marin.evaluation.metric_selection` |
-| `marin.evaluation.model_config` | Model catalog schema: vLLM serve, generation, Harbor agent configs loaded from YAML (review) | `marin.evaluation.model_config` |
-| `marin.evaluation.model_identity` | Config digest that separates eval runs sharing a model display name (review) | `marin.evaluation.model_identity` |
-| `marin.evaluation.model_loading` | Loads a Levanter or Hugging Face checkpoint for Levanter-based eval entrypoints | `marin.evaluation.trace_labeled_eval` |
-| `marin.evaluation.records` | Pydantic eval-run record schema and its `record.json` object-store read and write | `marin.evaluation.records` |
-| `marin.evaluation.rollouts` | Builds the FineStore rollout table from archived eval samples and steps | `marin.evaluation.rollouts` |
-| `marin.evaluation.trace_labeled_eval` | Levanter labeled-loss evaluation on OpenAI-style agent traces with resumable results | `marin.evaluation.trace_labeled_eval` |
-| `marin.execution` | Package marker | R1 |
-| `marin.execution.artifact` | `Artifact` base type, its on-disk record, and the fingerprint drift check | R1 |
-| `marin.execution.build_context` | Ambient build context resolving deferred artifact versions through a `VersionCodex` | R2 |
-| `marin.execution.fingerprint` | Canonical JSON encoding and hashing of step configs for drift detection | R1 |
-| `marin.execution.lazy` | Lazy artifact steps: `name@version` handles, step context, lowering to the step runner | R1 |
-| `marin.execution.remote` | `@remote` decorator that submits a step function as a Fray job | R1 |
-| `marin.execution.step_runner` | DAG scheduler running `StepSpec`s with caching, locking, status writes, Fray dispatch | R1 |
-| `marin.execution.step_spec` | `StepSpec` dataclass: step name, deps, hash attributes, output path, function | R1 |
-| `marin.execution.step_status` | Per-step status files and heartbeat lock files under each output path | R1 |
-| `marin.experiment` | Package marker; docstring points to the `data`, `sweep`, and `train` submodules | R1 |
-| `marin.experiment.cli` | Click options (`--version`, `--override`, `--run`) that plan or build an experiment graph | R1 |
-| `marin.experiment.data` | Lazy dataset builders: HF and raw downloads, tokenized, pretokenized, and mixture handles | R1 |
-| `marin.experiment.namespacing` | Prefixes mutable training artifact names with the user to avoid path collisions | R2 |
-| `marin.experiment.sweep` | Grid enumeration and one trial handle per grid point for hyperparameter sweeps | `marin.experiment.sweep` |
-| `marin.experiment.train` | `train_lm`: assembles a Levanter LM training step with mesh, checkpointer, evals | R1 |
-| `marin.processing` | Package marker | R1 |
-| `marin.processing.classification` | Package marker | `marin.processing.classification.deduplication.exact` |
-| `marin.processing.classification.consolidate` | Filters documents or removes spans by joining co-partitioned attribute files | `marin.processing.classification.consolidate` |
-| `marin.processing.classification.deduplication` | Package marker | `marin.processing.classification.deduplication.exact` |
-| `marin.processing.classification.deduplication.connected_components` | Hash-to-Min connected components over Zephyr datasets for fuzzy-duplicate clustering | `marin.processing.classification.deduplication.fuzzy_dups` |
-| `marin.processing.classification.deduplication.dedup_commons` | Shared dedup helpers: input discovery, batch loading, dup counters, W&B summary | `marin.processing.classification.deduplication.exact` |
-| `marin.processing.classification.deduplication.exact` | Exact paragraph and document deduplication by text hash, writing duplicate attributes | `marin.processing.classification.deduplication.exact` |
-| `marin.processing.classification.deduplication.fuzzy_dups` | LSH-graph connected components over MinHash buckets, producing fuzzy-duplicate cluster attributes | `marin.processing.classification.deduplication.fuzzy_dups` |
-| `marin.processing.classification.deduplication.fuzzy_minhash` | Computes dupekit MinHash LSH bucket attributes per normalized Datakit shard | `marin.processing.classification.deduplication.fuzzy_minhash` |
-| `marin.processing.classification.deduplication.fuzzy_verification` | Full-text checks for fuzzy-duplicate candidates: n-gram Jaccard, containment, line-count ratio | `marin.processing.classification.deduplication.verify_fuzzy_dups` |
-| `marin.processing.classification.deduplication.verify_fuzzy_dups` | Verifies fuzzy-duplicate clusters against full text and writes verified duplicate attributes | `marin.processing.classification.deduplication.verify_fuzzy_dups` |
-| `marin.processing.tokenize` | Re-exports tokenize configs, mixture config builders, and cache stats readers | R1 |
-| `marin.processing.tokenize._core` | Shared tokenization internals: file bundling, id-preserving batching, oversized-record splitting | R1 |
-| `marin.processing.tokenize.attributes` | Stage A: tokenizes normalized Datakit data into co-partitioned `input_ids` attribute Parquet | R1 |
-| `marin.processing.tokenize.cache_stats` | Reads per-split `.stats.json` document and token counts of tokenized caches | R1 |
-| `marin.processing.tokenize.data_configs` | Builds Levanter mixture data configs from tokenized sources; tokenizer vocab sizes | R1 |
-| `marin.processing.tokenize.download_pretokenized` | Downloads a pretokenized Levanter cache from Hugging Face as a dataset source | R1 |
-| `marin.processing.tokenize.store_builder` | Stage B: writes tokenized records into a sharded Levanter cache with stats | R1 |
-| `marin.processing.tokenize.tokenize` | Legacy end-to-end tokenization of files or HF datasets into a Levanter cache | R1 |
-| `marin.profiling` | Package marker for JAX and xprof profile ingestion and query tools | `marin.profiling.cli` |
-| `marin.profiling.cli` | CLI to summarize, query, and compare JAX profile traces before and after | `marin.profiling.cli` |
-| `marin.profiling.compare_bundle` | One-shot compare, regression-track, and report run over two profile summaries | `marin.profiling.cli` |
-| `marin.profiling.ingest` | Downloads W&B profile artifacts and summarizes Perfetto/Chrome traces into profile summaries | `marin.profiling.cli` |
-| `marin.profiling.publish` | Publishes profile summaries and reports as W&B artifacts | `marin.profiling.cli` |
-| `marin.profiling.query` | Queries and diffs profile summaries: hot ops, step classes, gap contexts | `marin.profiling.cli` |
-| `marin.profiling.report` | Markdown report generation from profile summaries | `marin.profiling.cli` |
-| `marin.profiling.schema` | Versioned dataclass schema for profile summaries and its dict parser | `marin.profiling.cli` |
-| `marin.profiling.semantics` | Op-name canonicalization, semantic family classification, shape signatures, FLOP proxies | `marin.profiling.cli` |
-| `marin.profiling.trace_summary` | Engine turning trace events into a `ProfileSummary`: step times, hot ops, gaps | `marin.profiling.cli` |
-| `marin.profiling.tracking` | Before/after profile regression thresholds and JSONL regression history | `marin.profiling.cli` |
-| `marin.profiling.xplane` | Ingests XPlane protobuf profiles directly and through xprof tables | `marin.profiling.cli` |
-| `marin.pytest_timeout_guard` | pytest plugin that hard-kills a test when pytest-timeout's signal handler fails | `marin.pytest_timeout_guard` |
-| `marin.scaling_laws` | Re-exports isoFLOP analysis, scaling plots, and TPU slice helpers | `marin.scaling_laws` |
-| `marin.scaling_laws.eval_metrics_reader` | Reads `tracker_metrics.jsonl` eval records from finished runs, with W&B backfill | `marin.scaling_laws.eval_metrics_reader` |
-| `marin.scaling_laws.isoflop_analysis` | IsoFLOP scaling-law fitting and compute-optimal config prediction from run records | `marin.scaling_laws.isoflop_analysis` |
-| `marin.scaling_laws.scaling_plots` | Plotly isoFLOP and scaling-fit plots, saved locally or uploaded to W&B | `marin.scaling_laws.scaling_plots` |
-| `marin.scaling_laws.tpu_utils` | TPU v4/v5p memory specs and slice-size selection (review) | `marin.scaling_laws.tpu_utils` |
-| `marin.training` | Lazy re-export of LM and DPO pod training configs and run functions | R1 |
-| `marin.training.run_environment` | Training-process env defaults (git commit, HF, TPU logging) and accelerator uv extras | R1 |
-| `marin.training.training` | `LevanterCheckpoint` artifact, LM/DPO train configs, env setup, in-process Levanter launch | R1 |
-| `marin.utilities` | Package marker | R1 |
-| `marin.utilities.json_encoder` | JSON encoder for configs: dataclasses, dtypes, enums, paths, timedeltas | R1 |
-| `marin.utilities.provenance` | Writes provenance JSON sidecars for raw downloads | R1 |
-| `marin.utilities.wandb_utils` | W&B run init when an API key is set; entity and project defaults | `marin.profiling.cli` |
+| `poorin` | Package marker | package |
+| `poorin.datakit` | Datakit package: standard Parquet format notes and `part-NNNNN-of-MMMMM` filename helper | R1 |
+| `poorin.datakit.canonical` | Package marker | package |
+| `poorin.datakit.canonical.fineweb_edu` | FineWeb-Edu download step from Hugging Face at a pinned revision | `poorin.datakit.canonical.fineweb_edu` |
+| `poorin.datakit.chat_template` | Marin chat template string shared by tokenizer export and Datakit rendering | R1 |
+| `poorin.datakit.copartitioned` | Co-partitioned input/output shard layout and source manifest for Datakit stages | `poorin.processing.classification.deduplication.fuzzy_dups` |
+| `poorin.datakit.decon` | Bloom-filter n-gram decontamination of normalized data against eval text, emitting attributes | `poorin.datakit.decon` |
+| `poorin.datakit.download` | Package marker | R1 |
+| `poorin.datakit.download.http_session` | Retrying `requests.Session` factory for HTTP downloaders | `poorin.datakit.download.nemotron_v1` |
+| `poorin.datakit.download.huggingface` | Streams a Hugging Face dataset repo to an fsspec path; download step builder | R1 |
+| `poorin.datakit.download.nemotron_v1` | Nemotron-CC v1 download from Common Crawl and per-split normalize steps | `poorin.datakit.download.nemotron_v1` |
+| `poorin.datakit.download.uncheatable_eval` | Downloads and normalizes the latest Uncheatable Eval dumps from GitHub | `experiments.datasets.uncheatable` |
+| `poorin.datakit.download.zstd_jsonl` | Streaming reader for zstd-compressed JSONL download sources | `poorin.datakit.download.nemotron_v1` |
+| `poorin.datakit.normalize` | Normalizes raw JSONL/Parquet into Datakit Parquet with content ids, dedup, sorted partitions | R1 |
+| `poorin.datakit.source_key` | Strips Marin bucket and prefix roots to give Datakit artifacts stable source keys | R1 |
+| `poorin.evaluation` | Package marker | R1 |
+| `poorin.evaluation.endpoint` | OpenAI-compatible endpoint and tokenizer types for a served model under evaluation | `poorin.evaluation.lm_eval` |
+| `poorin.evaluation.eval_env` | Env-var allowlist an eval orchestrator forwards to serve and harness jobs (review) | `poorin.evaluation.eval_env` |
+| `poorin.evaluation.eval_measurements` | Converts eval run records into statistics-engine measurements; owns harness output shapes | `poorin.evaluation.eval_measurements` |
+| `poorin.evaluation.eval_stats` | Eval statistics: measurements, coverage, Wilson and attrition-widened intervals, cohort selection | `poorin.evaluation.eval_stats` |
+| `poorin.evaluation.evaluation_config` | `EvalTaskConfig` lm-eval task spec, results-directory identity, Levanter task conversion | R1 |
+| `poorin.evaluation.lm_eval` | Runs lm-evaluation-harness in an isolated uv env against an OpenAI-compatible endpoint | `poorin.evaluation.lm_eval` |
+| `poorin.evaluation.lm_eval_samples` | Exports lm-eval sample archives and summarizes Evalchemy output into task coverage (review) | `poorin.evaluation.eval_measurements` |
+| `poorin.evaluation.metric_selection` | Picks the primary lm-eval metric and extraction filter for a task | `poorin.evaluation.metric_selection` |
+| `poorin.evaluation.model_config` | Model catalog schema: vLLM serve, generation, Harbor agent configs loaded from YAML (review) | `poorin.evaluation.model_config` |
+| `poorin.evaluation.model_identity` | Config digest that separates eval runs sharing a model display name (review) | `poorin.evaluation.model_identity` |
+| `poorin.evaluation.model_loading` | Loads a Levanter or Hugging Face checkpoint for Levanter-based eval entrypoints | `poorin.evaluation.trace_labeled_eval` |
+| `poorin.evaluation.records` | Pydantic eval-run record schema and its `record.json` object-store read and write | `poorin.evaluation.records` |
+| `poorin.evaluation.rollouts` | Builds the FineStore rollout table from archived eval samples and steps | `poorin.evaluation.rollouts` |
+| `poorin.evaluation.trace_labeled_eval` | Levanter labeled-loss evaluation on OpenAI-style agent traces with resumable results | `poorin.evaluation.trace_labeled_eval` |
+| `poorin.execution` | Package marker | R1 |
+| `poorin.execution.artifact` | `Artifact` base type, its on-disk record, and the fingerprint drift check | R1 |
+| `poorin.execution.build_context` | Ambient build context resolving deferred artifact versions through a `VersionCodex` | R2 |
+| `poorin.execution.fingerprint` | Canonical JSON encoding and hashing of step configs for drift detection | R1 |
+| `poorin.execution.lazy` | Lazy artifact steps: `name@version` handles, step context, lowering to the step runner | R1 |
+| `poorin.execution.remote` | `@remote` decorator that submits a step function as a Fray job | R1 |
+| `poorin.execution.step_runner` | DAG scheduler running `StepSpec`s with caching, locking, status writes, Fray dispatch | R1 |
+| `poorin.execution.step_spec` | `StepSpec` dataclass: step name, deps, hash attributes, output path, function | R1 |
+| `poorin.execution.step_status` | Per-step status files and heartbeat lock files under each output path | R1 |
+| `poorin.experiment` | Package marker; docstring points to the `data`, `sweep`, and `train` submodules | R1 |
+| `poorin.experiment.cli` | Click options (`--version`, `--override`, `--run`) that plan or build an experiment graph | R1 |
+| `poorin.experiment.data` | Lazy dataset builders: HF and raw downloads, tokenized, pretokenized, and mixture handles | R1 |
+| `poorin.experiment.namespacing` | Prefixes mutable training artifact names with the user to avoid path collisions | R2 |
+| `poorin.experiment.sweep` | Grid enumeration and one trial handle per grid point for hyperparameter sweeps | `poorin.experiment.sweep` |
+| `poorin.experiment.train` | `train_lm`: assembles a Levanter LM training step with mesh, checkpointer, evals | R1 |
+| `poorin.processing` | Package marker | R1 |
+| `poorin.processing.classification` | Package marker | `poorin.processing.classification.deduplication.exact` |
+| `poorin.processing.classification.consolidate` | Filters documents or removes spans by joining co-partitioned attribute files | `poorin.processing.classification.consolidate` |
+| `poorin.processing.classification.deduplication` | Package marker | `poorin.processing.classification.deduplication.exact` |
+| `poorin.processing.classification.deduplication.connected_components` | Hash-to-Min connected components over Zephyr datasets for fuzzy-duplicate clustering | `poorin.processing.classification.deduplication.fuzzy_dups` |
+| `poorin.processing.classification.deduplication.dedup_commons` | Shared dedup helpers: input discovery, batch loading, dup counters, W&B summary | `poorin.processing.classification.deduplication.exact` |
+| `poorin.processing.classification.deduplication.exact` | Exact paragraph and document deduplication by text hash, writing duplicate attributes | `poorin.processing.classification.deduplication.exact` |
+| `poorin.processing.classification.deduplication.fuzzy_dups` | LSH-graph connected components over MinHash buckets, producing fuzzy-duplicate cluster attributes | `poorin.processing.classification.deduplication.fuzzy_dups` |
+| `poorin.processing.classification.deduplication.fuzzy_minhash` | Computes dupekit MinHash LSH bucket attributes per normalized Datakit shard | `poorin.processing.classification.deduplication.fuzzy_minhash` |
+| `poorin.processing.classification.deduplication.fuzzy_verification` | Full-text checks for fuzzy-duplicate candidates: n-gram Jaccard, containment, line-count ratio | `poorin.processing.classification.deduplication.verify_fuzzy_dups` |
+| `poorin.processing.classification.deduplication.verify_fuzzy_dups` | Verifies fuzzy-duplicate clusters against full text and writes verified duplicate attributes | `poorin.processing.classification.deduplication.verify_fuzzy_dups` |
+| `poorin.processing.tokenize` | Re-exports tokenize configs, mixture config builders, and cache stats readers | R1 |
+| `poorin.processing.tokenize._core` | Shared tokenization internals: file bundling, id-preserving batching, oversized-record splitting | R1 |
+| `poorin.processing.tokenize.attributes` | Stage A: tokenizes normalized Datakit data into co-partitioned `input_ids` attribute Parquet | R1 |
+| `poorin.processing.tokenize.cache_stats` | Reads per-split `.stats.json` document and token counts of tokenized caches | R1 |
+| `poorin.processing.tokenize.data_configs` | Builds Levanter mixture data configs from tokenized sources; tokenizer vocab sizes | R1 |
+| `poorin.processing.tokenize.download_pretokenized` | Downloads a pretokenized Levanter cache from Hugging Face as a dataset source | R1 |
+| `poorin.processing.tokenize.store_builder` | Stage B: writes tokenized records into a sharded Levanter cache with stats | R1 |
+| `poorin.processing.tokenize.tokenize` | Legacy end-to-end tokenization of files or HF datasets into a Levanter cache | R1 |
+| `poorin.profiling` | Package marker for JAX and xprof profile ingestion and query tools | `poorin.profiling.cli` |
+| `poorin.profiling.cli` | CLI to summarize, query, and compare JAX profile traces before and after | `poorin.profiling.cli` |
+| `poorin.profiling.compare_bundle` | One-shot compare, regression-track, and report run over two profile summaries | `poorin.profiling.cli` |
+| `poorin.profiling.ingest` | Downloads W&B profile artifacts and summarizes Perfetto/Chrome traces into profile summaries | `poorin.profiling.cli` |
+| `poorin.profiling.publish` | Publishes profile summaries and reports as W&B artifacts | `poorin.profiling.cli` |
+| `poorin.profiling.query` | Queries and diffs profile summaries: hot ops, step classes, gap contexts | `poorin.profiling.cli` |
+| `poorin.profiling.report` | Markdown report generation from profile summaries | `poorin.profiling.cli` |
+| `poorin.profiling.schema` | Versioned dataclass schema for profile summaries and its dict parser | `poorin.profiling.cli` |
+| `poorin.profiling.semantics` | Op-name canonicalization, semantic family classification, shape signatures, FLOP proxies | `poorin.profiling.cli` |
+| `poorin.profiling.trace_summary` | Engine turning trace events into a `ProfileSummary`: step times, hot ops, gaps | `poorin.profiling.cli` |
+| `poorin.profiling.tracking` | Before/after profile regression thresholds and JSONL regression history | `poorin.profiling.cli` |
+| `poorin.profiling.xplane` | Ingests XPlane protobuf profiles directly and through xprof tables | `poorin.profiling.cli` |
+| `poorin.pytest_timeout_guard` | pytest plugin that hard-kills a test when pytest-timeout's signal handler fails | `poorin.pytest_timeout_guard` |
+| `poorin.scaling_laws` | Re-exports isoFLOP analysis, scaling plots, and TPU slice helpers | `poorin.scaling_laws` |
+| `poorin.scaling_laws.eval_metrics_reader` | Reads `tracker_metrics.jsonl` eval records from finished runs, with W&B backfill | `poorin.scaling_laws.eval_metrics_reader` |
+| `poorin.scaling_laws.isoflop_analysis` | IsoFLOP scaling-law fitting and compute-optimal config prediction from run records | `poorin.scaling_laws.isoflop_analysis` |
+| `poorin.scaling_laws.scaling_plots` | Plotly isoFLOP and scaling-fit plots, saved locally or uploaded to W&B | `poorin.scaling_laws.scaling_plots` |
+| `poorin.scaling_laws.tpu_utils` | TPU v4/v5p memory specs and slice-size selection (review) | `poorin.scaling_laws.tpu_utils` |
+| `poorin.training` | Lazy re-export of LM and DPO pod training configs and run functions | R1 |
+| `poorin.training.run_environment` | Training-process env defaults (git commit, HF, TPU logging) and accelerator uv extras | R1 |
+| `poorin.training.training` | `LevanterCheckpoint` artifact, LM/DPO train configs, env setup, in-process Levanter launch | R1 |
+| `poorin.utilities` | Package marker | R1 |
+| `poorin.utilities.json_encoder` | JSON encoder for configs: dataclasses, dtypes, enums, paths, timedeltas | R1 |
+| `poorin.utilities.provenance` | Writes provenance JSON sidecars for raw downloads | R1 |
+| `poorin.utilities.wandb_utils` | W&B run init when an API key is set; entity and project defaults | `poorin.profiling.cli` |
 
 ### zephyr
 
@@ -531,12 +531,12 @@ Modules marked "(review)" below, grouped by why they look vestigial on a one-GPU
 | `finestore.cache` | PersistentKvCache: in-memory tier over FineStore named-object byte cache | R2 |
 | `finestore.commit` | Manifest snapshots and compare-and-swap commit publication | R2 |
 | `finestore.compaction` | Manifest-driven compaction that merges a table's shards | R2 |
-| `finestore.eval` | EvalSample and rollout schemas with typed FineStore writer and reader for eval outputs | `marin.evaluation.rollouts` |
+| `finestore.eval` | EvalSample and rollout schemas with typed FineStore writer and reader for eval outputs | `poorin.evaluation.rollouts` |
 | `finestore.layout` | Format-v2 metadata models and object-key layout for FineStore archives | R2 |
 | `finestore.migrations` | Ordered on-disk format migrations, run before writes | R2 |
 | `finestore.migrations.m0001_manifest` | Upgrades listing-based v1 archives to transactional v2 manifests (review) | R2 |
 | `finestore.reader` | Snapshot reads, filtering, and deduplication over manifest-selected shards | R2 |
-| `finestore.schema` | Derives pyarrow schemas from pydantic models or dataclasses | `marin.evaluation.rollouts` |
+| `finestore.schema` | Derives pyarrow schemas from pydantic models or dataclasses | `poorin.evaluation.rollouts` |
 | `finestore.shard_writer` | Streams Arrow batches into one atomically published Parquet shard | R2 |
 | `finestore.store` | Transactional FineStore writer with buffered level-zero batches and flush scheduling | R2 |
 

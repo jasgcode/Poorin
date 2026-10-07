@@ -8,23 +8,23 @@
     python -m experiments.tutorials.train_tiny_model --device v5litepod-16 --dataset fineweb-edu --version dev --run
 
 Every training decision is stated inline: the model, the data, the optimizer, the token
-budget. :func:`~marin.experiment.train.train_lm` handles only the accelerator plumbing (the
+budget. :func:`~poorin.experiment.train.train_lm` handles only the accelerator plumbing (the
 mesh, the resumption checkpointer, the Fray dispatch); the same script runs on every device.
 
 The checkpoint's version is *deferred*: it is set once for the whole run by the shared
 ``--version`` (``--run`` builds, the default prints the plan). The datasets pin explicit calendar
 versions — they are shared caches that should not rebuild on a mutable version. See
-:mod:`marin.experiment.cli`.
+:mod:`poorin.experiment.cli`.
 """
 
 import click
 from levanter.optim.config import AdamConfig
-from marin.execution.lazy import ArtifactStep
-from marin.experiment.cli import build_options
-from marin.experiment.data import pretokenized, tokenized
-from marin.experiment.train import train_lm
-from marin.processing.tokenize.tokenize import TokenizedCache
-from marin.training.training import LevanterCheckpoint
+from poorin.execution.lazy import ArtifactStep
+from poorin.experiment.cli import build_options
+from poorin.experiment.data import pretokenized, tokenized
+from poorin.experiment.train import train_lm
+from poorin.processing.tokenize.tokenize import TokenizedCache
+from poorin.training.training import LevanterCheckpoint
 from poorin_fray.types import ANY_REGION, ResourceConfig
 
 from experiments.llama import llama_150m, llama_nano

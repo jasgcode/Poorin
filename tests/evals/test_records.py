@@ -14,9 +14,9 @@ import json
 from pathlib import Path
 
 import pytest
-from marin.evaluation.model_config import AgentConfig, GenerationConfig, ModelConfig, ResourceHint, ServeConfig
-from marin.evaluation.model_identity import comparison_model_name
-from marin.evaluation.records import (
+from poorin.evaluation.model_config import AgentConfig, GenerationConfig, ModelConfig, ResourceHint, ServeConfig
+from poorin.evaluation.model_identity import comparison_model_name
+from poorin.evaluation.records import (
     BenchmarkMetadataRef,
     BenchmarkMetricRef,
     EvalchemyRef,
@@ -258,7 +258,7 @@ def test_scan_records_invalidates_filesystem_listing_cache(tmp_path, monkeypatch
     write_record(_RECORD.model_copy(update={"run_id": "first-run"}), str(evals))
     filesystem = _CachedListingFileSystem()
     monkeypatch.setattr(
-        "marin.evaluation.records.url_to_fs",
+        "poorin.evaluation.records.url_to_fs",
         lambda prefix: (filesystem, prefix),
     )
     initial = scan_records(str(evals))

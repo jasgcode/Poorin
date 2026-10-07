@@ -1,6 +1,6 @@
-Marin has most of the pieces for end-to-end data processing \- download, dedup, filtering, classification, decontamination, tokenization \- but the code is scattered across `experiments/` and `lib/marin/` with inconsistent formats, ad-hoc ID handling, and unclear provenance.
+Marin has most of the pieces for end-to-end data processing \- download, dedup, filtering, classification, decontamination, tokenization \- but the code is scattered across `experiments/` and `lib/poorin/` with inconsistent formats, ad-hoc ID handling, and unclear provenance.
 
-We propose consolidating this into **datakit**: a set of composable pipeline stages with standardized formats and conventions, living in `lib/marin/src/marin/datakit/`. Dataset-specific wiring (e.g., "for Arxiv, apply these transforms") lives in `experiments/` or reference configurations.
+We propose consolidating this into **datakit**: a set of composable pipeline stages with standardized formats and conventions, living in `lib/poorin/src/poorin/datakit/`. Dataset-specific wiring (e.g., "for Arxiv, apply these transforms") lives in `experiments/` or reference configurations.
 
 
 Links:
@@ -27,7 +27,7 @@ Convert raw data into the **datakit standard format**:
 * **Mandatory columns**:
   * `id` \- unique document identifier (see [ID Column](#id-column) below)
   * `text` \- primary text content \- we enforce UTF-8
-* **Partition identity**: derived, not stored on rows. Normalize writes `part-x-of-y` files and downstream stages recover the source partition index from the sorted file order (zephyr's `shard.shard_idx`). Stages that emit attributes materialize it as a `partition_id` column on their own output — see `marin.datakit.decon`.
+* **Partition identity**: derived, not stored on rows. Normalize writes `part-x-of-y` files and downstream stages recover the source partition index from the sorted file order (zephyr's `shard.shard_idx`). Stages that emit attributes materialize it as a `partition_id` column on their own output — see `poorin.datakit.decon`.
 * **Arbitrary additional columns**: any fields present in the raw data are preserved
 * **Directory structure**: preserver original directory structure
 * **Partition structure**: partition layout from the source does NOT need to be preserved at this point \- and in most cases it will not be
@@ -184,12 +184,12 @@ tokenized = StepSpec(
 
 # API Surface
 
-## `lib/marin/src/marin/datakit/`
+## `lib/poorin/src/poorin/datakit/`
 
 Core primitives — the reusable building blocks:
 
 ```
-lib/marin/src/marin/datakit/
+lib/poorin/src/poorin/datakit/
   normalize       # Raw format -> standard Parquet (id, text, ...)
   embed           # Document embedding
   classify        # Quality/topic classification

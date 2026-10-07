@@ -10,8 +10,8 @@ nothing is recomputed — while a provenance record at the canonical address rec
 import logging
 
 import pytest
-from marin.execution.artifact import Artifact, read_record
-from marin.execution.lazy import ArtifactStep, materialized_config, run
+from poorin.execution.artifact import Artifact, read_record
+from poorin.execution.lazy import ArtifactStep, materialized_config, run
 
 
 def test_adopt_resolves_to_source_not_canonical():

@@ -3,7 +3,7 @@
 
 import numpy as np
 from levanter.store.cache import SerialCacheWriter, TreeCache
-from marin.processing.tokenize.download_pretokenized import (
+from poorin.processing.tokenize.download_pretokenized import (
     PretokenizedCacheDownloadConfig,
     fetch_pretokenized_cache,
 )

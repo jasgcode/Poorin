@@ -9,7 +9,7 @@ import pyarrow.parquet as pq
 import pytest
 from levanter.data.text.formats import TextLmDatasetFormat
 from levanter.store.cache import CacheLedger
-from marin.processing.tokenize.tokenize import (
+from poorin.processing.tokenize.tokenize import (
     MIN_GROUP_BYTES,
     TokenizeConfig,
     bundle_files_by_size,

@@ -17,7 +17,7 @@ from levanter.data.text.trace_chat import (
     TraceChatProcessor,
 )
 from levanter.tokenizers import MarinTokenizer, load_tokenizer
-from marin.datakit.chat_template import MARIN_CHAT_TEMPLATE
+from poorin.datakit.chat_template import MARIN_CHAT_TEMPLATE
 from transformers import AutoTokenizer, PreTrainedTokenizer
 
 from experiments.marin_tokenizer import (

@@ -10,8 +10,8 @@ from pathlib import Path
 import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
-from marin.datakit.normalize import NORMALIZED_DATA_VERSION, NormalizedData, generate_id, normalize_to_parquet
-from marin.execution.artifact import ArtifactRecord, read_artifact, write_artifact, write_record
+from poorin.datakit.normalize import NORMALIZED_DATA_VERSION, NormalizedData, generate_id, normalize_to_parquet
+from poorin.execution.artifact import ArtifactRecord, read_artifact, write_artifact, write_record
 from poorin_fray.current_client import set_current_client
 from poorin_fray.local_backend import LocalClient
 

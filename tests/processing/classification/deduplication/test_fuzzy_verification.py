@@ -4,7 +4,7 @@
 from random import Random
 
 import pytest
-from marin.processing.classification.deduplication.fuzzy_verification import (
+from poorin.processing.classification.deduplication.fuzzy_verification import (
     FuzzyVerificationParams,
     VerificationRejection,
     character_ngram_jaccard,

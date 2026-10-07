@@ -7,17 +7,17 @@ import sys
 from pathlib import Path
 from types import ModuleType, SimpleNamespace
 
-import marin.profiling.cli as cli_module
-import marin.profiling.ingest as ingest_module
-import marin.profiling.xplane as xplane_module
+import poorin.profiling.cli as cli_module
+import poorin.profiling.ingest as ingest_module
+import poorin.profiling.xplane as xplane_module
 import pytest
 from google.protobuf.message import DecodeError
-from marin.profiling.ingest import summarize_profile_artifact, summarize_trace
-from marin.profiling.query import compare_profile_summaries, query_profile_summary
-from marin.profiling.report import build_markdown_report
-from marin.profiling.schema import PROFILE_SUMMARY_SCHEMA_VERSION, profile_summary_from_dict
-from marin.profiling.trace_summary import BreakdownMode, trace_quality_warnings
-from marin.profiling.xplane import (
+from poorin.profiling.ingest import summarize_profile_artifact, summarize_trace
+from poorin.profiling.query import compare_profile_summaries, query_profile_summary
+from poorin.profiling.report import build_markdown_report
+from poorin.profiling.schema import PROFILE_SUMMARY_SCHEMA_VERSION, profile_summary_from_dict
+from poorin.profiling.trace_summary import BreakdownMode, trace_quality_warnings
+from poorin.profiling.xplane import (
     XPROF_TABLE_TOOLS,
     _xspace_message_class,
     export_xplane_tables,

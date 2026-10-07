@@ -19,8 +19,8 @@ and hands the graph to `StepRunner`. Nothing runs at import time; all I/O happen
 `StepRunner.run`.
 
 ```python
-from marin.execution.lazy import lower
-from marin.execution.step_runner import StepRunner
+from poorin.execution.lazy import lower
+from poorin.execution.step_runner import StepRunner
 
 def build():
     ...  # return a lazy artifact handle
@@ -31,12 +31,12 @@ if __name__ == "__main__":
 
 ## Step 1: Tokenize the dataset
 
-`tokenized` from `marin.experiment.data` returns an `ArtifactStep[TokenizedCache]` handle — a
+`tokenized` from `poorin.experiment.data` returns an `ArtifactStep[TokenizedCache]` handle — a
 lazy reference to a Levanter tokenized cache. The tokenization step runs before training, and
 its output is cached for future runs.
 
 ```python
-from marin.experiment.data import tokenized
+from poorin.experiment.data import tokenized
 from experiments.marin_tokenizer import marin_tokenizer
 
 tinystories_tokenized = tokenized(
@@ -77,16 +77,16 @@ from experiments.llama import llama_nano
 
 ## Step 3: Assemble the training run
 
-`train_lm` from `marin.experiment.train` takes every experiment decision as an explicit
+`train_lm` from `poorin.experiment.train` takes every experiment decision as an explicit
 argument and returns an `ArtifactStep[LevanterCheckpoint]` handle. It handles the mechanical
 plumbing — the mesh, the checkpointer, the Fray dispatch — while you supply the policy.
 
 ```python
 from poorin_fray.cluster import ResourceConfig
 from levanter.optim.config import AdamConfig
-from marin.execution.lazy import ArtifactStep
-from marin.experiment.train import train_lm
-from marin.training.training import LevanterCheckpoint
+from poorin.execution.lazy import ArtifactStep
+from poorin.experiment.train import train_lm
+from poorin.training.training import LevanterCheckpoint
 
 BATCH_SIZE = 4
 SEQ_LEN = llama_nano.max_seq_len
@@ -120,8 +120,8 @@ Key arguments:
 ## Step 4: Wire the main block
 
 ```python
-from marin.execution.lazy import lower
-from marin.execution.step_runner import StepRunner
+from poorin.execution.lazy import lower
+from poorin.execution.step_runner import StepRunner
 
 if __name__ == "__main__":
     StepRunner().run([lower(build())])

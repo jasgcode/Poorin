@@ -8,13 +8,13 @@ raw data is a :func:`raw_download` handle (re-fetched on demand — a small repo
 each subset tokenizer depends on.
 """
 
-from marin.datakit.download.uncheatable_eval import (
+from poorin.datakit.download.uncheatable_eval import (
     UncheatableEvalDownloadConfig,
     download_latest_uncheatable_eval,
 )
-from marin.execution.lazy import ArtifactStep
-from marin.experiment.data import dataset_main, raw_download, tokenized
-from marin.processing.tokenize.tokenize import TokenizedCache
+from poorin.execution.lazy import ArtifactStep
+from poorin.experiment.data import dataset_main, raw_download, tokenized
+from poorin.processing.tokenize.tokenize import TokenizedCache
 
 from experiments.llama import llama3_tokenizer
 

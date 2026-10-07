@@ -4,13 +4,13 @@
 import os
 from pathlib import Path
 
-from marin.processing.classification.consolidate import (
+from poorin.processing.classification.consolidate import (
     FilterConfig,
     FilterType,
     consolidate,
 )
-from marin.processing.classification.deduplication.dedup_commons import DedupMode
-from marin.processing.classification.deduplication.exact import dedup_exact_paragraph
+from poorin.processing.classification.deduplication.dedup_commons import DedupMode
+from poorin.processing.classification.deduplication.exact import dedup_exact_paragraph
 from zephyr.readers import load_parquet
 
 

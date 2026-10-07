@@ -33,12 +33,12 @@ from levanter.tracker import TrackerConfig
 from levanter.tracker.telemetry import TelemetryConfig
 from levanter.tracker.wandb import WandbConfig
 from levanter.trainer import TrainerConfig
-from marin.execution.build_context import resolve_version
-from marin.execution.lazy import ArtifactStep, StepContext
-from marin.experiment.cli import build_options
-from marin.experiment.data import mixture, pretokenized
-from marin.experiment.namespacing import user_namespaced_name
-from marin.training.training import LevanterCheckpoint, resolve_checkpointer_output_path
+from poorin.execution.build_context import resolve_version
+from poorin.execution.lazy import ArtifactStep, StepContext
+from poorin.experiment.cli import build_options
+from poorin.experiment.data import mixture, pretokenized
+from poorin.experiment.namespacing import user_namespaced_name
+from poorin.training.training import LevanterCheckpoint, resolve_checkpointer_output_path
 from poorin_fray.cluster import ResourceConfig
 
 from experiments.grug.base.model import GrugModelConfig

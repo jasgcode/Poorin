@@ -1,8 +1,8 @@
 # Copyright The Marin Authors
 # SPDX-License-Identifier: Apache-2.0
 
-from marin.processing.classification.deduplication.dedup_commons import DedupMode
-from marin.processing.classification.deduplication.exact import dedup_exact_document, dedup_exact_paragraph
+from poorin.processing.classification.deduplication.dedup_commons import DedupMode
+from poorin.processing.classification.deduplication.exact import dedup_exact_document, dedup_exact_paragraph
 
 from tests.processing.classification.deduplication.conftest import load_dedup_parquet_outputs
 

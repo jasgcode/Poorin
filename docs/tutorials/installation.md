@@ -73,7 +73,7 @@ You might find it convenient to store `WANDB_API_KEY` and `HF_TOKEN` and
 
 Marin runs on multiple types of hardware (CPU, GPU, TPU).
 
-!!! info "Install `marin` for different accelerators"
+!!! info "Install `poorin` for different accelerators"
 
     Marin requires different JAX installations depending on your hardware accelerator. These installation options are defined in our `pyproject.toml` file and will install the appropriate JAX version for your hardware.
 

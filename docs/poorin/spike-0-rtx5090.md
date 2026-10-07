@@ -94,12 +94,12 @@ IPython 114, iris 69, haliax 47, marin 39, zephyr 23.
 
 Unexpected imports and the chains that pull them in:
 
-- torch, torchvision, sympy, torch._dynamo: `marin.experiment.train` → `levanter.adaptor` →
+- torch, torchvision, sympy, torch._dynamo: `poorin.experiment.train` → `levanter.adaptor` →
   `levanter.compat.hf_checkpoints` → `transformers` (image utils pull torchvision, which pulls
   dynamo and sympy). Half of all import time.
 - IPython: `levanter.compat.hf_checkpoints` → `tqdm_loggable.auto`.
 - polars: `levanter.store.cache` → `deepdiff`.
-- iris: `marin.execution.step_runner` → `iris.cluster.client.job_info`.
+- iris: `poorin.execution.step_runner` → `iris.cluster.client.job_info`.
 
 ## Grug
 
@@ -176,7 +176,7 @@ Input for sub-project #1 (core prune), ordered by measured impact:
    checkpoint. Options: fresh path per invocation, or a code hash in the identity.
 3. **Cut eager imports from the training path.** Lazy-load `levanter.compat.hf_checkpoints`
    (takes torch, torchvision, transformers, IPython off every launch); remove Iris imports
-   from `marin.execution.step_runner`, `levanter.distributed`, and grug's dispatcher.
+   from `poorin.execution.step_runner`, `levanter.distributed`, and grug's dispatcher.
 4. **Pick one CUDA stack**, or pin the NVRTC path at venv level, so cuDNN works without a
    manual `LD_LIBRARY_PATH`. Whether PyTorch stays depends on embodied tooling
    (simulators, video decoding), decided in #3 and #6.

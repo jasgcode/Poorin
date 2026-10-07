@@ -1,7 +1,7 @@
 # Copyright The Marin Authors
 # SPDX-License-Identifier: Apache-2.0
 
-"""Behaviour tests for the experiment CLI bootstrap (``marin.experiment.cli``).
+"""Behaviour tests for the experiment CLI bootstrap (``poorin.experiment.cli``).
 
 These cover the CLI's own logic — deferred versions and overrides reaching the builders, the
 mutable-version flag in the plan, the unused-override guard, and the plan/run toggle. They do not
@@ -13,8 +13,8 @@ from datetime import datetime
 
 import pytest
 from click.testing import CliRunner
-from marin.execution.lazy import OUT, apply
-from marin.experiment.cli import experiment_main, run_version
+from poorin.execution.lazy import OUT, apply
+from poorin.experiment.cli import experiment_main, run_version
 
 
 def _noop(**_kwargs):

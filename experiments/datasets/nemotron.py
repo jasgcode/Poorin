@@ -9,9 +9,9 @@ them never re-tokenizes the multi-TiB corpus. This is the catalog only — handl
 weights; the mixture weights are policy and live in the experiment that chooses them.
 """
 
-from marin.execution.lazy import ArtifactStep
-from marin.experiment.data import dataset_main, tokenized
-from marin.processing.tokenize.tokenize import TokenizedCache
+from poorin.execution.lazy import ArtifactStep
+from poorin.experiment.data import dataset_main, tokenized
+from poorin.processing.tokenize.tokenize import TokenizedCache
 from poorin_fray.types import ResourceConfig
 
 from experiments.llama import llama3_tokenizer

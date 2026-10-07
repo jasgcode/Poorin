@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import pytest
-from marin.experiment.data import tokenized
+from poorin.experiment.data import tokenized
 
 _TOKENIZER = "gpt2"
 _V = "2026.06.28"

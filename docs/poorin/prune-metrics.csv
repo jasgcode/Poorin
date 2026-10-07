@@ -65,3 +65,4 @@ date,phase,step,first_party_lines,reachable_lines,reachable_modules,r1_imported_
 2026-10-07,Rename,Rename fray to poorin_fray,137615,136592,446,5972,3.32,66.8,29.0,7824176970
 2026-10-07,Rename,Rename finelog to poorin_finelog,137615,136592,446,5972,3.3,66.5,28.3,7824176996
 2026-10-07,Rename,Rename rigging to poorin_rigging,137617,136594,446,5972,3.3,66.7,29.3,7824177049
+2026-10-07,Rename,Rename marin to poorin,137617,136594,446,5972,3.31,66.3,29.3,7824177019

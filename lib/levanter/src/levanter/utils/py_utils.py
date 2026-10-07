@@ -93,7 +93,7 @@ class FailSafeJSONEncoder(json.JSONEncoder):
 
     NOTES [Kevin: 10/15/25]:
     Marin also has a CustomJsonEncoder:
-    `https://github.com/marin-community/marin/blob/4dec0f6fdb33d72846a1a1a5279d0c6da6fc118d/src/marin/utilities/json_encoder.py#L26`.
+    `https://github.com/marin-community/marin/blob/4dec0f6fdb33d72846a1a1a5279d0c6da6fc118d/src/poorin/utilities/json_encoder.py#L26`.
     Hopefully after the monorepo conversion is complete, we can just have a shared CustomJsonEncoder.
     """
 

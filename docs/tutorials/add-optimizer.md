@@ -96,7 +96,7 @@ In this guide, we’ll walk through adding an [AdaMax](https://optax.readthedocs
     In a Marin experiment, pass it as `train_lm`'s `optimizer` argument:
 
     ```python
-    from marin.experiment.train import train_lm
+    from poorin.experiment.train import train_lm
 
     checkpoint = train_lm(
         ...
