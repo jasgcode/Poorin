@@ -15,3 +15,4 @@ date,phase,step,first_party_lines,reachable_lines,reachable_modules,r1_imported_
 2026-10-06,P1,Delete scripts/,384378,139239,461,6702,8.1,150.5,53.3,11893054128
 2026-10-06,P1,"Delete docker/, etc/, and .github/",384377,139238,461,6702,8.23,149.9,53.4,11893054128
 2026-10-06,P1,Format with ruff,384628,139305,461,6702,9.94,185.6,67.3,11893054128
+2026-10-06,P1,Skip the reformat in git blame,384628,139305,461,6702,9.57,183.8,62.2,11893054128
