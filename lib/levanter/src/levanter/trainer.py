@@ -78,7 +78,9 @@ from levanter.cutlass_kernel_cache import install as install_cutlass_kernel_cach
 from levanter.data.dataset import AsyncDataset
 from levanter.data.loader import DataLoader
 from levanter.data.loader import _round_to_nearest_multiple
+from levanter.compile_cache import configure_compilation_cache
 from levanter.distributed import DistributedConfig
+from levanter.nvrtc import preload_nvrtc_builtins
 from levanter.grad_accum import microbatched
 from levanter.metrics import Metric, auto_metric_from_name, unwrap_metrics
 from levanter.optim.model_averaging import ModelAveragingConfig
@@ -1005,6 +1007,7 @@ class TrainerConfig:
         # Can't do full logging setup until we've initialized jax b/c we use jax for rank id
         pylogging.basicConfig(level=pylogging.WARNING)
         self.distributed.initialize()
+        preload_nvrtc_builtins()
         # Importing cutlass.jax may initialize the XLA backend, so install its
         # cache only after jax.distributed.initialize().
         install_cutlass_kernel_cache(cutlass_kernel_cache())
@@ -1102,8 +1105,7 @@ class TrainerConfig:
         for key, value in self.jax_config.items():
             jax.config.update(key, value)
 
-        if self.jax_compilation_cache_dir is not None:
-            jax.config.update("jax_compilation_cache_dir", self.jax_compilation_cache_dir)
+        configure_compilation_cache(self.jax_compilation_cache_dir)
 
     def _maybe_set_id(self):
         # always do this so we don't get weird hangs if the id isn't set right

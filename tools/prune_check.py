@@ -31,7 +31,6 @@ import shlex
 import shutil
 import subprocess
 import sys
-import sysconfig
 import time
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
@@ -47,7 +46,6 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 METRICS_FILE = REPO_ROOT / "docs" / "poorin" / "prune-metrics.csv"
 CACHE_HOME = Path.home() / ".cache" / "poorin"
 MARIN_PREFIX = CACHE_HOME / "prune-check"
-JAX_CACHE_DIR = CACHE_HOME / "jax"
 # Levanter writes run logs under ./logs and W&B under ./wandb; runnable roots run from REPO_ROOT.
 RUN_LOG_DIRS = (REPO_ROOT / "logs", REPO_ROOT / "wandb")
 
@@ -137,15 +135,9 @@ def directory_size(path: Path) -> int:
 
 
 def run_env() -> dict[str, str]:
-    """Environment for runnable roots. P5a moves the cache and NVRTC fixes into Levanter."""
-    nvidia_lib = Path(sysconfig.get_paths()["purelib"]) / "nvidia" / "cu13" / "lib"
+    """Environment for runnable roots. Levanter enables the compilation cache and preloads NVRTC itself."""
     env = dict(os.environ)
-    env.update(
-        MARIN_PREFIX=str(MARIN_PREFIX),
-        JAX_COMPILATION_CACHE_DIR=str(JAX_CACHE_DIR),
-        WANDB_MODE="offline",
-        LD_LIBRARY_PATH=os.pathsep.join(p for p in (str(nvidia_lib), env.get("LD_LIBRARY_PATH", "")) if p),
-    )
+    env.update(MARIN_PREFIX=str(MARIN_PREFIX), WANDB_MODE="offline")
     return env
 
 
