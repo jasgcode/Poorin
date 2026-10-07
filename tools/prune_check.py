@@ -16,6 +16,9 @@ Checks run in order and the first failure stops the run, so nothing is recorded:
    and runs them: one CPU pytest process per suite.
 5. Each runnable root trains to completion twice. The second run, with warm caches, is timed.
 
+``--fast`` skips checks 2 to 4 while the tree is being stripped; a cleanup pass runs them all
+afterwards (D73).
+
 Runnable roots write under ``~/.cache/poorin/prune-check``. After the runs, even failed ones, the
 per-user run outputs there and the new entries in the repository's ``logs/`` and ``wandb/`` are
 deleted; tokenized datasets and kernel autotune caches are kept so later checks stay warm.
@@ -205,14 +208,16 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--phase", required=True, help="Prune phase, for example P0.")
     parser.add_argument("--step", required=True, help="Short label for the change being checked.")
     parser.add_argument("--no-record", action="store_true", help="Run the checks without appending a row.")
+    parser.add_argument("--fast", action="store_true", help="Skip ty, lint, and tests; import and train only.")
     args = parser.parse_args(argv)
 
     roots = load_roots(ROOTS_FILE)
     modules = sorted(workspace_modules(REPO_ROOT))
     import_kept_roots(roots.kept, roots.static_only, modules)
-    _run(list(TY))
-    _run([sys.executable, "-m", "tools.lint"])
-    run_affected_tests()
+    if not args.fast:
+        _run(list(TY))
+        _run([sys.executable, "-m", "tools.lint"])
+        run_affected_tests()
 
     warm = train_roots(roots.runnable, run_env(), prefix=MARIN_PREFIX, log_dirs=RUN_LOG_DIRS)
 

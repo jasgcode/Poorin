@@ -941,6 +941,25 @@ Plan: `plans/2026-10-07-p3-serving-and-eval-orchestration.md`.
 
 ---
 
+## P4 to P7 strip: 2026-10-07
+
+Plan: `plans/2026-10-07-p4-p7-strip.md`.
+
+### D73. Strip first, fix static checks and tests afterwards
+
+- **When:** 2026-10-07, P4. **Status:** Adopted.
+- **Decision:** P4 to P7 run on one branch. Each commit runs `tools.prune_check --fast`, which
+  imports every kept root and trains R1 and R2 but skips ty, lint, and tests. After P7 a cleanup
+  pass runs ty, `tools.lint --all-files`, and `tools.affected_tests --all`, and fixes what they
+  report.
+- **Why:** The owner, 2026-10-07: strip aggressively, ignore ty, ruff, and the CI checks for now,
+  and resolve them afterwards.
+- **Cost if wrong:** Type, lint, and test failures pile up and the cleanup pass is larger; the
+  commits between are not individually green on those checks. The kept-root imports and the two
+  training runs still gate every commit.
+
+---
+
 ## Deferred
 
 Known gaps left open on purpose. Each names where it gets resolved.
