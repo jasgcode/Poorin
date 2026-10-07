@@ -1194,7 +1194,7 @@ Known gaps left open on purpose. Each names where it gets resolved.
 | `test_device_flops` asserts only that FLOPs are positive | P0 review | Open |
 | The cross-attention case in `test_attention.py` is non-causal, so it never exercises the `q_len != k_len` guard in `_fa4_supports` | P0 review | Open |
 | `test_append_metrics_row_rejects_a_row_with_missing_columns` is a guard test under `TESTING.md` | P0 review | Open |
-| About 125 MB of untracked `logs/` and `wandb/` entries from P0's check runs sit in the checkout | P0 | Open; delete on request |
+| About 125 MB of untracked `logs/` and `wandb/` entries from P0's check runs sit in the checkout | P0 | Deleted on request, 2026-10-07, spike 0's runs included |
 | Set up `projects/` as a git-ignored, nested uv workspace member for `looped-diffusion-lm`, and scan `projects/*` for prune roots | D52 | Next step (D84), once `looped-diffusion-lm` has code |
 | Design the SkyRL integration: a Hugging Face mapping for grug, launching the owner's SkyRL fork from the executor, and moving checkpoints both ways | D68 | A later sub-project |
 | `tools.lint --all-files` reports two files under `infra/`: a TypeScript config with comments, and the old linter's own conflict-marker strings | P1 Task 2 | P1 Task 7 |
