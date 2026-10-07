@@ -128,6 +128,9 @@ marin-core = { workspace = true }
 marin-rigging = { workspace = true }
 marin-zephyr = { workspace = true }
 marin-finestore = { workspace = true }
+# Every torch requirement resolves to the CPU wheel: Poorin uses torch only to convert
+# Hugging Face checkpoints, and the CUDA wheel would install CUDA 12 libraries beside JAX's CUDA 13.
+torch = { index = "pytorch-cpu" }
 nvidia-cutlass-dsl = { index = "nvidia" }
 nvidia-cutlass-dsl-libs-base = { index = "nvidia" }
 nvidia-cutlass-dsl-libs-cu13 = { index = "nvidia" }
@@ -141,13 +144,6 @@ explicit = true
 name = "pytorch-cpu"
 url = "https://download.pytorch.org/whl/cpu"
 explicit = true
-
-# Use CPU Torch for unpinned imports without changing other packages' indexes.
-# marin-core[gpu] explicitly selects its CUDA Torch index.
-[[tool.uv.index]]
-name = "pytorch-cpu-fallback"
-url = "https://download.pytorch.org/whl/cpu/torch/"
-format = "flat"
 
 [tool.ruff]
 line-length = 121

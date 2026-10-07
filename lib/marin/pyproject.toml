@@ -101,30 +101,17 @@ gpu = [
   "nvidia-cutlass-dsl[cu13]==4.6.2; sys_platform == 'linux'",
   "flash-attn-4[cu13]>=4.0.0b27,<4.1; sys_platform == 'linux'",
   "torch==2.11.0",
-  "torchvision==0.26.0",
 ]
 tpu = [
   "jax==0.11.1",
   "jaxlib==0.11.1",
   "libtpu==0.0.46.*",
   "torch==2.11.0",
-  # Linux x86_64
-  "torchvision==0.26.0+cpu; sys_platform == 'linux' and platform_machine == 'x86_64'",
-  # Windows x86_64 (AMD64)
-  "torchvision==0.26.0+cpu; sys_platform == 'win32' and platform_machine == 'AMD64'",
-  # Linux aarch64, macOS arm64: PyPI default wheel
-  "torchvision==0.26.0; (sys_platform == 'linux' and platform_machine == 'aarch64') or (sys_platform == 'darwin' and platform_machine == 'arm64')",
 ]
 
 cpu = [
   "jax==0.11.1",
   "torch==2.11.0",
-  # Linux x86_64
-  "torchvision==0.26.0+cpu; sys_platform == 'linux' and platform_machine == 'x86_64'",
-  # Windows x86_64 (AMD64)
-  "torchvision==0.26.0+cpu; sys_platform == 'win32' and platform_machine == 'AMD64'",
-  # Linux aarch64, macOS arm64: PyPI default wheel
-  "torchvision==0.26.0; (sys_platform == 'linux' and platform_machine == 'aarch64') or (sys_platform == 'darwin' and platform_machine == 'arm64')",
 ]
 
 dedup = [
@@ -132,32 +119,6 @@ dedup = [
     # kernels transitively (see lib/dupekit/pyproject.toml).
     "marin-dupekit",
 ]
-
-[tool.uv.sources]
-torchvision = [
-    # Default to the CPU index for TPU/CPU builds
-    { index = "pytorch-cpu", extra = "cpu" },
-    { index = "pytorch-cpu", extra = "tpu" },
-    # PyTorch cu130 pins an older cuBLAS than the B200 guard above allows.
-    { index = "pytorch-cu128", extra = "gpu", marker = "sys_platform == 'linux'" },
-]
-torch = [
-    # PyTorch cu130 pins an older cuBLAS than the B200 guard above allows.
-    { index = "pytorch-cu128", extra = "gpu", marker = "sys_platform == 'linux'" },
-    { index = "pytorch-cpu", extra = "cpu" },
-    { index = "pytorch-cpu", extra = "tpu" },
-]
-
-[[tool.uv.index]]
-name = "pytorch-cpu"
-url = "https://download.pytorch.org/whl/cpu"
-explicit = true
-
-[[tool.uv.index]]
-name = "pytorch-cu128"
-url = "https://download.pytorch.org/whl/cu128"
-explicit = true
-
 
 [tool.hatch.metadata]
 allow-direct-references = true

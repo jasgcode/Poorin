@@ -1036,6 +1036,25 @@ Plan: `plans/2026-10-07-p4-p7-strip.md`.
 
 ---
 
+## P8 workspace: 2026-10-07
+
+Plan: `plans/2026-10-07-p8-workspace.md`.
+
+### D79. PyTorch installs from its CPU wheel
+
+- **When:** 2026-10-07, P8. **Status:** Adopted.
+- **Decision:** One root `[tool.uv.sources]` entry sends every `torch` requirement in the
+  workspace to the PyTorch CPU index. Marin's per-extra CUDA 12.8 and CPU sources, its
+  `pytorch-cu128` index, the root's flat CPU fallback index, and `torchvision` (no importer) go.
+- **Why:** Poorin uses PyTorch only to convert Hugging Face checkpoints and in test helpers, on
+  CPU. vLLM, which needed CUDA PyTorch, is gone, and the owner's SkyRL fork has its own
+  environment (D68). The CUDA wheel installed CUDA 12 copies of cuDNN, NCCL, and NVRTC beside
+  JAX's CUDA 13 libraries (spec, "Risks").
+- **Cost if wrong:** Code that needs PyTorch on the GPU in this environment has to bring the CUDA
+  wheel back, with its CUDA 12 libraries.
+
+---
+
 ## Deferred
 
 Known gaps left open on purpose. Each names where it gets resolved.
