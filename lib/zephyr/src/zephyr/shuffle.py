@@ -51,13 +51,13 @@ import msgspec
 import polars as pl
 import psutil
 import pyarrow as pa
-from iris.env_resources import TaskResources
 from rigging.filesystem.factory import open_url, url_to_fs
 from rigging.filesystem.storage_path import StoragePath
 from rigging.timing import RateLimiter, log_time
 
 from zephyr import memory_budget
 from zephyr.parquet_scan import scan_parquet
+from zephyr.resources import HostResources
 from zephyr.shard_keys import encode_key, hash_encoded_key
 from zephyr.worker_context import _worker_ctx_var
 from zephyr.writers import ensure_parent_dir
@@ -137,7 +137,7 @@ def _task_memory_bytes() -> int:
     if ctx is not None and ctx.task_memory_bytes > 0:
         return ctx.task_memory_bytes
 
-    memory_bytes = TaskResources.from_environment().memory_bytes
+    memory_bytes = HostResources.from_environment().memory_bytes
     if memory_bytes <= 0:
         logger.warning("No task memory is available. Using a 1 GiB memory budget.")
         return 1024 * 1024 * 1024

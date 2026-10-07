@@ -15,8 +15,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
 from fray.actor import ActorFuture, ActorHandle, current_actor
-from iris.cluster.client.job_info import get_job_info
-from rigging.timing import ExponentialBackoff, RateLimiter
+from rigging.timing import ExponentialBackoff
 
 from zephyr import counters as stage_counters
 from zephyr.coordinator import CoordinatorUnreachable, PullStatus, PullTask
@@ -35,7 +34,6 @@ from zephyr.stats import (
     StatsWriter,
     ZephyrShuffleStat,
     ZephyrWorkerStatStatus,
-    _push_iris_task_status,
 )
 from zephyr.worker_context import CounterEntry, CounterSnapshot, merge_counter_entries
 
@@ -62,15 +60,6 @@ class _ActiveShard:
 
 def _counter_values(counters: dict[str, CounterEntry]) -> dict[str, int | float]:
     return {name: entry.value for name, entry in counters.items()}
-
-
-def _format_worker_status_md(active_tasks: int, stage: str) -> tuple[str, str]:
-    """Return worker status text, or two idle values when no task is active."""
-    if active_tasks == 0 or not stage:
-        return "idle", "idle"
-    summary = f"**{stage}** — {active_tasks} task(s)"
-    detail = "  \n".join([f"**Stage**: {stage}", f"**Active tasks**: {active_tasks}"])
-    return detail, summary
 
 
 class ZephyrWorker:
@@ -105,9 +94,6 @@ class ZephyrWorker:
         # Set by task threads on completion so the poll loop wakes early.
         self._task_completed_event = threading.Event()
 
-        # Throttle Iris status pushes; the heartbeat loop ticks faster than
-        # the UI needs to refresh.
-        self._iris_status_limiter = RateLimiter(interval_seconds=10.0)
 
         # Capture actor context while ContextVar is still set (child threads
         # in Python <3.12 don't inherit it).
@@ -117,9 +103,8 @@ class ZephyrWorker:
         self._actor_handle = self._actor_ctx.handle
         self._memory_store = MemoryStoreService(self._actor_ctx.index)
         self._stats_writer = StatsWriter.connect(stats_config)
-        job_info = get_job_info()
-        self._job_id = str(job_info.job_id) if job_info is not None else ""
-        self._task_id = job_info.task_id.to_wire() if job_info is not None else ""
+        self._job_id = ""
+        self._task_id = ""
 
         self._heartbeat_thread = threading.Thread(
             target=self._heartbeat_loop,
@@ -392,17 +377,6 @@ class ZephyrWorker:
             )
             self._active_shards.remove(active_shard)
 
-    def _report_worker_iris_status(self) -> None:
-        """Push worker status text to Iris for UI display. Called on each heartbeat."""
-        _push_iris_task_status(self._iris_status_limiter, self._worker_status_md)
-
-    def _worker_status_md(self) -> tuple[str, str]:
-        """Render the live ``_active_shards`` list as ``(detail, summary)`` markdown."""
-        with self._resources_lock:
-            active = list(self._active_shards)
-        stage = active[-1].task.stage_name if active else ""
-        return _format_worker_status_md(len(active), stage)
-
     def _report_shuffle_sizes(self, active: _ActiveShard, counters: dict[str, CounterEntry]) -> None:
         keys = (
             stage_counters.SHUFFLE_INPUT_ROWS,
@@ -489,7 +463,6 @@ class ZephyrWorker:
                 consecutive_failures = 0
                 if heartbeat_count % 10 == 1:
                     logger.debug("[%s] Sent heartbeat #%d", self._worker_id, heartbeat_count)
-                self._report_worker_iris_status()
             except Exception as e:
                 consecutive_failures += 1
                 logger.warning(

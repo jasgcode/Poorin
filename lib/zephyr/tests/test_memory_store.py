@@ -4,7 +4,6 @@
 """Behavior tests for read-only Zephyr memory stores."""
 
 from typing import Any, cast
-from unittest.mock import MagicMock
 
 import cloudpickle
 import pyarrow as pa
@@ -13,8 +12,7 @@ import pytest
 from connectrpc.code import Code
 from connectrpc.errors import ConnectError
 from fray.actor import ActorHandle, ActorUnavailableError
-from fray.local_backend import LocalClient
-from zephyr.context import ZephyrContext, _require_resolvable_worker_handles
+from zephyr.context import ZephyrContext
 from zephyr.dataset import Dataset
 from zephyr.memory_store import (
     DuplicateMemoryStoreKey,
@@ -273,16 +271,3 @@ def test_memory_store_rejects_pipeline_with_shuffle(local_client, tmp_path):
             _load_store(context, dataset, name="shuffled")
 
 
-def test_memory_store_rejects_a_driver_that_cannot_resolve_worker_handles():
-    """A distributed driver outside an Iris job cannot resolve the handles it is sent.
-
-    Worker handles arrive from the coordinator, and serializing one drops its resolver,
-    so it rebinds through the ambient Iris context. Failing here names the problem
-    instead of surfacing it as a bare "requires IrisContext" from inside the load.
-    """
-    with pytest.raises(RuntimeError, match="inside an Iris job"):
-        _require_resolvable_worker_handles(MagicMock())
-
-
-def test_local_pools_need_no_iris_context():
-    _require_resolvable_worker_handles(LocalClient())

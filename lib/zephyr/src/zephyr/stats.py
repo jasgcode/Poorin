@@ -19,17 +19,12 @@ and send aggregated counters to the coordinator for stage stats.
 import enum
 import logging
 import time
-from collections.abc import Callable
 from contextlib import suppress
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import ClassVar
 
 from finelog.client import LogClient, Table
-from iris.client.client import get_iris_ctx
-from iris.cluster.client.job_info import get_job_info
-from iris.cluster.endpoints import LOG_SERVER_ENDPOINT_NAME
-from rigging.timing import RateLimiter
 
 logger = logging.getLogger(__name__)
 
@@ -60,24 +55,6 @@ ZEPHYR_WORKER_MEM_AVERAGE_KEY = "zephyr/worker/mem_average_bytes"
 """Average resident-set size of the runner process in bytes"""
 ZEPHYR_WORKER_MEM_PEAK_KEY = "zephyr/worker/mem_peak_bytes"
 """Monotonically increasing peak RSS seen across all sampling intervals"""
-
-
-def _push_iris_task_status(
-    rate_limiter: RateLimiter,
-    build_md: Callable[[], tuple[str, str]],
-) -> None:
-    """Send status text to the active Iris task."""
-    iris_ctx = get_iris_ctx()
-    if iris_ctx is None or iris_ctx.client is None:
-        return
-    job_info = get_job_info()
-    if job_info is None or not rate_limiter.should_run():
-        return
-    detail_md, summary_md = build_md()
-    try:
-        iris_ctx.client.report_task_status_text(job_info.task_id, job_info.attempt_id, detail_md, summary_md)
-    except Exception:
-        logger.warning("Failed to report task status text to Iris controller", exc_info=True)
 
 
 def per_second(total: float, elapsed: float) -> float:
@@ -212,9 +189,8 @@ class ZephyrExecutionStat:
 class StatsWriter:
     """Manages finelog connections and emits Zephyr stat rows.
 
-    Call ``connect()`` to get a live instance; pass explicit ``StatsConfig`` when
-    an Iris context is not available. All emit methods are no-ops when the
-    log client is unavailable.
+    Call ``connect()`` with a ``StatsConfig`` naming a Finelog server to get a live
+    instance. All emit methods are no-ops when the log client is unavailable.
     """
 
     def __init__(self, log_client: LogClient | None) -> None:
@@ -231,12 +207,11 @@ class StatsWriter:
 
     @classmethod
     def connect(cls, config: StatsConfig | None = None) -> "StatsWriter":
-        """Connect to Finelog using explicit configuration or Iris discovery.
+        """Connect to the Finelog server ``config`` names.
 
-        Returns a no-op instance if the URL cannot be determined or the
-        connection fails.
+        Returns a no-op instance without a configured URL, or if the connection fails.
         """
-        resolved = config.finelog_url if config is not None else cls.resolve_url()
+        resolved = config.finelog_url if config is not None else None
         if resolved is None:
             return cls(None)
         try:
@@ -244,18 +219,6 @@ class StatsWriter:
         except Exception:
             logger.warning("Could not connect to finelog at %s; stats disabled", resolved, exc_info=True)
             return cls(None)
-
-    @staticmethod
-    def resolve_url() -> str | None:
-        """Resolve the finelog endpoint URL via the Iris controller registry."""
-        iris_ctx = get_iris_ctx()
-        if iris_ctx is None or iris_ctx.client is None:
-            return None
-        try:
-            return iris_ctx.client.resolve_endpoint(LOG_SERVER_ENDPOINT_NAME)
-        except Exception:
-            logger.warning("Could not resolve finelog endpoint", exc_info=True)
-            return None
 
     def emit_stage_stat(
         self,

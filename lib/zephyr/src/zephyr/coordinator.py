@@ -17,16 +17,12 @@ from contextlib import contextmanager, suppress
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
 from typing import Any
-from urllib.parse import quote
 
 import cloudpickle
-from connectrpc.errors import ConnectError
 from fray.actor import ActorGroup, ActorHandle, current_actor
 from fray.current_client import current_client
 from fray.local_backend import LocalClient
 from fray.types import ActorConfig, ResourceConfig
-from iris.client.client import get_iris_ctx
-from iris.cluster.client.job_info import get_job_info
 from rigging import telemetry
 from rigging.filesystem.storage_path import StoragePath
 from rigging.timing import Duration, ExponentialBackoff, RateLimiter, Timestamp, log_time
@@ -71,7 +67,6 @@ from zephyr.stats import (
     ZephyrExecutionStat,
     ZephyrShuffleStat,
     ZephyrWorkerStatStatus,
-    _push_iris_task_status,
 )
 from zephyr.worker_context import Aggregation, CounterEntry, CounterSnapshot, merge_counter_entries
 from zephyr.writers import ensure_parent_dir
@@ -117,17 +112,6 @@ def _cleanup_execution(prefix: str, execution_id: str) -> None:
                 exec_dir.rmtree()
             except Exception as e:
                 logger.warning(f"Failed to cleanup chunks at {exec_dir}: {e}")
-
-
-def _resolve_execution_history_url() -> str | None:
-    """Resolve the optional execution-history app for the current Iris cluster."""
-    context = get_iris_ctx()
-    if context is None or context.client is None:
-        return None
-    try:
-        return context.client.resolve_endpoint(ZEPHYR_HISTORY_ENDPOINT_NAME).rstrip("/")
-    except (ConnectionError, ConnectError):
-        return None
 
 
 class WorkerState(enum.StrEnum):
@@ -399,7 +383,6 @@ class ZephyrCoordinator:
         self._max_shard_infra_failures = max_shard_infra_failures
         self._max_concurrent_pipelines = max_concurrent_pipelines
         self._stats_config = stats_config
-        self._execution_history_url = _resolve_execution_history_url()
         # Per-worker in-flight counter snapshots. Each snapshot carries a
         # monotonic generation so the coordinator can discard stale or
         # out-of-order heartbeats.
@@ -412,9 +395,6 @@ class ZephyrCoordinator:
         self._shutdown_event = threading.Event()
         self._lock = threading.Lock()
 
-        # Throttle Iris task-status pushes; the coordinator loop ticks more
-        # frequently than the UI needs to refresh.
-        self._task_stats_limiter = RateLimiter(interval_seconds=10.0)
         self._worker_group_check_limiter = RateLimiter(interval_seconds=WORKER_GROUP_CHECK_INTERVAL)
 
         # Capture the actor context while its ContextVar is still set. Methods called
@@ -425,13 +405,12 @@ class ZephyrCoordinator:
         self._self_handle = actor_ctx.handle
 
         self._stats_writer = StatsWriter.connect(stats_config)
-        job_info = get_job_info()
-        self._job_id = str(job_info.job_id) if job_info is not None else ""
-        self._root_job_id = str(job_info.job_id.root_job) if job_info is not None else ""
+        self._job_id = ""
+        self._root_job_id = ""
         self._result_executor = ThreadPoolExecutor(
             max_workers=MAX_CONCURRENT_RESULT_READS, thread_name_prefix="zephyr-result"
         )
-        self._coordinator_task_id = job_info.task_id.to_wire() if (job_info := get_job_info()) is not None else ""
+        self._coordinator_task_id = ""
 
         self._web_application = create_dashboard_application(CoordinatorDashboard(self, WorkerState.ACTIVE))
 
@@ -624,64 +603,12 @@ class ZephyrCoordinator:
                 attributes=attributes,
             )
 
-    def _build_status_md(self) -> tuple[str, str]:
-        """Render pipeline progress as ``(detail, summary)`` markdown."""
-        with self._lock:
-            snapshot = [
-                (
-                    run.execution_id,
-                    list(run.plan_stages),
-                    run.current_stage_index,
-                    run.completed_shards,
-                    run.total_shards,
-                    len(run.in_flight),
-                    len(run.task_queue),
-                )
-                for run in self._executions.values()
-                if not run.done
-            ]
-
-        detail_lines = []
-        summary_lines = []
-        if self._execution_history_url is not None:
-            applet_link = f"[Zephyr]({self._execution_history_url})"
-            detail_lines.append(applet_link)
-            summary_lines.append(applet_link)
-        if not snapshot:
-            detail_lines.append("idle")
-            summary_lines.append("idle")
-        for execution_id, plan_stages, stage_index, completed, total, in_flight, queued in snapshot:
-            if self._execution_history_url is not None:
-                execution_url = f"{self._execution_history_url}/#/execution/{quote(execution_id, safe='')}"
-                detail_lines.append(f"**[{execution_id}]({execution_url})**")
-            else:
-                detail_lines.append(f"**{execution_id}**")
-            for idx, stage in enumerate(plan_stages):
-                stage_desc = _get_stage_description(stage)
-                detail_lines.append(f"- **{stage_desc}**" if idx == stage_index else f"- {stage_desc}")
-            pct = int(100 * completed / total) if total > 0 else 0
-            detail_lines.append(
-                f"**Shards** - {completed}/{total} complete ({pct}%), {in_flight} in-flight, {queued} queued\n"
-            )
-            current_desc = _get_stage_description(plan_stages[stage_index]) if plan_stages else ""
-            summary_lines.append(
-                f"**{current_desc}** ({stage_index + 1}/{len(plan_stages)}) - {completed}/{total} shards ({pct}%)"
-            )
-
-        detail_md = "\n".join(detail_lines)[:MAX_STATUS_TEXT_LENGTH]
-        summary_md = "  \n".join(summary_lines)[:MAX_STATUS_TEXT_LENGTH]
-        return detail_md, summary_md
-
     def _report_task_stats(self) -> None:
-        """Publish pipeline progress telemetry and Iris task status."""
+        """Publish pipeline progress telemetry."""
         try:
             self._publish_telemetry()
         except Exception:
             logger.warning("Failed to publish coordinator telemetry", exc_info=True)
-        # Pass the renderer, not its result: the limiter throttles pushes to
-        # half the coordinator loop's tick rate, so eager rendering would take
-        # the lock and walk every execution's stages for output nobody reads.
-        _push_iris_task_status(self._task_stats_limiter, self._build_status_md)
 
     def _log_status(self) -> None:
         with self._lock:
