@@ -862,6 +862,25 @@ Plan: `plans/2026-10-07-p2-rl-stack.md`.
 - **Cost if wrong:** A phase the owner would have shaped differently lands on local `main`; it can
   be reverted before anything is pushed.
 
+### D68. RL through the owner's SkyRL fork is a first-class integration
+
+- **When:** 2026-10-07, P2. **Status:** Adopted for the roots; the integration itself is planned.
+- **Decision:** Marin's SkyRL glue goes (D6), but Poorin treats RL post-training through the
+  owner's SkyRL fork as first-class. The fork (`skyrl-train`, the JAX backend `skyrl-tx`,
+  `skyrl-gym` environments) imports nothing from Poorin, so Poorin keeps the hooks it plugs into:
+  Hugging Face export of Levanter and grug checkpoints (`levanter.compat.hf_checkpoints`), the chat
+  template (`marin.datakit.chat_template`), dispatch through the executor and Fray, Levanter's
+  inference engine and `sample_lm`, and evaluation records and rollouts. The first two become kept
+  roots, since nothing else guarantees they survive P7 and Pass 2; the others already are roots
+  or reached from them. A later sub-project designs the integration: launching SkyRL runs from the
+  executor, and moving checkpoints both ways.
+- **Why:** The owner, 2026-10-07: delete Marin's integration directly, "but assume we have first
+  class support."
+- **Alternatives:** Keep Verifyit's graders for RL rewards; the fork brings its own environments
+  and rewards in `skyrl-gym`.
+- **Cost if wrong:** Two kept roots that keep `transformers` reachable.
+- **Landed:** `[poorin] Keep the hooks a SkyRL integration needs as roots`.
+
 ---
 
 ## Deferred

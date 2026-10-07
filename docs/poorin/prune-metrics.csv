@@ -28,3 +28,4 @@ date,phase,step,first_party_lines,reachable_lines,reachable_modules,r1_imported_
 2026-10-06,P1,Remove stale comments and links to deleted skills,384659,127539,420,6702,7.9,137.4,49.8,11893054128
 2026-10-06,P1,Record P1's deferred review findings,384659,127539,420,6702,7.43,137.4,49.0,11893054128
 2026-10-07,P2,Delete Marin's RL integration,363766,127539,420,6702,3.65,67.8,27.1,11893054128
+2026-10-07,P2,Keep the hooks a SkyRL integration needs as roots,363766,127539,420,6702,3.67,68.6,27.2,11893054128
