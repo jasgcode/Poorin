@@ -5,20 +5,15 @@ build-backend = "hatchling.build"
 [project]
 name = "marin-finelog"
 version = "0.2.11"
-description = "Standalone log store + log service: structured-log ingest, query, and persistence."
+description = "Python client for the Finelog log and metrics store."
 requires-python = ">=3.12,<3.14"
-# duckdb is used by the deploy CLI to query pulled parquet segments in-process
-# (`finelog inspect`), not by a storage engine — the Rust server owns storage.
+# duckdb runs SQL over Parquet objects in-process for the object query client.
 dependencies = [
     "marin-rigging",
-    "click>=8.3.1",
     "connect-python>=0.9.0",
     "duckdb>=1.0.0",
-    "fsspec>=2024.0.0",
-    "gcsfs>=2024.0.0",
     "protobuf>=5.0",
     "pyarrow>=23.0.0",
-    "pyyaml>=6.0",
     "zstandard>=0.22",
 ]
 
@@ -26,7 +21,6 @@ dependencies = [
 test = [
     # The native in-process server (module `finelog_server`) is not a runtime dependency of the
     # client; the embedded-server test needs it. It is the published marin-finelog-server wheel.
-    "httpx>=0.28.1",
     "marin-finelog-server==0.2.46.dev33324331711",
     "pytest>=8.4",
     "pytest-timeout",
