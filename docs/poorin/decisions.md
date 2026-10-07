@@ -1076,6 +1076,42 @@ Plan: `plans/2026-10-07-p8-workspace.md`.
 
 ---
 
+## Pass 2 edge cuts: 2026-10-07
+
+Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
+
+### D81. TPU kernel imports and backward flow stay eager
+
+- **When:** 2026-10-07, Pass 2 Phase A. **Status:** Adopted.
+- **Decision:** The spec's verdicts for two initial targets change from Make lazy to Keep. The
+  splash and ragged paged attention kernels in `levanter.layers.attention` and the `pallas_tpu`
+  fused cross-entropy variant stay module-level imports. So does `levanter.analysis.backward_flow`
+  in grug.
+- **Why:** Measured with `python -X importtime` on R1 and R2 after P8: the TPU kernel imports add
+  about 2 ms, since `haliax.nn.ragged_dot` already loads the Pallas TPU package, and backward
+  flow's own import is 2.3 ms; its 755 ms cumulative figure is `levanter.tracker` and W&B loading
+  first through it. Grug's forward pass calls backward flow's hooks, which are no-ops while the
+  interval is 0, the launcher default since P0. Making either lazy would restructure the
+  attention module and the kernel registry for no measurable gain.
+- **Cost if wrong:** CPU and GPU runs keep loading about 15 TPU kernel modules.
+
+### D82. Hugging Face conversion stays eager until sub-project 4
+
+- **When:** 2026-10-07, Pass 2 Phase A. **Status:** Adopted.
+- **Decision:** `levanter.compat.hf_checkpoints` stays a module-level import of the Llama, GPT-2,
+  and Qwen model modules, the adaptor package, and `train_lm`. Sub-project 4, which imports
+  pretrained vision and VLA weights through this module, decides its split.
+- **Why:** It costs about 0.94 s per launch (`transformers` 0.42 s, and PyTorch 0.52 s, which
+  `transformers` imports because it is installed). R1 loads it at runtime anyway to save its
+  Hugging Face checkpoint. A clean cut moves `HFCompatConfig` and the serialization mixins out of
+  the module, but they annotate with `transformers.PretrainedConfig`: a transformers-free module
+  would need a `TYPE_CHECKING` import, which AGENTS.md forbids, or weaker types on the interface
+  sub-project 4 builds on.
+- **Cost if wrong:** Runs that never convert checkpoints, grug's R2 among them, pay about 0.9 s at
+  every launch.
+
+---
+
 ## Deferred
 
 Known gaps left open on purpose. Each names where it gets resolved.
