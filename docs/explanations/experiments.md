@@ -11,9 +11,7 @@ controlled setting, or trying out different tokenizers or data quality filtering
 Regardless, an experiment consists of a DAG of steps.
 
 To promote the reproducibility of experiments, we record all experiments in the
-[experiments](https://github.com/marin-community/marin/tree/main/experiments) directory.
-Each file in that directory (e.g.,
-[tutorials/exp1078_reproduce_dclm_7b1x.py](https://github.com/marin-community/marin/blob/main/experiments/tutorials/exp1078_reproduce_dclm_7b1x.py))
-corresponds to one experiment, where the naming convention contains the GitHub issue number.
+`experiments/` directory. Each launcher there (e.g., `experiments/grug/base/launch.py`)
+builds the artifact graph for one experiment.
 
 Running each experiment produces provenance records for every artifact it builds.

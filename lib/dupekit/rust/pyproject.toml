@@ -36,7 +36,7 @@ features = ["pyo3/extension-module"]
 
 [tool.uv]
 # Rebuild the extension when the Rust sources change, not just pyproject.toml —
-# this is what makes the `scripts/rust_mode.py dev` path source track live edits.
+# so a uv source pointing at this tree tracks live edits.
 cache-keys = [
     "pyproject.toml",
     "Cargo.toml",

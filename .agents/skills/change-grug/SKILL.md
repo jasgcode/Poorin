@@ -16,7 +16,6 @@ bounded operational diagnostic. Use the variant README and launcher controls for
 
 - **Canonical template:** `experiments/grug/base/` — `model.py`, `train.py`, `launch.py`.
 - **Variants:** `experiments/grug/<variant>/` — copy from `base` and modify locally (e.g. MoE).
-- **One-off speedruns:** `experiments/speedrun/...` — useful for exploration, not canonical.
 - **Reference branch for array-stacked grug variant wiring:** https://github.com/marin-community/marin/tree/codex/array-stacked-grug-variant-pointer — useful for perf-focused experiments, especially improving compile times and reducing peak HBM.
 
 ## Workflow
@@ -39,7 +38,7 @@ Keep each pass scoped to one bucket:
 
 ### 3) Record the experiment
 
-Update `docs/reports/grug-archive.md` with: path, origin (`base`, `moe`, or another source variant), commit SHA (when known), purpose, status (`active`, `superseded`, `deleted`), and how to see its diff against the origin.
+Update `experiments/grug/variants.md` with: path, origin (`base` or another source variant), commit SHA (when known), purpose, status (`active`, `superseded`, `deleted`), and how to see its diff against the origin.
 
 To review a variant against its origin:
 
@@ -61,7 +60,7 @@ Port the successful change back into `experiments/grug/base/model.py`, `train.py
 
 ### 5) Delete stale paths
 
-After upstreaming, delete superseded experiment code; keep only the archive trail in `docs/reports/grug-archive.md`.
+After upstreaming, delete superseded experiment code; keep only the archive trail in `experiments/grug/variants.md`.
 
 ### 6) Validate
 

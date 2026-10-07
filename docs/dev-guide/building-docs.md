@@ -45,7 +45,7 @@ uv run mkdocs build --clean
 ## Documentation Structure
 
 The documentation follows the [Diátaxis](https://diataxis.fr/) framework. The `nav` in
-`mkdocs.yml` publishes six sections:
+`mkdocs.yml` publishes four sections:
 
 1. **Tutorials** (`docs/tutorials/`)
    - Step-by-step guides
@@ -57,22 +57,17 @@ The documentation follows the [Diátaxis](https://diataxis.fr/) framework. The `
    - Design decisions
    - Best practices
 
-3. **Experiments** (`docs/experiments/`, `docs/reports/`)
-   - Experiment reports and digests
-
-4. **Reproducibility** (`docs/reproducibility/`)
-   - Data and experiment reconstruction guides
-
-5. **Developer Guide** (`docs/dev-guide/`)
+3. **Developer Guide** (`docs/dev-guide/`)
    - Contributing, releasing, and repository workflow
 
-6. **Technical Reference** (`docs/references/`)
+4. **Technical Reference** (`docs/references/`)
    - API documentation
    - Configuration options
    - Technical specifications
 
-Pages outside those directories — `docs/design/`, `docs/ops/`, `docs/recipes/`, `docs/model-cards/` —
-build but are not in the `nav`, so link to them from a page that is.
+Pages outside those directories — `docs/design/` and `docs/recipes/` — build but are not in
+the `nav`, so link to them from a page that is. `docs/poorin/` holds the fork's specs, plans,
+and decision log; `exclude_docs` in `mkdocs.yml` keeps it out of the site.
 
 ## Writing Documentation
 

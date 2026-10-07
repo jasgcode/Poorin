@@ -56,7 +56,7 @@ def parse_log_level(line: str) -> str | None:
 class LevelPrefixFormatter(logging.Formatter):
     """Formatter that prepends a single-letter level prefix (I/W/E/D/C).
 
-    Produces lines like: I20260306 12:44:05 iris.worker starting up
+    Produces lines like: I20260306 12:44:05 zephyr.worker starting up
     """
 
     # Bind the prefix table to the class so the formatter survives

@@ -264,20 +264,17 @@ def get_tpu_topology(tpu_type: str) -> TpuTopologyInfo:
 
 @dataclass(frozen=True)
 class TpuHostResources:
-    """Per-VM host CPU/RAM for a TPU family.
+    """Per-VM host CPU/RAM for a TPU family: the physical size of each TPU host VM.
 
-    Mirrors the ``tpu_pools[*].resources`` blocks in
-    ``lib/iris/config/marin.yaml`` — the scheduler's source of truth for the
-    physical size of each TPU host VM. Used to size ``with_tpu`` container
-    defaults relative to the host rather than a flat constant.
+    Used to size ``with_tpu`` container defaults relative to the host rather
+    than a flat constant.
     """
 
     cpu: int
     ram_gb: int
 
 
-# Per-VM host size by TPU family. Keep in sync with the `resources:` blocks in
-# lib/iris/config/marin.yaml.
+# Per-VM host size by TPU family.
 TPU_HOST_RESOURCES: dict[str, TpuHostResources] = {
     "v4": TpuHostResources(cpu=240, ram_gb=400),
     "v5e": TpuHostResources(cpu=112, ram_gb=192),
@@ -426,8 +423,8 @@ class ResourceConfig:
     a custom runtime (e.g. an image with runsc/skopeo for sandboxing
     untrusted child workloads).
 
-    `target_cluster` routes an Iris job to a named peer cluster. Other backends
-    may ignore it.
+    `target_cluster` names a peer cluster to route the job to. LocalClient
+    ignores it.
     """
 
     cpu: float = 1
@@ -565,7 +562,6 @@ class ActorConfig:
 
     `max_task_retries` controls how many times a failed task (or actor
     initialisation) is retried before being marked as permanently failed.
-    Maps to Iris's ``max_retries_failure``.
 
     `priority` is forwarded to the underlying backend if supported. 0 leaves
     the backend to use its default priority.
@@ -592,10 +588,8 @@ class EnvironmentConfig:
         pip_packages: Additional pip packages to install
         env_vars: Environment variables to set
         extras: Extra dependency groups for uv (e.g., ["tpu", "eval"])
-        setup_scripts: Setup scripts run in order before the command. ``None``
-            builds the default uv-sync script; a list runs verbatim (``[]`` => no
-            setup, image used as-is). Either way iris appends its own runtime-deps
-            script. Build the default and tweak it via ``fray.default_setup_script``.
+        setup_scripts: Setup scripts to run in order before the command. LocalClient
+            does not run them.
         sync_packages: Workspace members the default sync targets (default: all).
     """
 
@@ -703,9 +697,8 @@ class JobRequest:
         resources: Resource requirements per replica
         environment: Environment configuration (dependencies, env vars)
         replicas: Gang-scheduled replicas (e.g. TPU slices for multislice training)
-        processes_per_task: GPU processes to run inside each task (default 1). When
-            > 1, fray composes the ``iris.jax.multigpu_main`` supervisor into the command
-            (one process per GPU group); iris runs it verbatim. ``1`` is a no-op.
+        processes_per_task: GPU processes to run inside each task (default 1).
+            LocalClient ignores it.
         max_retries_failure: Max retries on failure
         max_retries_preemption: Max retries on preemption
         max_task_failures: Cumulative failed task attempts the job tolerates before it

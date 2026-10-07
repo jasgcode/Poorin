@@ -356,8 +356,8 @@ def _maybe_override_auto_build_caches(config: TrainConfigT, auto_build: bool) ->
 
 # XLA disables the NCCL collective watchdog by default (-1). A positive value
 # makes XLA abort the communicators and raise TimeoutError once a collective is
-# stuck that long, so a hung collective becomes a process crash Iris can retry
-# instead of a silent mesh-wide hang.
+# stuck that long, so a hung collective becomes a process crash instead of a
+# silent mesh-wide hang.
 GPU_NCCL_TERMINATION_TIMEOUT_FLAG = "xla_gpu_nccl_termination_timeout_seconds"
 # Counts only time spent inside a collective, so it does not fire during compile
 # or data loading. Set above the longest legitimate collective (cross-rank skew on
@@ -418,7 +418,6 @@ def resolve_training_env(
     env.setdefault(TENSORSTORE_CURL_LOW_SPEED_TIME_ENV, DEFAULT_TENSORSTORE_CURL_LOW_SPEED_TIME)
     env.setdefault(TENSORSTORE_CURL_LOW_SPEED_LIMIT_ENV, DEFAULT_TENSORSTORE_CURL_LOW_SPEED_LIMIT)
 
-
     return env
 
 
@@ -466,8 +465,8 @@ def _prepare_training_run(
 def _apply_env_to_process(env: dict[str, str]) -> None:
     """Apply training env vars to ``os.environ`` so Levanter's main reads them.
 
-    Uses ``setdefault`` so ambient env (set by Iris from the parent
-    JobRequest) wins on conflict; only missing keys are filled in.
+    Uses ``setdefault`` so ambient env wins on conflict; only missing keys are
+    filled in.
     """
     for key, value in env.items():
         os.environ.setdefault(key, value)

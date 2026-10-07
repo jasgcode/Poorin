@@ -34,7 +34,7 @@ DEFAULT_JOB_NAME = "remote_job"
 
 
 def sanitize_job_name(name: str) -> str:
-    """Ensure job names are compatible with Iris and Docker image tags."""
+    """Ensure job names are compatible with Docker image tags."""
     sanitized = re.sub(r"[^a-z0-9_.-]+", "-", name.lower())
     sanitized = sanitized.strip("-.")
     return sanitized or DEFAULT_JOB_NAME

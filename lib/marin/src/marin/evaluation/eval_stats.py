@@ -23,7 +23,7 @@ widens the interval. A one-item run of a 1319-item benchmark passes the second a
 
 Nothing here knows what a harness writes: :mod:`marin.evaluation.eval_measurements` turns records into
 measurements, and this module takes them from there. It depends only on the evaluation record and
-archive contracts, with no training, Levanter, or Iris imports.
+archive contracts, with no training or Levanter imports.
 """
 
 from __future__ import annotations

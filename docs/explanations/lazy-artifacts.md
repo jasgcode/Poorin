@@ -15,7 +15,7 @@ materialized result type produced when the step runs:
 - `ArtifactStep[TokenizedCache]` — a handle whose step produces a tokenized dataset
   (consumed by `train_lm` and other data assemblers).
 - `ArtifactStep[LevanterCheckpoint]` — a handle whose step produces a Levanter model
-  checkpoint (consumed by `train_lm`'s `init_from` and by eval steps).
+  checkpoint (consumed by `train_lm`'s `init_from`).
 
 The result types are `Artifact` subclasses that live with their producers:
 `TokenizedCache` in `marin.processing.tokenize.tokenize`, `LevanterCheckpoint` in
@@ -47,7 +47,7 @@ experiment step. New library code should not construct
 `ArtifactStep` or `StepSpec` objects, compose a graph, or refer to specific artifact handles
 or output locations. Library tests continue to cover reusable behavior.
 
-`marin.experiment.data`, `train`, and `evaluation` currently provide library builders that
+`marin.experiment.data` and `marin.experiment.train` currently provide library builders that
 construct handles. They remain supported APIs, but do not establish a location for new
 pipeline builders. The `Artifact` and `ArtifactStep` types themselves remain in the
 execution framework.
@@ -89,27 +89,26 @@ versions — define the artifact and enter its fingerprint. Values pulled from `
 output paths, the prefix, the region, compute resources — are execution choices and are
 excluded from the fingerprint.
 
-A concrete example from `experiments/tutorials/exp1078_reproduce_dclm_7b1x.py`:
+A concrete example from `experiments/tutorials/train_tiny_model.py`:
 
 ```python
 return train_lm(
-    name="checkpoints/dclm_7b_1x_how_to",
-    version="2026.06.28",
-    model=llama_7b_dclm,         # literal → bears identity
+    name=f"checkpoints/tiny-{data}-{device}",
+    run_id=f"tiny-{data}-{device}",
+    model=model,                 # literal → bears identity
     optimizer=AdamConfig(
-        learning_rate=2e-3,      # literal → bears identity
-        ...
+        learning_rate=6e-4,      # literal → bears identity
+        weight_decay=0.1,
     ),
-    datasets=weighted,           # literal → bears identity
-    validation=validation,
-    batch_size=BATCH_SIZE,       # literal → bears identity
+    datasets={dataset(data): 1.0},  # literal → bears identity
+    batch_size=batch_size,       # literal → bears identity
     ...
-    resources=TRAIN_RESOURCES,   # runtime arg → excluded from fingerprint
+    resources=resources,         # runtime arg → excluded from fingerprint
 )
 ```
 
 `train_lm` constructs the `ArtifactStep` internally and passes `resources` as a
-`runtime_arg`, so changing the TPU never re-fingerprints the checkpoint.
+`runtime_arg`, so changing the hardware never re-fingerprints the checkpoint.
 
 ## Lowering and running
 

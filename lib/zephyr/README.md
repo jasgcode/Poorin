@@ -1,6 +1,6 @@
 # Zephyr
 
-Simple data processing library for Marin pipelines. Build lazy dataset pipelines that run on Iris jobs or a local backend.
+Simple data processing library for Marin pipelines. Build lazy dataset pipelines that run on Fray's local backend.
 
 ## Quick Start
 
@@ -46,7 +46,7 @@ Pass `include_file_paths=True` to add `__file_path` to each row (or set `file_pa
 - `.write_vortex(pattern)` - write to a Vortex file
 
 **Execution (`ZephyrContext`):**
-- `ZephyrContext(max_workers=N)` — auto-detects the backend (Iris inside an Iris job, local otherwise) via `fray.current_client()`
+- `ZephyrContext(max_workers=N)` — uses the client from `fray.current_client.current_client()`, a `LocalClient` unless another client is set
 - `ZephyrContext(client=LocalClient())` — explicit local backend (testing)
 - `ctx.execute(pipeline)` — runs the pipeline; returns a `ZephyrExecutionResult(results, counters)`
 
@@ -100,11 +100,9 @@ retries. Multiple tables can share the worker process. Zephyr does not reserve,
 limit, or evict table memory; size the context's worker RAM for the combined
 tables and pipeline workload.
 
-Iris reconstructs a preempted worker at the same endpoint. The first table
-lookup on that replacement reloads its immutable source shards, and all worker
-responses and reconstruction share one `recovery_timeout` deadline. Destroying
-one table leaves other tables active. Exiting the creating context stops the
-worker pool and invalidates its table handles.
+All worker responses and worker recovery share one `recovery_timeout`
+deadline. Destroying one table leaves other tables active. Exiting the creating
+context stops the worker pool and invalidates its table handles.
 
 ## Real Usage
 
@@ -163,22 +161,11 @@ uv pip install -e .
 
 ## Running Tests
 
-Zephyr tests run against multiple execution backends to ensure correctness across different environments.
+Tests run on Fray's `LocalClient`.
 
-### All Tests on Both Backends (Default)
 ```bash
 uv run pytest lib/zephyr/tests
-# Runs all tests on both Local and Iris backends
-# Local Iris cluster is started automatically via ClusterManager
 ```
-
-### Run Specific Backend Only
-```bash
-uv run pytest lib/zephyr/tests -k "local"
-uv run pytest lib/zephyr/tests -k "iris"
-```
-
-The Iris cluster is started once per test session and reused across all tests for efficiency.
 
 ## Design
 
@@ -188,7 +175,7 @@ Zephyr consolidates ad-hoc distributed and Hugging Face dataset processing patte
 - Lazy evaluation with operation fusion
 - Disk-based inter-stage data flow for low memory footprint
 - Chunk-by-chunk streaming to minimize memory pressure
-- Distributed execution with bounded parallelism (Iris/local backends)
+- Parallel execution with bounded worker count
 - Automatic chunking to prevent large object overhead
 - fsspec integration (GCS, S3, local)
 - Type-safe operation chaining

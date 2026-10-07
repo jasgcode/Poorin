@@ -81,11 +81,9 @@ MAX_CONCURRENT_RESULT_READS = 16
 ZEPHYR_PROGRESS_TIME_METRIC = "progress_time_seconds"
 ZEPHYR_HISTORY_ENDPOINT_NAME = "/system/zephyr-history"
 
-# Seconds between worker-job liveness probes. Each probe is a GetJobState RPC to
-# the Iris controller, and the coordinator loop ticks every 0.5s, so probing once
-# per tick costs 7,200 controller calls per idle hour per pool. Iris caps its own
-# long-running job-state polling at 30s, and the heartbeat timeout already bounds
-# how long a dead pool goes unnoticed, so a slower probe loses nothing.
+# Seconds between worker-group liveness probes. The coordinator loop ticks every
+# 0.5s, but the heartbeat timeout already bounds how long a dead pool goes
+# unnoticed, so a probe slower than the tick loses nothing.
 WORKER_GROUP_CHECK_INTERVAL = 5.0
 
 _SNAPSHOT_ATTRIBUTES = telemetry.snapshot_attributes("gauge", telemetry.CURRENT_SNAPSHOT)
@@ -153,7 +151,7 @@ class PullTask:
 
 
 class CoordinatorUnreachable(RuntimeError):
-    """Worker lost contact with the coordinator. Retryable at the iris task level."""
+    """Worker lost contact with the coordinator."""
 
 
 @dataclass
@@ -430,13 +428,7 @@ class ZephyrCoordinator:
         worker_resources: ResourceConfig,
         actor_config: ActorConfig,
     ) -> None:
-        """Create the worker group from inside this coordinator's job.
-
-        Iris derives a submitted job's id from the enclosing job context, so a group
-        created here is a *child* of the coordinator job and Iris cascading termination
-        takes the workers down with it. Creating the group on the driver instead leaves
-        the two as siblings: a dead coordinator strands its workers, and a reconstructed
-        one comes back with no executions for them to poll.
+        """Create the worker group, owned by this coordinator and retired on its shutdown.
 
         ``worker_class`` is passed in rather than imported because ``worker`` imports
         this module.
@@ -936,10 +928,10 @@ class ZephyrCoordinator:
                 return
 
             if shard_idx in run.results:
-                # Iris retries a transient actor RPC failure, so a result whose
-                # reply was lost arrives twice with the same attempt. Counting
-                # it again would let the stage finish while another shard is
-                # still running, silently dropping that shard's output.
+                # A backend that retries a transient actor RPC failure delivers a
+                # result twice, with the same attempt, when its first reply was lost.
+                # Counting it again would let the stage finish while another shard
+                # is still running, silently dropping that shard's output.
                 logger.warning(
                     "Ignoring duplicate result from worker %s for shard %d (attempt %d)",
                     worker_id,

@@ -3,8 +3,9 @@
 
 """The memory and CPU limits visible to this process.
 
-Salvaged from Marin's Iris (``iris.env_resources``) without the Iris task-resource environment
-variable. Limits come from cgroup v2, then cgroup v1, then ``/proc/meminfo`` and ``os.cpu_count()``
+Salvaged from upstream Marin's ``iris.env_resources`` (git tag ``upstream-baseline``) without its
+task-resource environment variable. Limits come from cgroup v2, then cgroup v1, then
+``/proc/meminfo`` and ``os.cpu_count()``
 with a warning, so a container's limits win over the host's.
 """
 

@@ -11,11 +11,9 @@ description = "Optimized text de-duplication kernels (Rust) with a pure-Python s
 readme = "README.md"
 requires-python = ">=3.12"
 # `import dupekit` re-exports the native `dupekit_native` extension, which ships
-# as the companion marin-dupekit-native platform wheel (maturin, rust/), built
-# in lockstep by marin-release-libs-wheels.yaml. It is a hard runtime dependency —
-# the pure package is only the proxy/type surface. The `>= X.Y.Z.dev0` floor
-# opts uv into development wheels; `scripts/rust_mode.py dev` swaps the
-# [tool.uv.sources] entry below to the local rust/ tree so it builds from source.
+# as the companion marin-dupekit-native platform wheel, built with maturin from
+# rust/. It is a hard runtime dependency — the pure package is only the
+# proxy/type surface. The `>= X.Y.Z.dev0` floor opts uv into development wheels.
 dependencies = [
     "marin-dupekit-native>=0.1.6.dev31131847556",
 ]
@@ -50,13 +48,6 @@ only-include = ["src/dupekit", "tests", "README.md"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/dupekit"]
-
-[tool.uv.sources]
-# `scripts/rust_mode.py dev` points marin-dupekit-native at ./rust here (and at
-# lib/dupekit/rust in the root pyproject) so the extension builds from source;
-# `user` mode clears the block and the pre-built wheel comes from PyPI.
-# ### BEGIN RUST-DEV SOURCES ###
-# ### END RUST-DEV SOURCES ###
 
 [tool.pytest.ini_options]
 pythonpath = ["src", "tests"]

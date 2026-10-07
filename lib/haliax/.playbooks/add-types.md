@@ -5,7 +5,7 @@ annotation helpers described in `docs/typing.md`.
 
 1. **Read the documentation**: Familiarise yourself with `docs/typing.md`.
    It describes the `Named[...]` syntax and the dtype aware helpers in
-   `haliax.typing`.
+   `haliax.haxtyping`.
 2. **Annotate parameters**: Replace plain `NamedArray` annotations with
    `Named[...]` that lists the required axes.  Use ellipses or sets when the
    exact order is flexible.
@@ -22,11 +22,11 @@ annotation helpers described in `docs/typing.md`.
        ...
    ```
 3. **Annotate dtypes when needed**: If the dtype matters, import symbolic dtypes
-   from `haliax.typing` (e.g. `ht.f32`, `ht.i32`).  They can be indexed just
+   from `haliax.haxtyping` (e.g. `ht.f32`, `ht.i32`).  They can be indexed just
    like `Named`.
 
    ```python
-   import haliax.typing as ht
+   import haliax.haxtyping as ht
 
    def bar(x: ht.f32["batch"]):
        ...

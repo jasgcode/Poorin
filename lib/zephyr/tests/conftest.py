@@ -104,8 +104,8 @@ def _configure_marin_prefix():
 
 
 # Thread name prefixes for infrastructure threads managed by long-lived
-# fixtures (iris, fray). These persist across tests within a module/session
-# and are not leaks.
+# fixtures. These persist across tests within a module/session and are not
+# leaks.
 _INFRA_THREAD_PREFIXES = (
     "worker-server",
     "worker-lifecycle",
@@ -114,15 +114,6 @@ _INFRA_THREAD_PREFIXES = (
     "asyncio_",
     "grpc_",
     "monitoring",
-    # Iris worker task/log threads, spawned the first time a test touches the
-    # cluster fixture and torn down with the cluster.
-    "task-/",
-    "logs-/",
-    # Iris worker profiling thread and controller RPC thread pool — created
-    # lazily when the cluster handles its first job but torn down with the
-    # module-scoped iris_cluster fixture, not with individual tests.
-    "profile-loop",
-    "rpc-handler",
 )
 
 
@@ -134,7 +125,7 @@ def _thread_cleanup():
     non-daemon threads remain after teardown. Waits briefly for threads
     that are in the process of shutting down.
 
-    Infrastructure threads from long-lived fixtures (iris cluster, fray) are
+    Infrastructure threads from long-lived fixtures are
     excluded — they persist for the lifetime of the fixture and are not leaks.
     """
     before = {t.ident for t in threading.enumerate()}

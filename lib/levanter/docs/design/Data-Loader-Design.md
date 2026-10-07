@@ -63,7 +63,7 @@ as well as some information to make it less likely that you accidentally reuse a
 
 ### Cache Structure
 
-A cache is a [PyTree](https://jax.readthedocs.io/en/latest/pytrees.html) of [levanter.store.JaggedArrayStore][]s, each
+A cache is a [PyTree](https://jax.readthedocs.io/en/latest/pytrees.html) of `levanter.store.jagged_array.JaggedArrayStore`s, each
 representing a different field of the processed documents. Each JaggedArray is a group of either two or three arrays:
 
 * **Data**: The actual data, stored as a Zarray array. All the "tokens" for a given field for all documents are stored in a single flat array.
@@ -91,7 +91,7 @@ cache
 
 The stuff under `input_ids/data` is the actual data, and the stuff under `input_ids/offsets` is the offsets.
 
-In code, this is modeled in [levanter.store.TreeStore][].
+In code, this is modeled in `levanter.store.tree_store.TreeStore`.
 
 ### Cache Construction
 
@@ -107,31 +107,31 @@ ledger is used for resuming cache construction.
 
 Along with the cache, we introduce interfaces and classes for working with the cache. The main classes are:
 
-- [levanter.data.AsyncDataset][]: This is the base class for all datasets. The main method it exposes is
+- `levanter.data.dataset.AsyncDataset`: This is the base class for all datasets. The main method it exposes is
   `get_batch(indices: Sequence[int])` which (asynchronously) returns a batch of documents for the given indices.
-- [levanter.data.DataLoader][]: This is a class that wraps a dataset and provides an iterator over the dataset. It prefetches
+- `levanter.data.loader.DataLoader`: This is a class that wraps a dataset and provides an iterator over the dataset. It prefetches
   the parts of batches that each machine needs. It has an iterator and supports "seeking" to a particular batch.
-- [levanter.store.TreeCache][]: This is an AsyncDataest that wraps a cache and exposes a `get_batch` method that returns
+- `levanter.store.cache.TreeCache`: This is an AsyncDataest that wraps a cache and exposes a `get_batch` method that returns
   a batch of documents for the given indices.
-- [levanter.data.text.TokenSeqDataset][]: This is an async dataset that does the chunking of documents into examples. It
+- [levanter.data.text.datasets.TokenSeqDataset][]: This is an async dataset that does the chunking of documents into examples. It
   takes a cache and a `max_seq_len` and returns examples of length `max_seq_len`.
-- [levanter.data.BlockShufflingDataset][]: This is the default LM-training shuffle dataset. It shuffles contiguous IO-sized
+- `levanter.data.dataset.BlockShufflingDataset`: This is the default LM-training shuffle dataset. It shuffles contiguous IO-sized
   blocks and then permutes examples within a moving window of blocks.
-- [levanter.data.PermutationDataset][]: This is a dataset that permutes the indices of another dataset. It remains available
+- `levanter.data.dataset.PermutationDataset`: This is a dataset that permutes the indices of another dataset. It remains available
   for full-dataset random-access shuffles.
-- [levanter.data.MixtureDataset][]: This is a dataset that mixes together multiple datasets with different weights.
+- `levanter.data.mixture.MixtureDataset`: This is a dataset that mixes together multiple datasets with different weights.
 
-### [levanter.data.BlockShufflingDataset][]
+### `levanter.data.dataset.BlockShufflingDataset`
 
 The BlockShufflingDataset is the default shuffle strategy for LM caches. It preserves more locality than a full
 permutation while still mixing examples across nearby blocks. This is the path used by the default LM data config.
 
-### [levanter.data.PermutationDataset][]
+### `levanter.data.dataset.PermutationDataset`
 
 The PermutationDataset is a dataset that permutes the indices of another dataset. It is backed by a pseudo-random
 permutation (PRP). PRPs give you random access to a permutation with O(1) time and memory.
 
-### [levanter.data.MixtureDataset][]
+### `levanter.data.mixture.MixtureDataset`
 
 We implement "stable mixtures" where the number of samples from each domain for each batch is fixed. This acts
 as a kind of variance reduction, while also enabling random access and sampling without replacement.

@@ -181,7 +181,7 @@ Used when you construct an `AsyncDataset[LmExample]` directly in code and want t
 component/mixture plumbing without cache build/load.
 
 ```python
-from levanter.data.text import DirectDatasetComponent, LmDataConfig
+from levanter.data.text.datasets import DirectDatasetComponent, LmDataConfig
 
 component = DirectDatasetComponent(datasets={"train": train_ds, "validation": val_ds})
 config = LmDataConfig(components={"special": component})
@@ -197,26 +197,26 @@ Direct datasets are expected to yield `LmExample` instances that already include
 
 ## Overall Configs
 
-::: levanter.data.text.LmDataConfig
-::: levanter.data.text.BlockShuffleConfig
-::: levanter.data.text.DatasetComponent
-::: levanter.data.text.DatasetComponentBase
-::: levanter.data.text.DirectDatasetComponent
-::: levanter.data.text.LmDatasetSourceConfigBase
-::: levanter.data.text.HfDatasetSourceConfig
-::: levanter.data.text.UrlDatasetSourceConfig
+::: levanter.data.text.datasets.LmDataConfig
+::: levanter.data.text.datasets.BlockShuffleConfig
+::: levanter.data.text.datasets.DatasetComponent
+::: levanter.data.text.datasets.DatasetComponentBase
+::: levanter.data.text.datasets.DirectDatasetComponent
+::: levanter.data.text.datasets.LmDatasetSourceConfigBase
+::: levanter.data.text.datasets.HfDatasetSourceConfig
+::: levanter.data.text.datasets.UrlDatasetSourceConfig
 
 ## Formats
 
-::: levanter.data.text.LmDatasetFormatBase
+::: levanter.data.text.formats.LmDatasetFormatBase
 
-::: levanter.data.text.ChatLmDatasetFormat
-::: levanter.data.text.PrebuiltLmDatasetFormat
-::: levanter.data.text.TextLmDatasetFormat
+::: levanter.data.text.formats.ChatLmDatasetFormat
+::: levanter.data.text.formats.PrebuiltLmDatasetFormat
+::: levanter.data.text.formats.TextLmDatasetFormat
 
 ## Datasets
 
 
-::: levanter.data.text.TokenSeqDataset
-::: levanter.data.text.CausalLmDataset
-::: levanter.data.text.ChatDataset
+::: levanter.data.text.datasets.TokenSeqDataset
+::: levanter.data.text.datasets.CausalLmDataset
+::: levanter.data.text.datasets.ChatDataset

@@ -134,31 +134,13 @@ This says that the field called `blocks` in this class should be (de)serialized 
 #### Hard Case: Custom Serialization
 
 If your modules need special logic, you'll need to extend your class from `ModuleWithStateDictSerialization` and
-overwrite the default function `update_state_dict()` and `from_state_dict()`. It takes in and returns a modified
+overwrite the default function `to_state_dict()` and `from_state_dict()`. It takes in and returns a modified
 [haliax.state_dict.StateDict][]. As of May 2024, we almost never this in Levanter.
 
 For implementation, there are a few helper methods from `haliax.state_dict` that you can use:
-- To join specific prefix to the keys of Hugging Face state_dict, you can use the helper function `apply_prefix()`. The prefix comes from the name of attributes defined at the beginning of your model class.
+- To join specific prefix to the keys of Hugging Face state_dict, you can use the helper function `with_prefix()`. The prefix comes from the name of attributes defined at the beginning of your model class.
 
-For example, below is an implementation of `update_state_dict()` in a model.
-In this class, we want to preserve HF compatibility by saving untied output embeddings. (We chose not to implement
-non-weight-tied embeddings.)
-
-```python
-    def update_state_dict(self, state_dict: StateDict, prefix: Optional[str] = None) -> StateDict:
-        state_dict = super().update_state_dict(state_dict, prefix=prefix)
-        # In levanter's implementation, we have a shared embedding matrix for both the word
-        # embeddings and the sense embeddings
-        state_dict[apply_prefix(prefix, "backpack.word_embeddings.weight")] = state_dict[
-            apply_prefix(prefix, "backpack.gpt2_model.wte.weight")
-        ]
-        state_dict[apply_prefix(prefix, "backpack.position_embeddings.weight")] = state_dict[
-            apply_prefix(prefix, "backpack.gpt2_model.wpe.weight")
-        ]
-        return state_dict
-```
-
-Similarly, to load weights from the state dict, you'll need to implement `from_state_dict`.
+To load weights from the state dict, you'll need to implement `from_state_dict`.
 
 The correctness of your implementation can be validated through serialization tests, which will be discussed in the next section.
 

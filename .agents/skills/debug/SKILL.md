@@ -16,7 +16,7 @@ sm_120 and the workaround for each.
 ## Pipeline faults
 
 For a slow Zephyr pipeline, stragglers, data skew, or worker failures, read
-`lib/zephyr/AGENTS.md`, then `lib/zephyr/OPS.md` → Diagnostic Patterns, Observability.
+`lib/zephyr/AGENTS.md`.
 
 ## Code bugs
 

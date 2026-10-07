@@ -98,9 +98,7 @@ nav:
       - 'Performance-Guide.md'
       - "guides/Training-Data-Guide.md"
       - "guides/Direct-Cache-Construction.md"
-      - "guides/Training-On-Audio-Data.md"
   - 'Tutorials':
-      - "tutorials/Fine-Tuning-Semantic-Parsing.md"
       - "Hardware-Agnostic-Training.md"
   - 'Explanation':
       - 'explanation/Mesh-Parallelism.md'
@@ -111,8 +109,6 @@ nav:
   - 'Developer Guide':
       - 'dev/Port-Models.md'
       - 'dev/GPU-Docker-Dev.md'
-      - 'dev/DeepEP.md'
   - 'FAQ' : 'faq.md'
   - Other:
-      - Release Announcement: 'Levanter-1.0-Release.md'
       - "design/Data-Loader-Design.md"

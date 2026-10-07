@@ -280,8 +280,8 @@ _S3_NATIVE_REQUEST_TIMEOUT = 120
 def _s3_filesystem_kwargs() -> dict[str, str | bool | int]:
     """Translate the ambient fsspec S3 config into pyarrow S3FileSystem kwargs.
 
-    Iris exports the store's connection settings for s3fs via ``FSSPEC_S3``
-    (see ``configure_client_s3``): ``endpoint_url``, a signing region of
+    :func:`rigging.filesystem.s3_compat.configure_fsspec_s3` exports the store's
+    connection settings for s3fs via ``FSSPEC_S3``: ``endpoint_url``, a signing region of
     ``auto`` for non-AWS endpoints, and ``addressing_style: virtual`` where
     the endpoint rejects path-style requests (CoreWeave object storage).
     Credentials come from the ``AWS_*`` environment, which pyarrow reads

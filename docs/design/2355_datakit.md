@@ -206,7 +206,7 @@ Dataset-specific wiring \- which transforms to apply for a given dataset, expres
 * Implement `datakit/normalize.py` \- standard schema definitions, ID generation, raw format to Parquet conversion with mandatory columns
 * Integration tests for the normalize step
 * Integration tests covering download, normalize, dedup and tokenize at reasonable scale
-* Update Grug/ferry experiment definitions to consume datakit pipeline outputs directly
+* Update Grug experiment definitions to consume datakit pipeline outputs directly
 
 # Non-Goals
 

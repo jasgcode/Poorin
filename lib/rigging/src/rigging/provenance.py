@@ -35,9 +35,9 @@ logger = logging.getLogger(__name__)
 LAUNCH_PROVENANCE_ENV = "MARIN_PROVENANCE"
 """Env var carrying the launch's :class:`Provenance` as JSON.
 
-A submitting client stamps it into a job's environment (see iris
-``EnvironmentSpec.to_proto``), so a process running from a ``.git``-less bundle inherits the
-submission's provenance — :meth:`Provenance.capture` prefers it over shelling out to git.
+A submitting client can stamp it into a job's environment, so a process running from a
+``.git``-less bundle inherits the submission's provenance — :meth:`Provenance.capture` prefers it
+over shelling out to git.
 """
 
 

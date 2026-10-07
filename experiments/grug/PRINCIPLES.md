@@ -27,7 +27,7 @@ New variants (for example MoE) should start as copies of `experiments/grug/base/
 
 - Template code belongs in `experiments/grug/<variant>/`.
 - Shared library code should only hold general-purpose helpers, not grug-specific framework layers.
-- Remove stale experiment paths after upstreaming, and keep the trail in `docs/reports/grug-archive.md`.
+- Remove stale experiment paths after upstreaming, and keep the trail in `experiments/grug/variants.md`.
 
 ## Testing
 

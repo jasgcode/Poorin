@@ -3,8 +3,9 @@
 
 """JAX's persistent compilation cache, on by default.
 
-Salvaged from Marin's Iris (``iris.jax.compile_cache``) without the cluster parts: the node-local
-scratch mount and the object-store mirror of XLA's per-fusion autotune cache.
+Salvaged from upstream Marin's ``iris.jax.compile_cache`` (git tag ``upstream-baseline``) without
+the cluster parts: the node-local scratch mount and the object-store mirror of XLA's per-fusion
+autotune cache.
 """
 
 import logging

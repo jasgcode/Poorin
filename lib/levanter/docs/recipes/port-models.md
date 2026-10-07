@@ -9,7 +9,7 @@ This guide outlines the steps to port a model architecture (e.g. from Hugging Fa
 the Levanter ecosystem using Haliax and Equinox. This guide is focused on LLMs, but the principles apply to other models as well.
 Agents can also refer to [Port-Models.md](../dev/Port-Models.md), which contains a more detailed, human-oriented guide.
 
-In general, pattern match on `llama.py` or `mixtral.py` for examples of how to implement a model.
+In general, pattern match on `llama.py` or `qwen.py` for examples of how to implement a model.
 
 ## Step 1: Write the Config
 - Define all model hyperparameters and axis definitions using a `@dataclass`.
@@ -43,14 +43,14 @@ In general, pattern match on `llama.py` or `mixtral.py` for examples of how to i
 - Compare Levanter and HF model outputs on the same input.
 
 ## Step 5: Create a "nano" config
-- Create a `yaml` training config under `configs/`. Pattern match on llama2_nano.yaml
+- Create a `yaml` training config under `config/`. Pattern match on llama2_nano.yaml
 - Probably you cannot run
 
 ## Tips
 - Avoid positional tensors: always use named `Axis`.
 - Use `rearrange`, `dot`, and `einsum` for shape and contraction logic.
 - Use gradient checkpointing policies similar to what's in `llama.py`.
-- Haliax means you generally don't need to worry about sharding. For more complex things you may. See `mixtral.py` for an example of an MoE.
+- Haliax means you generally don't need to worry about sharding. For more complex things you may.
 
 ## Example Models
 - `GPT2Config`, `Gpt2Transformer` in `levanter.models.gpt2`

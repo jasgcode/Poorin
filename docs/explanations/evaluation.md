@@ -2,10 +2,10 @@
 
 Poorin keeps Marin's evaluation framework and drops the fleet that ran it: the harness
 integration, the durable per-run record, the normalized rollout table, and the statistics that
-compare runs all stay. Marin's launcher, which served a model on Iris and ran Evalchemy and Harbor
-suites against it, is gone. To evaluate a model after training, serve it yourself behind an
-OpenAI-compatible endpoint (vLLM, or Levanter's own server for its models) and point the
-lm-evaluation-harness integration at it. A local orchestrator that does this for you is planned
+compare runs all stay. Marin's launcher, which served a model and ran Evalchemy and Harbor suites
+against it, is gone. To evaluate a model after training, serve it yourself behind an
+OpenAI-compatible endpoint (for example, vLLM) and point the lm-evaluation-harness integration
+at it. A local orchestrator that does this for you is planned
 (sub-project 7b).
 
 ## Evaluation modes

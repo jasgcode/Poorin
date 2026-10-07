@@ -12,7 +12,6 @@ end="<!--marin-intro-end-->"
 - [First Experiment](tutorials/first-experiment.md)
 - [Local GPU Setup](tutorials/local-gpu.md)
 - [The Language Modeling Pipeline](explanations/lm-pipeline.md)
-- [Experiment Reports](reports/index.md)
 
 ## Documentation Structure
 
@@ -20,7 +19,6 @@ Our documentation is organized into the following main sections:
 
 - **Tutorials**: Step-by-step guides to help you get started with Marin, including installation, basic usage, and local GPU setup
 - **Explanation**: Background information and context about the project
-- **Experiment Reports**: Reports from our experiments
 - **Developer Guide**: Information for developers who want to contribute to Marin
 - **Technical Reference**: Detailed technical information about Marin's architecture and components
 

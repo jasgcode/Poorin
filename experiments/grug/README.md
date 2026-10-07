@@ -14,15 +14,15 @@
 - `GrugBaseLaunchConfig` is the user-facing knob surface (model/data/optimizer/trainer/eval/run metadata).
 - `grug_base_trial(...)` returns a typed `Checkpoint` handle addressed by `name@version`; its recipe's
   `build_config` is what the fingerprint is computed from.
-- `ctx.out` (inside `build_config`) resolves to the current step's output root.
-- `run_grug(...)` in `base/train.py` is the runtime entry point the recipe's `fn` (`run_grug_base_trial`) calls.
+- `ctx.output_path` (inside `build_config`) resolves to the current step's output root.
+- `run_grug(...)` in `base/train.py` is the runtime entry point the step's `run` function (`run_grug_base_trial`) calls.
 - `P` in train/model code is the usual JAX alias for `PartitionSpec`; see the JAX explicit sharding tutorial: [Explicit Sharding (JAX)](https://docs.jax.dev/en/latest/notebooks/explicit-sharding.html).
 
 ## How to use it
 
 1. Copy `experiments/grug/base` to a new variant directory (for example `experiments/grug/moe`).
 2. Make model/training changes in that variant, not in shared trainer libraries.
-3. Set run knobs in `<variant>/launch.py` (run id, data mix, optimizer, TPU type).
+3. Set run knobs in `<variant>/launch.py` (run id, data mix, optimizer, resources).
 4. Launch from the variant's `launch.py` entrypoint.
 5. Add or update variant-specific notes in `experiments/grug/variants.md`.
 
@@ -52,16 +52,6 @@ Local run (lowers the trial and runs it through the `StepRunner`):
 uv run python experiments/grug/base/launch.py --version dev --run
 ```
 
-Iris cluster run (from a dev box, on `marin` prod cluster):
-
-```bash
-uv run iris --cluster=marin job run --cpu=1 --memory=2G --extra=cpu \
-  -e WANDB_API_KEY "$WANDB_API_KEY" \
-  -- python -m experiments.grug.base.launch --version dev --run
-```
-
-The entrypoint job is CPU-only; the `StepRunner` inside it submits TPU sub-tasks via Fray. See [`lib/iris/OPS.md`](../../lib/iris/OPS.md) for flag reference and troubleshooting.
-
 ## Diffing a variant against base
 
 When template-copying `experiments/grug/base/` to a new variant, review the changes with git:
@@ -89,7 +79,7 @@ git diff --no-index experiments/grug/base experiments/grug/<variant>
 - An own-run checkpoint resumes the complete state, including the optimizer and step, and takes precedence over
   `trainer.initialize_from`.
 - `trainer.initialize_from` initializes a new phase from external model weights when no own-run checkpoint was loaded.
-  The optimizer and step remain fresh. MoE runs also load `pending_qb_betas`; EMA starts from the loaded parameters.
+  The optimizer and step remain fresh. EMA starts from the loaded parameters.
 - `trainer.load_checkpoint_path` is a complete-state resume, not a phase-chaining input.
 - If `trainer.load_checkpoint=True` and no resume checkpoint is found, startup fails. With no resume checkpoint and no
   `trainer.initialize_from`, the run starts from scratch.
@@ -105,7 +95,7 @@ git diff --no-index experiments/grug/base experiments/grug/<variant>
 - Checkpoints: `<output_path>/checkpoints`.
 - Profiler traces (if enabled): `<trainer.log_dir>/<run_id>/profiler`.
 - Backward-flow artifacts: `<trainer.log_dir>/<run_id>/artifacts/backward_flow`, plus `backward_flow/dag` as native HTML media in W&B. Base Grug disables it by default (`backward_flow_interval=0` in `base/launch.py`); set a positive interval to sample it.
-- Step outputs: the `ctx.out` root for the step.
+- Step outputs: the `ctx.output_path` root for the step.
 
 ## Logged metrics
 

@@ -991,6 +991,23 @@ Plan: `plans/2026-10-07-p4-p7-strip.md`.
   row is committed with the last of them.
 - **Cost if wrong:** A deleted test or config is recoverable from `upstream-baseline`.
 
+### D76. Documentation describes only code Poorin has
+
+- **When:** 2026-10-07, cleanup (D73). **Status:** Adopted.
+- **Decision:** Pages about deleted subsystems were deleted: Iris actors, Finelog's server
+  analytics, TPU fleet observability, perplexity-gap analysis, scaling heuristics, Snowball SFT,
+  and cloud GPUs. So was Marin's project history: reports, retrospectives, the model card, and the
+  system prompt. Surviving tutorials and references lost their cluster-submission sections and
+  links to deleted files. Guides outside `docs/` (READMEs, `AGENTS.md` files, skills) and Python
+  comments that described Iris were corrected the same way. Levanter's reference pages had been
+  broken upstream since its package `__init__` files stopped re-exporting configs; their `:::`
+  references now name the defining submodules. `docs/poorin/` is excluded from the site: its
+  specs, plans, and decision log link into the repository and quote other files' Markdown.
+- **Why:** AGENTS.md: keep MkDocs content in sync with code, and docs stand alone. The root and
+  Levanter sites now build with `mkdocs build --strict`.
+- **Cost if wrong:** Marin's reports and tutorials remain at `upstream-baseline`. Poorin's own
+  tutorials are not written yet.
+
 ### D78. The profiling package returns as a kept root
 
 - **When:** 2026-10-07, cleanup. **Status:** Adopted.
@@ -1040,4 +1057,6 @@ Known gaps left open on purpose. Each names where it gets resolved.
 | `test_ruff_checks_marin_with_its_own_configuration_as_marin_did` only mirrors the `RUFF_CONFIGS` table | P1 review | Open |
 | `config/local.yaml`'s comment says outputs fall back to `/tmp/marin`; on a GCE VM, rigging falls back to `gs://marin-{region}` | P1 review | Sub-project 2 |
 | The ruff reformat's commit message says ruff checks each file's syntax tree; ruff has no such check, and a separate AST comparison confirmed the reformat | P1 review | Recorded here |
+| Code that only made sense under Iris survives the comment cleanup (D76): Zephyr's `MAX_IRIS_WORKER_REPLICAS` and the coordinator-owned worker group, Fray fields `LocalClient` ignores (`target_cluster`, `processes_per_task`, `setup_scripts`, `sync_packages`, actor retries), grug dispatch's forwarded environment, the profiler's `iris.oa.dev` xprof URL, `MARIN_PROVENANCE`, `LogClient.connect(resolver=...)`, and `EvalRecord`, which nothing writes | Cleanup | Pass 2 |
+| Haliax's docs fail `mkdocs build --strict` on 144 warnings, all present at `upstream-baseline`: unresolved cross-references to JAX, NumPy, and Equinox objects, and griffe docstring warnings | Cleanup | Open |
 | P1's timing columns in `prune-metrics.csv` are confounded by host load (load average about 250 from processes outside the checkout) and are not comparable with P0's | P1 | A rerun on a quiet machine |

@@ -115,8 +115,7 @@ def _tasks_per_worker(worker_resources: ResourceConfig, task_resources: Resource
     """Return how many concurrent copies of *task_resources* fit in *worker_resources*.
 
     Packing uses cpu and ram only. Zephyr does not track disk in runtime
-    admission (``ZephyrTaskResources`` is cpu+memory), so disk is ignored here
-    even though it still applies to Iris worker sizing.
+    admission (``ZephyrTaskResources`` is cpu+memory), so disk is ignored here.
     """
     ratios = [worker_resources.cpu / task_resources.cpu]
     worker_ram = humanfriendly.parse_size(worker_resources.ram, binary=True)
@@ -238,8 +237,8 @@ class ZephyrContext:
         max_concurrent_pipelines: Maximum pipelines one pool runs at the same
             time. A pipeline past the limit is rejected, not queued. Raise it
             for a driver that fans many pipelines onto one shared pool.
-        stats_config: Explicit Finelog endpoint for local reporting.
-            When absent, discover Finelog through the Iris context.
+        stats_config: Finelog endpoint for stats reporting. When absent,
+            stats are not reported.
     """
 
     client: Client | None = None
@@ -510,8 +509,8 @@ class ZephyrContext:
 
         pool = _OwnedPool(coordinator_group, coordinator, worker_count)
         try:
-            # The coordinator creates the workers so they land in a child job of its
-            # own and Iris cascading termination retires them with it.
+            # The coordinator creates the workers so it owns them and retires them
+            # when it shuts down.
             coordinator.start_workers.remote(
                 ZephyrWorker,
                 worker_count,

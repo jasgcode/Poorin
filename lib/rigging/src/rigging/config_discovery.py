@@ -3,9 +3,8 @@
 
 """Path-agnostic config discovery for cluster YAML files.
 
-Generic YAML config discovery helpers. Callers (e.g. iris) pass the
-directories to search; this module knows nothing about any particular
-marin sub-package.
+Generic YAML config discovery helpers. Callers pass the directories to
+search; this module knows nothing about any particular marin sub-package.
 """
 
 import functools
@@ -26,7 +25,7 @@ def find_project_root(start: Path | str | None = None) -> Path | None:
     Walks up from ``start`` (or the current working directory) looking for a
     ``pyproject.toml`` that declares ``[tool.uv.workspace]``. This uniquely
     identifies the top-level marin root and avoids matching a workspace
-    member's pyproject (e.g. ``lib/iris/pyproject.toml``).
+    member's pyproject (e.g. ``lib/levanter/pyproject.toml``).
 
     Returns:
         The marin root ``Path``, or ``None`` when running outside a marin

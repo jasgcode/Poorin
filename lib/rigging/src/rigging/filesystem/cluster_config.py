@@ -45,7 +45,6 @@ def _bundled_cluster_config_dir() -> str | None:
     Populated by the ``force-include`` in ``lib/rigging/pyproject.toml`` at
     ``rigging/clusters``. Returns ``None`` for a source/editable checkout, where
     the repo-root ``config/`` entry resolves against the marin workspace root.
-    Mirrors ``iris.cli.connect._bundled_iris_config_dir``.
 
     This module lives at ``rigging/filesystem/cluster_config.py``, so the bundled
     ``rigging/clusters`` dir is two levels up from this file.
@@ -226,8 +225,8 @@ def load_cluster_config(cluster: str | None = None) -> DataConfig:
     """Load a cluster's :class:`DataConfig` from its ``config/<cluster>.yaml``.
 
     The cluster name is ``cluster`` arg > ``MARIN_CLUSTER`` env > ``local``. A
-    parsed ``data:`` block becomes the config; other keys (e.g. ``iris:``) are
-    ignored. When the default ``local`` config cannot be found (e.g. an installed
+    parsed ``data:`` block becomes the config; other keys are ignored. When
+    the default ``local`` config cannot be found (e.g. an installed
     package outside a checkout), returns :data:`_FALLBACK_DATA_CONFIG`; a missing
     *named* cluster raises ``FileNotFoundError``. Cached; call
     :func:`reset_data_config_cache` in tests after changing env or config files.

@@ -11,7 +11,7 @@ to write batches directly. Here's an example:
 ```python
 import numpy as np
 
-from levanter.store import SerialCacheWriter
+from levanter.store.cache import SerialCacheWriter
 
 exemplar = {
     "input_ids": np.zeros((0), dtype=np.int32),

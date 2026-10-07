@@ -80,9 +80,8 @@ def test_cursors_bracket_a_window_around_a_named_row(embedded_server):
         seqs = [e.seq for e in everything]
         if not all(seq > 0 for seq in seqs):
             pytest.skip(
-                "the finelog_server extension predates LogEntry.seq. It installs from a pre-built "
-                "wheel by default; build it from this tree with "
-                "`python scripts/rust_mode.py dev && uv sync` to exercise the cursor contract."
+                "the pinned marin-finelog-server wheel predates LogEntry.seq, so the cursor "
+                "contract needs a newer server"
             )
         assert seqs == sorted(seqs), "seq ascends in write order"
         assert len(set(seqs)) == len(seqs), "seq uniquely names a row"

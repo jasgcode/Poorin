@@ -29,9 +29,6 @@ For a one-off run, set it inline:
 MARIN_PREFIX=local_store python experiments/your_experiment.py --version dev --run
 ```
 
-On a cluster, the task environment supplies `MARIN_PREFIX` — Iris sets it for GCP and
-CoreWeave tasks — so a job inherits the prefix for the region it lands in.
-
 ## Acceptable Storage Backends and Paths
 
 Marin leverages the `fsspec` library, allowing you to use various storage backends. The path you provide should be a URI understandable by `fsspec`. Common examples include:
@@ -50,7 +47,7 @@ Marin leverages the `fsspec` library, allowing you to use various storage backen
 
 ## Important Considerations for Distributed Environments
 
-When running Marin in a distributed setup (e.g., across multiple nodes via Iris), it is **critical** that the specified prefix path:
+When running Marin in a distributed setup (e.g., across multiple nodes), it is **critical** that the specified prefix path:
 
 *   **Is accessible by all worker nodes:** Each machine involved in the experiment must have the necessary permissions and network access to read from and write to this location.
 *   **Points to the same shared storage location for all workers:** Using a local path like `/tmp/marin_output` on each machine will result in data being scattered and inaccessible, not a unified output. You must use a shared filesystem (like NFS) or a cloud storage solution (S3, GCS) for distributed runs.

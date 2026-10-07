@@ -1,6 +1,6 @@
 # Hardware Resource Configuration
 
-Marin uses Fray for scheduling and resource management (dispatching to Iris on shared clusters, or to a local backend for laptop runs). The `fray` library provides unified resource configuration types that translate to concrete cluster resource requests.
+Marin dispatches jobs through Fray. Fray's only backend, `LocalClient`, runs each job on the current machine. A `ResourceConfig` describes the hardware a job expects; the local backend does not check it against the machine, but `train_lm` reads its device type to set up the training environment.
 
 ## ResourceConfig
 

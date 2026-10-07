@@ -5,7 +5,6 @@ Lazy dataset processing library. Start with the shared instructions in `/AGENTS.
 ## Key Docs
 
 - `README.md` — overview, API reference, quick start
-- `OPS.md` — debugging pipelines: dashboard, observability, profiling, diagnostic patterns (also used by the `debug` skill)
 
 ## Source Layout
 
@@ -54,4 +53,4 @@ Shared data is uploaded to filesystem by `ZephyrContext._upload_shared_data()` b
 
 ### Backends
 
-`ZephyrContext` uses `fray.current_client()`: Iris is auto-detected inside an Iris job, and `LocalClient` is the fallback for local tests and scripts.
+`ZephyrContext` uses `fray.current_client.current_client()`, which returns the client set with `set_current_client` or, by default, a `LocalClient`.

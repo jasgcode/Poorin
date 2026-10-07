@@ -6,16 +6,9 @@ tests.
 
 ## In-Repo Pallas Kernels
 
-- `lib/levanter/src/levanter/kernels/pallas/template_kernel.py`: minimal
-  template for API, reference, and Pallas wrapper structure.
-- `lib/levanter/src/levanter/kernels/pallas/fused_cross_entropy_loss/`: best
-  reference for production-style layout, TPU Pallas implementation, fallback
-  API, cost estimate plumbing, tuned block-size lookup, and autotune-on-miss
-  behavior.
-- `lib/levanter/src/levanter/kernels/pallas/mamba3/`: reference/XLA split and
-  config layout for sequence kernels.
-- `lib/levanter/src/levanter/kernels/pallas/ssd/`: reference/XLA split and
-  config layout for structured state-space kernels.
+- `lib/levanter/src/levanter/kernels/pallas/fused_cross_entropy_loss/`: the
+  reference for module layout, TPU Pallas implementation, fallback API, cost
+  estimate plumbing, tuned block-size lookup, and autotune-on-miss behavior.
 - `lib/levanter/src/levanter/kernels/pallas/splash_attention.py`: local Pallas
   attention reference.
 
@@ -28,14 +21,10 @@ tests.
 
 ## Tests and Harnesses
 
-- `lib/levanter/tests/kernels/test_pallas_template_kernel.py`: template kernel
-  test shape.
 - `lib/levanter/tests/kernels/test_pallas_fused_cross_entropy_loss.py`:
-  production kernel correctness, fallback, and tuning coverage.
+  kernel correctness, fallback, and tuning coverage.
 - `lib/levanter/tests/kernels/test_pallas_autotune_utils.py`: autotune helper
   behavior.
-- `lib/levanter/tests/kernels/test_pallas_mamba3.py`: reference/XLA parity for a
-  sequence kernel.
 
 Benchmark and tuning scripts:
 

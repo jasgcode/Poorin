@@ -1,8 +1,8 @@
 # Setting up a Local GPU Environment
 
 This guide will walk you through the steps to set up a local GPU environment for Marin.
-By "local", we mean a machine that you run jobs on directly, as opposed to dispatching them to a shared cluster via [Iris](https://github.com/marin-community/marin/blob/main/lib/iris/OPS.md).
-To dispatch a GPU job to Marin's shared GPU fleet instead, see [Training on Cloud GPUs](cloud-gpu.md).
+By "local", we mean a machine that you run jobs on directly. Fray's local backend runs every
+training job on the machine that launches it.
 
 ## Prerequisites
 
@@ -59,7 +59,7 @@ accepts a `--device` flag that selects the accelerator:
 export MARIN_PREFIX=local_store
 export WANDB_ENTITY=...
 uv run python experiments/tutorials/train_tiny_model.py \
-  --device h100x8 --dataset wikitext --version dev --run
+  --device rtx5090x1 --dataset wikitext --version dev --run
 ```
 
 `MARIN_PREFIX` sets the root directory for all outputs; it can be a local path or anything
@@ -69,22 +69,21 @@ The same script runs on CPU, GPU, and TPU — only `--device` and `--dataset` ch
 device entry in `train_tiny_model.py` configures resources and batch size:
 
 ```python
-from fray.types import ANY_REGION, ResourceConfig
+from fray.types import ResourceConfig
 
-# "h100x8" entry in DEVICES (resources, batch_size)
-resources = ResourceConfig.with_gpu(
-    "H100", count=8, cpu=32, disk="128G", ram="128G", regions=[ANY_REGION]
-)
-batch_size = 256
+# "rtx5090x1" entry in DEVICES (resources, batch_size)
+resources = ResourceConfig.with_gpu("RTX5090", count=1, cpu=16, disk="128G", ram="96G")
+batch_size = 32
 ```
 
-`regions=[ANY_REGION]` is not optional for the GPU entries: the fleets live in federated
-CoreWeave clusters that advertise no region, so an inherited region would exclude every host
-with the GPU and leave the job unschedulable.
+Whereas `--device cpu` uses `ResourceConfig.with_cpu()` and a batch size of 4, `--device rtx5090x1`
+uses one RTX 5090 with a larger batch. The local backend does not check the entry against the
+machine, so pick the one that matches your hardware. Adding a new device is one entry in the
+`DEVICES` dict — no separate file needed.
 
-Whereas `--device cpu` uses `ResourceConfig.with_cpu()` and a batch size of 4, `--device h100x8`
-uses eight H100s with a larger batch. Adding a new device is one entry in the `DEVICES` dict —
-no separate file needed.
+The Grug base launcher, `experiments/grug/base/launch.py`, trains a 130M-parameter Grug model for
+50 steps on 10M pretokenized FineWeb-Edu tokens, on one GPU:
 
-To scale up, submit the same script to Marin's shared GPU fleet — see [Training on Cloud
-GPUs](cloud-gpu.md), which covers the storage prefix, region, and cluster-pinning a GPU job needs.
+```bash
+uv run python -m experiments.grug.base.launch --version dev --run
+```

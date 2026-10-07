@@ -342,7 +342,7 @@ class Table:
         """Run Postgres-flavored SQL against the stats service.
 
         Reference namespaces by name in the FROM clause (e.g.
-        ``FROM "iris.worker"``). Raises :class:`QueryResultTooLargeError`
+        ``FROM "zephyr.worker"``). Raises :class:`QueryResultTooLargeError`
         if the row count exceeds ``max_rows``.
         """
         if self._querier is None:
@@ -604,8 +604,8 @@ class LogClient:
 
         ``endpoint`` is either an HTTP URL string or a ``(host, port)``
         tuple. The optional ``resolver`` is invoked on each re-resolve so
-        callers who advertise their endpoint via a registry (e.g. iris's
-        ``/system/log-server``) can plug that lookup in here.
+        callers who advertise their endpoint via a registry can plug that
+        lookup in here.
         """
         if isinstance(endpoint, tuple):
             host, port = endpoint
@@ -876,10 +876,10 @@ class LogClient:
                 raise RuntimeError("LogClient is closed")
             if (client := cached()) is not None:
                 return client
-        # Resolve outside the lock: the resolver may block on a network RPC (iris
-        # resolves the endpoint via the controller), and holding _lock across it
-        # stalls every other caller — notably a shutdown-path log emit parked on
-        # the same lock in _get_log_table, which deadlocks teardown. Re-check
+        # Resolve outside the lock: the resolver may block on a network RPC, and
+        # holding _lock across it stalls every other caller — notably a
+        # shutdown-path log emit parked on the same lock in _get_log_table, which
+        # deadlocks teardown. Re-check
         # under the lock afterward so a caller that loses the resolve race reuses
         # the winner's client instead of building a second one.
         address = self._resolve()

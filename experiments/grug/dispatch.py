@@ -17,9 +17,9 @@ logger = logging.getLogger(__name__)
 
 ConfigT = TypeVar("ConfigT")
 
-# Runtime-tuning env vars forwarded from the dispatcher to the train tasks.
-# Iris tasks don't inherit the submitter's shell, so anything the launcher was
-# given (e.g. `iris job run -e XLA_FLAGS ...`) must be re-exported explicitly.
+# Runtime-tuning env vars forwarded from the dispatcher to the train tasks, for
+# a backend whose tasks don't inherit the submitter's shell. LocalClient runs the
+# task in-process and ignores the forwarded environment.
 # JAX_PLATFORMS is excluded: the dispatcher runs CPU-only and its value must
 # not leak onto accelerator tasks.
 _FORWARDED_ENV_PREFIXES = ("XLA_", "LIBTPU_INIT_ARGS", "NCCL_", "JAX_", "MALLOC_")
@@ -36,7 +36,7 @@ def _forwarded_env_vars() -> dict[str, str]:
 
 
 def _safe_job_suffix(run_id: str) -> str:
-    """Sanitize run IDs into Fray/Iris-safe job-name suffixes."""
+    """Sanitize run IDs into Fray-safe job-name suffixes."""
     return re.sub(r"[^A-Za-z0-9_.-]+", "-", run_id)
 
 

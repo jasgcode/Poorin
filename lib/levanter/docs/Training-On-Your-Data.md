@@ -12,7 +12,7 @@ The basic steps are:
 1. [Evaluate](#evaluation)
 1. [Export your model to Huggingface](#huggingface-export)
 
-If you're training on data that isn't text (or [audio-to-text](./guides/Training-On-Audio-Data.md)), you'll need to
+If you're training on data that isn't text, you'll need to
 write a custom cache. See the guide on [Direct Cache Construction](./guides/Direct-Cache-Construction.md).)
 
 ## Environment Setup
@@ -271,7 +271,7 @@ Levanter supports starting from an HF pretrained model. To do so, you should set
 
 ```yaml
 model:
-  type: mpt
+  type: llama
 initialize_from_hf: "NousResearch/Llama-2-7b-hf"
 use_hf_model_config: true
 ```
@@ -352,9 +352,7 @@ gsutil cp my_config.yaml gs://path/to/config.yaml
 #### Using the Babysitting Script with a Preemptible or TRC TPU VM
 
 If you are using a preemptible TPU VM, or a TRC TPU VM, you should use the babysitting script to automatically restart
-your VM if it gets preempted. A detailed guide to babysitting is available in the
-[babysitting section of the TPU guide](./Getting-Started-TPU-VM.md#using-the-babysitting-script-with-a-preemptible-or-trc-tpu-vm).
-Here is the upshot:
+your VM if it gets preempted:
 
 ```bash
 infra/babysit-tpu-vm my-tpu -z us-east1-d -t v3-128 -- \
@@ -367,37 +365,12 @@ You should probably use the automated setup script, as described in the [relevan
 Here's what that looks like:
 
 ```bash
-bash infra/spin-up-tpu-vm.sh my-tpu -z us-east1-d -t v3-128
+bash infra/spin-up-vm.sh my-tpu -z us-east1-d -t v3-128
 ```
 
-This will spin up a TPU VM instance and install Levanter on it. You can then run a command like so:
+This will spin up a TPU VM instance and install Levanter on it. Then run the training command on every worker, as
+shown in [Useful commands](./Getting-Started-TPU-VM.md#running-a-command-on-all-workers-in-parallel).
 
-
-```
-cat > .config <<EOF
-env:
-    WANDB_API_KEY:
-    WANDB_ENTITY:
-    WANDB_PROJECT:
-    HF_TOKEN:
-    TPU_STDERR_LOG_LEVEL: 2
-    TPU_MIN_LOG_LEVEL: 2
-    LIBTPU_INIT_ARGS: <extra args to libtpu>
-
-docker_repository: levanter
-zone: us-west4-a
-tpu_type: "v5litepod-16"
-vm_image: "tpu-ubuntu2204-base"
-preemptible: true
-autodelete: false
-subnetwork: "default"
-
-EOF
-```
-
-```bash
-python infra/launch.py --tpu_name=my_tpu -- python src/levanter/main/train_lm.py --config_path gs://path/to/config.yaml"
-```
 
 ## Monitoring
 

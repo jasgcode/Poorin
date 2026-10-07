@@ -175,7 +175,7 @@ def compute_minhash_attrs(
             chars (~100K shingles at ngram=5). Pass ``None`` to disable
             (pre-v2 behavior).
         seed: MinHash seed.
-        worker_resources: Per-Iris-worker resource request. Unless
+        worker_resources: Per-Zephyr-worker resource request. Unless
             ``map_task_resources`` is explicit, each whole worker CPU admits
             one concurrent MinHash subprocess, capped at 16 per worker.
         max_workers: Max Zephyr workers. Defaults to Zephyr's own default.

@@ -10,7 +10,7 @@ Four namespaces are written:
 - ``zephyr.worker`` — one row per shard at START, each sample interval
   (RUNNING), and END, emitted by the long-lived worker actor.
 - ``zephyr.shuffle`` — target placeholders and reducer input sizes.
-- ``zephyr.execution`` — one physical plan per execution, linked to its Iris job.
+- ``zephyr.execution`` — one physical plan per execution, linked to its job.
 
 Runners sample CPU and memory counters. Worker heartbeats write per-shard rows
 and send aggregated counters to the coordinator for stage stats.

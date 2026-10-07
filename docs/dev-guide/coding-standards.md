@@ -19,14 +19,14 @@ by refactoring to a common package instead of hacking around them.
 ```python
 # BAD
 def train(config):
-    from marin.training.utils import setup_logging  # buried import
-    setup_logging()
+    from rigging.log_setup import configure_logging  # buried import
+    configure_logging()
 
 # GOOD
-from marin.training.logging_setup import setup_logging
+from rigging.log_setup import configure_logging
 
 def train(config):
-    setup_logging()
+    configure_logging()
 ```
 
 No `TYPE_CHECKING` guards. Fix import cycles structurally — extract common
@@ -300,10 +300,10 @@ Enforced automatically by `uv run --no-sync python -m tools.lint --all-files --f
 ## 10. Dependency Direction
 
 ```
-iris → {levanter, zephyr} → marin → haliax
+haliax → {levanter, zephyr} → marin
 ```
 
-Each layer may only import from layers to its right. Never introduce reverse
+Each layer may only import from layers to its left. Never introduce reverse
 dependencies. Cleanup workflows should flag any violation.
 
 ---

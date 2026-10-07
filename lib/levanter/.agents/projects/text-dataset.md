@@ -71,7 +71,7 @@ class DatasetComponent:
 4. Update utilities/tests/config examples; remove dead code and reroute imports.
 
 ## Verification
-- Run `uv run pytest tests/data/test_text.py tests/data/test_mixture.py` (or equivalent) plus targeted new tests.
+- Run `uv run pytest tests/test_text.py tests/test_mixture.py` plus targeted new tests.
 - Spot-check cache metadata files for loss_weight/assistant_masks fields and pack flag.
 
 ## Next Steps

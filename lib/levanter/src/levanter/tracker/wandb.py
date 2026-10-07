@@ -659,8 +659,8 @@ class WandbConfig(TrackerConfig):
 def _git_run_config(commit: Optional[str], source_dir: str) -> dict[str, Any]:
     """Run-config entries for the commit and working-tree state of the launch.
 
-    A job submitted through Iris runs from a bundle without ``.git``, but inherits the
-    submitter's git provenance in ``MARIN_PROVENANCE``. Only the commit, the dirty flag,
+    A job that runs from a bundle without ``.git`` can inherit the submitter's git
+    provenance in ``MARIN_PROVENANCE``. Only the commit, the dirty flag,
     and the tree hash are recorded: the full provenance also holds the submitter's
     username, command line, and remote URL, which do not belong in a W&B config.
 

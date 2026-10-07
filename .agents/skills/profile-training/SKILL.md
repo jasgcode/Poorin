@@ -55,16 +55,15 @@ HLO metadata increases artifact size, so keep these profile windows short. The
 `--trainer.profiler.upload.enabled false` for local-only capture. Do not copy
 profiles to another GCS region for inspection.
 
-Known-good TensorBoard scope recipe from CoreWeave Grug MoE profiling:
+Known-good TensorBoard scope recipe from upstream Marin's GPU Grug MoE profiling:
 `trainer.profiler.enabled=true`, `trainer.profiler.start_step=3`,
 `trainer.profiler.num_steps=2`, `trainer.profiler.perfetto_link=false`,
 `trainer.profiler.profile_options.host_tracer_level=1`,
 `trainer.profiler.profile_options.python_tracer_level=0`, and
 `trainer.profiler.profile_options.enable_hlo_proto=true` preserved useful
-`jax.named_scope` / `named_call` regions in TensorBoard for
-`GM2560-MAY-120S4096-W2048-B8-R1-E8M1-FA4PROFILE-S3B-N1-cw-20260617-2353`.
+`jax.named_scope` / `named_call` regions in TensorBoard.
 Leave `device_tracer_level` unset unless device timelines are specifically
-needed; this profile retained useful hierarchical host/XLA metadata without it.
+needed; that profile retained useful hierarchical host/XLA metadata without it.
 
 On GPU, command buffers can collapse or suppress the visible name stack in
 TensorBoard/Perfetto. For profile-readability runs, disable command buffers:

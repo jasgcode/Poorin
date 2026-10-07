@@ -22,8 +22,8 @@ Then add implementation variants as needed:
 - `pallas_mosaic_gpu.py`: GPU Pallas Mosaic implementation.
 - `tuned_block_sizes.py`: checked-in tuned table for runtime selection.
 
-Reference template:
-`lib/levanter/src/levanter/kernels/pallas/template_kernel.py`
+`lib/levanter/src/levanter/kernels/pallas/fused_cross_entropy_loss/` follows
+this layout.
 
 ## Top-Level API
 

@@ -33,8 +33,8 @@ guidelines.
 
 # GitHub pull requests
 
-Agents can use the `commit` skill for PR
-description style, testing requirements, and self-review.
+Agents follow `.agents/skills/writing-style/pull-requests.md` for PR
+titles and descriptions.
 
 ## General code style
 
@@ -126,6 +126,6 @@ Notes:
 - After the full experiment runs, use `ArtifactStep.adopt(name, version, source=...)`
   to reference heavy completed artifacts as pre-existing data. This keeps them
   visible in the dependency graph while preventing accidental re-execution.
-- When possible, use the standard helpers (e.g., `train_lm`, `eval_steps`) if
+- When possible, use the standard helpers (e.g., `train_lm`) if
   the configuration details are orthogonal to the aspect being varied in the
   experiment.

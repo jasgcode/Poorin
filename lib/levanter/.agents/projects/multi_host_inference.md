@@ -66,7 +66,7 @@ Enable `levanter.inference.engine.InferenceEngine` to execute inference across m
 - [ ] Create integration test plan for DP+TP (maybe using `pjit` with `Mesh` of size >1).
 
 ### 10. Documentation & Follow-up
-- [ ] Update docs (e.g., `docs/inference.md`) describing new multi-host mode and configuration knobs.
+- [ ] Update docs describing new multi-host mode and configuration knobs.
 - [ ] Provide migration notes for existing users (env vars, CLI flags).
 
 ## Risks & Mitigations

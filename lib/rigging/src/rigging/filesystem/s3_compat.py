@@ -95,9 +95,9 @@ def s3_request_bounds_config_kwargs() -> dict[str, Any]:
     connection wedges. Finite bounds turn that stall into an error handled by the
     task retry path (#6487).
 
-    JSON-safe by construction: this feeds the ``FSSPEC_S3`` environment block the
-    Iris controller exports to every task. Callers building a filesystem in
-    Python want :func:`s3_python_config_kwargs` instead.
+    JSON-safe by construction: this feeds the ``FSSPEC_S3`` environment block
+    (:func:`fsspec_s3_conf`). Callers building a filesystem in Python want
+    :func:`s3_python_config_kwargs` instead.
     """
     return {
         "connect_timeout": _S3_CONNECT_TIMEOUT,

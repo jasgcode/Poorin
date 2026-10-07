@@ -44,15 +44,14 @@ Progress was tracked in [GitHub issue #1337](https://github.com/marin-community/
 
 Some additional consolidated learnings can be found on the [Open Athena blog](https://openathena.ai/blog/). A selection, below:
 
-- [Cluster Scheduling with Iris](https://openathena.ai/blog/cluster-scheduling-with-iris/) · scheduling jobs across heterogeneous clusters
 - [Improving our LLM Pretraining Efficiency](https://openathena.ai/blog/pretraining-speedup/) · squeezing more throughput from pretraining
 - [Scaling Laws That Extrapolate 300× Past the Fit (Delphi)](https://openathena.ai/blog/delphi/) · predicting big models from small
 - [Mixture of Experts Quantile Balancing: Validated at 32B-A5B (1e22 FLOPs) Scale](https://openathena.ai/blog/quantile-balancing/) · keeping MoE experts load balanced
 
 ### Other models
 
-Previously, we used Marin to train an 8B parameter model that outperformed Llama 3.1 8B on our [base-model benchmark suite](docs/reports/marin-8b-retro.md#base-model-results).
-You can see the [training script](https://github.com/marin-community/marin/blob/ee163702c5bc71c9bbba3238db84b6ee86e826a7/experiments/tootsie/exp600_tootsie.py) or read the [retrospective](docs/reports/marin-8b-retro.md). We also trained [Marin 32B](docs/reports/marin-32b-retro.md).
+Previously, we used Marin to train an 8B parameter model that outperformed Llama 3.1 8B on our [base-model benchmark suite](https://github.com/marin-community/marin/blob/ab0da00df254ca0d52648df9169ca284cb5789af/docs/reports/marin-8b-retro.md#base-model-results).
+You can see the [training script](https://github.com/marin-community/marin/blob/ee163702c5bc71c9bbba3238db84b6ee86e826a7/experiments/tootsie/exp600_tootsie.py) or read the [retrospective](https://github.com/marin-community/marin/blob/ab0da00df254ca0d52648df9169ca284cb5789af/docs/reports/marin-8b-retro.md). We also trained [Marin 32B](https://github.com/marin-community/marin/blob/ab0da00df254ca0d52648df9169ca284cb5789af/docs/reports/marin-32b-retro.md).
 
 <!--marin-intro-end-->
 
@@ -66,8 +65,8 @@ To get started with Marin:
 
 - [Install](docs/tutorials/installation.md) Marin.
 - Train a [tiny language model](docs/tutorials/first-experiment.md) using Marin.
-- See how to run a much larger [DCLM 1B/1x](docs/tutorials/train-an-lm.md) experiment using Marin.
-- See a [summary of the experiments](docs/reports/index.md) we've run.
+- See how to run a much larger [1.4B-parameter](docs/tutorials/train-an-lm.md) experiment using Marin.
+- See a [summary of the experiments](https://github.com/marin-community/marin/blob/ab0da00df254ca0d52648df9169ca284cb5789af/docs/reports/index.md) Marin has run.
 - Join the [Marin Discord](https://discord.gg/J9CTk7pqcM) to chat with the community.
 
 <!--marin-first-steps-end-->
@@ -84,7 +83,7 @@ You can check out the [full script](https://github.com/marin-community/marin/blo
 
 ```python
 from fray.cluster import ResourceConfig
-from levanter.optim import AdamConfig
+from levanter.optim.config import AdamConfig
 from marin.execution.lazy import lower
 from marin.execution.step_runner import StepRunner
 from marin.experiment.data import tokenized
@@ -127,7 +126,7 @@ The training step depends on the tokenized dataset step, so it will be executed 
 <!--marin-example-end-->
 
 With slight modifications, you can extend this to train a [larger model on a larger dataset](docs/tutorials/train-an-lm.md),
-a [mixture of datasets](docs/tutorials/train-an-lm.md#mixture-of-sources), even scaling to very large GPU or TPU pods (or multislice TPUs!).
+or a [mixture of datasets](docs/tutorials/train-an-lm.md#building-the-data-mixture).
 
 ### For Contributors
 

@@ -94,7 +94,6 @@ class ZephyrWorker:
         # Set by task threads on completion so the poll loop wakes early.
         self._task_completed_event = threading.Event()
 
-
         # Capture actor context while ContextVar is still set (child threads
         # in Python <3.12 don't inherit it).
         self._actor_ctx = current_actor()
@@ -140,8 +139,8 @@ class ZephyrWorker:
         # shard it is still running to somebody else. Only a failed RPC starts a new
         # request.
         #
-        # Unbounded on purpose: returning exits the poll loop, and iris records that
-        # clean exit as a successful task and never replaces the worker.
+        # Unbounded on purpose: returning exits the poll loop, which ends the worker
+        # cleanly, and nothing replaces it.
         backoff = ExponentialBackoff(initial=1.0, maximum=30.0)
         future: ActorFuture | None = None
         request_start = 0.0

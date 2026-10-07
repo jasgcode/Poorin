@@ -26,7 +26,7 @@ factor here. The operation may use up to ``safety_fraction`` of the task's
 memory budget.
 
 The base coefficients below are rounded envelopes from 80 write measurements,
-a 36-cell sufficient-shard read matrix, and eight held-out read cells on Iris.
+a 36-cell sufficient-shard read matrix, and eight held-out read cells on upstream Marin's cluster.
 The buffered-input coefficient comes from the lower bound imposed by an
 incident-shaped OOM and a passing bounded-fan-in rerun. End-to-end cgroup,
 wide-merge, and ferry results are recorded in
@@ -40,7 +40,7 @@ fitted large-operation overhead.
 
 import math
 
-# Rounded upper envelope from 80 Iris scatter-flush measurements. The fixed
+# Rounded upper envelope from 80 cluster scatter-flush measurements. The fixed
 # term absorbs the scale-dependent growth in the zero-intercept ratio.
 FIXED_OVERHEAD_WRITE_BYTES = 320 * 2**20
 R_WRITE = 4.9
@@ -59,7 +59,7 @@ R_READ_SPILL_PAYLOAD = 1.1
 
 # A ceiling, not a target: the growth budget is derived from this fraction of
 # task memory, so the operation may use up to but not necessarily this much.
-# Both paths passed three end-to-end Iris repetitions run at 0.85, 0.90, and
+# Both paths passed three end-to-end cluster repetitions run at 0.85, 0.90, and
 # 0.95; 0.90 is kept for the predeclared 5% task-memory reserve.
 SAFETY_FRACTION_WRITE = 0.9
 SAFETY_FRACTION_READ = 0.9

@@ -26,18 +26,16 @@ dataset (or dataset family), built with the lazy data builders in
 - A module that builds tokenized-cache handles is runnable: end it with
   `if __name__ == "__main__": dataset_main(<family-dict>)`. `python -m
   experiments.datasets.<name>` prints the build plan; `--run` (optionally `--only
-  <keys>`) builds it. Modules of a different shape — `eval` (builds `EvalDataset`s)
-  and the `instruction`/`preference` HF-id registries — are exceptions with no CLI.
-  Never change a handle's `name=`/`version=`/`pin=`/path strings — those are
-  artifact identities.
+  <keys>`) builds it. Never change a handle's `name=`/`version=`/`pin=`/path
+  strings — those are artifact identities.
 - `__init__.py` stays docstring-only (no re-exports); import catalogs directly, e.g.
   `from experiments.datasets.nemotron import nemotron_datasets`.
 
 ## Artifact Path Rules
 
 - Do not hardcode `gs://...` paths in experiment configs unless there is no viable alternative.
-- Prefer artifact dependencies resolved at run time via `ctx.path(dep)` inside a recipe's `build_config`, so paths stay region-aware and reproducible.
-- To reference a pre-existing external output, use `adopt(name, version, source=...)` (see `marin.execution.lazy`) instead of a raw `gs://` URL.
+- Prefer artifact dependencies resolved at run time via `ctx.artifact_path(dep)` inside a recipe's `build_config`, so paths stay region-aware and reproducible.
+- To reference a pre-existing external output, use `ArtifactStep.adopt(name, version, source)` (see `marin.execution.lazy`) instead of a raw `gs://` URL.
 - If a referenced artifact may come from another region, point its source at a `mirror://...` path so reads are local-first and copied once when needed.
 
 ## Cross-Region Large Artifacts
@@ -54,4 +52,4 @@ dataset (or dataset family), built with the lazy data builders in
 - Write behavior: writes go directly to the local prefix.
 - Both `mirror://` copies and direct cross-region GCS reads share a single process-global `TransferBudget` (default 10 GB) that raises `TransferBudgetExceeded` when exhausted.
 
-Implementation references: `lib/iris/src/iris/marin_fs.py` and `rigging.filesystem` (the `TransferBudget`).
+Implementation references: `rigging.filesystem.mirror` and `rigging.filesystem.cross_region` (the `TransferBudget`).

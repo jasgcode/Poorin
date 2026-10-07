@@ -9,7 +9,7 @@ per-task metrics it produced. The record is the source of truth; evaldash builds
 these object-store records. Runs use an ``evals`` prefix in the platform-local object store.
 
 This module is import-light on purpose -- the filesystem layer plus Pydantic, with no
-marin/levanter/iris imports -- so it can be vendored into the dashboard image that reads records back.
+marin/levanter imports -- so it can be vendored into the dashboard image that reads records back.
 """
 
 import logging
@@ -492,7 +492,7 @@ class EvalRunRecord(BaseModel):
     count. Empty when the mechanism reports none and on every record written before coverage existed;
     a reader treats an empty entry as unknown coverage, never as complete coverage."""
     jobs: dict[str, str]
-    """Pipeline role (``orchestrator``/``inference``/``eval``) to Iris job path, for every job the run
+    """Pipeline role (``orchestrator``/``inference``/``eval``) to job id, for every job the run
     submitted before finishing; a failure before a role's submission simply omits that role."""
     log_tails: dict[str, tuple[str, ...]]
     """For failed runs, the last log lines of the child job(s) behind the failure, keyed like

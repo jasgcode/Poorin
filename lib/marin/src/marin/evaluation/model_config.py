@@ -138,7 +138,7 @@ class AgentConfig:
 class ModelConfig:
     """A model the launcher can serve and evaluate: where its weights live and how to serve/query it.
 
-    ``name`` is the slash-free launch identity used in Iris job names and record paths. ``location``
+    ``name`` is the slash-free launch identity used in job names and record paths. ``location``
     is an HF repo id or an object-store (``gs://``/``s3://``) HF-format export directory, while
     ``identity`` pins the producer of a resolved artifact. An object-store location requires
     ``tokenizer`` because the eval client loads its tokenizer through HF. ``revision`` pins an

@@ -261,16 +261,6 @@ trainer:
 ```
 
 Alternatively, JAX's compilation cache directory can be set using the `JAX_COMPILATION_CACHE_DIR` environment variable.
-This method is particularly useful for workflows involving `launch.py` on TPUs, as environment variables can be specified in the `~/.config/marin/config.yaml` configuration file used by `launch.py`.
-Checkout-local `.levanter.yaml` files are also read and override matching values from `~/.config/marin/config.yaml`.
-For more details on using `launch.py`, see the [Using launch.py](../Getting-Started-TPU-VM.md#using-launchpy) section in the TPU VM guide.
-
-Example `~/.config/marin/config.yaml` snippet:
-```yaml
-env:
-  JAX_COMPILATION_CACHE_DIR: "gs://your-compile-cache-bucket/path"
-  # ... other environment variables
-```
 
 
 ## Trackers and Logging
@@ -378,7 +368,7 @@ If you're not using SLURM or TPUs, you can specify the cluster manually using th
 
 ### Standard Options
 
-All optimizers in Levanter are based on the [levanter.optim.OptimizerConfig][] dataclass. This class has the following fields,
+All optimizers in Levanter are based on the [levanter.optim.config.OptimizerConfig][] dataclass. This class has the following fields,
 which are common to all optimizers (and most have to do with learning rate scheduling):
 
 
@@ -471,7 +461,7 @@ with short or no rewarmup.
 
 ### AdamConfig
 
-Additionally, [levanter.optim.AdamConfig][] has the following fields:
+Additionally, [levanter.optim.config.AdamConfig][] has the following fields:
 
 | Parameter       | Description                                  | Default |
 |-----------------|----------------------------------------------|---------|
@@ -551,11 +541,11 @@ trainer:
 
 ### Optimizer
 
-::: levanter.optim.OptimizerConfig
+::: levanter.optim.config.OptimizerConfig
 
-::: levanter.optim.AdamConfig
+::: levanter.optim.config.AdamConfig
 
-::: levanter.optim.SkipStepConfig
+::: levanter.optim.skipstep.SkipStepConfig
 
 
 ### LM Model

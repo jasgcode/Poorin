@@ -11,7 +11,7 @@ Delete:
 
 ```python
 def test_resolve_cluster_name_prefers_cli_name():
-    config = IrisClusterConfig(name="from-config")
+    config = ClusterConfig(name="from-config")
     assert resolve_cluster_name(config, None, "from-cli") == "from-cli"
 ```
 

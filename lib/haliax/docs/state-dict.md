@@ -119,33 +119,7 @@ For implementation, there are a few helper methods from `haliax.state_dict` that
 - To join specific prefix to the keys of Hugging Face state_dict, you can use the helper function `with_prefix()`.
   The prefix comes from the name of attributes defined at the beginning of your model class.
 
-For example, below is the implementation of `to_state_dict()` in [levanter.models.backpack.BackpackLMHeadModel][].
-In this class, we want to preserve HF compatibility by saving untied output embeddings. (We chose not to implement
-non-weight-tied embeddings.)
-
-```python
-from typing import Optional
-
-from haliax.state_dict import with_prefix, StateDict
-
-
-class BackpackLMHeadModel(ModuleWithStateDictSerialization):
-    ...
-
-    def to_state_dict(self, prefix: Optional[str] = None) -> StateDict:
-        state_dict = super().to_state_dict(prefix=prefix)
-        # In levanter's implementation, we have a shared embedding matrix for both the word
-        # embeddings and the sense embeddings
-        state_dict[with_prefix(prefix, "backpack.word_embeddings.weight")] = state_dict[
-            with_prefix(prefix, "backpack.gpt2_model.wte.weight")
-        ]
-        state_dict[with_prefix(prefix, "backpack.position_embeddings.weight")] = state_dict[
-            with_prefix(prefix, "backpack.gpt2_model.wpe.weight")
-        ]
-        return state_dict
-```
-
-Similarly, to load weights from the state dict, you might need to implement `from_state_dict`. This function
+To load weights from the state dict, you might need to implement `from_state_dict`. This function
 takes in a state dict and the module with the updated weights. You can use the `with_prefix()` helper function
 to join the prefix to the keys of the state dict.
 

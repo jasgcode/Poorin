@@ -11,11 +11,11 @@ uv run fsutil buckets                # what is declared, and whether credentials
 uv run fsutil ls -l gs://marin-us-central2/scratch
 uv run fsutil ls -R gs://marin-us-central2/scratch/checkpoints
 uv run fsutil ls 's3://marin-us-east-02a/*/config.json'
-uv run fsutil cat s3://marin-us-east-02a/iris/my-job/config.json
+uv run fsutil cat s3://marin-us-east-02a/checkpoints/my-run/config.json
 uv run fsutil show gs://marin-us-central2/documents/shard-00000.parquet
-uv run fsutil du s3://marin-us-east-02a/iris/my-job
+uv run fsutil du s3://marin-us-east-02a/checkpoints/my-run
 uv run fsutil usage s3://marin-us-east-02a -o usage-report.md
-uv run fsutil cp -r s3://marin-us-east-02a/iris/my-job/logs /tmp/logs
+uv run fsutil cp -r s3://marin-us-east-02a/checkpoints/my-run/logs /tmp/logs
 uv run fsutil mv /tmp/run.json gs://marin-us-central2/archive/
 uv run fsutil rsync --dry-run --delete /tmp/checkpoints gs://marin-us-central2/checkpoints
 uv run fsutil verified-copy gs://marin-us-central2/exports/model s3://marin-na/marin/exports/model
