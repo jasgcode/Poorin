@@ -10,14 +10,12 @@ import os
 from collections.abc import Mapping
 from copy import deepcopy
 from dataclasses import dataclass, replace
-from typing import Any, TypeVar, cast
+from typing import Any, Protocol, TypeVar, cast, runtime_checkable
 
 from draccus.utils import DataclassInstance
 from fray.types import CpuConfig, GpuConfig, ResourceConfig, TpuConfig
-from levanter.adaptor import NoAdaptorConfig
+from levanter.adaptor import AdaptorConfig, NoAdaptorConfig
 from levanter.checkpoint import CheckpointerConfig
-from levanter.main.train_dpo import TrainDpoConfig
-from levanter.main.train_lm import TrainLmConfig
 from levanter.schedule import BatchSchedule
 from mergedeep import mergedeep
 from pydantic import BaseModel
@@ -129,6 +127,18 @@ class TrainDpoOnPodConfig:
 
 
 TrainConfigT = TypeVar("TrainConfigT")
+
+
+@runtime_checkable
+class _AdapterExportConfig(Protocol):
+    """A Levanter train config that can export an adapter: ``TrainLmConfig`` or ``TrainDpoConfig``."""
+
+    adapter: AdaptorConfig
+    hf_save_path: str | None
+    hf_save_steps: int | None
+    peft_save_path: str | None
+
+
 TrainOnPodConfigT = TypeVar("TrainOnPodConfigT", TrainLmOnPodConfig, TrainDpoOnPodConfig)
 
 DEFAULT_CHECKPOINTS_PATH = "checkpoints"
@@ -196,7 +206,7 @@ def apply_output_path(train_config: TrainConfigT, output_path: str) -> TrainConf
         hf_save_path=prefix_join(output_path, DEFAULT_HF_CHECKPOINTS_PATH),
     )
 
-    if isinstance(config, (TrainDpoConfig, TrainLmConfig)) and not isinstance(config.adapter, NoAdaptorConfig):
+    if isinstance(config, _AdapterExportConfig) and not isinstance(config.adapter, NoAdaptorConfig):
         peft_save_path = config.peft_save_path
         if peft_save_path is None and config.hf_save_steps is not None:
             peft_save_path = config.hf_save_path
