@@ -8,11 +8,10 @@ A :class:`DataConfig` describes where a cluster's data lives: the
 region-to-bucket mirror set, the URL scheme, and the temp TTL policy.
 :func:`data_config` returns the active config — the one bound by
 :func:`use_data_config`, else the cluster named by ``MARIN_CLUSTER`` (default
-``marin``), loaded from ``config/<cluster>.yaml``. Every "where does data live"
+``local``), loaded from ``config/<cluster>.yaml``. Every "where does data live"
 answer flows through it: :func:`marin_prefix` is ``data_config().resolved_root()``,
 while :func:`marin_temp_bucket` resolves region-local scratch, honoring a
-cluster-wide ``MARIN_TEMP_PREFIX`` override when configured. Lifecycle rules
-on every configured data bucket are managed by ``infra/buckets``.
+cluster-wide ``MARIN_TEMP_PREFIX`` override when configured.
 """
 
 import contextlib
@@ -56,11 +55,9 @@ def _bundled_cluster_config_dir() -> str | None:
 
 
 # A per-user override dir for connecting to a live cluster (e.g. on a dev VM).
-# Named so tests can filter it out of MARIN_CLUSTER_CONFIG_DIRS by identity
-# rather than re-hardcoding the path, since it makes cluster-config resolution
-# host-dependent: a document there may lack a `data:` block, silently swapping
-# the loaded DataConfig out from under a test that expects the committed
-# config/marin.yaml layout.
+# A per-user override dir for connecting to a live cluster (e.g. on a dev VM). It takes
+# priority over the repository's config/ directory, so tests replace the search dirs to stay
+# independent of the host.
 PER_USER_CLUSTER_CONFIG_DIR = "~/.config/marin/clusters"
 
 # Cluster config search dirs, highest priority first: a per-user override, the
@@ -192,13 +189,10 @@ def _canonical_root(prefix: str) -> str:
     return str(path)
 
 
-# The marin cluster's storage layout lives in ``config/marin.yaml`` (loaded as
-# the default below). This in-code config is only a degraded fallback for when
-# no config file is discoverable — e.g. an installed package running outside a
-# marin checkout. Such contexts set ``MARIN_PREFIX`` (which wins in
-# ``resolved_root``) or detect a region (constructing ``gs://marin-{region}``),
-# so an empty ``region_buckets`` is sufficient.
-_DEFAULT_CLUSTER = "marin"
+# The default cluster is config/local.yaml: one machine and no buckets, so outputs go under
+# MARIN_PREFIX, or _DEFAULT_LOCAL_PREFIX when it is unset. This in-code config is the fallback
+# when no config file is discoverable, e.g. an installed package outside a checkout.
+_DEFAULT_CLUSTER = "local"
 _FALLBACK_DATA_CONFIG: DataConfig = DataConfig(region_buckets={})
 
 _active_data_config: contextvars.ContextVar[DataConfig | None] = contextvars.ContextVar(
@@ -210,7 +204,7 @@ def data_config() -> DataConfig:
     """Return the active :class:`DataConfig`.
 
     Resolution: the config bound by :func:`use_data_config` (a context-local
-    override), else the cluster named by ``MARIN_CLUSTER`` (default ``marin``)
+    override), else the cluster named by ``MARIN_CLUSTER`` (default ``local``)
     loaded from its ``config/<cluster>.yaml``.
     """
     override = _active_data_config.get()
@@ -232,9 +226,9 @@ def use_data_config(config: DataConfig) -> Generator[DataConfig, None, None]:
 def load_cluster_config(cluster: str | None = None) -> DataConfig:
     """Load a cluster's :class:`DataConfig` from its ``config/<cluster>.yaml``.
 
-    The cluster name is ``cluster`` arg > ``MARIN_CLUSTER`` env > ``marin``. A
+    The cluster name is ``cluster`` arg > ``MARIN_CLUSTER`` env > ``local``. A
     parsed ``data:`` block becomes the config; other keys (e.g. ``iris:``) are
-    ignored. When the default ``marin`` config cannot be found (e.g. an installed
+    ignored. When the default ``local`` config cannot be found (e.g. an installed
     package outside a checkout), returns :data:`_FALLBACK_DATA_CONFIG`; a missing
     *named* cluster raises ``FileNotFoundError``. Cached; call
     :func:`reset_data_config_cache` in tests after changing env or config files.
@@ -467,8 +461,8 @@ def s3_data_buckets() -> Mapping[str, BucketSpec]:
 def _s3_bucket_from_prefix(prefix: str | None) -> str | None:
     """Return the bucket from an ``s3://bucket/…`` prefix, or ``None``.
 
-    Only recognizes buckets in :func:`s3_data_buckets` (the R2/CoreWeave buckets
-    with lifecycle rules managed by ``infra/buckets``), so unknown
+    Only recognizes buckets in :func:`s3_data_buckets` (the R2/CoreWeave buckets, which carry
+    ``tmp/ttl=Nd/`` lifecycle rules), so unknown
     S3 buckets fall through to the flat non-TTL fallback instead of getting a
     ``tmp/ttl=Nd/`` path that would never be cleaned up.
     """
@@ -576,8 +570,8 @@ def marin_temp_bucket(
             path = f"gs://{spec.name}/{cfg.temp_path}/ttl={ttl_days}d"
             return _append_path_prefix(path, prefix)
 
-    # R2 and CoreWeave temp lives at the bucket root so the `tmp/ttl=Nd/`
-    # lifecycle prefix managed by infra/buckets applies. The
+    # R2 and CoreWeave temp lives at the bucket root so the bucket's `tmp/ttl=Nd/`
+    # lifecycle rules apply. The
     # bucket already pins the region (R2 is non-regional; CoreWeave encodes it in
     # the name, e.g. marin-us-east-02a), and the runtime marin prefix carries a
     # `marin/` data subdir (e.g. `s3://marin-na/marin`) that we deliberately strip.

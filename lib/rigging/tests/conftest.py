@@ -8,21 +8,14 @@ from rigging.config_discovery import find_project_root
 
 @pytest.fixture(autouse=True)
 def _hermetic_cluster_config(monkeypatch):
-    """Isolate cluster-config resolution from the host's ambient environment.
+    """Resolve clusters from Marin's multi-region configs, kept as fixtures in ``config/testing``.
 
-    ``~/.config/marin/clusters`` is a real per-user override some dev hosts carry
-    for connecting to a live Iris cluster. It takes priority over the
-    repo-committed ``config/`` dir, and a `data:`-less document there (e.g. a
-    pure Iris connection config) silently swaps the loaded ``DataConfig`` out
-    from under any test that expects the committed cluster layout — the same
-    class of host-dependent flake as an unmocked GCE metadata lookup. Tests see
-    only the repo-committed and bundled config dirs.
+    Rigging's tests exercise region routing, temp buckets, and cross-region guards, which need
+    Marin's buckets; Poorin's default ``config/local.yaml`` declares none. Replacing the search
+    dirs also keeps a per-user ``~/.config/marin/clusters`` override from changing results.
     """
-    monkeypatch.setattr(
-        cluster_config,
-        "MARIN_CLUSTER_CONFIG_DIRS",
-        tuple(p for p in cluster_config.MARIN_CLUSTER_CONFIG_DIRS if p != cluster_config.PER_USER_CLUSTER_CONFIG_DIR),
-    )
+    monkeypatch.setattr(cluster_config, "MARIN_CLUSTER_CONFIG_DIRS", ("config/testing",))
+    monkeypatch.setenv("MARIN_CLUSTER", "marin")
     find_project_root.cache_clear()
     cluster_config.reset_data_config_cache()
     yield

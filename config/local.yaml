@@ -1,0 +1,6 @@
+# Poorin's default cluster: one machine with local disk. Outputs go under MARIN_PREFIX, or
+# /tmp/marin when it is unset. No region buckets are declared, so no path is treated as a
+# region-local cloud bucket. Marin's multi-region clusters live in config/testing/ as fixtures
+# for the tests of region routing.
+data:
+  region_buckets: {}

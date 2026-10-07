@@ -480,7 +480,9 @@ Plan: `plans/2026-10-05-p1-fleet-operations.md`. Executing on branch `prune/p1-f
 
 ### D43. The local machine is the default cluster; Marin's clusters become fixtures
 
-- **When:** 2026-10-05, P1. **Status:** Planned (Task 12).
+- **When:** 2026-10-05, P1. **Status:** Adopted. One rigging test that clears the environment
+  now names the `marin` cluster itself, and Iris's suite resolves clusters from
+  `config/testing/` too: its CoreWeave backend reads Marin's `coreweave` config.
 - **Decision:** `config/local.yaml` declares no buckets and becomes the default for
   `MARIN_CLUSTER`. Marin's `marin.yaml` and `coreweave.yaml` move to `config/testing/`, which the
   default search does not read. The rigging and root test suites resolve clusters from there; the
@@ -491,6 +493,7 @@ Plan: `plans/2026-10-05-p1-fleet-operations.md`. Executing on branch `prune/p1-f
 - **Alternatives:** Delete Marin's cluster files outright, as the spec first said, and rewrite or
   delete the tests that use them.
 - **Cost if wrong:** Root-suite tests keep testing Marin's layout until later phases revisit them.
+- **Landed:** `[rigging] Make the local machine the default cluster`.
 
 ---
 

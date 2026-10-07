@@ -25,6 +25,7 @@ from iris.cluster.types import JobName
 from iris.managed_thread import thread_container_scope
 from iris.test_util import SentinelFile
 from iris.testing.config import make_controller_only_config
+from rigging.filesystem import cluster_config
 from rigging.timing import Duration, ExponentialBackoff
 
 
@@ -192,6 +193,23 @@ def local_iris_client():
         yield client
     finally:
         client.shutdown()
+
+
+@pytest.fixture(autouse=True, scope="session")
+def _marin_cluster_layout():
+    """Resolve clusters from Marin's configs, kept as fixtures in ``config/testing``.
+
+    Iris's CoreWeave backend and its profile paths read Marin's ``coreweave`` and ``marin``
+    clusters; Poorin's default ``config/local.yaml`` declares neither. Session-scoped so
+    module-scoped fixtures are covered too.
+    """
+    mp = pytest.MonkeyPatch()
+    mp.setattr(cluster_config, "MARIN_CLUSTER_CONFIG_DIRS", ("config/testing",))
+    mp.setenv("MARIN_CLUSTER", "marin")
+    cluster_config.reset_data_config_cache()
+    yield
+    mp.undo()
+    cluster_config.reset_data_config_cache()
 
 
 @pytest.fixture(autouse=True, scope="session")

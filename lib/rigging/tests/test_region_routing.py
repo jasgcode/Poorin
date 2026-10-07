@@ -139,7 +139,7 @@ def test_marin_temp_bucket_uses_source_prefix_region():
 def test_marin_temp_bucket_uses_source_prefix_region_from_local_launcher():
     with (
         patch("rigging.filesystem.cluster_config.urllib.request.urlopen", side_effect=OSError("not on GCP")),
-        patch.dict(os.environ, {}, clear=True),
+        patch.dict(os.environ, {"MARIN_CLUSTER": "marin"}, clear=True),  # the region buckets are Marin's
     ):
         assert marin_temp_bucket(
             ttl_days=14,

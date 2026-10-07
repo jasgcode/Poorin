@@ -8,10 +8,12 @@ import os
 
 import pytest
 import rigging.filesystem.cluster_config as fs
+from rigging.config_discovery import resolve_cluster_config
 from rigging.filesystem.cluster_config import (
     BucketSpec,
     DataConfig,
     StoreType,
+    data_buckets,
     data_config,
     load_cluster_config,
     marin_prefix,
@@ -24,20 +26,20 @@ from rigging.filesystem.cluster_config import (
 # --- loading / active-config selection -------------------------------------
 
 
-def test_default_loads_marin_config_not_fallback(monkeypatch):
-    """No override and no MARIN_CLUSTER -> the marin cluster loaded from YAML.
-
-    A non-empty region_buckets distinguishes "loaded config/marin.yaml" from the
-    empty in-code fallback, which is the behavior change being guarded.
-    """
+def test_default_cluster_is_the_local_config_with_no_buckets(monkeypatch):
+    """No override and no MARIN_CLUSTER -> config/local.yaml: one machine, no region buckets."""
+    monkeypatch.setattr(fs, "MARIN_CLUSTER_CONFIG_DIRS", ("config",))
     monkeypatch.delenv("MARIN_CLUSTER", raising=False)
-    config = data_config()
-    assert config is load_cluster_config("marin")  # default resolves to the marin cluster
-    assert config.region_buckets  # loaded the file, not the empty fallback
+    reset_data_config_cache()
+
+    assert resolve_cluster_config("local", ("config",)).name == "local.yaml"
+    assert data_config() is load_cluster_config("local")
+    assert data_config().region_buckets == {}
+    assert data_buckets() == {}  # Marin's buckets are fixtures, outside the default search
 
 
-def test_committed_cluster_configs_load(monkeypatch):
-    """The committed marin and coreweave configs parse and are the expected kind."""
+def test_marin_fixture_cluster_configs_load(monkeypatch):
+    """Marin's fixture configs parse and are the expected kind."""
     monkeypatch.delenv("MARIN_CLUSTER", raising=False)
     assert load_cluster_config("marin").region_buckets  # region-local gs cluster
     assert load_cluster_config("coreweave").root is not None  # single-prefix s3 cluster
