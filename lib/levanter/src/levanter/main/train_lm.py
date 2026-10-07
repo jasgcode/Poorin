@@ -16,11 +16,11 @@ from haliax import Axis
 from haliax.partitioning import named_jit, round_axis_for_partitioning
 
 import levanter
-import levanter.analysis
 import levanter.config
 import levanter.tracker
 import levanter.callbacks
 import levanter.eval
+from levanter.analysis.entropy import cb_compute_entropies
 from levanter import callbacks
 from levanter.callbacks.labeled_eval import LabeledLmEvalConfig, add_labeled_lm_eval_callbacks
 from levanter.adaptor import AdaptorConfig, AdaptorExportConfig, NoAdaptorConfig
@@ -404,7 +404,7 @@ def main(config: TrainLmConfig):
         if config.log_entropy:
             for name, dataset in config.data.validation_sets(Pos).items():
                 trainer.add_hook(
-                    levanter.analysis.cb_compute_entropies(
+                    cb_compute_entropies(
                         compute_logits,
                         Vocab,
                         dataset,

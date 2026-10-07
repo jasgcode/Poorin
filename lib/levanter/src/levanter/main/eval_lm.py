@@ -15,9 +15,10 @@ from haliax import Axis
 from haliax.partitioning import round_axis_for_partitioning
 
 import levanter
-import levanter.analysis
 import levanter.config
 import levanter.tracker
+from levanter.analysis.entropy import compute_entropy_histogram, compute_top2_gap_histogram
+from levanter.analysis.tree_stats import summary_statistics_for_tree
 from levanter.compat.hf_checkpoints import RepoRef
 from levanter.data.loader import DataLoader
 from levanter.data.text.datasets import LmDataConfig
@@ -158,7 +159,7 @@ def main(config: EvalLmConfig):
                 loader = DataLoader(
                     dataset, batch_size=config.trainer.eval_batch_size, axis_resources=compute_axis_mapping
                 )
-                entropy_hist = levanter.analysis.compute_entropy_histogram(
+                entropy_hist = compute_entropy_histogram(
                     model,
                     Vocab,
                     compute_logits,
@@ -180,7 +181,7 @@ def main(config: EvalLmConfig):
                 loader = DataLoader(
                     dataset, batch_size=config.trainer.eval_batch_size, axis_resources=compute_axis_mapping
                 )
-                top2_gap_hist = levanter.analysis.compute_top2_gap_histogram(
+                top2_gap_hist = compute_top2_gap_histogram(
                     model,
                     Vocab,
                     compute_logits,
@@ -196,7 +197,7 @@ def main(config: EvalLmConfig):
 
         if config.log_param_stats:
             logger.info("Computing param stats...")
-            log_dict = haliax.named_jit(levanter.analysis.summary_statistics_for_tree)(
+            log_dict = haliax.named_jit(summary_statistics_for_tree)(
                 "params", model, split_scan_layers=True, include_histogram=True
             )
 

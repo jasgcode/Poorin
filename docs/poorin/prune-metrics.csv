@@ -58,3 +58,4 @@ date,phase,step,first_party_lines,reachable_lines,reachable_modules,r1_imported_
 2026-10-07,P8,Rebuild the venv on a fresh lock,137994,136971,447,5985,3.34,67.0,28.4,7824176927
 2026-10-07,Pass2,Load the eval harness only when configured,138006,136983,447,5976,3.32,67.1,29.3,7824176927
 2026-10-07,Pass2,Stop pretraining from importing DPO,138016,136993,447,5974,3.32,66.9,28.3,7824176927
+2026-10-07,Pass2,Empty the analysis re-export hub,137960,136611,446,5972,3.34,67.5,28.2,7824176927
