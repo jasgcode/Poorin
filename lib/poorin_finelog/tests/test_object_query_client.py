@@ -7,12 +7,12 @@ from collections.abc import Callable
 from pathlib import Path
 
 import duckdb
-import finelog.client.object_query_client as object_query_client_mod
+import poorin_finelog.client.object_query_client as object_query_client_mod
 import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
-from finelog.client import ObjectQueryClient
-from finelog.errors import QueryTimeoutError, StatsError
+from poorin_finelog.client import ObjectQueryClient
+from poorin_finelog.errors import QueryTimeoutError, StatsError
 
 
 def _write_catalog(

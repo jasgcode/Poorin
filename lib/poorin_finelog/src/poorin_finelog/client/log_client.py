@@ -26,7 +26,7 @@ from connectrpc.interceptor import Interceptor
 from rigging.log_setup import LOG_DATEFMT, LOG_FORMAT, LevelPrefixFormatter
 from rigging.timing import ExponentialBackoff, RateLimiter
 
-from finelog.errors import (
+from poorin_finelog.errors import (
     InvalidNamespaceError,
     NamespaceNotFoundError,
     QueryResultTooLargeError,
@@ -34,12 +34,12 @@ from finelog.errors import (
     SchemaValidationError,
     StatsError,
 )
-from finelog.policy import StoragePolicy
-from finelog.rpc import finelog_stats_pb2 as stats_pb2
-from finelog.rpc import logging_pb2
-from finelog.rpc.finelog_stats_connect import StatsServiceClientSync
-from finelog.rpc.logging_connect import LogServiceClientSync
-from finelog.schema import (
+from poorin_finelog.policy import StoragePolicy
+from poorin_finelog.rpc import finelog_stats_pb2 as stats_pb2
+from poorin_finelog.rpc import logging_pb2
+from poorin_finelog.rpc.finelog_stats_connect import StatsServiceClientSync
+from poorin_finelog.rpc.logging_connect import LogServiceClientSync
+from poorin_finelog.schema import (
     IMPLICIT_SEQ_COLUMN,
     LOG_REGISTERED_SCHEMA,
     Column,
@@ -49,8 +49,8 @@ from finelog.schema import (
     schema_to_arrow,
     schema_to_proto,
 )
-from finelog.table_spec import TableSpec, TableStatus, table_status_from_proto
-from finelog.types import is_retryable_error
+from poorin_finelog.table_spec import TableSpec, TableStatus, table_status_from_proto
+from poorin_finelog.types import is_retryable_error
 
 # The identity a Table registers under; registration re-runs when it changes.
 RegistrationKey = tuple[Schema, StoragePolicy, "TableSpec | None"]

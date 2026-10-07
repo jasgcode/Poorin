@@ -74,7 +74,7 @@ modules = [
     "zephyr.shard_subprocess",
     "haliax.__about__",
     "rigging.fsutil.*",
-    "finelog.embedded",
+    "poorin_finelog.embedded",
     # Loaded with importlib.import_module and a literal name: Marin's training launch helpers,
     # grug's segmented FA4 backward pass, and the QuACK kernel behind fast-track's stacked MuonH.
     "levanter.infra.cli_helpers",

@@ -13,9 +13,9 @@ segment and reads come back empty. A disk-backed store serves reads.
 """
 
 import pytest
-from finelog.client import LogClient
-from finelog.embedded import is_available, require_embedded_server
-from finelog.rpc import logging_pb2
+from poorin_finelog.client import LogClient
+from poorin_finelog.embedded import is_available, require_embedded_server
+from poorin_finelog.rpc import logging_pb2
 
 
 @pytest.fixture

@@ -8,8 +8,8 @@ import time
 from typing import ClassVar
 
 import numpy as np
-from finelog.client import FlushResult, LogClient
-from finelog.client.log_client import Table
+from poorin_finelog.client import FlushResult, LogClient
+from poorin_finelog.client.log_client import Table
 
 from levanter.tracker.histogram import SummaryStats
 

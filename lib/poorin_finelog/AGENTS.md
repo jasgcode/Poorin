@@ -9,10 +9,10 @@ Start with the shared instructions in `/AGENTS.md`.
 
 ## Source Layout
 
-- `src/finelog/client/` — `LogClient` (logs, stats tables, and object queries) and its helpers
-- `src/finelog/embedded.py` — starts an in-process server from the installed wheel
-- `src/finelog/rpc/` — generated `_pb2`/`_connect` modules for `src/finelog/proto/`
-- `src/finelog/schema.py`, `table_spec.py`, `types.py`, `policy.py`, `errors.py` — table schemas,
+- `src/poorin_finelog/client/` — `LogClient` (logs, stats tables, and object queries) and its helpers
+- `src/poorin_finelog/embedded.py` — starts an in-process server from the installed wheel
+- `src/poorin_finelog/rpc/` — generated `_pb2`/`_connect` modules for `src/poorin_finelog/proto/`
+- `src/poorin_finelog/schema.py`, `table_spec.py`, `types.py`, `policy.py`, `errors.py` — table schemas,
   shared types, and errors
 - `tests/` — client and embedded-server tests
 

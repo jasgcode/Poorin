@@ -40,9 +40,9 @@ from dataclasses import dataclass, replace
 from datetime import date
 from pathlib import Path
 
-from finelog.client import LogClient
-from finelog.embedded import require_embedded_server
 from levanter.tracker.finelog_metrics import LEVANTER_METRICS_NAMESPACE
+from poorin_finelog.client import LogClient
+from poorin_finelog.embedded import require_embedded_server
 
 from tools import affected_tests
 from tools.changes import changed_files

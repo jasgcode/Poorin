@@ -2,8 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import jax.numpy as jnp
-from finelog.client import FlushResult, schema_from_dataclass
-from finelog.rpc import finelog_stats_pb2
+from poorin_finelog.client import FlushResult, schema_from_dataclass
+from poorin_finelog.rpc import finelog_stats_pb2
 
 from levanter.tracker.finelog_metrics import LevanterMetricRow, LevanterMetricsWriter
 from levanter.tracker.histogram import SummaryStats

@@ -14,7 +14,7 @@ import pytest
 import zstandard
 from connectrpc.code import Code
 from connectrpc.errors import ConnectError
-from finelog.client import (
+from poorin_finelog.client import (
     BucketTransform,
     FlushResult,
     L0Mode,
@@ -28,16 +28,16 @@ from finelog.client import (
     TableSpec,
     schema_from_dataclass,
 )
-from finelog.client import log_client as log_client_mod
-from finelog.errors import (
+from poorin_finelog.client import log_client as log_client_mod
+from poorin_finelog.errors import (
     InvalidNamespaceError,
     NamespaceNotFoundError,
     QueryResultTooLargeError,
     SchemaValidationError,
 )
-from finelog.rpc import finelog_stats_pb2 as stats_pb2
-from finelog.rpc import logging_pb2
-from finelog.schema import (
+from poorin_finelog.rpc import finelog_stats_pb2 as stats_pb2
+from poorin_finelog.rpc import logging_pb2
+from poorin_finelog.schema import (
     FLOAT64_LIST,
     INT64_LIST,
     MAP_STRING_STRING,
@@ -969,7 +969,7 @@ def test_table_overflow_drops_oldest(tracked_clients, caplog):
         table._batch_rows = 1_000_000
         # Bypass the rate limiter so the very first overflow logs.
         table._overflow_log_limiter = log_client_mod.RateLimiter(interval_seconds=0)
-        client_logger = logging.getLogger("finelog.client.log_client")
+        client_logger = logging.getLogger("poorin_finelog.client.log_client")
         client_logger.addHandler(caplog.handler)
         client_logger.setLevel(logging.WARNING)
         try:

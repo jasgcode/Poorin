@@ -8,14 +8,14 @@
 :class:`RemoteLogHandler` plugs Python's ``logging`` into a
 :class:`LogClient`.
 
-The error types live in :mod:`finelog.errors` and are re-exported here so
-callers can ``from finelog.client import SchemaConflictError`` etc.
+The error types live in :mod:`poorin_finelog.errors` and are re-exported here so
+callers can ``from poorin_finelog.client import SchemaConflictError`` etc.
 """
 
-from finelog.client.log_client import FlushResult, LogClient, NamespaceInfo, Table, schema_from_dataclass
-from finelog.client.object_query_client import ObjectQueryClient
-from finelog.client.remote_log_handler import RemoteLogHandler
-from finelog.errors import (
+from poorin_finelog.client.log_client import FlushResult, LogClient, NamespaceInfo, Table, schema_from_dataclass
+from poorin_finelog.client.object_query_client import ObjectQueryClient
+from poorin_finelog.client.remote_log_handler import RemoteLogHandler
+from poorin_finelog.errors import (
     InvalidNamespaceError,
     NamespaceNotFoundError,
     QueryResultTooLargeError,
@@ -24,8 +24,8 @@ from finelog.errors import (
     SchemaValidationError,
     StatsError,
 )
-from finelog.policy import StoragePolicy
-from finelog.table_spec import (
+from poorin_finelog.policy import StoragePolicy
+from poorin_finelog.table_spec import (
     BucketTransform,
     IdentityTransform,
     L0Mode,

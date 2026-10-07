@@ -21,7 +21,7 @@ top of the existing size / count caps.
 from dataclasses import dataclass
 from typing import Self
 
-from finelog.rpc import finelog_stats_pb2 as stats_pb2
+from poorin_finelog.rpc import finelog_stats_pb2 as stats_pb2
 
 
 @dataclass(frozen=True)

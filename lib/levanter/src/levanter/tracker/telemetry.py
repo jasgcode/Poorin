@@ -15,7 +15,7 @@ from typing import Any, Optional
 
 import jax
 import numpy as np
-from finelog.client import FlushResult
+from poorin_finelog.client import FlushResult
 from rigging import telemetry
 from rigging.telemetry.probes import nccl, nccl_client
 

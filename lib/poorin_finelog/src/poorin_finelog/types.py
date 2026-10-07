@@ -13,16 +13,16 @@ from typing import Protocol
 from connectrpc.code import Code
 from connectrpc.errors import ConnectError
 
-from finelog.rpc import logging_pb2
+from poorin_finelog.rpc import logging_pb2
 
 
 class LogWriterProtocol(Protocol):
     """Minimal interface for writing log entries to the LogService.
 
-    Satisfied by :class:`finelog.client.LogClient` (via ``write_batch``) and
+    Satisfied by :class:`poorin_finelog.client.LogClient` (via ``write_batch``) and
     by lightweight test fakes that don't want to subclass LogClient. The
     protocol exists so collectors can accept either without import-cycling
-    through ``finelog.client``.
+    through ``poorin_finelog.client``.
     """
 
     def write_batch(self, key: str, messages: list[logging_pb2.LogEntry]) -> None: ...

@@ -6,9 +6,9 @@
 from dataclasses import dataclass
 from enum import StrEnum
 
-from finelog.policy import StoragePolicy
-from finelog.rpc import finelog_stats_pb2 as stats_pb2
-from finelog.schema import Schema, schema_to_proto
+from poorin_finelog.policy import StoragePolicy
+from poorin_finelog.rpc import finelog_stats_pb2 as stats_pb2
+from poorin_finelog.schema import Schema, schema_to_proto
 
 
 class L0Mode(StrEnum):

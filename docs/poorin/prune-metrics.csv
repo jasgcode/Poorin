@@ -63,3 +63,4 @@ date,phase,step,first_party_lines,reachable_lines,reachable_modules,r1_imported_
 2026-10-07,Pass2,Write the architecture page,137634,136611,446,5972,3.33,67.3,28.2,7824176927
 2026-10-07,Pass2,Clear ty's warnings,137615,136592,446,5972,3.33,67.1,28.1,7824176927
 2026-10-07,Rename,Rename fray to poorin_fray,137615,136592,446,5972,3.32,66.8,29.0,7824176970
+2026-10-07,Rename,Rename finelog to poorin_finelog,137615,136592,446,5972,3.3,66.5,28.3,7824176996

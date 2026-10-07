@@ -7,7 +7,7 @@ The :class:`Schema` and :class:`Column` dataclasses are the in-process
 representation of a registered table's column layout. They convert
 to/from:
 
-- ``finelog.rpc.finelog_stats_pb2.Schema`` (over the wire)
+- ``poorin_finelog.rpc.finelog_stats_pb2.Schema`` (over the wire)
 - ``pyarrow.Schema`` (for Parquet I/O and IPC schema comparisons)
 
 The Rust ``finelog-server`` owns storage-side validation, merging, and
@@ -19,8 +19,8 @@ from dataclasses import dataclass
 
 import pyarrow as pa
 
-from finelog.errors import SchemaValidationError
-from finelog.rpc import finelog_stats_pb2 as stats_pb2
+from poorin_finelog.errors import SchemaValidationError
+from poorin_finelog.rpc import finelog_stats_pb2 as stats_pb2
 
 # Logical column types are owned by the proto schema (single source of truth).
 # ``stats_pb2.ColumnType`` is an ``int``-valued enum with members like

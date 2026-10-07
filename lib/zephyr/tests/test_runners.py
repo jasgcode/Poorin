@@ -12,9 +12,9 @@ from threading import Lock
 
 import polars as pl
 import pytest
-from finelog.client import LogClient
-from finelog.embedded import EmbeddedServer
 from fsspec.implementations.local import LocalFileSystem
+from poorin_finelog.client import LogClient
+from poorin_finelog.embedded import EmbeddedServer
 from poorin_fray.types import ResourceConfig
 from rigging.filesystem.storage_path import StoragePath
 from rigging.timing import Duration, ExponentialBackoff

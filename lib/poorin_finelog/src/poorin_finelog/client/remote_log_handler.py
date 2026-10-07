@@ -10,9 +10,9 @@ Table; the handler just formats records and calls ``write_batch``.
 import logging
 from typing import Protocol
 
-from finelog.client.log_client import FlushResult
-from finelog.rpc import logging_pb2
-from finelog.types import str_to_log_level
+from poorin_finelog.client.log_client import FlushResult
+from poorin_finelog.rpc import logging_pb2
+from poorin_finelog.types import str_to_log_level
 
 
 class _WriteBatchClient(Protocol):

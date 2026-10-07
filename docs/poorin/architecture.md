@@ -61,7 +61,7 @@ Modules marked "(review)" below, grouped by why they look vestigial on a one-GPU
   `levanter.grug._moe.quack_symmetric_cute`, which raises on compute capability 12 (the RTX 5090);
   `levanter.models.gpt2`, a test fixture and the harness's default model.
 - **Rules this tree breaks:** `poorin_fray.cluster` and `levanter.main.lora_dpo` are
-  backward-compatibility shims (AGENTS.md: no backward compatibility); `finelog.client`
+  backward-compatibility shims (AGENTS.md: no backward compatibility); `poorin_finelog.client`
   re-exports `object_query_client` and `remote_log_handler`, which nothing else uses.
 - **TPU-only code kept on purpose** (D81): `levanter.kernels.pallas.splash_attention`, the
   `pallas_tpu` fused cross-entropy, and `marin.scaling_laws.tpu_utils`.
@@ -506,22 +506,22 @@ Modules marked "(review)" below, grouped by why they look vestigial on a one-GPU
 
 | Module | Purpose | Reached from |
 |---|---|---|
-| `finelog` | Package marker | R2 |
-| `finelog.client` | Re-exports LogClient, query client, log handler, errors, policy, table-spec types | R2 |
-| `finelog.client.log_client` | LogClient and Table: buffered, retried writes and queries against a Finelog server | R2 |
-| `finelog.client.object_query_client` | Client-side SQL over Finelog catalog snapshots in object storage (review) | R2 |
-| `finelog.client.remote_log_handler` | logging.Handler that ships log records through a LogClient (review) | R2 |
-| `finelog.embedded` | In-process Finelog server from the optional native Rust extension | `finelog.embedded` |
-| `finelog.errors` | Typed exceptions translated from Finelog ConnectRPC error codes | R2 |
-| `finelog.policy` | Per-namespace storage retention policy sent at table registration | R2 |
-| `finelog.rpc` | Package marker for generated proto bindings | R2 |
-| `finelog.rpc.finelog_stats_connect` | Generated ConnectRPC client and server stubs for the stats service | R2 |
-| `finelog.rpc.finelog_stats_pb2` | Generated protobuf messages for the stats service | R2 |
-| `finelog.rpc.logging_connect` | Generated ConnectRPC client and server stubs for the log service | R2 |
-| `finelog.rpc.logging_pb2` | Generated protobuf messages for the log service | R2 |
-| `finelog.schema` | Table Schema and Column dataclasses with proto and Arrow conversion | R2 |
-| `finelog.table_spec` | Versioned table layout, partitioning, and operating-policy declarations | R2 |
-| `finelog.types` | Log-writer protocol, log-level parsing, and retryable-error check | R2 |
+| `poorin_finelog` | Package marker | R2 |
+| `poorin_finelog.client` | Re-exports LogClient, query client, log handler, errors, policy, table-spec types | R2 |
+| `poorin_finelog.client.log_client` | LogClient and Table: buffered, retried writes and queries against a Finelog server | R2 |
+| `poorin_finelog.client.object_query_client` | Client-side SQL over Finelog catalog snapshots in object storage (review) | R2 |
+| `poorin_finelog.client.remote_log_handler` | logging.Handler that ships log records through a LogClient (review) | R2 |
+| `poorin_finelog.embedded` | In-process Finelog server from the optional native Rust extension | `poorin_finelog.embedded` |
+| `poorin_finelog.errors` | Typed exceptions translated from Finelog ConnectRPC error codes | R2 |
+| `poorin_finelog.policy` | Per-namespace storage retention policy sent at table registration | R2 |
+| `poorin_finelog.rpc` | Package marker for generated proto bindings | R2 |
+| `poorin_finelog.rpc.finelog_stats_connect` | Generated ConnectRPC client and server stubs for the stats service | R2 |
+| `poorin_finelog.rpc.finelog_stats_pb2` | Generated protobuf messages for the stats service | R2 |
+| `poorin_finelog.rpc.logging_connect` | Generated ConnectRPC client and server stubs for the log service | R2 |
+| `poorin_finelog.rpc.logging_pb2` | Generated protobuf messages for the log service | R2 |
+| `poorin_finelog.schema` | Table Schema and Column dataclasses with proto and Arrow conversion | R2 |
+| `poorin_finelog.table_spec` | Versioned table layout, partitioning, and operating-policy declarations | R2 |
+| `poorin_finelog.types` | Log-writer protocol, log-level parsing, and retryable-error check | R2 |
 
 ### finestore
 

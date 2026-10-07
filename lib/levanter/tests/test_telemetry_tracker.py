@@ -11,7 +11,7 @@ from pathlib import Path
 import jax.numpy as jnp
 import numpy as np
 import pytest
-from finelog.client import FlushResult
+from poorin_finelog.client import FlushResult
 from rigging import telemetry
 from rigging.telemetry.probes import nccl_ras
 from rigging.telemetry.probes.nccl_client import NCCL_RAS_ENABLE_ENV

@@ -5,14 +5,14 @@
 
 ``EmbeddedServer`` boots the same axum app the ``finelog-server`` binary serves,
 on an owned tokio runtime bound to a local port. Callers then talk to it over
-the normal RPC contract (:class:`finelog.client.LogClient` / proxies), so there
+the normal RPC contract (:class:`poorin_finelog.client.LogClient` / proxies), so there
 is exactly one server implementation.
 
 The extension ships as the top-level ``finelog_server`` module in the separate
-``marin-finelog-server`` wheel. The pure ``marin-finelog`` client does not
+``marin-finelog-server`` wheel. The pure ``poorin-finelog`` client does not
 depend on it; consumers that need the in-process server depend on it
 explicitly. Its Rust source is not in this tree: it lives under
-``lib/finelog/rust`` at git tag ``upstream-baseline``. If the extension is
+``lib/poorin_finelog/rust`` at git tag ``upstream-baseline``. If the extension is
 missing, ``EmbeddedServer`` is ``None`` and :func:`require_embedded_server`
 raises an actionable error; :func:`is_available` lets callers probe without
 importing.
@@ -27,7 +27,7 @@ _INSTALL_MSG = (
     "finelog native server extension (finelog_server) is not available. It ships "
     "in the separate marin-finelog-server wheel; install it (e.g. 'pip install "
     "marin-finelog-server'), or build it from the Rust source under "
-    "lib/finelog/rust at git tag upstream-baseline."
+    "lib/poorin_finelog/rust at git tag upstream-baseline."
 )
 
 

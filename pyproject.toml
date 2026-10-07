@@ -16,9 +16,9 @@ dependencies = [
     "marin-core",
     "marin-rigging",
     "marin-zephyr",
-    # marin-finelog is Finelog's Python client, a workspace member. Its server is the published
+    # poorin-finelog is Finelog's Python client, a workspace member. Its server is the published
     # marin-finelog-server wheel, pinned to the version Marin last released with this client.
-    "marin-finelog",
+    "poorin-finelog",
     "marin-finelog-server==0.2.46.dev33324331711",
     # marin-dupekit is the pure-Python text-dedup surface, a workspace member
     # (editable source). Its native companion marin-dupekit-native (the Rust
@@ -84,7 +84,7 @@ conflicts = [
 [tool.uv.workspace]
 members = [
     "lib/poorin_fray",
-    "lib/finelog",
+    "lib/poorin_finelog",
     "lib/dupekit",
     "lib/haliax",
     "lib/levanter",
@@ -102,7 +102,7 @@ exclude = ["lib/dupekit/rust"]
 
 [tool.uv.sources]
 poorin-fray = { workspace = true }
-marin-finelog = { workspace = true }
+poorin-finelog = { workspace = true }
 marin-dupekit = { workspace = true }
 marin-haliax = { workspace = true }
 marin-levanter = { workspace = true }

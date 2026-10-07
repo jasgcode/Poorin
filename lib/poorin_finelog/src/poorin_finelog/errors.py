@@ -3,7 +3,7 @@
 
 """Public stats-service error types.
 
-Raised by :mod:`finelog.client` to translate ConnectRPC error codes into
+Raised by :mod:`poorin_finelog.client` to translate ConnectRPC error codes into
 typed exceptions callers can catch.
 """
 
