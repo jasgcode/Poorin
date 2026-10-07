@@ -122,6 +122,25 @@ def test_cluster_configs_and_their_test_fixtures_select_every_member_suite(repo)
     assert select(["config/testing/marin.yaml"], repo) == every_suite
 
 
+def test_a_grug_module_selects_the_contract_test_that_imports_variants_by_computed_name(repo):
+    # The contract test loads each variant with importlib.import_module, which no import graph sees.
+    write_files(
+        repo,
+        {
+            "experiments/grug/__init__.py": "",
+            "experiments/grug/base/__init__.py": "",
+            "experiments/grug/base/model.py": "X = 1\n",
+            "tests/test_grug_variant_contracts.py": (
+                "import importlib\n\n\ndef test_variant():\n"
+                '    importlib.import_module("experiments.grug." + "base.model")\n'
+            ),
+        },
+    )
+    assert select(["experiments/grug/base/model.py"], repo) == [
+        Selection(ROOT, ("tests/test_grug_variant_contracts.py",))
+    ]
+
+
 def test_test_data_selects_its_suite_but_experiment_files_and_docs_select_nothing(repo):
     assert select(["lib/alpha/tests/data/sample.txt"], repo) == [Selection(ALPHA, ALPHA.test_dirs)]
     assert select(["experiments/README.md", "docs/index.md"], repo) == []

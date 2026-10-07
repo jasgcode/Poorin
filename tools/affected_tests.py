@@ -41,6 +41,9 @@ WORKSPACE_MANIFESTS = frozenset({"pyproject.toml", "uv.lock"})
 # Data that tests in several suites read and no module imports: the cluster configs and their test
 # fixtures. A change under one of these directories runs every suite.
 SHARED_DATA_DIRS = ("config",)
+# Test files that load modules by computed name, with the package they load from. No import graph
+# sees those edges, so a change to any module in the package selects the test.
+DYNAMIC_IMPORTERS = {"tests/test_grug_variant_contracts.py": "experiments.grug"}
 ROOT_TEST_DIRS = ("tests", "experiments")
 # experiments/ is a source tree that also holds tests: its data files select no tests.
 SOURCE_TREES = frozenset({"experiments"})
@@ -235,6 +238,9 @@ def _affected_tests(
         names = imported_modules(repo_root / path, module, by_name, eager=False)
         local_imports[path] = {target for name in names for target in by_name[name]} - {path}
         if imported_modules(repo_root / path, module, known, eager=False) & affected:
+            reaches_affected.add(path)
+        package = DYNAMIC_IMPORTERS.get(str(path))
+        if package is not None and any(name == package or name.startswith(f"{package}.") for name in affected):
             reaches_affected.add(path)
     hits = changed_local | reaches_affected
     return tuple(

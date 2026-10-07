@@ -805,6 +805,21 @@ Plan: `plans/2026-10-05-p1-fleet-operations.md`. Executing on branch `prune/p1-f
 - **Cost if wrong:** A change to `config/external/` pins also runs every suite, about 25 minutes.
 - **Landed:** `[poorin] Run every suite when the cluster configs change`.
 
+### D64. A grug change selects the variant contract test
+
+- **When:** 2026-10-06, P1 final review. **Status:** Adopted.
+- **Decision:** `tools.affected_tests` keeps a table of test files that load modules by computed
+  name, with the package each loads from. A change to any module in that package selects the
+  test. Its one entry maps `tests/test_grug_variant_contracts.py` to `experiments.grug`.
+- **Why:** The contract test loads each grug variant with `importlib.import_module` and a computed
+  name, which no static import graph sees, so editing grug's base model, the template Poorin's
+  models start from (D13), selected no unit tests. Marin's selector had the same blind spot.
+  `prune_check` trains R2, which covers `base` but not the other variants.
+- **Alternatives:** Import the variants statically in the test, which would undo its automatic
+  discovery of new variants.
+- **Cost if wrong:** Every grug change runs the contract test, which compiles each variant.
+- **Landed:** `[poorin] Select the grug variant contract test for any grug change`.
+
 ---
 
 ## Deferred
