@@ -6,7 +6,7 @@ from collections.abc import Iterator, Sequence
 from typing import Any, TypedDict
 
 import dupekit
-from fray.types import ResourceConfig
+from poorin_fray.types import ResourceConfig
 from rigging.filesystem.storage_path import StoragePath
 from zephyr import counters
 from zephyr.context import ZephyrContext

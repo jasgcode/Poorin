@@ -11,7 +11,7 @@ from collections.abc import Callable, Hashable, Sequence
 from dataclasses import dataclass, field
 from typing import Any, Generic, TypeVar, cast
 
-from fray.actor import ActorFuture, ActorHandle, ActorUnavailableError
+from poorin_fray.actor import ActorFuture, ActorHandle, ActorUnavailableError
 from rigging.timing import ExponentialBackoff
 
 from zephyr.dataset import Dataset

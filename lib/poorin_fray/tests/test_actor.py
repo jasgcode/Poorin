@@ -6,8 +6,8 @@
 import threading
 
 import pytest
-from fray.actor import ActorHandle, ActorUnavailableError, current_actor
-from fray.local_backend import LocalClient
+from poorin_fray.actor import ActorHandle, ActorUnavailableError, current_actor
+from poorin_fray.local_backend import LocalClient
 
 
 class Counter:

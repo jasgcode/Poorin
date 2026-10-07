@@ -11,7 +11,7 @@ import uuid
 from concurrent.futures import Future, ThreadPoolExecutor
 from typing import Any, cast
 
-from fray.actor import (
+from poorin_fray.actor import (
     ActorContext,
     ActorFuture,
     ActorGroup,
@@ -21,7 +21,7 @@ from fray.actor import (
     _reset_current_actor,
     _set_current_actor,
 )
-from fray.types import (
+from poorin_fray.types import (
     ActorConfig,
     BinaryEntrypoint,
     CallableEntrypoint,

@@ -14,9 +14,9 @@ import warnings
 from unittest.mock import MagicMock
 
 import pytest
-from fray.actor import ActorContext, _reset_current_actor, _set_current_actor
-from fray.local_backend import LocalClient
-from fray.types import ResourceConfig
+from poorin_fray.actor import ActorContext, _reset_current_actor, _set_current_actor
+from poorin_fray.local_backend import LocalClient
+from poorin_fray.types import ResourceConfig
 from rigging.timing import ExponentialBackoff
 from zephyr.context import ZephyrContext
 from zephyr.readers import load_file

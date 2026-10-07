@@ -12,10 +12,10 @@ import os
 from dataclasses import dataclass
 
 import pytest
-from fray.types import ResourceConfig
 from marin.execution.artifact import Artifact, ArtifactTypeMismatchError
 from marin.execution.lazy import OUT, ArtifactStep, StepContext, apply, lower, materialized_config, resolve, run
 from marin.execution.remote import remote
+from poorin_fray.types import ResourceConfig
 
 # --- Toy configs/fns standing in for tokenize + train --------------------------
 

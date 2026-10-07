@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.12,<3.14"
 dependencies = [
     "marin-rigging",
-    "marin-fray",
+    "poorin-fray",
     "click>=8.0",
     "cloudpickle>=3.0",
     "humanfriendly>=10.0",

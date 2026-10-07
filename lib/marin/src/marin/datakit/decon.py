@@ -54,7 +54,7 @@ from typing import Any, NamedTuple
 import dupekit
 import pyarrow as pa
 import pyarrow.parquet as pq
-from fray.types import ResourceConfig
+from poorin_fray.types import ResourceConfig
 from pydantic import BaseModel
 from rigging.filesystem.factory import url_to_fs
 from rigging.filesystem.storage_path import StoragePath, prefix_join

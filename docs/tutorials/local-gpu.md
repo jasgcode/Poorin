@@ -73,7 +73,7 @@ The same script runs on CPU, GPU, and TPU — only `--device` and `--dataset` ch
 device entry in `train_tiny_model.py` configures resources and batch size:
 
 ```python
-from fray.types import ResourceConfig
+from poorin_fray.types import ResourceConfig
 
 # "rtx5090x1" entry in DEVICES (resources, batch_size)
 resources = ResourceConfig.with_gpu("RTX5090", count=1, cpu=16, disk="128G", ram="96G")

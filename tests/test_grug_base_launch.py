@@ -1,11 +1,11 @@
 # Copyright The Marin Authors
 # SPDX-License-Identifier: Apache-2.0
 
-from fray.cluster import ResourceConfig
 from levanter.data.text.datasets import LmDataConfig
 from levanter.optim.config import AdamConfig
 from levanter.tracker.telemetry import TelemetryConfig
 from levanter.tracker.wandb import WandbConfig
+from poorin_fray.cluster import ResourceConfig
 
 from experiments.grug.base.launch import GRUG_130M_MODEL, GrugBaseLaunchConfig, build_grug_run_config
 

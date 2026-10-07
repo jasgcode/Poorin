@@ -21,10 +21,10 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
 from typing import Any
 
-from fray.client import JobHandle, JobStatus
-from fray.current_client import _current_client_var, current_client, set_current_client
-from fray.local_backend import LocalJobHandle
-from fray.types import Entrypoint, JobRequest, ResourceConfig, create_environment
+from poorin_fray.client import JobHandle, JobStatus
+from poorin_fray.current_client import _current_client_var, current_client, set_current_client
+from poorin_fray.local_backend import LocalJobHandle
+from poorin_fray.types import Entrypoint, JobRequest, ResourceConfig, create_environment
 from rigging.filesystem.factory import url_to_fs
 from rigging.filesystem.storage_path import StoragePath
 from rigging.log_setup import configure_logging

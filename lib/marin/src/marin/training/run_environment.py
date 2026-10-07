@@ -6,7 +6,7 @@ import logging
 import os
 from copy import deepcopy
 
-from fray.types import GpuConfig, ResourceConfig, TpuConfig
+from poorin_fray.types import GpuConfig, ResourceConfig, TpuConfig
 
 logger = logging.getLogger(__name__)
 

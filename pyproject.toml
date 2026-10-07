@@ -10,7 +10,7 @@ license = { file = "LICENSE" }
 requires-python = ">=3.12"
 dependencies = [
     # workspaces
-    "marin-fray",
+    "poorin-fray",
     "marin-haliax",
     "marin-levanter",
     "marin-core",
@@ -83,7 +83,7 @@ conflicts = [
 
 [tool.uv.workspace]
 members = [
-    "lib/fray",
+    "lib/poorin_fray",
     "lib/finelog",
     "lib/dupekit",
     "lib/haliax",
@@ -101,7 +101,7 @@ members = [
 exclude = ["lib/dupekit/rust"]
 
 [tool.uv.sources]
-marin-fray = { workspace = true }
+poorin-fray = { workspace = true }
 marin-finelog = { workspace = true }
 marin-dupekit = { workspace = true }
 marin-haliax = { workspace = true }
@@ -188,7 +188,7 @@ include = [
     "lib/marin/src",
     "lib/levanter/src",
     "lib/haliax/src",
-    "lib/fray/src",
+    "lib/poorin_fray/src",
     "lib/rigging/src",
     "lib/zephyr/src",
     "lib/finestore/src",

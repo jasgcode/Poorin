@@ -16,9 +16,9 @@ from unittest.mock import MagicMock
 import cloudpickle
 import pytest
 import zephyr.coordinator as coordinator_module
-from fray.actor import ActorContext
-from fray.local_backend import LocalClient
-from fray.types import ResourceConfig
+from poorin_fray.actor import ActorContext
+from poorin_fray.local_backend import LocalClient
+from poorin_fray.types import ResourceConfig
 from zephyr import counters
 from zephyr.context import (
     _NON_RETRYABLE_ERRORS,

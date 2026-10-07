@@ -14,7 +14,6 @@ import jmp
 import levanter.callbacks as callbacks
 import levanter.tracker
 import optax
-from fray.cluster import ResourceConfig
 from haliax import Axis
 from haliax.partitioning import set_mesh
 from jax.sharding import Mesh, NamedSharding
@@ -47,6 +46,7 @@ from levanter.trainer import TrainerConfig
 from levanter.utils.flop_utils import lm_flops_per_token
 from levanter.utils.jax_utils import parameter_count
 from levanter.utils.logging import LoadingTimeTrackerIterator
+from poorin_fray.cluster import ResourceConfig
 
 from experiments.grug.base.model import GrugModelConfig, Transformer
 from experiments.grug.checkpointing import init_weights_only_from_checkpoint, restore_grug_state_from_checkpoint

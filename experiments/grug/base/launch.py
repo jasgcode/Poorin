@@ -23,7 +23,6 @@ from datetime import timedelta
 
 import click
 import jmp
-from fray.cluster import ResourceConfig
 from levanter.analysis.backward_flow import BackwardFlowConfig
 from levanter.callbacks.profiler import ProfilerConfig
 from levanter.callbacks.watch import WatchConfig
@@ -40,6 +39,7 @@ from marin.experiment.cli import build_options
 from marin.experiment.data import mixture, pretokenized
 from marin.experiment.namespacing import user_namespaced_name
 from marin.training.training import LevanterCheckpoint, resolve_checkpointer_output_path
+from poorin_fray.cluster import ResourceConfig
 
 from experiments.grug.base.model import GrugModelConfig
 from experiments.grug.base.train import GrugEvalConfig, GrugRunConfig, GrugTrainerConfig, run_grug

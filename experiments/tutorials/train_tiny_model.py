@@ -18,7 +18,6 @@ versions — they are shared caches that should not rebuild on a mutable version
 """
 
 import click
-from fray.types import ANY_REGION, ResourceConfig
 from levanter.optim.config import AdamConfig
 from marin.execution.lazy import ArtifactStep
 from marin.experiment.cli import build_options
@@ -26,6 +25,7 @@ from marin.experiment.data import pretokenized, tokenized
 from marin.experiment.train import train_lm
 from marin.processing.tokenize.tokenize import TokenizedCache
 from marin.training.training import LevanterCheckpoint
+from poorin_fray.types import ANY_REGION, ResourceConfig
 
 from experiments.llama import llama_150m, llama_nano
 from experiments.marin_tokenizer import marin_tokenizer

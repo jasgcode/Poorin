@@ -53,4 +53,4 @@ Shared data is uploaded to filesystem by `ZephyrContext._upload_shared_data()` b
 
 ### Backends
 
-`ZephyrContext` uses `fray.current_client.current_client()`, which returns the client set with `set_current_client` or, by default, a `LocalClient`.
+`ZephyrContext` uses `poorin_fray.current_client.current_client()`, which returns the client set with `set_current_client` or, by default, a `LocalClient`.

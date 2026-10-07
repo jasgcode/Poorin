@@ -14,7 +14,7 @@ from contextlib import suppress
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
-from fray.actor import ActorFuture, ActorHandle, current_actor
+from poorin_fray.actor import ActorFuture, ActorHandle, current_actor
 from rigging.timing import ExponentialBackoff
 
 from zephyr import counters as stage_counters

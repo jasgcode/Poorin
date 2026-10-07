@@ -8,8 +8,8 @@ import contextvars
 import logging
 from collections.abc import Generator
 
-from fray.client import Client
-from fray.local_backend import LocalClient
+from poorin_fray.client import Client
+from poorin_fray.local_backend import LocalClient
 
 logger = logging.getLogger(__name__)
 

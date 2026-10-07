@@ -18,7 +18,6 @@ import math
 from pathlib import Path
 
 import pytest
-from fray.cluster import ResourceConfig
 from levanter.models.llama import LlamaConfig
 from levanter.optim.config import AdamConfig
 from marin.execution.artifact import ArtifactRecord, write_record
@@ -26,6 +25,7 @@ from marin.execution.lazy import ArtifactStep, materialized_config
 from marin.experiment.data import tokenized
 from marin.experiment.train import EvalSuite, train_lm
 from marin.processing.tokenize.tokenize import TokenizedCache
+from poorin_fray.cluster import ResourceConfig
 
 from experiments.evals.task_configs import CORE_TASKS
 

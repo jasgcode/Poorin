@@ -46,7 +46,7 @@ Pass `include_file_paths=True` to add `__file_path` to each row (or set `file_pa
 - `.write_vortex(pattern)` - write to a Vortex file
 
 **Execution (`ZephyrContext`):**
-- `ZephyrContext(max_workers=N)` — uses the client from `fray.current_client.current_client()`, a `LocalClient` unless another client is set
+- `ZephyrContext(max_workers=N)` — uses the client from `poorin_fray.current_client.current_client()`, a `LocalClient` unless another client is set
 - `ZephyrContext(client=LocalClient())` — explicit local backend (testing)
 - `ctx.execute(pipeline)` — runs the pipeline; returns a `ZephyrExecutionResult(results, counters)`
 
@@ -59,7 +59,7 @@ handle is picklable, so later pipelines and child jobs can use `get()` or
 order-preserving `get_many()` lookups without copying the table into every task.
 
 ```python
-from fray.types import ResourceConfig
+from poorin_fray.types import ResourceConfig
 
 
 def document_partition(key: tuple[int, str]) -> int:

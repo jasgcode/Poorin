@@ -8,7 +8,7 @@ from typing import Any, TypeVar
 import dupekit
 import humanfriendly
 import pyarrow as pa
-from fray.types import ResourceConfig
+from poorin_fray.types import ResourceConfig
 from rigging.filesystem.storage_path import rebase_file_path
 from zephyr import counters
 from zephyr.context import ZephyrContext

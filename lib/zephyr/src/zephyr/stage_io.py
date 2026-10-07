@@ -18,7 +18,7 @@ from typing import Protocol
 
 import cloudpickle
 import humanfriendly
-from fray.types import ResourceConfig
+from poorin_fray.types import ResourceConfig
 from rigging.filesystem.atomic import unique_temp_path
 from rigging.filesystem.factory import open_url
 

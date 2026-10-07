@@ -1,7 +1,7 @@
 # Copyright The Marin Authors
 # SPDX-License-Identifier: Apache-2.0
 
-from fray.device_flops import device_flops_for_jax_device
+from poorin_fray.device_flops import device_flops_for_jax_device
 
 
 def test_rtx_5090_device_kind_resolves_to_a_peak_flops_entry():

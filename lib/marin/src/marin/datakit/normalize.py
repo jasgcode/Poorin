@@ -26,7 +26,7 @@ from typing import Any
 
 import dupekit
 import pyarrow as pa
-from fray.types import ResourceConfig
+from poorin_fray.types import ResourceConfig
 from pydantic import BaseModel, ValidationInfo, model_validator
 from rigging.filesystem.factory import url_to_fs
 from rigging.filesystem.storage_path import prefix_join

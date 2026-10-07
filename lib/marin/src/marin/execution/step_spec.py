@@ -10,7 +10,7 @@ from functools import cached_property
 from typing import Any
 from urllib.parse import urlparse
 
-from fray.types import ResourceConfig
+from poorin_fray.types import ResourceConfig
 from rigging.filesystem.cluster_config import marin_prefix
 from rigging.filesystem.storage_path import prefix_join
 

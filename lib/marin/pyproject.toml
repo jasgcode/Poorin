@@ -15,7 +15,7 @@ dependencies = [
     "braceexpand",
     "datasets<5.0.0",
     "draccus>=0.11.6",
-    "marin-fray",
+    "poorin-fray",
     "marin-finestore",
     "marin-rigging",
     "fsspec>=2025.3.0",

@@ -29,13 +29,13 @@ import logging
 import time
 
 import numpy as np
-from fray.types import ResourceConfig
 from levanter.store.cache import (
     CacheLedger,
     ShardedCacheLayout,
     consolidate_shard_cache_ledgers,
     write_levanter_cache,
 )
+from poorin_fray.types import ResourceConfig
 from pydantic import BaseModel
 from rigging.filesystem.storage_path import StoragePath, prefix_join
 from zephyr.context import ZephyrContext

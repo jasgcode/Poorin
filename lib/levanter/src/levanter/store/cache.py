@@ -25,7 +25,7 @@ import numpy as np
 import pyarrow as pa
 import tensorstore as ts
 from dataclasses_json import dataclass_json
-from fray.types import ResourceConfig
+from poorin_fray.types import ResourceConfig
 from fsspec import AbstractFileSystem
 from haliax.jax_utils import broadcast_one_to_all
 from jaxtyping import PyTree

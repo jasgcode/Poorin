@@ -4,8 +4,8 @@
 """Tests for current_client() and set_current_client()."""
 
 import pytest
-from fray.current_client import current_client, set_current_client
-from fray.local_backend import LocalClient
+from poorin_fray.current_client import current_client, set_current_client
+from poorin_fray.local_backend import LocalClient
 
 
 def test_default_returns_local_client():

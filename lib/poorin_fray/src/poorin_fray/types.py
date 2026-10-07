@@ -4,7 +4,7 @@
 """Type definitions for fray.
 
 Standalone dataclasses with no v1 backend dependencies. Copied from
-fray.cluster.base with one structural change: `replicas` moves from
+poorin_fray.cluster.base with one structural change: `replicas` moves from
 ResourceConfig to JobRequest (it's a job-level gang-scheduling concern,
 not a per-task resource requirement).
 """
@@ -19,7 +19,7 @@ from typing import Any, Literal
 import humanfriendly
 from rigging.timing import Duration
 
-from fray.device_flops import device_flops as _device_flops
+from poorin_fray.device_flops import device_flops as _device_flops
 
 
 def _scale_byte_size(size: str, factor: float) -> str:

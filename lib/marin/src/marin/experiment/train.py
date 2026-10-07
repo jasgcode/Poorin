@@ -24,7 +24,6 @@ from dataclasses import dataclass
 from datetime import timedelta
 
 import jmp
-from fray.types import GpuConfig, ResourceConfig
 from haliax.partitioning import ResourceAxis
 from levanter.adaptor import NoAdaptorConfig
 from levanter.checkpoint import CheckpointerConfig
@@ -35,6 +34,7 @@ from levanter.optim.config import OptimizerConfig
 from levanter.tracker.wandb import WandbConfig
 from levanter.trainer import TrainerConfig
 from levanter.utils.mesh import MeshConfig
+from poorin_fray.types import GpuConfig, ResourceConfig
 
 from marin.evaluation.evaluation_config import EvalTaskConfig, convert_to_levanter_task_config
 from marin.execution.artifact import is_mutable_version

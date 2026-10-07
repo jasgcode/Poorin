@@ -8,8 +8,8 @@ import time
 from collections.abc import Sequence
 from typing import Any, Protocol
 
-from fray.actor import ActorGroup, ActorHandle, HostedActor
-from fray.types import ActorConfig, JobRequest, JobStatus, ResourceConfig
+from poorin_fray.actor import ActorGroup, ActorHandle, HostedActor
+from poorin_fray.types import ActorConfig, JobRequest, JobStatus, ResourceConfig
 
 logger = logging.getLogger(__name__)
 

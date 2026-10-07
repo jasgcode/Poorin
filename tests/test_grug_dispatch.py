@@ -3,7 +3,7 @@
 
 from types import SimpleNamespace
 
-from fray.cluster import ResourceConfig
+from poorin_fray.cluster import ResourceConfig
 
 from experiments.grug import dispatch
 

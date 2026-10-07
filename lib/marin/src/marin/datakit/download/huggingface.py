@@ -16,9 +16,9 @@ import time
 from dataclasses import dataclass, field
 
 import huggingface_hub
-from fray.types import ResourceConfig
 from huggingface_hub.errors import HfHubHTTPError
 from packaging.version import Version
+from poorin_fray.types import ResourceConfig
 from rigging.filesystem.atomic import atomic_rename
 from rigging.filesystem.factory import open_url, url_to_fs
 from rigging.filesystem.storage_path import StoragePath, prefix_join

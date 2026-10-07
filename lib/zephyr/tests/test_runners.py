@@ -14,8 +14,8 @@ import polars as pl
 import pytest
 from finelog.client import LogClient
 from finelog.embedded import EmbeddedServer
-from fray.types import ResourceConfig
 from fsspec.implementations.local import LocalFileSystem
+from poorin_fray.types import ResourceConfig
 from rigging.filesystem.storage_path import StoragePath
 from rigging.timing import Duration, ExponentialBackoff
 from zephyr import counters, runners, worker

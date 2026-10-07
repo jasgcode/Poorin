@@ -1,9 +1,9 @@
 # Copyright The Marin Authors
 # SPDX-License-Identifier: Apache-2.0
 
-"""fray.cluster re-exports resource/job types for back-compat."""
+"""poorin_fray.cluster re-exports resource/job types for back-compat."""
 
-from fray.types import (
+from poorin_fray.types import (
     ANY_REGION,
     CpuConfig,
     DeviceConfig,

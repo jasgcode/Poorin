@@ -92,7 +92,7 @@ my_data = tokenized(
 of them. The complete `build()` function:
 
 ```python
-from fray.cluster import ResourceConfig
+from poorin_fray.cluster import ResourceConfig
 from levanter.optim.config import AdamConfig
 from marin.execution.lazy import ArtifactStep, lower
 from marin.execution.step_runner import StepRunner

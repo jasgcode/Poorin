@@ -8,7 +8,6 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-from fray.types import ResourceConfig
 from levanter.adaptor import LoraAdaptorConfig
 from levanter.checkpoint import CheckpointerConfig
 from levanter.data.text.datasets import DatasetComponent
@@ -29,6 +28,7 @@ from marin.training.training import (
     resolve_training_env,
     temporary_checkpoint_base_path,
 )
+from poorin_fray.types import ResourceConfig
 
 
 @pytest.fixture

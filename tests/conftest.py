@@ -5,10 +5,10 @@ import tempfile
 from pathlib import Path
 
 import pytest
-from fray.current_client import set_current_client
-from fray.local_backend import LocalClient
 from levanter.testing.tokenizer import stage_gpt2_tokenizer
 from levanter.tokenizers import load_tokenizer
+from poorin_fray.current_client import set_current_client
+from poorin_fray.local_backend import LocalClient
 
 DEFAULT_BUCKET_NAME = "marin-us-east5"
 DEFAULT_DOCUMENT_PATH = "documents/test-document-path"

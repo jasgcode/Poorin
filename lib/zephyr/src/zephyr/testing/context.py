@@ -7,8 +7,8 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
 
-from fray.client import Client
-from fray.types import ResourceConfig
+from poorin_fray.client import Client
+from poorin_fray.types import ResourceConfig
 
 from zephyr.context import ZephyrContext
 

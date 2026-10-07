@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "marin-fray"
+name = "poorin-fray"
 version = "0.2.0"
 requires-python = ">=3.12,<3.14"
 dependencies = [
@@ -24,4 +24,4 @@ addopts = "-m 'not slow' --import-mode=importlib"
 pythonpath = ["src", "tests"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/fray"]
+packages = ["src/poorin_fray"]

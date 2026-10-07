@@ -30,9 +30,9 @@ import logging
 import os
 
 import pyarrow as pa
-from fray.types import ResourceConfig
 from levanter.data.text.formats import LmDatasetFormatBase, TextLmDatasetFormat
 from levanter.tokenizers import TokenizerBackend
+from poorin_fray.types import ResourceConfig
 from pydantic import BaseModel
 from rigging.filesystem.storage_path import StoragePath, prefix_join
 from zephyr.context import ZephyrContext

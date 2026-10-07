@@ -29,7 +29,7 @@ artifacts produces fresh markers without re-reading any source text.
 import logging
 from collections.abc import Iterator
 
-from fray.types import ResourceConfig
+from poorin_fray.types import ResourceConfig
 from pydantic import BaseModel
 from zephyr import counters
 from zephyr.context import MAX_IRIS_WORKER_REPLICAS, ZephyrContext

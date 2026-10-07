@@ -14,7 +14,7 @@ Library manuals:
 - `lib/levanter/AGENTS.md` — Levanter (JAX training library)
 - `lib/marin/AGENTS.md` — Marin (experiment executor and pipelines)
 - `lib/zephyr/AGENTS.md` — Zephyr (dataset processing)
-- `lib/fray/AGENTS.md` — Fray (job dispatch)
+- `lib/poorin_fray/AGENTS.md` — Fray (job dispatch)
 - `lib/haliax/AGENTS.md` — Haliax (named tensors)
 
 ## Workflow Playbooks

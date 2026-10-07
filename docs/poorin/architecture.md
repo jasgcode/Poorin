@@ -60,7 +60,7 @@ Modules marked "(review)" below, grouped by why they look vestigial on a one-GPU
   is used; `experiments.grug.fast_track.grugmuon_stacked`, written for deleted MoE weights;
   `levanter.grug._moe.quack_symmetric_cute`, which raises on compute capability 12 (the RTX 5090);
   `levanter.models.gpt2`, a test fixture and the harness's default model.
-- **Rules this tree breaks:** `fray.cluster` and `levanter.main.lora_dpo` are
+- **Rules this tree breaks:** `poorin_fray.cluster` and `levanter.main.lora_dpo` are
   backward-compatibility shims (AGENTS.md: no backward compatibility); `finelog.client`
   re-exports `object_query_client` and `remote_log_handler`, which nothing else uses.
 - **TPU-only code kept on purpose** (D81): `levanter.kernels.pallas.splash_attention`, the
@@ -493,14 +493,14 @@ Modules marked "(review)" below, grouped by why they look vestigial on a one-GPU
 
 | Module | Purpose | Reached from |
 |---|---|---|
-| `fray` | Package docstring only; directs callers to import from submodules | R1 |
-| `fray.actor` | Actor protocols: handles, futures, method calls, actor groups, current-actor context | R1 |
-| `fray.client` | Client and JobHandle protocols for job submission, plus wait_all | R1 |
-| `fray.cluster` | Back-compat re-export of fray.types resource and job types (review) | R2 |
-| `fray.current_client` | Gets and sets the active Fray client, defaulting to LocalClient | R1 |
-| `fray.device_flops` | Peak FLOPS table per device type and dtype | R1 |
-| `fray.local_backend` | LocalClient: in-process Fray backend running jobs as threads or subprocesses | R1 |
-| `fray.types` | Job request, resource (CPU/GPU/TPU), environment, and entrypoint dataclasses | R1 |
+| `poorin_fray` | Package docstring only; directs callers to import from submodules | R1 |
+| `poorin_fray.actor` | Actor protocols: handles, futures, method calls, actor groups, current-actor context | R1 |
+| `poorin_fray.client` | Client and JobHandle protocols for job submission, plus wait_all | R1 |
+| `poorin_fray.cluster` | Back-compat re-export of poorin_fray.types resource and job types (review) | R2 |
+| `poorin_fray.current_client` | Gets and sets the active Fray client, defaulting to LocalClient | R1 |
+| `poorin_fray.device_flops` | Peak FLOPS table per device type and dtype | R1 |
+| `poorin_fray.local_backend` | LocalClient: in-process Fray backend running jobs as threads or subprocesses | R1 |
+| `poorin_fray.types` | Job request, resource (CPU/GPU/TPU), environment, and entrypoint dataclasses | R1 |
 
 ### finelog
 
