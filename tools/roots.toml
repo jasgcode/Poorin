@@ -120,7 +120,6 @@ modules = [
     "marin.inference.vllm_smoke_test",
     "marin.inference.vllm_wheel_entrypoint",
     "marin.inference.worker",
-    "experiments.evaluation",
     "finelog.deploy",
     "finelog.benchmarks",
     # The 14 Levanter architectures the owner chose to delete

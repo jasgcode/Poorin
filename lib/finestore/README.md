@@ -186,10 +186,7 @@ them. Format v1 has no `HEAD`, so `LegacyReadView.token` is always `None` and a 
 writer can span the listing snapshot. Use it for transitional inspection and dashboards;
 workloads that require an atomic multi-table snapshot must migrate to format v2.
 
-The application that owns an archive runs migrations after quiescing its writers. For
-evaluation archives, the fleet operator runs
-`experiments.evaluation.migrations.cli upgrade-format` before deploying format-v2
-readers. The v1-to-v2 revision is write-open-safe when the archive is sealed. A writable
+The application that owns an archive runs migrations after quiescing its writers. The v1-to-v2 revision is write-open-safe when the archive is sealed. A writable
 open then publishes existing Parquet shards through an initial manifest and keeps the
 legacy objects without copying payload data. Migration reads each payload once to bind
 its byte size and SHA-256 digest into the v2 manifest. An unsealed archive still

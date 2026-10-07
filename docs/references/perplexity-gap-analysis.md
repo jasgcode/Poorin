@@ -6,7 +6,7 @@ models into a pairwise gap report.
 
 Use it to answer "where is Marin better or worse in bits per byte?" on raw text
 slices or supervised target-only text slices. For standard task accuracy and
-generation evals, use [Running Evaluations with Marin](../tutorials/run-lm-evals.md).
+generation evals, see the [Evaluation Overview](../explanations/evaluation.md).
 
 ## Overview
 

@@ -889,7 +889,8 @@ def require_current_samples(out_path: str) -> None:
         return
     raise ValueError(
         f"{out_path} holds samples written under schema v{stored_version}; this writer is at "
-        f"v{SCHEMA_VERSION}. Migrate the archive with experiments.evaluation.migrations.samples_v4."
+        f"v{SCHEMA_VERSION}. Rebuild it, or migrate it with experiments/evaluation/migrations/samples_v4.py "
+        "at the upstream-baseline tag."
     )
 
 
