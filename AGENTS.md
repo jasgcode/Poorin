@@ -38,16 +38,16 @@ uv run --no-sync python -m tools.affected_tests
 uv run --no-sync python -m tools.prune_check --phase P<n> --step "<short label>"
 ```
 
-- Run every project command with `uv run --no-sync`. A syncing `uv run` can replace the CUDA
-  build of JAX with the CPU build. Until P8 there is no `uv.lock` (D70), so any sync re-resolves
-  every dependency: do not sync during the prune. P8 resolves a fresh lock and re-verifies the
-  GPU environment.
+- Run every project command with `uv run --no-sync`. A syncing `uv run` installs no extras, so
+  it removes the CUDA build of JAX. Sync the environment explicitly from the lockfile:
+  `uv sync --locked --all-packages --extra=gpu`.
 - Unit tests run on CPU: `tools.affected_tests` sets `JAX_PLATFORMS=cpu`. Run one test file
   in-process with `-n 0`; run GPU tests the same way, without `JAX_PLATFORMS=cpu`.
 - Do not pass a partial marker expression such as `-m "not slow"`: it replaces the default
   expression and selects cluster and Docker tests. `tools.affected_tests` passes a complete one.
 - Python >= 3.12.
-- Dependencies may be upgraded freely.
+- Dependencies may be upgraded freely. Each dependency change is its own commit, and its
+  `uv.lock` diff is checked for versions that moved without being asked.
 - Avoid large transfers between cloud regions or from the open internet; storage egress costs
   money.
 

@@ -23,12 +23,16 @@ Install an NVIDIA driver that supports CUDA 13. Verify that the driver is at lea
 nvidia-smi
 ```
 
-Marin uses [JAX](https://docs.jax.dev/en/latest/index.html) as a core library. The `gpu`
-extra installs the CUDA 13 JAX runtime, including CUDA, cuDNN, and NCCL Python wheels:
+Marin uses [JAX](https://docs.jax.dev/en/latest/index.html) as a core library. The workspace
+members' `gpu` extra installs the CUDA 13 JAX runtime, including CUDA, cuDNN, and NCCL Python
+wheels:
 
 ```bash
-uv sync --extra=gpu
+uv sync --locked --all-packages --extra=gpu
 ```
+
+Run commands with `uv run --no-sync` afterwards: a syncing `uv run` installs no extras, so it
+removes the CUDA build of JAX.
 
 If you install a local CUDA toolkit for custom kernels, use CUDA 13 and keep older CUDA libraries
 out of `LD_LIBRARY_PATH` so they do not override the JAX wheel libraries.

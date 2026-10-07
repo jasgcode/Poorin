@@ -903,7 +903,7 @@ Plan: `plans/2026-10-07-p3-serving-and-eval-orchestration.md`.
 
 ### D70. No lockfile until P8, no all-suite runs per commit, no per-phase review
 
-- **When:** 2026-10-07, P3. **Status:** Adopted.
+- **When:** 2026-10-07, P3. **Status:** Adopted; the lockfile clause ended in P8 (D80).
 - **Decision:** `uv.lock` is deleted. Work continues in the existing environment through
   `uv run --no-sync`, which needs no lockfile; nothing syncs until P8, which resolves a fresh lock
   and re-verifies the GPU environment. A change to the root `pyproject.toml` or `uv.lock` no
@@ -1046,6 +1046,8 @@ Plan: `plans/2026-10-07-p8-workspace.md`.
 - **Decision:** One root `[tool.uv.sources]` entry sends every `torch` requirement in the
   workspace to the PyTorch CPU index. Marin's per-extra CUDA 12.8 and CPU sources, its
   `pytorch-cu128` index, the root's flat CPU fallback index, and `torchvision` (no importer) go.
+  Triton, which the CUDA wheel used to bring, returns to Levanter's GPU extra: QuACK imports it
+  without declaring it.
 - **Why:** Poorin uses PyTorch only to convert Hugging Face checkpoints and in test helpers, on
   CPU. vLLM, which needed CUDA PyTorch, is gone, and the owner's SkyRL fork has its own
   environment (D68). The CUDA wheel installed CUDA 12 copies of cuDNN, NCCL, and NVRTC beside
@@ -1062,11 +1064,15 @@ Plan: `plans/2026-10-07-p8-workspace.md`.
   NCCL 2.32; the JAX wheels stay at 0.11.1. Override and constraint entries naming packages absent
   from the graph went, as did the Equinox override written for Vizier. Flax's 0.12.10 floor is a
   root constraint, not a Haliax dependency as the plan said: no workspace code imports Flax; AQT
-  does.
+  does. FlashAttention 4 is pinned to 4.0.0b28, the pre-P8 version: 4.0.0b34 needs a newer CuTe
+  DSL than the pinned 4.6.2 and broke R2's segmented FA4 backward. NVRTC moved from 13.0 to 13.4,
+  so the NVRTC preload now finds the installed builtins library instead of naming 13.0.
 - **Why:** Poorin runs only on Linux, and resolving for Windows failed on FlashAttention 4's
   pre-release. Dependencies may move freely (AGENTS.md), and D70 expected P8's resolve to move
   CUDA wheels; the fresh venv's checks on the RTX 5090 are the gate.
-- **Cost if wrong:** A regression from one of 153 upgrades has to be bisected by pinning.
+- **Cost if wrong:** A regression from one of 153 upgrades has to be bisected by pinning. The
+  full check passed on the new venv: every suite, both roots, and Finelog. The venv shrank from
+  11.9 GB to 7.8 GB, and R1 imports 5,985 modules instead of 6,611.
 
 ---
 

@@ -55,3 +55,4 @@ date,phase,step,first_party_lines,reachable_lines,reachable_modules,r1_imported_
 2026-10-07,P7,Sweep unreachable Levanter code,137503,131204,434,6611,3.55,67.3,26.9,11851494938
 2026-10-07,P7,Sweep unreachable rigging and Finestore code,133067,131546,435,6611,3.53,67.4,28.0,11851494938
 2026-10-07,cleanup,"Clean up tests, docs, and checks after the strip",137985,136962,447,6611,3.54,68.4,29.1,11858638529
+2026-10-07,P8,Rebuild the venv on a fresh lock,137994,136971,447,5985,3.34,67.0,28.4,7824176927
