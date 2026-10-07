@@ -64,6 +64,15 @@ modules = [
     "levanter.compat.hf_checkpoints",
     "levanter.main.export_lm_to_hf",
     "marin.datakit.chat_template",
+    "levanter.main.export_hf_to_lm",
+    # Loaded by name or needed by kept tooling, so static imports do not reach them: pytest's
+    # -p plugin, Zephyr's `python -m` shard runner, Haliax's build-time version, the fsutil CLI
+    # behind the use-fsutil skill, and Finelog's in-process server for prune_check (D74).
+    "marin.pytest_timeout_guard",
+    "zephyr.shard_subprocess",
+    "haliax.__about__",
+    "rigging.fsutil.*",
+    "finelog.embedded",
     # Plugin registry members: draccus finds these by name, so static imports do not reach them.
     "levanter.optim.*",
     "levanter.data.text.*",
