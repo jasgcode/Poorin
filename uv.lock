@@ -982,7 +982,7 @@ wheels = [
 
 [[package]]
 name = "flash-attn-4"
-version = "4.0.0b34"
+version = "4.0.0b28"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "apache-tvm-ffi", marker = "sys_platform == 'linux'" },
@@ -993,9 +993,9 @@ dependencies = [
     { name = "torch-c-dlpack-ext", marker = "sys_platform == 'linux'" },
     { name = "typing-extensions", marker = "sys_platform == 'linux'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/77/4b/846fc5e941f4116185e268c6eb77c3d430736558239dd23bd941a6a293c1/flash_attn_4-4.0.0b34.tar.gz", hash = "sha256:93118237c0d2e80b76bedd4e3c8b21a780d3119a42868ea26b974ae88d36b277", size = 481444, upload-time = "2026-10-07T08:23:16.882Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/3f/86/de2a7e2744c231bd96e723b592265c0ec4ba19468277968670447b2574a5/flash_attn_4-4.0.0b28.tar.gz", hash = "sha256:feda044eacd29e1c26f673ca98b25b12e7eb95df8dbe3e3f1f3fa9dc58165ce5", size = 377693, upload-time = "2026-08-26T08:47:48.138Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ea/8d/013d95d7dfa0231e0bb9d1515a8c9634245270244dc3d0b5bd64b3b942ca/flash_attn_4-4.0.0b34-py3-none-any.whl", hash = "sha256:776bd6f187f9b116811e450caaa59ae331c6a3d50970c1f226e41438cdec9f95", size = 509530, upload-time = "2026-10-07T08:23:15.462Z" },
+    { url = "https://files.pythonhosted.org/packages/bb/aa/3fbbf512a901b8174f840fa35fcc5eaed03dd3dba9879c16c435f6e62092/flash_attn_4-4.0.0b28-py3-none-any.whl", hash = "sha256:b6fc43864488b97becee5c123536bc7d0de98bfac0754973aa6c00521eced9cf", size = 402718, upload-time = "2026-08-26T08:47:46.577Z" },
 ]
 
 [package.optional-dependencies]
@@ -1902,7 +1902,7 @@ requires-dist = [
     { name = "braceexpand" },
     { name = "datasets", specifier = "<5.0.0" },
     { name = "draccus", specifier = ">=0.11.6" },
-    { name = "flash-attn-4", extras = ["cu13"], marker = "sys_platform == 'linux' and extra == 'gpu'", specifier = ">=4.0.0b27,<4.1" },
+    { name = "flash-attn-4", extras = ["cu13"], marker = "sys_platform == 'linux' and extra == 'gpu'", specifier = "==4.0.0b28" },
     { name = "fsspec", specifier = ">=2025.3.0" },
     { name = "gcsfs" },
     { name = "google-cloud-storage" },
@@ -2368,7 +2368,7 @@ requires-dist = [
     { name = "draccus", specifier = ">=0.11.6" },
     { name = "einops" },
     { name = "equinox", specifier = ">=0.11.7,!=0.12.0" },
-    { name = "flash-attn-4", extras = ["cu13"], marker = "sys_platform == 'linux' and extra == 'gpu'", specifier = ">=4.0.0b27,<4.1" },
+    { name = "flash-attn-4", extras = ["cu13"], marker = "sys_platform == 'linux' and extra == 'gpu'", specifier = "==4.0.0b28" },
     { name = "fsspec", extras = ["http"], specifier = ">=2024.2,<2027" },
     { name = "gcsfs", specifier = ">=2024.2,<2027" },
     { name = "gitpython", specifier = ">=3.1.50" },
