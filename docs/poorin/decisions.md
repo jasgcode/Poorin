@@ -677,7 +677,7 @@ Plan: `plans/2026-10-05-p1-fleet-operations.md`. Executing on branch `prune/p1-f
 
 ### D55. A test that times out under host load is rerun, not given a longer limit
 
-- **When:** 2026-10-06, P1 Task 3. **Status:** Adopted.
+- **When:** 2026-10-06, P1 Task 3. **Status:** Superseded by D60.
 - **Decision:** When grug's `test_staged_loss_and_gradients_match_the_unsplit_model` passed the
   60-second limit while about 200 browser processes outside the checkout held the load average at
   243 on 32 cores, the check was rerun unchanged, and it passed.
@@ -744,6 +744,19 @@ Plan: `plans/2026-10-05-p1-fleet-operations.md`. Executing on branch `prune/p1-f
   Poorin cannot run; pull P6's Finelog trim into P1.
 - **Cost if wrong:** None; P6 deletes the code they tested.
 - **Landed:** `[poorin] Delete infra/`.
+
+### D60. The MoE pipeline equivalence test gets a 180-second limit
+
+- **When:** 2026-10-06, P1 Task 12. **Status:** Adopted.
+- **Decision:** `test_staged_loss_and_gradients_match_the_unsplit_model` carries
+  `@pytest.mark.timeout(180)`, the limit the root suite already gives its slow June model tests.
+- **Why:** It timed out again in Task 12's check. The browser processes outside the checkout
+  have held the load average near 250 on 32 cores for hours, and alone the test takes about 57
+  seconds, so the 60-second default fails it often enough to cost a 25-minute rerun each time.
+- **Alternatives:** Keep rerunning (D55); mark it `slow`, which drops it from every default run.
+- **Cost if wrong:** A real hang in this test takes three minutes to report. P7 deletes the MoE
+  pipeline.
+- **Landed:** `[grug] Give the MoE pipeline equivalence test three minutes`.
 
 ---
 
