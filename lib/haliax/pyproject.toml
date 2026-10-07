@@ -24,7 +24,6 @@ dependencies = [
     "jax >= 0.9.2",
     "equinox>=0.10.6",
     "jaxtyping>=0.2.20",
-    "jmp>=0.0.4",
     "safetensors>=0.4.3",
     "aqtp>=0.8.2",
 ]
@@ -43,13 +42,10 @@ dev = [
     "mkdocs >= 1.4.3",
     "mkdocs-material >= 7.3.3",
     "mkdocstrings >= 0.22.0",
-    "mkdocs-literate-nav >= 0.6.0",
-    "mkdocs-macros-plugin >= 0.7.0",
     "mkdocstrings-python >= 1.1.2",
     "mkdocs-include-markdown-plugin",
     "pymdown-extensions",
     "pygments",
-    "pre-commit",
 ]
 
 
