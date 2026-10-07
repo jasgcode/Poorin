@@ -881,6 +881,17 @@ Plan: `plans/2026-10-07-p2-rl-stack.md`.
 - **Cost if wrong:** Two kept roots that keep `transformers` reachable.
 - **Landed:** `[poorin] Keep the hooks a SkyRL integration needs as roots`.
 
+### D69. Verifyit leaves with Harbor and Evalchemy in P3
+
+- **When:** 2026-10-07, P2. **Status:** Adopted.
+- **Decision:** P2 deletes the RL integration, Shellbox, and Taskcompendium, and leaves Verifyit.
+  P3 deletes it right after the Harbor and Evalchemy integrations.
+- **Why:** Harbor's trial driver and its root-suite test import `harbor_config`, which reaches
+  the lock only through Verifyit's Harbor adapter; deleting Verifyit first broke that test.
+  Verifyit is mostly benchmark adapters for Harbor, Evalchemy, and lm-eval, so it belongs with
+  them.
+- **Cost if wrong:** None; the spec's P2 row lists Verifyit, and P3 now carries it.
+
 ---
 
 ## Deferred
