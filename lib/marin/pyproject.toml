@@ -65,7 +65,6 @@ test = [
     "pytest-json-report>=1.5",
     "pytest-xdist",
     "pytest-timeout",
-    "verifyit[answer,reasoning-gym,schema]",
     # for scaling law plotting tests
     "plotly",
 ]

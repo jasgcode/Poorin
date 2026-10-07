@@ -64,9 +64,6 @@ HOST_EXCLUSIONS = (
     "--deselect=lib/iris/tests/cluster/worker/test_env_probe.py::test_hardware_probe_builds_valid_metadata",
     "--deselect=lib/iris/tests/cluster/worker/test_env_probe.py"
     "::test_hardware_probe_ignores_tpu_env_vars_without_metadata",
-    # Verifyit's Go grader fails with this workstation's Go toolchain. P3 deletes Verifyit (D69).
-    "--deselect=lib/verifyit/tests/test_gotest.py::test_gotest_real_go_module_passes",
-    "--deselect=lib/verifyit/tests/test_gotest.py::test_gotest_undiscovered_test_function_cannot_leave_positive_reward",
 )
 
 
