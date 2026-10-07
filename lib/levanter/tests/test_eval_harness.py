@@ -6,8 +6,8 @@ from levanter.testing.helpers import skip_if_module_missing
 from transformers import AutoTokenizer
 
 from levanter.data.packing import PromptCompletion
-from levanter.eval_harness import LmEvalHarnessConfig, _call_with_retry, _iterate_tokenized_requests
-from levanter.eval_harness_config import TaskConfig
+from levanter.eval_harness import _iterate_tokenized_requests
+from levanter.eval_harness_config import LmEvalHarnessConfig, TaskConfig, _call_with_retry
 
 
 @skip_if_module_missing("lm_eval")
@@ -189,7 +189,7 @@ def test_task_config():
 
 def test_call_with_retry_does_not_sleep_after_the_last_attempt(monkeypatch):
     sleeps: list[float] = []
-    monkeypatch.setattr("levanter.eval_harness.time.sleep", sleeps.append)
+    monkeypatch.setattr("levanter.eval_harness_config.time.sleep", sleeps.append)
 
     attempts = 0
 

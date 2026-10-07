@@ -28,7 +28,7 @@ from fray.types import GpuConfig, ResourceConfig
 from haliax.partitioning import ResourceAxis
 from levanter.adaptor import NoAdaptorConfig
 from levanter.checkpoint import CheckpointerConfig
-from levanter.eval_harness import LmEvalHarnessConfig
+from levanter.eval_harness_config import LmEvalHarnessConfig
 from levanter.main.train_lm import TrainLmConfig
 from levanter.models.lm_model import LmConfig
 from levanter.optim.config import OptimizerConfig

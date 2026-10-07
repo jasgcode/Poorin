@@ -21,7 +21,6 @@ import levanter.config
 import levanter.tracker
 import levanter.callbacks
 import levanter.eval
-import levanter.eval_harness
 from levanter import callbacks
 from levanter.callbacks.labeled_eval import LabeledLmEvalConfig, add_labeled_lm_eval_callbacks
 from levanter.adaptor import AdaptorConfig, AdaptorExportConfig, NoAdaptorConfig
@@ -30,7 +29,7 @@ from levanter.checkpoint import latest_checkpoint_path, load_checkpoint
 from levanter.compat.hf_checkpoints import HFCompatConfig, build_generation_config
 from levanter.data.mixture import MixtureDataset
 from levanter.data.text.datasets import LmDataConfig
-from levanter.eval_harness import LmEvalHarnessConfig
+from levanter.eval_harness_config import LmEvalHarnessConfig
 from levanter.models.llama import LlamaConfig
 from levanter.models.lm_model import LmConfig, LmExample, LmHeadModel, split_activations
 from levanter.optim.config import AdamConfig, OptimizerConfig
@@ -383,11 +382,12 @@ def main(config: TrainLmConfig):
         )
 
         if config.eval_harness is not None:
+            # optional dep: the harness needs lm-eval and loads the inference engine
+            from levanter.eval_harness import lm_eval_harness  # noqa: PLC0415
+
             eval_harness = config.eval_harness
             trainer.add_hook(
-                levanter.eval_harness.lm_eval_harness(
-                    eval_harness, tokenizer, EvalBatch, compute_axis_mapping, trainer.mp
-                ),
+                lm_eval_harness(eval_harness, tokenizer, EvalBatch, compute_axis_mapping, trainer.mp),
                 every=config.eval_harness_steps,
             )
 
