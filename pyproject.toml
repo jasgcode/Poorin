@@ -49,6 +49,8 @@ constraint-dependencies = [
     "opentelemetry-instrumentation>=0.41b0",
     "opentelemetry-instrumentation-grpc>=0.41b0",
     "opentelemetry-semantic-conventions>=0.1b0",
+    # Haliax imports AQT, which imports Flax; 0.12.10 is the spec's floor for JAX 0.11.
+    "flax>=0.12.10",
 ]
 override-dependencies = [
     "omegaconf>=2.4.0.dev4",
