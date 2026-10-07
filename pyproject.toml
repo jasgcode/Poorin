@@ -10,7 +10,6 @@ license = { file = "LICENSE" }
 requires-python = ">=3.12"
 dependencies = [
     # workspaces
-    "marin-iris",
     "marin-fray",
     "marin-haliax",
     "marin-levanter",
@@ -24,8 +23,7 @@ dependencies = [
     # workspace member (editable source) so deploy/CLI fixes land without a wheel
     # republish. Its native companion marin-finelog-server (the in-process
     # log-server ext, module `finelog_server`, maturin lib/finelog/rust) is NOT a
-    # member: it ships as a pre-built wheel and reaches us transitively via
-    # marin-iris, which depends on it explicitly.
+    # member: it ships as a pre-built wheel, which P6 pins.
     "marin-finelog",
     # top level deps. try to keep these small.
     "watchdog",
@@ -152,14 +150,6 @@ conflicts = [
         { package = "marin-fray", group = "fray_tpu_test" },
     ],
     [
-        { package = "marin-root", extra = "pipeline" },
-        { package = "marin-iris", group = "dev" },
-    ],
-    [
-        { package = "marin-root", extra = "pipeline" },
-        { package = "marin-iris", group = "test" },
-    ],
-    [
         { package = "marin-core", extra = "gpu" },
         { package = "marin-levanter", extra = "tpu" },
     ],
@@ -175,7 +165,6 @@ conflicts = [
 
 [tool.uv.workspace]
 members = [
-    "lib/iris",
     "lib/fray",
     "lib/finelog",
     "lib/dupekit",
@@ -192,11 +181,9 @@ members = [
 # companion wheels from PyPI.
 #   - lib/finelog/rust  -> marin-finelog-server (module `finelog_server`)
 #   - lib/dupekit/rust  -> marin-dupekit-native  (module `dupekit_native`)
-#   - lib/iris/rust     -> marin-iris-native     (module `iris_native`)
-exclude = ["lib/finelog/rust", "lib/dupekit/rust", "lib/iris/rust"]
+exclude = ["lib/finelog/rust", "lib/dupekit/rust"]
 
 [tool.uv.sources]
-marin-iris = { workspace = true }
 marin-fray = { workspace = true }
 marin-finelog = { workspace = true }
 marin-dupekit = { workspace = true }
@@ -349,12 +336,11 @@ testpaths = ["tests", "experiments"]
 pythonpath = ["."]
 
 # Don't run slow, integration, data_integration, cluster-bound, Docker, or manual tests by default.
-# Integration tests require external infrastructure (Iris cluster, GCS,
+# Integration tests require external infrastructure (GCS,
 # gated HF repos, etc.); data_integration tests fetch fixtures from HF;
 # cluster and requires_cluster tests submit jobs or start cluster infrastructure;
 # Docker tests require a local daemon;
 # manual tests are run by hand (e.g. live TPU smokes in a custom container).
 # All but manual are run from dedicated CI workflows. Tests that need a TPU carry
-# @skip_if_no_tpu (tests/test_utils.py) and skip themselves when none is present;
-# the Iris markers also apply when lib/iris test paths are passed from the root.
+# @skip_if_no_tpu (tests/test_utils.py) and skip themselves when none is present.
 addopts = "-p marin.pytest_timeout_guard --session-timeout=600 -n auto --dist=worksteal -m 'not slow and not integration and not data_integration and not cluster and not requires_cluster and not docker and not manual' --import-mode=importlib"

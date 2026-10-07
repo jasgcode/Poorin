@@ -60,10 +60,6 @@ HOST_EXCLUSIONS = (
     # tensorboardX is in Levanter's test dependency group, which the GPU environment does not
     # install. P7 deletes the TensorBoard tracker.
     "--ignore=lib/levanter/tests/test_tensorboard.py",
-    # Iris's hardware probe expects a host without a GPU. P5 deletes Iris.
-    "--deselect=lib/iris/tests/cluster/worker/test_env_probe.py::test_hardware_probe_builds_valid_metadata",
-    "--deselect=lib/iris/tests/cluster/worker/test_env_probe.py"
-    "::test_hardware_probe_ignores_tpu_env_vars_without_metadata",
 )
 
 

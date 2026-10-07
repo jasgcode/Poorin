@@ -9,7 +9,6 @@ description = "Lightweight dataset library for distributed data processing"
 readme = "README.md"
 requires-python = ">=3.12,<3.14"
 dependencies = [
-    "marin-iris",
     "marin-rigging",
     "marin-fray",
     "click>=8.0",
