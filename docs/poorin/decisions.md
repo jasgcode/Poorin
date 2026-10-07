@@ -1053,6 +1053,21 @@ Plan: `plans/2026-10-07-p8-workspace.md`.
 - **Cost if wrong:** Code that needs PyTorch on the GPU in this environment has to bring the CUDA
   wheel back, with its CUDA 12 libraries.
 
+### D80. The fresh lock resolves Linux only and takes current releases
+
+- **When:** 2026-10-07, P8. **Status:** Adopted.
+- **Decision:** `uv lock` resolves for `sys_platform == 'linux'` only (`tool.uv.environments`).
+  It takes the newest release each specifier allows, so 153 packages moved from the pre-P8
+  environment, among them numpy 2.5, pandas 3, pyarrow 25, the CUDA 13.4 runtime, cuDNN 9.27, and
+  NCCL 2.32; the JAX wheels stay at 0.11.1. Override and constraint entries naming packages absent
+  from the graph went, as did the Equinox override written for Vizier. Flax's 0.12.10 floor is a
+  root constraint, not a Haliax dependency as the plan said: no workspace code imports Flax; AQT
+  does.
+- **Why:** Poorin runs only on Linux, and resolving for Windows failed on FlashAttention 4's
+  pre-release. Dependencies may move freely (AGENTS.md), and D70 expected P8's resolve to move
+  CUDA wheels; the fresh venv's checks on the RTX 5090 are the gate.
+- **Cost if wrong:** A regression from one of 153 upgrades has to be bisected by pinning.
+
 ---
 
 ## Deferred
