@@ -991,6 +991,19 @@ Plan: `plans/2026-10-07-p4-p7-strip.md`.
   row is committed with the last of them.
 - **Cost if wrong:** A deleted test or config is recoverable from `upstream-baseline`.
 
+### D78. The profiling package returns as a kept root
+
+- **When:** 2026-10-07, cleanup. **Status:** Adopted.
+- **Decision:** `marin.profiling` and `levanter.utils.profile_dirs`, deleted by the P7 sweeps,
+  are restored with their tests, and `marin.profiling.cli` becomes a kept root. Broken scripts
+  found by the same audit were deleted instead: Levanter's `infra/launch.py`,
+  `infra/push_docker.py`, and `infra/cluster/`, the skip-guarded test of the deleted OpenAI
+  server, an unused OpenAI stub, and `tests/snapshots/`, whose test and converters are gone.
+- **Why:** The spec keeps the `profile-training` skill, which runs the package through the script
+  `lib/marin/tools/profile_summary.py`. A script outside `src/` is not a module, so the
+  reachability scan never saw the import. An audit of every first-party import in files outside
+  `src/` found no other such case.
+- **Cost if wrong:** 5,265 lines of profiling code stay without a training root that imports it.
 
 ---
 

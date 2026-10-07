@@ -54,6 +54,8 @@ modules = [
     "marin.scaling_laws.*",
     "experiments.references.completed_adamh",
     "experiments.grug.fast_track.heuristic",
+    # Workbench: profiling. The profile-training skill runs it through lib/marin/tools/profile_summary.py.
+    "marin.profiling.cli",
     # Light post-training kit (D9)
     "levanter.main.train_dpo",
     "levanter.main.lora_lm",
