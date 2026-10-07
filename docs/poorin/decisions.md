@@ -778,6 +778,21 @@ Plan: `plans/2026-10-05-p1-fleet-operations.md`. Executing on branch `prune/p1-f
 - **Cost if wrong:** None known.
 - **Landed:** `[poorin] Skip ignored test files that a change selects by name`.
 
+### D62. The Git hook lints only staged files
+
+- **When:** 2026-10-06, P1 final review. **Status:** Adopted.
+- **Decision:** `tools.lint --staged` lints the paths whose staged content differs from `HEAD`
+  (`tools.changes.staged_files`), and the documented pre-commit hook runs
+  `tools.lint --staged --fix`. `tools.lint` with no arguments, and `prune_check`, still check the
+  whole uncommitted change, untracked files included.
+- **Why:** The hook ran `tools.lint --fix` over the whole uncommitted change, so committing one
+  file cleared the outputs of untracked scratch notebooks, added license headers to scratch
+  scripts, and failed on large untracked data files. Marin's hook checked only tracked files.
+- **Alternatives:** Leave untracked files out of `changed_files`, which would hide new files from
+  `prune_check`.
+- **Cost if wrong:** None known.
+- **Landed:** `[poorin] Lint only staged files from the Git hook`.
+
 ---
 
 ## Deferred

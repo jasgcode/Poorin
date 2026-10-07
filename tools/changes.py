@@ -13,11 +13,20 @@ def changed_files(repo_root: Path) -> list[str]:
     Deleted paths are included, and a rename counts as a deletion plus an addition. Callers that
     read files skip the paths that no longer exist.
     """
-
-    def git(*args: str) -> list[str]:
-        out = subprocess.run(["git", *args], cwd=repo_root, check=True, capture_output=True, text=True).stdout
-        return [line for line in out.splitlines() if line]
-
-    tracked = git("diff", "--name-only", "--no-renames", "HEAD")
-    untracked = git("ls-files", "--others", "--exclude-standard")
+    tracked = _git(repo_root, "diff", "--name-only", "--no-renames", "HEAD")
+    untracked = _git(repo_root, "ls-files", "--others", "--exclude-standard")
     return sorted({*tracked, *untracked})
+
+
+def staged_files(repo_root: Path) -> list[str]:
+    """Paths whose staged content differs from ``HEAD``: what the next commit holds, sorted.
+
+    Unstaged edits and untracked files are left out. Deletions and renames count as in
+    :func:`changed_files`.
+    """
+    return sorted(_git(repo_root, "diff", "--cached", "--name-only", "--no-renames", "HEAD"))
+
+
+def _git(repo_root: Path, *args: str) -> list[str]:
+    out = subprocess.run(["git", *args], cwd=repo_root, check=True, capture_output=True, text=True).stdout
+    return [line for line in out.splitlines() if line]

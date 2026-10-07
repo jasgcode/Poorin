@@ -6,6 +6,7 @@
 Usage (from the repository root):
     uv run --no-sync python -m tools.lint                 # the uncommitted change
     uv run --no-sync python -m tools.lint --fix           # and fix what can be fixed
+    uv run --no-sync python -m tools.lint --staged        # what the next commit holds (the Git hook)
     uv run --no-sync python -m tools.lint --all-files     # every tracked file
     uv run --no-sync python -m tools.lint PATH ...        # these files
 
@@ -31,7 +32,7 @@ from pathlib import Path
 
 import yaml
 
-from tools.changes import changed_files
+from tools.changes import changed_files, staged_files
 from tools.reachability import REPO_ROOT
 
 RUFF = ("uvx", "ruff@0.14.3", "check")
@@ -231,12 +232,16 @@ def lint(paths: Sequence[str], *, fix: bool, repo_root: Path = REPO_ROOT) -> lis
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Lint and format Poorin's files.")
     parser.add_argument("--fix", action="store_true", help="Fix what can be fixed; the run still fails.")
-    parser.add_argument("--all-files", action="store_true", help="Lint every tracked file.")
+    scope = parser.add_mutually_exclusive_group()
+    scope.add_argument("--all-files", action="store_true", help="Lint every tracked file.")
+    scope.add_argument("--staged", action="store_true", help="Lint only staged changes, for the Git hook.")
     parser.add_argument("paths", nargs="*", help="Files to lint, relative to the repository root.")
     args = parser.parse_args(argv)
     if args.all_files:
         tracked = subprocess.run(["git", "ls-files"], cwd=REPO_ROOT, check=True, capture_output=True, text=True)
         paths = tracked.stdout.splitlines()
+    elif args.staged:
+        paths = staged_files(REPO_ROOT)
     else:
         paths = args.paths or changed_files(REPO_ROOT)
     problems = lint(paths, fix=args.fix)

@@ -16,7 +16,7 @@ cat <<'EOF' > .git/hooks/pre-commit
 #!/bin/sh
 set -e
 cd "$(git rev-parse --show-toplevel)"
-uv run --no-sync python -m tools.lint --fix
+uv run --no-sync python -m tools.lint --staged --fix
 EOF
 chmod +x .git/hooks/pre-commit
 ```

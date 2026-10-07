@@ -30,14 +30,14 @@ cat <<'EOF' > .git/hooks/pre-commit
 #!/bin/sh
 set -e
 cd "$(git rev-parse --show-toplevel)"
-uv run --no-sync python -m tools.lint --fix
+uv run --no-sync python -m tools.lint --staged --fix
 EOF
 chmod +x .git/hooks/pre-commit
 ```
 
 ### Linting
 
-The Git hook configured above lints the uncommitted change before each commit. Lint every file with
+The Git hook configured above lints the staged change before each commit. Lint every file with
 `uv run --no-sync python -m tools.lint --all-files --fix`.
 
 ### Testing
