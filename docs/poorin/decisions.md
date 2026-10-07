@@ -434,8 +434,9 @@ Plan: `plans/2026-10-05-p1-fleet-operations.md`. Executing on branch `prune/p1-f
 
 ### D39. The linter moves to `tools/lint.py`
 
-- **When:** 2026-10-05, P1. **Status:** Adopted. Marin's code keeps its explicit ruff configuration (see
-  `PythonStyle.ruff_config`).
+- **When:** 2026-10-05, P1. **Status:** Adopted; superseded in part by D49 (ty replaces pyrefly)
+  and D50 (ruff format replaces black). Marin's code keeps its explicit ruff linter
+  configuration (`RUFF_CONFIGS` in `tools/lint.py`).
 - **Decision:** `tools/lint.py` runs ruff 0.14.3 and black 25.9.0 (each library's black
   configuration), pyrefly, license headers, file size, syntax, merge-conflict markers, TOML,
   YAML, and JSON validity, trailing whitespace, final newlines, and notebook outputs. It drops
@@ -829,6 +830,18 @@ Plan: `plans/2026-10-05-p1-fleet-operations.md`. Executing on branch `prune/p1-f
   then strip "trailing whitespace" from it and append a newline, silently corrupting it.
 - **Cost if wrong:** A text file containing a NUL skips the whitespace and newline checks.
 - **Landed:** `[poorin] Treat files with a NUL byte as binary in lint`.
+
+### D66. Stale comments and links found by the final review go now
+
+- **When:** 2026-10-06, P1 final review. **Status:** Adopted.
+- **Decision:** One commit removes what the review found stale in kept files: a duplicated line
+  in the comment Task 12 rewrote in rigging's `cluster_config.py`, the `.gitignore` comment left
+  without its pattern by P0, D39's status text, and links from the grug README, two kept skills,
+  and the MoE hero README to deleted skills. Links in code that P2 and P7 delete stay.
+- **Why:** `AGENTS.md` says to delete stale comments on discovery and keep documentation in sync.
+  The review's other minor findings are deferred.
+- **Cost if wrong:** None.
+- **Landed:** `[poorin] Remove stale comments and links to deleted skills`.
 
 ---
 

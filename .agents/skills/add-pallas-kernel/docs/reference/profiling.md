@@ -11,9 +11,6 @@ actually improved steady-state performance.
 For generic profiling setup and UI usage, start with:
 - `lib/levanter/docs/Performance-Guide.md`
 
-For an explicitly requested long-running research program, use:
-- `.agents/skills/research/SKILL.md`
-
 ## What to report
 
 For every headline result, report at least:

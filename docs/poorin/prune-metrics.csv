@@ -25,3 +25,4 @@ date,phase,step,first_party_lines,reachable_lines,reachable_modules,r1_imported_
 2026-10-06,P1,Run every suite when the cluster configs change,384650,127530,420,6702,7.73,148.6,57.3,11893054128
 2026-10-06,P1,Select the grug variant contract test for any grug change,384656,127536,420,6702,7.87,144.2,52.5,11893054128
 2026-10-06,P1,Treat files with a NUL byte as binary in lint,384660,127540,420,6702,11.56,172.3,60.7,11893054128
+2026-10-06,P1,Remove stale comments and links to deleted skills,384659,127539,420,6702,7.9,137.4,49.8,11893054128

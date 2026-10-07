@@ -54,7 +54,6 @@ def _bundled_cluster_config_dir() -> str | None:
     return str(bundled) if bundled.is_dir() else None
 
 
-# A per-user override dir for connecting to a live cluster (e.g. on a dev VM).
 # A per-user override dir for connecting to a live cluster (e.g. on a dev VM). It takes
 # priority over the repository's config/ directory, so tests replace the search dirs to stay
 # independent of the host.
