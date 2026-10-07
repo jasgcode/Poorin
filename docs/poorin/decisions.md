@@ -1155,6 +1155,27 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
 - **Cost if wrong:** Video and action data meet Levanter's language-model-shaped data interfaces
   (`LmDataConfig`, named-array batches); sub-project 3, the data layer, decides that.
 
+### D85. The libraries Poorin cut heavily take poorin_ names
+
+- **When:** 2026-10-07. **Status:** Adopted. Spec: `specs/2026-10-07-library-renames-design.md`.
+- **Decision:** `fray`, `finelog`, `rigging`, and `marin` become `poorin_fray`, `poorin_finelog`,
+  `poorin_rigging`, and `poorin`: import names, distribution names (`poorin-fray`,
+  `poorin-finelog`, `poorin-rigging`, `poorin`), and directories under `lib/`. The workspace root
+  becomes `poorin-root`. Each renamed library's README says what Poorin removed from it and why.
+  Levanter, Haliax, Zephyr, Finestore, and Dupekit keep their names; so do the `MARIN_*`
+  environment variables, `marin_*` helpers, bucket paths, upstream's `marin-finelog-server` wheel,
+  and Finelog's protobuf package names. One library per commit; the owner authorized running the
+  spec, plan, and commits end to end.
+- **Why:** The owner, 2026-10-07: the libraries Poorin modified heavily should not carry upstream's
+  names, and the docs should say explicitly that each was made lighter. Measured against
+  `upstream-baseline`: Marin's code −64%, Finelog −66% plus its 75k-line Rust server, Fray −30%,
+  Rigging −28%.
+- **Alternatives:** Rename distributions only, keeping imports; rename every library Poorin
+  touched, Levanter included; document without renaming.
+- **Cost if wrong:** Reading upstream code needs the name map in AGENTS.md. Artifact records name
+  their class by module path, so cached artifacts are migrated once with
+  `find ~/.cache/poorin -name .artifact.json -exec sed -i 's/"result_type": "marin\./"result_type": "poorin./' {} +`.
+
 ---
 
 ## Deferred
