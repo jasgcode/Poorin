@@ -141,14 +141,6 @@ def test_scan_model_configs_rejects_duplicate_names(tmp_path):
         scan_model_configs(tmp_path)
 
 
-@pytest.mark.parametrize("flag", ["--tensor-parallel-size", "--pipeline-parallel-size", "--headless"])
-@pytest.mark.parametrize("equals", [False, True])
-def test_pipeline_rejects_raw_topology_overrides(flag, equals):
-    extra_args = (f"{flag}=2",) if equals else (flag, "2")
-    with pytest.raises(ValueError, match="pipeline parallelism owns"):
-        ServeConfig(tensor_parallel_size=8, pipeline_parallel_size=2, vllm_extra_args=extra_args)
-
-
 @pytest.mark.parametrize(
     "serve",
     [

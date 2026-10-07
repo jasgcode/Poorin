@@ -13,8 +13,6 @@ from pathlib import Path
 import draccus
 from rigging.filesystem.storage_path import StoragePath
 
-from marin.inference.config import SpeculativeServingConfig, resolve_tokenizer_revision, validate_pipeline_args
-
 
 class ServeBackend(StrEnum):
     """Inference backend used for evaluation."""
@@ -92,7 +90,6 @@ class ServeConfig:
     vllm_batch_invariant: bool | None = None
     vllm_use_flashinfer_sampler: bool | None = None
     vllm_extra_args: tuple[str, ...] = ()
-    speculative: SpeculativeServingConfig | None = None
     chat_template: str | None = None
     auto_overrides: bool = True
 
@@ -108,7 +105,6 @@ class ServeConfig:
                 raise ValueError("pipeline parallelism requires the vLLM backend")
             if self.tensor_parallel_size is None:
                 raise ValueError("pipeline parallelism requires an explicit tensor_parallel_size")
-            validate_pipeline_args(self.vllm_extra_args)
         if self.gpu_memory_utilization is not None:
             if not 0 < self.gpu_memory_utilization <= 1:
                 raise ValueError("gpu_memory_utilization must be in (0, 1]")
@@ -116,11 +112,6 @@ class ServeConfig:
                 raise ValueError("gpu_memory_utilization requires the vLLM backend")
             if has_vllm_option(self.vllm_extra_args, "--gpu-memory-utilization"):
                 raise ValueError("gpu_memory_utilization conflicts with --gpu-memory-utilization in extra args")
-        if self.speculative is not None:
-            if self.backend is not ServeBackend.VLLM:
-                raise ValueError("speculative serving requires the vLLM backend")
-            if has_vllm_option(self.vllm_extra_args, "--speculative-config"):
-                raise ValueError("speculative serving conflicts with --speculative-config in extra args")
 
 
 @dataclass(frozen=True)
@@ -181,6 +172,19 @@ class ModelConfig:
     def effective_tokenizer_revision(self) -> str | None:
         """Revision owned by the configured or default tokenizer repository."""
         return resolve_tokenizer_revision(self.revision, self.tokenizer, self.tokenizer_revision)
+
+
+def resolve_tokenizer_revision(
+    revision: str | None,
+    tokenizer: str | None,
+    tokenizer_revision: str | None,
+) -> str | None:
+    """Resolve the revision owned by an explicit or model-default tokenizer."""
+    if tokenizer_revision is not None:
+        return tokenizer_revision
+    if tokenizer is None:
+        return revision
+    return None
 
 
 def has_vllm_option(args: tuple[str, ...], option: str) -> bool:

@@ -55,9 +55,6 @@ dependencies = [
 [project.license]
 file = "../../LICENSE"
 
-[project.scripts]
-marin-serve = "marin.inference.serve_cli:main"
-
 [dependency-groups]
 test = [
     "pytest>=8.3.2",
@@ -213,17 +210,9 @@ allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/marin"]
-# The serving dashboard's node project lives inside the package for colocation;
-# only its build artifact (serve_dashboard.html) ships.
-exclude = ["src/marin/inference/dashboard"]
 
 [tool.hatch.build.targets.sdist]
 packages = ["src/marin"]
-exclude = [
-  "src/marin/inference/dashboard/node_modules",
-  "src/marin/inference/dashboard/dist",
-  "src/marin/inference/dashboard/.rsbuild",
-]
 
 [tool.ruff]
 extend = "../../pyproject.toml"

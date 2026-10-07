@@ -6,8 +6,8 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from enum import StrEnum
 
+from marin.evaluation.endpoint import RunningModel
 from marin.execution.artifact import Artifact
-from marin.inference.types import RunningModel
 
 LmEvalModelArgValue = str | int | float | bool
 LM_EVAL_UV_PACKAGES = (

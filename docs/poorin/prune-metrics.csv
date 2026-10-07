@@ -37,3 +37,4 @@ date,phase,step,first_party_lines,reachable_lines,reachable_modules,r1_imported_
 2026-10-07,P3,Delete the Harbor integration,352595,127653,419,6702,3.6,67.5,27.2,11893054103
 2026-10-07,P3,Delete Evalchemy and the evaluation fleet,349491,127652,419,6702,3.63,67.3,27.2,11893054103
 2026-10-07,P3,Delete Verifyit,341568,127649,419,6702,3.59,73.2,30.0,11851482155
+2026-10-07,P3,Move the endpoint types and delete marin.inference,333000,127582,418,6702,5.45,71.5,30.5,11851481578

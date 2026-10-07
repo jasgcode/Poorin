@@ -175,8 +175,7 @@ class LmConfig(draccus.PluginRegistry, abc.ABC, Generic[LmT], discover_packages_
         Models that reshard with ``jax.sharding.reshard(..., out_sharding=)`` over named
         ``PartitionSpec``s (e.g. Snowball/Grug) require explicit mesh axes. The default
         haliax named-axis partitioning does not, so this is ``False`` for most models.
-        Consumers that build the mesh (e.g. the marin-serve Levanter backend) read this to
-        decide whether to set ``TrainerConfig.use_explicit_mesh_axes``.
+        Code that builds the mesh reads this to decide whether to set ``TrainerConfig.use_explicit_mesh_axes``.
         """
         return False
 

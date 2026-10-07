@@ -41,7 +41,7 @@ def test_each_library_requires_its_own_license_header(tmp_path):
 def test_ruff_checks_marin_with_its_own_configuration_as_marin_did():
     # Ruff's per-file discovery classifies first-party imports differently from an explicit
     # --config for lib/marin, so Marin passed it explicitly; everything else uses discovery.
-    assert ruff_config("lib/marin/src/marin/testing/inference/snowball_checkpoint.py") == "lib/marin/pyproject.toml"
+    assert ruff_config("lib/marin/src/marin/evaluation/records.py") == "lib/marin/pyproject.toml"
     assert ruff_config("lib/levanter/src/levanter/main/train_lm.py") is None
     assert ruff_config("tools/lint.py") is None
 
