@@ -14,48 +14,18 @@ dependencies = [
     "marin-haliax",
     "marin-levanter",
     "marin-core",
-    # [secrets] so `iris cluster up` on a Kubernetes cluster can resolve the
-    # `gcp-secret://` signing key in the operator's shell: the controller pod holds no
-    # cloud credentials and reads the key from a projected Secret instead.
-    "marin-rigging[secrets]",
+    "marin-rigging",
     "marin-zephyr",
     # marin-finelog is Finelog's Python client, a workspace member. Its server is the published
     # marin-finelog-server wheel, pinned to the version Marin last released with this client.
     "marin-finelog",
     "marin-finelog-server==0.2.46.dev33324331711",
-    # top level deps. try to keep these small.
-    "watchdog",
-    "seaborn>=0.13",
     # marin-dupekit is the pure-Python text-dedup surface, a workspace member
     # (editable source). Its native companion marin-dupekit-native (the Rust
     # kernels, module `dupekit_native`, maturin lib/dupekit/rust) is NOT a
     # member: it ships as a pre-built platform wheel and reaches us transitively
     # as marin-dupekit's runtime dependency.
     "marin-dupekit",
-]
-
-[project.scripts]
-# Friendly entry point for the grug fast_track scaling ladder: `uv run fast-track ...`.
-fast-track = "experiments.grug.fast_track.launch:main"
-
-[project.optional-dependencies]
-# Keep this CUDA stack separate from marin-levanter[gpu] while JaxPP requires
-# JAX <=0.11.0 and Levanter GPU pins 0.11.1. Once those versions align, make
-# this extra depend on marin-levanter[gpu] instead of listing its GPU packages.
-pipeline = [
-    "jaxpp",
-    "marin-levanter",
-    "jax[cuda13]==0.11.0",
-    "nvidia-cublas>=13.2.0.9; sys_platform == 'linux'",
-    "nvidia-nccl-cu13>=2.31.2; sys_platform == 'linux'",
-    "nvidia-cutlass-dsl[cu13]==4.6.2; sys_platform == 'linux'",
-    "flash-attn-4[cu13]>=4.0.0b27,<4.1; sys_platform == 'linux'",
-    "quack-kernels[cu13]==0.6.4; sys_platform == 'linux'",
-    "jax-triton==0.3.1; sys_platform == 'linux'",
-    "triton>=3.6.0,<3.7; sys_platform == 'linux'",
-    # Flash Attention's Python helpers import Torch, but the Grug kernels execute
-    # through JAX/CuTe. Keep the pipeline environment on one CUDA runtime.
-    "torch==2.11.0+cpu; sys_platform == 'linux'",
 ]
 
 [tool.uv]
@@ -124,30 +94,6 @@ conflicts = [
         { package = "marin-core", extra = "tpu" },
     ],
     [
-        { package = "marin-root", extra = "pipeline" },
-        { package = "marin-core", extra = "gpu" },
-    ],
-    [
-        { package = "marin-root", extra = "pipeline" },
-        { package = "marin-core", extra = "cpu" },
-    ],
-    [
-        { package = "marin-root", extra = "pipeline" },
-        { package = "marin-core", extra = "tpu" },
-    ],
-    [
-        { package = "marin-root", extra = "pipeline" },
-        { package = "marin-levanter", extra = "gpu" },
-    ],
-    [
-        { package = "marin-root", extra = "pipeline" },
-        { package = "marin-levanter", extra = "tpu" },
-    ],
-    [
-        { package = "marin-root", extra = "pipeline" },
-        { package = "marin-fray", group = "fray_tpu_test" },
-    ],
-    [
         { package = "marin-core", extra = "gpu" },
         { package = "marin-levanter", extra = "tpu" },
     ],
@@ -190,8 +136,6 @@ marin-core = { workspace = true }
 marin-rigging = { workspace = true }
 marin-zephyr = { workspace = true }
 marin-finestore = { workspace = true }
-jaxpp = { git = "https://github.com/NVIDIA/jaxpp.git", rev = "46b8443eed01f54688dd24ae451203a504b1cff8" }
-torch = [{ index = "pytorch-cpu", extra = "pipeline", marker = "sys_platform == 'linux'" }]
 nvidia-cutlass-dsl = { index = "nvidia" }
 nvidia-cutlass-dsl-libs-base = { index = "nvidia" }
 nvidia-cutlass-dsl-libs-cu13 = { index = "nvidia" }
@@ -294,10 +238,8 @@ allowed-unresolved-imports = [
     "cuda", "cuda.**",
     "cutlass", "cutlass.**",
     "jaxlib.**",
-    "jaxpp", "jaxpp.**",
     "librosa", "librosa.**",
     "lm_eval", "lm_eval.**",
-    "resiliparse", "resiliparse.**",
     "soundfile", "soundfile.**",
     "tensorboardX", "tensorboardX.**",
     "trackio", "trackio.**",
