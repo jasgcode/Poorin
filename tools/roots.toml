@@ -78,6 +78,8 @@ modules = [
     "levanter.infra.cli_helpers",
     "levanter.grug.attention._fa4_cute_segmented_bwd",
     "levanter.grug._moe.quack_symmetric_cute",
+    # Registered with fsspec by a dotted name; Levanter stages tokenizers through mirror://.
+    "rigging.filesystem.mirror",
     # Plugin registry members: draccus finds these by name, so static imports do not reach them.
     "levanter.optim.*",
     "levanter.data.text.*",
