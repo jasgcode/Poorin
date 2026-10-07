@@ -19,12 +19,10 @@ dependencies = [
     # cloud credentials and reads the key from a projected Secret instead.
     "marin-rigging[secrets]",
     "marin-zephyr",
-    # marin-finelog is the pure-Python finelog client + deploy/CLI tooling, a
-    # workspace member (editable source) so deploy/CLI fixes land without a wheel
-    # republish. Its native companion marin-finelog-server (the in-process
-    # log-server ext, module `finelog_server`, maturin lib/finelog/rust) is NOT a
-    # member: it ships as a pre-built wheel, which P6 pins.
+    # marin-finelog is Finelog's Python client, a workspace member. Its server is the published
+    # marin-finelog-server wheel, pinned to the version Marin last released with this client.
     "marin-finelog",
+    "marin-finelog-server==0.2.46.dev33324331711",
     # top level deps. try to keep these small.
     "watchdog",
     "seaborn>=0.13",
@@ -179,9 +177,8 @@ members = [
 # owns its own build backend and package metadata. The path sources below build
 # them from this checkout for development; published packages resolve their
 # companion wheels from PyPI.
-#   - lib/finelog/rust  -> marin-finelog-server (module `finelog_server`)
 #   - lib/dupekit/rust  -> marin-dupekit-native  (module `dupekit_native`)
-exclude = ["lib/finelog/rust", "lib/dupekit/rust"]
+exclude = ["lib/dupekit/rust"]
 
 [tool.uv.sources]
 marin-fray = { workspace = true }

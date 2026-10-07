@@ -84,8 +84,6 @@ static_only = []
 modules = [
     "iris",
     "fray.iris_backend",
-    "finelog.deploy",
-    "finelog.benchmarks",
     # The 14 Levanter architectures the owner chose to delete
     "levanter.models.mistral",
     "levanter.models.mixtral",

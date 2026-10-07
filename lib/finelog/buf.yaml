@@ -1,9 +1,0 @@
-version: v2
-modules:
-  - path: src/finelog/proto
-lint:
-  use:
-    - STANDARD
-breaking:
-  use:
-    - FILE
