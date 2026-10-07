@@ -13,39 +13,52 @@ args = ["--version", "dev", "--run"]
 
 [kept]
 modules = [
-    # Scaling-law code
-    "experiments.grug.fast_track.launch",
-    "experiments.grug.fast_track.train",
-    "experiments.grug.fast_track.model",
-    "experiments.grug.fast_track.heuristic",
-    "experiments.references.reference_scaling_suite",
-    "experiments.tutorials.train_tiny_sweep",
-    "marin.scaling_laws",
+    # Workbench: data preparation
+    "marin.experiment.data",
+    "marin.processing.tokenize.*",
+    "marin.datakit.download.huggingface",
+    "marin.datakit.download.nemotron_v1",
+    "marin.datakit.canonical.fineweb_edu",
+    "marin.datakit.normalize",
+    "marin.datakit.decon",
+    "marin.processing.classification.consolidate",
+    "marin.processing.classification.deduplication.exact",
+    "marin.processing.classification.deduplication.fuzzy_minhash",
+    "marin.processing.classification.deduplication.fuzzy_dups",
+    "marin.processing.classification.deduplication.verify_fuzzy_dups",
     "marin.experiment.cli",
-    # Light post-training kit
+    "marin.experiment.sweep",
+    # Dataset recipes: the Delphi mix and its validation sets
+    "experiments.datasets.nemotron",
+    "experiments.datasets.starcoder",
+    "experiments.datasets.proofpile",
+    "experiments.datasets.paloma",
+    "experiments.datasets.uncheatable",
+    # Workbench: evaluation
+    "levanter.main.eval_lm",
+    "levanter.eval_harness",
+    "levanter.main.perplexity_gap",
+    "marin.evaluation.lm_eval",
+    "marin.evaluation.records",
+    "marin.evaluation.eval_stats",
+    "marin.evaluation.eval_measurements",
+    "marin.evaluation.metric_selection",
+    "marin.evaluation.trace_labeled_eval",
+    "marin.evaluation.rollouts",
+    "marin.evaluation.model_config",
+    "marin.evaluation.model_identity",
+    "marin.evaluation.eval_env",
+    "experiments.evals.task_configs",
+    # Workbench: scaling laws and the Delphi recipe
+    "marin.scaling_laws",
+    "marin.scaling_laws.*",
+    "experiments.references.completed_adamh",
+    "experiments.grug.fast_track.heuristic",
+    # Light post-training kit (D9)
     "levanter.main.train_dpo",
     "levanter.main.lora_lm",
     "levanter.main.lora_dpo",
     "levanter.main.sample_lm",
-    # Serving and in-loop evaluation for Levanter models
-    "levanter.inference.openai",
-    "levanter.eval_harness",
-    # Evaluation framework
-    "marin.evaluation.evalchemy.*",
-    "marin.evaluation.harbor.*",
-    "marin.evaluation.lm_eval",
-    "marin.evaluation.lm_eval_samples",
-    "marin.evaluation.records",
-    "marin.evaluation.rollouts",
-    "marin.evaluation.eval_stats",
-    "marin.evaluation.eval_measurements",
-    "marin.evaluation.metric_selection",
-    "marin.evaluation.evaluation_config",
-    "marin.evaluation.model_config",
-    "marin.evaluation.model_identity",
-    "marin.evaluation.eval_env",
-    "marin.evaluation.perplexity_gap",
-    "marin.evaluation.trace_labeled_eval",
     # Plugin registry members: draccus finds these by name, so static imports do not reach them.
     "levanter.optim.*",
     "levanter.data.text.*",
@@ -58,12 +71,8 @@ modules = [
     # Poorin's own tooling: the prune must not delete it.
     "tools.*",
 ]
-# Kept for reachability, not imported by prune_check: these run inside Harbor's isolated runtime,
-# which provides the `harbor` package.
-static_only = [
-    "marin.evaluation.harbor.trial_driver",
-    "marin.evaluation.harbor.single_turn_aime_agent",
-]
+# No root needs to be importable only inside another tool's runtime any more.
+static_only = []
 
 [deleted]
 # Deleted by Pass 1 regardless of reachability. Excluded from traversal, with their submodules.

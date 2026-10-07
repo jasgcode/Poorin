@@ -553,7 +553,9 @@ Plan: `plans/2026-10-05-p1-fleet-operations.md`. Executing on branch `prune/p1-f
 
 ### D47. Re-derive the kept roots from the workbench survey
 
-- **When:** 2026-10-06, design. **Status:** Planned (P1 Task 13).
+- **When:** 2026-10-06, design. **Status:** Adopted. With `tools.*` and P1's other changes,
+  reachable code fell from 461 modules and 139,309 lines to 420 and 127,512, and every new root
+  imports on the workstation.
 - **Decision:** The kept roots in `tools/roots.toml` become the Marin utilities a solo researcher
   runs as tools, found by a survey of data, training, and evaluation code. Added: tokenization,
   the Hugging Face and Nemotron-CC v1 downloaders, FineWeb-Edu, normalize, exact and fuzzy
@@ -568,11 +570,13 @@ Plan: `plans/2026-10-05-p1-fleet-operations.md`. Executing on branch `prune/p1-f
   workbench tools. The survey found these run locally under `MARIN_PREFIX`.
 - **Cost if wrong:** A utility left off the list is deleted in P7; it remains at
   `upstream-baseline`.
-- **Landed:** `specs/2026-10-06-workbench-and-roots-design.md`.
+- **Landed:** `specs/2026-10-06-workbench-and-roots-design.md`; `[poorin] Keep the workbench
+  tools as the prune's roots`.
 
 ### D48. Drop four kept roots
 
-- **When:** 2026-10-06, design. **Status:** Planned (P1 Task 13 for the roots; deletions in P3 and P7).
+- **When:** 2026-10-06, design. **Status:** Adopted for the roots; the deletions are planned for
+  P3 and P7.
 - **Decision:** Remove these kept roots. Their code becomes unreachable and is deleted later.
   - The Harbor and Evalchemy integrations, about 3k lines: their runners need Iris or Marin's
     serving sessions, and agentic benchmarks don't fit small-LM research. lm-eval, records,
@@ -587,6 +591,7 @@ Plan: `plans/2026-10-05-p1-fleet-operations.md`. Executing on branch `prune/p1-f
     through vLLM; the inference engine stays, reachable through `sample_lm`.
 - **Why:** None of them runs or matters on one workstation without Marin's infrastructure.
 - **Cost if wrong:** MoE work later would start from `upstream-baseline`'s grug MoE.
+- **Landed:** `[poorin] Keep the workbench tools as the prune's roots`.
 
 ### D49. ty replaces pyrefly
 
