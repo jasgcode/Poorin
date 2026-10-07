@@ -87,6 +87,8 @@ gpu = [
   # Fix the variable-length CLC scheduler's unobserved cancellation drain.
   # https://github.com/Dao-AILab/quack/commit/58cb592a1a6ef85a69e37d0b4eb50217b59d20ca
   "quack-kernels[cu13]==0.6.4; sys_platform == 'linux'",
+  # QuACK's autotuner imports Triton without declaring it; the CUDA PyTorch wheel used to bring it.
+  "triton>=3.6.0,<3.7; sys_platform == 'linux'",
 ]
 tpu = ["jax==0.11.1", "jaxlib==0.11.1", "libtpu==0.0.46.*"]
 torch_test = [
