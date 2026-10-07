@@ -401,8 +401,8 @@ from the final review of the branch.
 
 ## P1 fleet operations: planned 2026-10-05
 
-Plan: `plans/2026-10-05-p1-fleet-operations.md`. Executing on branch `prune/p1-fleet-ops` since
-2026-10-06; rulings made while executing it are D53 onward.
+Plan: `plans/2026-10-05-p1-fleet-operations.md`. Executed on branch `prune/p1-fleet-ops` on
+2026-10-06; rulings made while executing it, and the fixes from its final review, are D53 to D66.
 
 ### D37. Affected tests come from the reachability import graph
 
@@ -863,3 +863,16 @@ Known gaps left open on purpose. Each names where it gets resolved.
 | `tools.lint --all-files` reports two files under `infra/`: a TypeScript config with comments, and the old linter's own conflict-marker strings | P1 Task 2 | P1 Task 7 |
 | `--ignore` skips a file found in a directory but not one passed by name, so a change that selects `test_tensorboard.py` through its imports still collects it, and it fails on `tensorboardX` | D56 | D61 |
 | ty's 231 warnings | D54 | Pass 2 |
+| `experiments/rl_data_reviews/publish_review.py` imports the deleted `marina` package; it is unreachable and untested | P1 Task 7 | P2 |
+| Links to deleted skills remain in `experiments/grug/moe/agent.md`, `experiments/grug/fast_track/agent.md`, and `experiments/post_training/cat_count_canary/README.md` | P1 review | P2, P7 |
+| ty's three noisy warning rules could be set per rule, so other warning rules would fail; `tools.lint` prints ty's warnings only when ty fails | P1 review | Pass 2 |
+| 26 code comments name pyrefly as the reason for a workaround | P1 review | Pass 2 |
+| ty does not check `lib/dupekit/src`, which D47 keeps | P1 review | Open |
+| A deletion-only change skips ty in `tools.lint`; `prune_check` runs it regardless | P1 review | Open |
+| `tools.lint PATH` skips a path that does not exist without saying so | P1 review | Open |
+| The contributing guide's PR checklist still says to verify GitHub CI, and `tools.affected_tests` has no mode for a committed branch | P1 review | Open |
+| Levanter's and Haliax's `AGENTS.md` and the `profile-training` skill show syncing `uv run` commands | P1 review | Open |
+| `test_ruff_checks_marin_with_its_own_configuration_as_marin_did` only mirrors the `RUFF_CONFIGS` table | P1 review | Open |
+| `config/local.yaml`'s comment says outputs fall back to `/tmp/marin`; on a GCE VM, rigging falls back to `gs://marin-{region}` | P1 review | Sub-project 2 |
+| The ruff reformat's commit message says ruff checks each file's syntax tree; ruff has no such check, and a separate AST comparison confirmed the reformat | P1 review | Recorded here |
+| P1's timing columns in `prune-metrics.csv` are confounded by host load (load average about 250 from processes outside the checkout) and are not comparable with P0's | P1 | A rerun on a quiet machine |
