@@ -25,7 +25,6 @@ from fray.client import JobHandle, JobStatus
 from fray.current_client import _current_client_var, current_client, set_current_client
 from fray.local_backend import LocalJobHandle
 from fray.types import Entrypoint, JobRequest, ResourceConfig, create_environment
-from iris.cluster.client.job_info import get_job_info
 from rigging.filesystem.factory import url_to_fs
 from rigging.filesystem.storage_path import StoragePath
 from rigging.log_setup import configure_logging
@@ -62,29 +61,6 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
-
-
-def _warn_if_secondary_task() -> None:
-    """Warn when StepRunner starts on a non-primary task of a multi-task Iris job.
-
-    The per-step distributed lock is won by exactly one task; the others lose the
-    race and spin without ever entering the step body. If every task was launched
-    to run the same step (an SPMD run), those tasks never join the step's
-    collective and the job deadlocks. Flags that launch mode without blocking the
-    run (#7080).
-    """
-    info = get_job_info()
-    if info is None or info.task_index == 0:
-        return
-    logger.warning(
-        "StepRunner is starting on Iris task %d of %d. The per-step distributed lock lets only one "
-        "task run each step, so this task will lose the lock race and spin without ever entering the "
-        "step body. If every task was launched to run the same step, the tasks that never enter it "
-        "cannot join its collective and the job will DEADLOCK (marin-community/marin#7080); run the "
-        "executor on a single task instead.",
-        info.task_index,
-        info.num_tasks,
-    )
 
 
 def _write_executor_info(step: StepSpec) -> None:
@@ -207,10 +183,6 @@ class StepRunner:
         # skipped when the driver (or a wrapping app) already installed handlers.
         if not logging.getLogger().handlers:
             configure_logging(level=logging.INFO)
-
-        # A non-primary Iris task loses the per-step lock race and never enters the
-        # step; warn before doing any work in case an SPMD launch was intended (#7080).
-        _warn_if_secondary_task()
 
         max_workers = max_concurrent or 8
         if max_workers < 1:
@@ -453,7 +425,7 @@ def run_step(step: StepSpec) -> None:
             try:
                 t0 = time.monotonic()
                 if step.resources is not None:
-                    _run_iris_job(step, output_path)
+                    _run_fray_job(step, output_path)
                 elif isinstance(step.fn, RemoteCallable):
                     _run_remote_step(step, output_path)
                 else:
@@ -474,7 +446,7 @@ def run_step(step: StepSpec) -> None:
         logger.info(f"Step {step_label} completed by another worker")
 
 
-def _submit_iris_job(
+def _submit_fray_job(
     step: StepSpec,
     output_path: str,
     raw_fn: Callable[[str], Any],
@@ -512,7 +484,7 @@ def _submit_iris_job(
     handle.wait(raise_on_failure=True)
 
 
-def _run_iris_job(step: StepSpec, output_path: str) -> None:
+def _run_fray_job(step: StepSpec, output_path: str) -> None:
     """Dispatch a step with explicit ``resources`` as a Fray job.
 
     When ``step.fn`` is a :class:`RemoteCallable`, its inner callable is
@@ -522,7 +494,7 @@ def _run_iris_job(step: StepSpec, output_path: str) -> None:
     assert step.resources is not None
     raw_fn = step.fn.fn if isinstance(step.fn, RemoteCallable) else step.fn
     assert raw_fn is not None, f"Step {step.name} has no callable"
-    _submit_iris_job(step, output_path, raw_fn, step.resources)
+    _submit_fray_job(step, output_path, raw_fn, step.resources)
 
 
 def _run_remote_step(step: StepSpec, output_path: str) -> None:
@@ -532,7 +504,7 @@ def _run_remote_step(step: StepSpec, output_path: str) -> None:
     ``pip_packages`` through to the submitted job's environment.
     """
     assert isinstance(step.fn, RemoteCallable)
-    _submit_iris_job(
+    _submit_fray_job(
         step,
         output_path,
         step.fn.fn,

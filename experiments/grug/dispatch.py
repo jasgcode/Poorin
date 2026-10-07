@@ -10,16 +10,12 @@ from typing import TypeVar
 from fray.cluster import ResourceConfig
 from fray.current_client import current_client
 from fray.types import Entrypoint, JobRequest, create_environment
-from iris.rpc.proto_display import priority_band_value
 from marin.training.run_environment import extras_for_resources
 from marin.training.training import resolve_training_env
 
 logger = logging.getLogger(__name__)
 
 ConfigT = TypeVar("ConfigT")
-
-# `JobRequest.priority` is the Iris priority band as a bare int. INHERIT is Iris's own default.
-INHERIT_PRIORITY = priority_band_value("inherit")
 
 # Runtime-tuning env vars forwarded from the dispatcher to the train tasks.
 # Iris tasks don't inherit the submitter's shell, so anything the launcher was
@@ -53,13 +49,12 @@ def dispatch_grug_training_run(
     max_retries_failure: int = 3,
     max_task_failures: int = 10,
     processes_per_task: int = 1,
-    priority: int = INHERIT_PRIORITY,
+    priority: int = 0,
     extras: list[str] | None = None,
 ) -> None:
     """Submit a grug train entrypoint through Fray and wait for completion.
 
-    ``INHERIT_PRIORITY`` takes the submitting job's band, or ``interactive`` when the submitter is
-    not itself an Iris job -- which is the case for a launcher run from a dev box.
+    ``priority`` 0 leaves the backend's default priority.
 
     ``max_retries_failure`` is the per-task retry budget and ``max_task_failures`` is the
     cumulative one. The job fails when either is exhausted, so raise the two together: a large

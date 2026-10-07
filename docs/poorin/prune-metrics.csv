@@ -47,3 +47,4 @@ date,phase,step,first_party_lines,reachable_lines,reachable_modules,r1_imported_
 2026-10-07,P5,Remove Iris from Zephyr,330818,127605,421,6705,3.61,70.3,27.1,11851481578
 2026-10-07,P5,Delete Fray's Iris backend,329968,127575,421,6705,3.78,96.7,28.2,11851481578
 2026-10-07,P5,Remove Iris from Levanter,329314,125577,414,6680,3.61,68.3,27.3,11851481578
+2026-10-07,P5,Remove Iris from the executor and training,328977,125500,414,6611,3.54,69.1,27.0,11851481578

@@ -354,39 +354,6 @@ def _maybe_override_auto_build_caches(config: TrainConfigT, auto_build: bool) ->
     return config
 
 
-def _normalize_jax_compilation_cache_dir(path: str) -> str:
-    """Normalize cache dir to a form accepted by JAX's compilation cache.
-
-    JAX's ``LRUCache`` delegates I/O to ``etils.epath.Path`` which supports
-    local paths, ``gs://`` (via gcsfs), and ``s3://`` (via s3fs/fsspec).
-    The only scheme that causes problems is ``file://`` which raises during
-    initialization.
-    """
-    if path.startswith("file://"):
-        return path.removeprefix("file://")
-    return path
-
-
-def _disable_xla_autotune_subcache(env: dict) -> None:
-    """Disable XLA's per-fusion autotune sub-cache for remote compilation caches.
-
-    JAX automatically places XLA sub-caches (autotune, kernel cache) as
-    subdirectories of the compilation cache dir.  The autotune cache uses
-    XLA's C++ ``tsl::Env`` which only supports local paths, so it cannot follow
-    the compilation cache onto ``gs://`` or ``s3://``.
-
-    This covers backends that never reach Iris's JAX init, which applies the
-    same guard and redirects the autotune cache to node-local disk.
-    """
-    cache_dir = env.get("JAX_COMPILATION_CACHE_DIR", "")
-    if "://" not in cache_dir:
-        return
-    if "JAX_PERSISTENT_CACHE_ENABLE_XLA_CACHES" in env:
-        return
-    env["JAX_PERSISTENT_CACHE_ENABLE_XLA_CACHES"] = "none"
-    logger.info("XLA sub-caches disabled (compilation cache is remote: %s)", cache_dir)
-
-
 # XLA disables the NCCL collective watchdog by default (-1). A positive value
 # makes XLA abort the communicators and raise TimeoutError once a collective is
 # stuck that long, so a hung collective becomes a process crash Iris can retry
@@ -451,12 +418,6 @@ def resolve_training_env(
     env.setdefault(TENSORSTORE_CURL_LOW_SPEED_TIME_ENV, DEFAULT_TENSORSTORE_CURL_LOW_SPEED_TIME)
     env.setdefault(TENSORSTORE_CURL_LOW_SPEED_LIMIT_ENV, DEFAULT_TENSORSTORE_CURL_LOW_SPEED_LIMIT)
 
-    if "JAX_COMPILATION_CACHE_DIR" not in env:
-        env["JAX_COMPILATION_CACHE_DIR"] = _normalize_jax_compilation_cache_dir(
-            marin_temp_bucket(ttl_days=30, prefix="compilation-cache")
-        )
-        logger.info("JAX compilation cache: %s", env["JAX_COMPILATION_CACHE_DIR"])
-    _disable_xla_autotune_subcache(env)
 
     return env
 

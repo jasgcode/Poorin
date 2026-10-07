@@ -19,7 +19,6 @@ from collections.abc import Generator
 from threading import Event, Thread
 from time import sleep
 
-from iris.cluster.client.job_info import get_job_info
 from rigging.filesystem.distributed_lock import (
     HEARTBEAT_INTERVAL,
     LeaseLostError,
@@ -150,11 +149,7 @@ class StatusFile:
 
 
 def worker_id() -> str:
-    local_worker_id = default_worker_id()
-    job_info = get_job_info()
-    if job_info is None:
-        return local_worker_id
-    return f"{job_info.task_attempt.to_wire()} ({local_worker_id})"
+    return default_worker_id()
 
 
 class PreviousTaskFailedError(Exception):
