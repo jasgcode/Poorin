@@ -182,7 +182,7 @@ def test_cache_revision_combines_internal_source_and_dependency_lock(monkeypatch
     source_hash = ["source-v1"]
     dependency_hash = ["dependencies-v1"]
     monkeypatch.setattr(cutlass_kernel_cache, "directory_content_hash", lambda _path: source_hash[0])
-    monkeypatch.setattr(cutlass_kernel_cache, "workspace_lock_hash", lambda _path: dependency_hash[0])
+    monkeypatch.setattr(cutlass_kernel_cache, "dependencies_hash", lambda _path: dependency_hash[0])
     cutlass_kernel_cache._kernel_cache_revision.cache_clear()
     try:
         original = cutlass_kernel_cache._kernel_cache_revision()

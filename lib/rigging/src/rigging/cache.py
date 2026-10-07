@@ -4,6 +4,7 @@
 """Content identities shared by compiled-artifact caches."""
 
 import hashlib
+import importlib.metadata
 import pathlib
 from collections.abc import Sequence
 from typing import Protocol
@@ -63,15 +64,20 @@ def combined_content_hash(components: Sequence[str]) -> str:
     return digest.hexdigest()
 
 
-def workspace_lock_hash(start: pathlib.Path) -> str:
-    """Return the Marin ``uv.lock`` content identity visible from ``start``."""
+def dependencies_hash(start: pathlib.Path) -> str:
+    """Return the dependency identity of the workspace visible from ``start``.
+
+    It is the content of the workspace's ``uv.lock``, or, while the workspace has no lockfile, the
+    names and versions of the installed distributions.
+    """
     workspace = find_project_root(start)
     if workspace is None:
         raise ValueError(f"Marin workspace is unavailable from {start}")
     lockfile = workspace / "uv.lock"
-    if not lockfile.is_file():
-        raise ValueError(f"Marin dependency lockfile is unavailable: {lockfile}")
-    return file_content_hash(lockfile)
+    if lockfile.is_file():
+        return file_content_hash(lockfile)
+    installed = sorted(f"{dist.metadata['Name']}=={dist.version}" for dist in importlib.metadata.distributions())
+    return combined_content_hash(installed)
 
 
 def _hash_component(digest: _Digest, name: str, value: bytes) -> None:

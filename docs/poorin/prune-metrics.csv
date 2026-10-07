@@ -43,3 +43,4 @@ date,phase,step,first_party_lines,reachable_lines,reachable_modules,r1_imported_
 2026-10-07,P4,Add a fast mode to prune_check,332882,127595,418,6702,6.13,173.7,51.6,11851481578
 2026-10-07,P4,Delete Ducky,330808,127595,418,6702,5.51,169.8,42.2,11851481578
 2026-10-07,P5,Salvage the compilation cache and preload NVRTC,330970,127657,420,6704,3.59,188.3,40.0,11851481578
+2026-10-07,P5,Key kernel caches on installed packages without a lockfile,330976,127663,420,6704,3.62,70.4,28.5,11851481578

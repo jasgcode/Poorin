@@ -29,7 +29,7 @@ from typing import Any, Callable
 
 import jax
 from finestore.cache import PersistentKvCache
-from rigging.cache import combined_content_hash, directory_content_hash, workspace_lock_hash
+from rigging.cache import combined_content_hash, directory_content_hash, dependencies_hash
 
 logger = logging.getLogger(__name__)
 
@@ -196,7 +196,7 @@ def _kernel_cache_revision() -> str:
         [
             _KERNEL_CACHE_SCHEMA,
             f"grug={directory_content_hash(grug_sources)}",
-            f"dependencies={workspace_lock_hash(pathlib.Path(__file__))}",
+            f"dependencies={dependencies_hash(pathlib.Path(__file__))}",
         ]
     )
 

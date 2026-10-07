@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import pytest
-from rigging.cache import combined_content_hash, directory_content_hash, file_content_hash, workspace_lock_hash
+from rigging.cache import combined_content_hash, dependencies_hash, directory_content_hash, file_content_hash
 
 
 def test_directory_content_hash_is_independent_of_checkout_location(tmp_path):
@@ -62,13 +62,27 @@ def test_combined_content_hash_frames_and_orders_components():
     assert combined_content_hash(["first", "second"]) != combined_content_hash(["second", "first"])
 
 
-def test_workspace_lock_hash_finds_and_hashes_the_marin_lockfile(tmp_path):
+def _workspace(tmp_path):
     workspace = tmp_path / "workspace"
     nested = workspace / "lib" / "levanter"
     nested.mkdir(parents=True)
     (workspace / "pyproject.toml").write_text("[tool.uv.workspace]\nmembers = []\n")
+    return workspace, nested
+
+
+def test_dependencies_hash_finds_and_hashes_the_lockfile(tmp_path):
+    workspace, nested = _workspace(tmp_path)
     lockfile = workspace / "uv.lock"
     lockfile.write_text("revision = 1")
-    original = workspace_lock_hash(nested)
+    original = dependencies_hash(nested)
     lockfile.write_text("revision = 2")
-    assert original != workspace_lock_hash(nested)
+    assert original != dependencies_hash(nested)
+
+
+def test_dependencies_hash_identifies_the_installed_distributions_without_a_lockfile(tmp_path):
+    # Poorin has no uv.lock until P8 (D70); kernel caches still need a dependency identity.
+    workspace, nested = _workspace(tmp_path)
+    unlocked = dependencies_hash(nested)
+    assert unlocked == dependencies_hash(nested)
+    (workspace / "uv.lock").write_text("revision = 1")
+    assert dependencies_hash(nested) != unlocked

@@ -22,7 +22,7 @@ from rigging.cache import (
     combined_content_hash,
     directory_content_hash,
     file_content_hash,
-    workspace_lock_hash,
+    dependencies_hash,
 )
 
 from levanter.kernels.pallas import autotune_utils
@@ -300,7 +300,7 @@ def _autotune_revision(impl_name: str) -> str:
             f"implementation={impl_name}",
             f"source={directory_content_hash(source_root)}",
             f"autotune_helpers={file_content_hash(autotune_helpers)}",
-            f"dependencies={workspace_lock_hash(pathlib.Path(__file__))}",
+            f"dependencies={dependencies_hash(pathlib.Path(__file__))}",
             f"jax={jax.__version__}",
             f"jaxlib={jaxlib.__version__}",
         ]
