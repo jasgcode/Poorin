@@ -1,7 +1,7 @@
 # Training a Language Model
 
 This tutorial walks through training a language model with Marin's lazy artifact API,
-using a 1.4B-parameter Llama trained on the Nemotron-CC quality splits as a concrete example.
+using a 1.4B-parameter Llama trained on a sample of FineWeb-Edu as a concrete example.
 
 ## Prerequisites
 
@@ -60,31 +60,25 @@ Pre-defined configurations for common sizes live in `experiments/llama.py`.
 Training data is expressed as a dict of `ArtifactStep[TokenizedCache]` handles to weights. Pass
 this dict as `datasets=` to `train_lm`; it assembles the Levanter data mixture internally:
 
-```python
-from experiments.datasets.nemotron import nemotron_datasets
-from experiments.llama import llama3_tokenizer
-
-train = nemotron_datasets(tokenizer=llama3_tokenizer)
-weighted = {handle: 1.0 for handle in train.values()}
-```
-
-`nemotron_datasets` returns a dict of `ArtifactStep[TokenizedCache]` handles, one per
-Nemotron-CC quality split. It defines no mixture weights; this example weights every split
-equally. The splits tokenize a raw Nemotron-CC download that must already exist under
-`POORIN_PREFIX`; `experiments/datasets/nemotron.py` names the path. To tokenize a custom
-dataset instead, use `tokenized` from `poorin.experiment.data`:
+`tokenized` from `poorin.experiment.data` turns a Hugging Face dataset (or raw files under
+`POORIN_PREFIX`) into a tokenized-cache handle; the first run downloads and tokenizes it, later
+runs reuse the cache:
 
 ```python
 from poorin.experiment.data import tokenized
-from experiments.marin_tokenizer import marin_tokenizer
+from experiments.llama import llama3_tokenizer
 
-my_data = tokenized(
-    name="tokenized/my-dataset",
-    source="org/my-hf-dataset",  # HuggingFace dataset id
-    tokenizer=marin_tokenizer,
+fineweb = tokenized(
+    "tokenized/fineweb-edu-sample",
+    source="HuggingFaceFW/fineweb-edu",  # Hugging Face dataset id
+    tokenizer=llama3_tokenizer,
+    sample_count=100_000,  # documents per shard; part of the cache's identity
     version="2026.06.28",
 )
+weighted = {fineweb: 1.0}
 ```
+
+A mixture is a dict with more than one entry; the weights need not sum to one.
 
 ## Calling `train_lm`
 
@@ -98,24 +92,33 @@ from poorin.execution.lazy import ArtifactStep, lower
 from poorin.execution.step_runner import StepRunner
 from poorin.experiment.train import EvalSuite, train_lm
 from poorin.training.training import LevanterCheckpoint
-from experiments.datasets.nemotron import nemotron_datasets
-from experiments.datasets.paloma import paloma_datasets
-from experiments.datasets.uncheatable import uncheatable_datasets
+from poorin.experiment.data import tokenized
 from experiments.evals.task_configs import CORE_TASKS
 from experiments.llama import llama3_tokenizer
 
 TRAIN_RESOURCES = ResourceConfig.with_gpu("H100", count=8, cpu=32, disk="128G", ram="128G")
 
 def build(*, version: str = "2026.06.28") -> ArtifactStep[LevanterCheckpoint]:
-    train = nemotron_datasets(tokenizer=llama3_tokenizer)
+    train = tokenized(
+        "tokenized/fineweb-edu-sample",
+        source="HuggingFaceFW/fineweb-edu",
+        tokenizer=llama3_tokenizer,
+        sample_count=100_000,
+        version="2026.06.28",
+    )
     validation = [
-        *paloma_datasets(tokenizer=llama3_tokenizer).values(),
-        *uncheatable_datasets(tokenizer=llama3_tokenizer).values(),
+        tokenized(
+            "tokenized/wikitext-validation",
+            source="dlwh/wikitext_2_detokenized",
+            tokenizer=llama3_tokenizer,
+            validation=True,
+            version="2026.06.28",
+        )
     ]
-    weighted = {handle: 1.0 for handle in train.values()}
+    weighted = {train: 1.0}
 
     return train_lm(
-        name="checkpoints/nemotron_1b_1x",
+        name="checkpoints/llama_1b_fineweb_edu",
         version=version,
         model=llama_1_4b,
         optimizer=AdamConfig(
@@ -132,7 +135,7 @@ def build(*, version: str = "2026.06.28") -> ArtifactStep[LevanterCheckpoint]:
         z_loss_weight=1e-4,
         evals=EvalSuite(CORE_TASKS, every=10000),
         resources=TRAIN_RESOURCES,
-        tags=["NEMOTRON_1B_1X"],
+        tags=["LLAMA_1B_FINEWEB_EDU"],
     )
 
 if __name__ == "__main__":

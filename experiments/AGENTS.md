@@ -29,7 +29,7 @@ dataset (or dataset family), built with the lazy data builders in
   <keys>`) builds it. Never change a handle's `name=`/`version=`/`pin=`/path
   strings — those are artifact identities.
 - `__init__.py` stays docstring-only (no re-exports); import catalogs directly, e.g.
-  `from experiments.datasets.nemotron import nemotron_datasets`.
+  `from experiments.datasets.<name> import <name>_datasets`.
 
 ## Artifact Path Rules
 

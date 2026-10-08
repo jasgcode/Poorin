@@ -344,7 +344,6 @@ Modules marked "(review)" below, grouped by why they look vestigial on a one-GPU
 | `poorin.datakit.download.http_session` | Retrying `requests.Session` factory for HTTP downloaders | `poorin.datakit.download.nemotron_v1` |
 | `poorin.datakit.download.huggingface` | Streams a Hugging Face dataset repo to an fsspec path; download step builder | R1 |
 | `poorin.datakit.download.nemotron_v1` | Nemotron-CC v1 download from Common Crawl and per-split normalize steps | `poorin.datakit.download.nemotron_v1` |
-| `poorin.datakit.download.uncheatable_eval` | Downloads and normalizes the latest Uncheatable Eval dumps from GitHub | `experiments.datasets.uncheatable` |
 | `poorin.datakit.download.zstd_jsonl` | Streaming reader for zstd-compressed JSONL download sources | `poorin.datakit.download.nemotron_v1` |
 | `poorin.datakit.normalize` | Normalizes raw JSONL/Parquet into Datakit Parquet with content ids, dedup, sorted partitions | R1 |
 | `poorin.datakit.source_key` | Strips Marin bucket and prefix roots to give Datakit artifacts stable source keys | R1 |
@@ -568,11 +567,6 @@ Modules marked "(review)" below, grouped by why they look vestigial on a one-GPU
 |---|---|---|
 | `experiments` | Package marker | package |
 | `experiments.datasets` | Package marker; docstring sets conventions for dataset catalog modules | package |
-| `experiments.datasets.nemotron` | Nemotron-CC quality-split tokenized dataset handles, pinned to existing llama3 caches | `experiments.datasets.nemotron` |
-| `experiments.datasets.paloma` | Paloma perplexity-eval subsets as tokenized validation dataset handles | `experiments.datasets.paloma` |
-| `experiments.datasets.proofpile` | Proof-Pile 2 tokenized dataset handle pinned to its llama3 cache | `experiments.datasets.proofpile` |
-| `experiments.datasets.starcoder` | StarCoder tokenized dataset handle pinned to its llama3 cache | `experiments.datasets.starcoder` |
-| `experiments.datasets.uncheatable` | Uncheatable Eval raw download and tokenized validation subset handles | `experiments.datasets.uncheatable` |
 | `experiments.evals` | Package marker | package |
 | `experiments.evals.task_configs` | Named lm-eval task lists (`EvalTaskConfig`) by suite: core, MMLU, leaderboard, multilingual | `experiments.evals.task_configs` |
 | `experiments.grug` | Package marker | R2 |

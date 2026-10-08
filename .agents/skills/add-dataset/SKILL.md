@@ -40,8 +40,8 @@ Add a leaf module under `experiments/datasets/` using the lazy builders in
 
 - expose `<name>_dataset()` for one corpus;
 - expose `<name>_datasets() -> dict[str, ...]` for a keyed family;
-- for Hugging Face subsets, follow `experiments/datasets/nemotron.py` and return
-  one keyed handle per subset.
+- for Hugging Face subsets, return one keyed handle per subset, each built with
+  `tokenized(..., source="<org>/<dataset>")`.
 
 Validate the selected config, splits, text mapping, and one sample before adding
 tokenization or downstream experiment configuration.

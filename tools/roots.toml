@@ -28,12 +28,6 @@ modules = [
     "poorin.processing.classification.deduplication.verify_fuzzy_dups",
     "poorin.experiment.cli",
     "poorin.experiment.sweep",
-    # Dataset recipes: the Delphi mix and its validation sets
-    "experiments.datasets.nemotron",
-    "experiments.datasets.starcoder",
-    "experiments.datasets.proofpile",
-    "experiments.datasets.paloma",
-    "experiments.datasets.uncheatable",
     # Workbench: evaluation
     "levanter.main.eval_lm",
     "levanter.eval_harness",
