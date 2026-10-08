@@ -75,3 +75,4 @@ date,phase,step,first_party_lines,reachable_lines,reachable_modules,r1_imported_
 2026-10-08,Backlog,Check grug's jaxtyping annotations in tests,135585,134560,436,6512,3.61,67.1,28.3,8017593240
 2026-10-08,Backlog,Delete the fray.cluster and lora_dpo shims,135443,134418,434,6511,3.61,68.1,29.8,8017593240
 2026-10-08,Backlog,"Delete recovery, pipeline, TPU shutdown, gcloud args, Finelog extras",134575,133550,429,6499,3.53,67.6,28.1,8017593240
+2026-10-08,Backlog,Delete the NCCL stall probes,133180,132202,423,6493,3.55,67.0,28.5,8017593240

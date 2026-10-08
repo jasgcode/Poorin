@@ -7,14 +7,14 @@ The base layer every other Poorin library builds on:
 - `rigging.fsutil`: the `fsutil` command-line tool for listing, copying, inspecting, and
   deleting data in buckets.
 - `rigging.cache`: content hashes that key compiled-kernel and autotune caches.
-- Logging setup, config discovery, provenance, timing, and the telemetry probes Levanter's
-  telemetry tracker starts.
+- Logging setup, config discovery, provenance, timing, and the telemetry client Levanter's
+  telemetry tracker writes through.
 
 ## Poorin's lighter fork of Rigging
 
 This library is Marin's Rigging, distributed as `poorin-rigging` (D85, D86); the import name stays
 `rigging`. Poorin removed the parts that served a
-shared fleet. Against the `upstream-baseline` tag it has 10,352 lines of source instead of 14,465.
+shared fleet. Against the `upstream-baseline` tag it has 8,985 lines of source instead of 14,465.
 
 Removed:
 
@@ -23,7 +23,6 @@ Removed:
   `server_auth`, `token_authority`, `credentials`, `credential_store`, `secrets`, `redaction`).
 - Cluster connectivity: `connect`, `tunnel`, `rpc`, `network`, and the cluster manifest.
 - The Prometheus bridge and the NVIDIA telemetry probe.
+- The NCCL stall probes and the metric-snapshot publisher they fed (D89): a single-GPU run has no
+  NCCL communicators.
 - The `pyjwt` dependency and the `iap`, `prometheus`, and `secrets` extras.
-
-Still here but likely vestigial on one GPU (see `docs/poorin/architecture.md`): the NCCL stall
-probes under `telemetry/` and the `mirror://` filesystem.

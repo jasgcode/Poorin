@@ -11,7 +11,7 @@ names `finelog.stats` and `finelog.logging`, which the wire protocol carries.
 
 This library is Marin's Finelog, distributed as `poorin-finelog` (D85, D86) because Poorin kept only its
 Python client; the import name stays `finelog`. Against
-the `upstream-baseline` tag it has 3,417 lines of Python source instead of 10,023, and none of the
+the `upstream-baseline` tag it has 2,938 lines of Python source instead of 10,023, and none of the
 other code.
 
 Removed (D14, P6):
@@ -20,6 +20,10 @@ Removed (D14, P6):
 - The web dashboard: 6,672 lines.
 - The deploy CLI, its cluster configs, and the benchmarks.
 - The `click`, `fsspec`, `gcsfs`, and `pyyaml` dependencies the deploy CLI used.
+
+Removed later (D89): `ObjectQueryClient`, which ran SQL over catalog snapshots in object storage,
+and `RemoteLogHandler`, which shipped Python log records through a `LogClient`. Nothing outside
+Finelog used them.
 
 Regenerating the RPC stubs from `proto/`, or patching the server, needs the generator and the Rust
 source at `upstream-baseline`.

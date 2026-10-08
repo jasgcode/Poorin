@@ -5,7 +5,6 @@
 
 import dataclasses
 import logging
-import os
 import re
 import threading
 from collections.abc import Callable, Mapping
@@ -17,7 +16,6 @@ import jax
 import numpy as np
 from finelog.client import FlushResult
 from rigging import telemetry
-from rigging.telemetry.probes import nccl, nccl_client
 
 from levanter.callbacks.progress_watchdog import ProgressTimeout
 from levanter.tracker import Tracker, TrackerConfig, get_tracker
@@ -48,8 +46,6 @@ def _metric_name(name: str) -> str:
 # drops records under queue pressure, so several missed beats must not un-enroll a
 # live job.
 _PHASE_HEARTBEAT_SECONDS = 60.0
-_NCCL_RAS_POLL_SECONDS = 10 * 60.0
-_NCCL_STALL_CAPTURE_SECONDS = 8.0
 _STALL_TELEMETRY_FLUSH_SECONDS = 5.0
 
 
@@ -126,29 +122,15 @@ def _as_scalar(value: Any) -> float | None:
     return float(array)
 
 
-def _start_nccl_ras_probe() -> nccl.NcclRasSession | None:
-    try:
-        if not telemetry.runtime_status().configured:
-            return None
-        if os.environ.get(nccl_client.NCCL_RAS_ENABLE_ENV, "1") == "0":
-            return None
-        if jax.default_backend() != "gpu" or jax.process_index() != 0:
-            return None
-        return nccl.start(interval=_NCCL_RAS_POLL_SECONDS)
-    except RuntimeError:
-        logger.warning("could not start NCCL RAS telemetry", exc_info=True)
-        return None
-
-
 def capture_stall_diagnostics(timeout: ProgressTimeout) -> None:
-    """Capture bounded process-zero diagnostics immediately before watchdog exit."""
+    """Flush process-zero telemetry immediately before watchdog exit."""
     try:
         tracker = get_tracker("telemetry")
     except KeyError:
         logger.warning("No telemetry tracker is available for stalled-training diagnostics")
         return
     logger.error(
-        "Capturing NCCL RAS after %s made no progress for %.1f seconds",
+        "Flushing telemetry after %s made no progress for %.1f seconds",
         timeout.event.value,
         timeout.elapsed,
     )
@@ -169,7 +151,6 @@ class TelemetryTracker(Tracker):
         self._writer = writer
         self._step: int | None = None
         self._heartbeat = _PhaseHeartbeat(writer, self._current_step, heartbeat_interval)
-        self._nccl_ras_probe = _start_nccl_ras_probe()
         self._publish_scalar("progress_time_seconds", 0)
         self._heartbeat.publish(TrainingPhase.INITIALIZING)
         self._heartbeat.start()
@@ -217,11 +198,6 @@ class TelemetryTracker(Tracker):
         pass
 
     def finish(self):
-        if self._nccl_ras_probe is not None:
-            try:
-                self._nccl_ras_probe.shutdown()
-            except Exception:
-                logger.warning("could not stop NCCL RAS telemetry", exc_info=True)
         self._heartbeat.publish(TrainingPhase.FINISHED)
         # The run is over, so there is nothing left to keep enrolled. FINISHED is
         # already published above, and republishing it for the process's remaining
@@ -230,9 +206,7 @@ class TelemetryTracker(Tracker):
         self._writer.close()
 
     def capture_stall_diagnostics(self) -> None:
-        """Stop periodic RAS polling, publish a fresh stall sample, and flush telemetry."""
-        if self._nccl_ras_probe is not None:
-            self._nccl_ras_probe.capture_stall(_NCCL_STALL_CAPTURE_SECONDS)
+        """Flush buffered metrics and telemetry so the last steps survive the watchdog's exit."""
         typed_flushed = self._writer.flush(_STALL_TELEMETRY_FLUSH_SECONDS) == FlushResult.SUCCEEDED
         if not typed_flushed or not telemetry.flush(_STALL_TELEMETRY_FLUSH_SECONDS):
             logger.warning("Telemetry did not flush within the stalled-training diagnostic budget")

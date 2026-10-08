@@ -49,8 +49,8 @@ what was removed.
 | Library | Import | Distribution (upstream) | Before | Now |
 |---|---|---|---|---|
 | Experiment framework | `poorin` (was `marin`) | `poorin` (`marin-core`) | 65,588 | 23,602 |
-| Finelog client | `finelog` | `poorin-finelog` (`marin-finelog`) | 10,023 Python, plus 74,921 Rust | 3,417 Python |
-| Rigging | `rigging` | `poorin-rigging` (`marin-rigging`) | 14,465 | 10,352 |
+| Finelog client | `finelog` | `poorin-finelog` (`marin-finelog`) | 10,023 Python, plus 74,921 Rust | 2,938 Python |
+| Rigging | `rigging` | `poorin-rigging` (`marin-rigging`) | 14,465 | 8,985 |
 | Fray | `fray` | `poorin-fray` (`marin-fray`) | 2,768 | 1,925 |
 
 Deleted outright: Iris (83,889), Verifyit (7,916), Shellbox (2,675), Ducky (2,074), and
@@ -63,9 +63,6 @@ Modules marked "(review)" below, grouped by why they look vestigial on a one-GPU
 - **Cluster and multi-region operations:** `zephyr.dashboard` (and its `app` and `coordinator`),
   whose web app nothing serves; `rigging.filesystem.mirror`, which copies from other regions'
   `marin-*` buckets; `levanter.model_cache`, a region-local shared Hugging Face cache.
-- **NCCL stall diagnostics:** `rigging.telemetry.probes` and its `nccl`, `nccl_client`,
-  `nccl_ras`, and `runner` modules, with `rigging.telemetry.metrics` and the fixtures in
-  `rigging.testing`. A single-GPU run has no NCCL communicators.
 - **Upstream archive migration:** `finestore.migrations.m0001_manifest`, which upgrades upstream
   archives. (The evaluation leftovers of the deleted serving flow were removed by D88.)
 - **Code that no longer serves its purpose:** `experiments.grug.fast_track.grugmuon_stacked`,
@@ -479,14 +476,8 @@ Modules marked "(review)" below, grouped by why they look vestigial on a one-GPU
 | `rigging.log_setup` | Logging setup: level-prefix formatter, log ring buffer, fault handler | R1 |
 | `rigging.provenance` | Build provenance: content tree hash plus git, user, and launch context | R1 |
 | `rigging.telemetry` | Bounded, best-effort counters, gauges, histograms, and events exported to Finelog | R2 |
-| `rigging.telemetry.metrics` | Publishes externally collected metric snapshots into telemetry (review) | R2 |
-| `rigging.telemetry.probes` | Package marker for NVIDIA and NCCL telemetry probes (review) | R2 |
-| `rigging.telemetry.probes.nccl` | Periodic NCCL RAS collection and stall capture published as telemetry (review) | R2 |
-| `rigging.telemetry.probes.nccl_client` | Bounded client for NCCL's RAS text protocol (review) | R2 |
-| `rigging.telemetry.probes.nccl_ras` | Parses and reduces NCCL RAS status responses into per-rank reports (review) | R2 |
-| `rigging.telemetry.probes.runner` | Bounded subprocess runner and periodic driver for hardware probes (review) | R2 |
 | `rigging.telemetry.serialization` | Bounded JSON serialization and validation for telemetry records | R2 |
-| `rigging.testing` | Recording telemetry transport and NCCL RAS payload fixture for tests (review) | test support |
+| `rigging.testing` | Recording telemetry transport for tests | test support |
 | `rigging.timing` | Time types and helpers: Deadline, Duration, Timer, rate limiters, backoff retry | R1 |
 
 ### fray
