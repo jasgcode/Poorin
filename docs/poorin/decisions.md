@@ -1214,6 +1214,22 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
   go to `/tmp/poorin`. On 2026-10-08 nothing in the owner's shell set a `MARIN_*` variable, and the
   owner's SkyRL fork references none.
 
+### D88. Verdicts on the workflows no training check runs
+
+- **When:** 2026-10-08. **Status:** Adopted. Plan: `plans/2026-10-08-workflow-verdicts.md`.
+- **Decision:** Of the 35k lines that only kept roots reach, the owner keeps data preparation,
+  evaluation, scaling laws, profiling, post-training, the SkyRL hooks, and all optimizers. The
+  five dataset recipes of the Delphi mix (Nemotron-CC, StarCoder, ProofPile, Paloma,
+  uncheatable-eval) are deleted, as are the evaluation modules left from the deleted serving flow
+  (`eval_env`, `model_config`, `model_identity`, `lm_eval_samples`). The `lm_eval` extra joins the
+  standard sync so the harness runs; scaling laws gets its first tests; `train_dpo` and `lora_lm`
+  get end-to-end smoke runs.
+- **Why:** The owner, 2026-10-08, accepting the per-workflow suggestions. The recipes expect raw
+  data under the prefix that is not there (Nemotron-CC is terabytes in upstream buckets); the
+  evaluation leftovers describe a serving and Evalchemy flow that P3 removed; the kept workflows
+  had no evidence they still run.
+- **Cost if wrong:** Reproducing Delphi's data mix needs the recipes from `upstream-baseline`.
+
 ---
 
 ## Deferred
