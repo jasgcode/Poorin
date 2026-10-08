@@ -1283,6 +1283,28 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
 - **Cost if wrong:** A cloud backend (sub-project 2) chooses its own worker counts and passes
   them explicitly.
 
+### D92. Typed overrides, sweeps, and fail-closed drift, on draccus
+
+- **When:** 2026-10-08, design. **Status:** Planned. Spec:
+  `specs/2026-10-08-experiment-overrides-design.md`.
+- **Decision:** Experiments gain `--set PATH=VALUE`, `--sweep`, a readable plan with
+  `--show-config`, and `--accept-drift`, built on draccus. A changed recipe under an existing
+  output becomes an error, checked over the whole graph before a run, and the config class enters
+  the fingerprint. The owner's rulings: `--set` reaches the whole config; an overridden trial's
+  name spells its overrides when they are plain, else a digest; `--accept-drift` re-stamps the
+  record; tracker settings (W&B config, run ID, log cadence) leave identity; `--override` is
+  renamed `--version-of`; the experiment applies its overrides itself.
+- **Why:** The owner, 2026-10-08: bring Hydra's strengths into the experiment workflow. A probe
+  found four ways a stale cached output is served today, one of them silent; overrides would make
+  quick recipe changes routine, and a stale checkpoint behind a published result is the costliest
+  failure.
+- **Alternatives:** Hydra or hydra-zen (D51 already chose the executor; OmegaConf cannot represent
+  Levanter's union and registry types); tyro, chz, or fiddle (a second representation of Levanter's
+  configs); the framework applying overrides implicitly; generating per-field flags with
+  `draccus.parse` (needs the config before the step context exists).
+- **Cost if wrong:** Every fingerprint changes once, absorbed with `--accept-drift`; about 300
+  lines of code and 200 of tests.
+
 ---
 
 ## Deferred
