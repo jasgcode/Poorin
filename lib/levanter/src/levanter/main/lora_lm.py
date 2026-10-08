@@ -71,7 +71,7 @@ def main(config: LoraLmConfig):
 
     # some axes we need
     Batch = config.trainer.TrainBatch
-    Pos = model_config.max_Pos.resize(config.max_train_length)
+    Pos = model_config.max_Pos.resize(config.train_seq_len)
 
     optimizer = config.optimizer.build(config.trainer.num_train_steps)
 
@@ -171,6 +171,8 @@ def main(config: LoraLmConfig):
 
         ## OK, actually run training!
         trainer.train(state, iter_data)
+
+    trainer.tracker.finish()
 
 
 if __name__ == "__main__":

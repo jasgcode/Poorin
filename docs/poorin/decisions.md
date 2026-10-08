@@ -1227,7 +1227,9 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
 - **Why:** The owner, 2026-10-08, accepting the per-workflow suggestions. The recipes expect raw
   data under the prefix that is not there (Nemotron-CC is terabytes in upstream buckets); the
   evaluation leftovers describe a serving and Evalchemy flow that P3 removed; the kept workflows
-  had no evidence they still run.
+  had no evidence they still run. The `lora_lm` smoke run found two bugs it had carried since
+  upstream: it read a renamed setting (`max_train_length`, now `train_seq_len`) and crashed
+  before training, and it never finished its tracker, so W&B and Finelog runs never closed.
 - **Cost if wrong:** Reproducing Delphi's data mix needs the recipes from `upstream-baseline`. The
   `lm_eval` extra installs scikit-learn, which `transformers` imports at load time when present, so
   every launch imports about 540 more modules and spends about 0.25 s longer in imports (R1: 3.37 s
