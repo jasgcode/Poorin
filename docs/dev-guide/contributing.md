@@ -66,11 +66,12 @@ Before opening a pull request:
 
 1. Run `uv run --no-sync python -m tools.lint --all-files --fix`.
 2. Run `uv run --no-sync python -m tools.affected_tests`.
-3. If your change is docs-heavy, run `uv run mkdocs build --strict`.
+3. If your change is docs-heavy, run `uv run --no-sync mkdocs build --strict`.
 4. If your change adds or rewrites substantial prose, do a final prose-only review using `./.agents/skills/writing-style/SKILL.md`. Remove generic significance framing, stock AI-writing templates, and polished filler that does not add information.
 5. Follow `./.agents/skills/writing-style/pull-requests.md` for the PR title and body. The body becomes the squash-merge commit message: lead with what changes, then why, and retain the evidence and caveats a future reader needs.
 6. If the work came from an issue, end the PR body with `Fixes #NNNN` or `Part of #NNNN`.
-7. After pushing, verify the relevant GitHub CI checks pass before considering the PR ready for review.
+7. Poorin has no CI, so the local checks are the gate. Before merging a branch, run the tests its
+   commits affect with `uv run --no-sync python -m tools.affected_tests --base main`.
 
 ## Guidelines
 

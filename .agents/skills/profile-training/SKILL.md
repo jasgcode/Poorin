@@ -29,7 +29,7 @@ Use Levanter profiler flags so profiles land under
 `POORIN_PREFIX` TTL storage and print an XProf link:
 
 ```bash
-uv run ... \
+uv run --no-sync ... \
   --trainer.profiler.enabled true \
   --trainer.profiler.start_step 5 \
   --trainer.profiler.num_steps 10 \
@@ -40,7 +40,7 @@ For profiles where xprof/HLO protobuf tables matter, enable JAX profile options
 through the Levanter profiler config:
 
 ```bash
-uv run ... \
+uv run --no-sync ... \
   --trainer.profiler.enabled true \
   --trainer.profiler.start_step 5 \
   --trainer.profiler.num_steps 5 \
@@ -99,7 +99,7 @@ must retain an uncommitted analysis artifact.
 
 ```bash
 # /tmp (ephemeral)
-uv run python lib/poorin/tools/profile_summary.py summarize \
+uv run --no-sync python lib/poorin/tools/profile_summary.py summarize \
   --run-target marin-community/marin/<run_id> \
   --download-root /tmp/poorin-profiles \
   --breakdown-mode exclusive_global \
@@ -110,7 +110,7 @@ uv run python lib/poorin/tools/profile_summary.py summarize \
 ### Option A: From a W&B artifact reference
 
 ```bash
-uv run python lib/poorin/tools/profile_summary.py summarize \
+uv run --no-sync python lib/poorin/tools/profile_summary.py summarize \
   --artifact marin-community/marin/run-grug-125m-profile-apples-pallas_tpu-20260217-225239-055ab2-profiler:v0 \
   --download-root /tmp/poorin-profiles \
   --output /tmp/profile_summary.json
@@ -123,7 +123,7 @@ resolved from `trainer.log_dir` in the run config.
 ### Option B: From a local artifact directory
 
 ```bash
-uv run python lib/poorin/tools/profile_summary.py summarize \
+uv run --no-sync python lib/poorin/tools/profile_summary.py summarize \
   --profile-dir /path/to/profiler_dir \
   --output /tmp/profile_summary.json
 ```
@@ -136,7 +136,7 @@ capped). Use `--trace-file` to force a specific Perfetto JSON file.
 ### Option C: From a specific trace file
 
 ```bash
-uv run python lib/poorin/tools/profile_summary.py summarize \
+uv run --no-sync python lib/poorin/tools/profile_summary.py summarize \
   --trace-file /path/to/perfetto_trace.json.gz \
   --output /tmp/profile_summary.json
 ```
@@ -149,7 +149,7 @@ also exports compact xprof table JSON and augments the timeline summary with
 aggregate step, kernel, collective, and bottleneck evidence.
 
 ```bash
-uv run --with xprof --with protobuf python lib/poorin/tools/profile_summary.py summarize \
+uv run --no-sync --with xprof --with protobuf python lib/poorin/tools/profile_summary.py summarize \
   --xplane-file /path/to/profile.xplane.pb \
   --xplane-output-dir /tmp/profile_xprof_tables \
   --xplane-count-trace-events \
@@ -171,7 +171,7 @@ Summary version tag: `profile_summary.v1`
 Generate a deterministic markdown root-cause report:
 
 ```bash
-uv run python lib/poorin/tools/profile_summary.py report \
+uv run --no-sync python lib/poorin/tools/profile_summary.py report \
   --summary /tmp/profile_summary.json \
   --output /tmp/profile_report.md
 ```
@@ -183,7 +183,7 @@ Trace quality checks are surfaced in `trace_overview`:
 ## Query the summary
 
 ```bash
-uv run python lib/poorin/tools/profile_summary.py query \
+uv run --no-sync python lib/poorin/tools/profile_summary.py query \
   --summary /tmp/profile_summary.json \
   --question "<top ops, compute vs communication, gap, region, or op context>"
 ```
@@ -215,7 +215,7 @@ Use a strict workflow:
 4. **Compare**:
 
 ```bash
-uv run python lib/poorin/tools/profile_summary.py compare \
+uv run --no-sync python lib/poorin/tools/profile_summary.py compare \
   --before /tmp/profile_before.json \
   --after /tmp/profile_after.json \
   --strict-provenance
@@ -224,7 +224,7 @@ uv run python lib/poorin/tools/profile_summary.py compare \
 5. **Track** (thresholded pass/warn/fail + history):
 
 ```bash
-uv run python lib/poorin/tools/profile_summary.py track \
+uv run --no-sync python lib/poorin/tools/profile_summary.py track \
   --before /tmp/profile_before.json \
   --after /tmp/profile_after.json \
   --label "pallas-kernel-attempt-3" \
@@ -234,14 +234,14 @@ uv run python lib/poorin/tools/profile_summary.py track \
 6. **History summary** (regression trend tracking):
 
 ```bash
-uv run python lib/poorin/tools/profile_summary.py history \
+uv run --no-sync python lib/poorin/tools/profile_summary.py history \
   --history /tmp/profile_regression_history.jsonl
 ```
 
 7. **One-shot compare bundle**:
 
 ```bash
-uv run python lib/poorin/tools/profile_summary.py bundle \
+uv run --no-sync python lib/poorin/tools/profile_summary.py bundle \
   --before-run-target marin-community/marin/<baseline_run_id> \
   --after-run-target marin-community/marin/<candidate_run_id> \
   --output-dir /tmp/profile_bundle \
@@ -251,7 +251,7 @@ uv run python lib/poorin/tools/profile_summary.py bundle \
 8. **Publish summary/report back to W&B**:
 
 ```bash
-uv run python lib/poorin/tools/profile_summary.py publish \
+uv run --no-sync python lib/poorin/tools/profile_summary.py publish \
   --summary /tmp/profile_summary.json \
   --report /tmp/profile_report.md \
   --alias latest

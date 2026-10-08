@@ -5,7 +5,7 @@ description: Use Marin's fsutil CLI for local object-storage operations across G
 
 # Use fsutil
 
-Use `uv run fsutil` from the Marin checkout for operations on `gs://` and
+Use `uv run --no-sync fsutil` from the Marin checkout for operations on `gs://` and
 `s3://` paths. It routes each declared bucket to the backend and endpoint in
 `config/*.yaml`.
 

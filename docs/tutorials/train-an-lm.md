@@ -168,7 +168,7 @@ the training job. None of those are experiment decisions.
 Save the script (for example as `train_1b.py`) and run it on the machine that has the GPUs:
 
 ```bash
-POORIN_PREFIX=local_store uv run python train_1b.py
+POORIN_PREFIX=local_store uv run --no-sync python train_1b.py
 ```
 
 Fray's local backend runs the training job on the current machine. `resources` describes

@@ -31,6 +31,23 @@ def test_changed_files_include_edits_deletions_both_sides_of_a_rename_and_untrac
     assert changed_files(tmp_path) == ["edited.py", "moved.py", "new.py", "removed.py", "renamed.py"]
 
 
+def test_changed_files_since_a_base_add_the_branch_commits_but_not_later_base_commits(tmp_path):
+    _repo_with(tmp_path, "edited.py", "later_on_main.py")
+    _git(tmp_path, "branch", "-M", "main")
+    _git(tmp_path, "switch", "-q", "-c", "work")
+    (tmp_path / "committed.py").write_text("x = 1\n")
+    _git(tmp_path, "add", "committed.py")
+    _git(tmp_path, "commit", "-q", "-m", "work")
+    _git(tmp_path, "switch", "-q", "main")
+    (tmp_path / "later_on_main.py").write_text("x = 2\n")
+    _git(tmp_path, "commit", "-q", "-am", "main moves on")
+    _git(tmp_path, "switch", "-q", "work")
+    (tmp_path / "edited.py").write_text("x = 2\n")
+
+    assert changed_files(tmp_path, "main") == ["committed.py", "edited.py"]
+    assert changed_files(tmp_path) == ["edited.py"]
+
+
 def test_staged_files_leave_out_unstaged_edits_and_untracked_files(tmp_path):
     # The Git hook lints only what the commit holds, so scratch files are never rewritten.
     _repo_with(tmp_path, "staged.py", "unstaged.py", "renamed.py")

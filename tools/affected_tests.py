@@ -21,8 +21,9 @@ one process. Tests run on CPU in UTC, as in Marin's CI, with a complete marker e
 leaves out slow, cluster, Docker, manual, and Torch tests.
 
 Usage (from the repository root):
-    uv run --no-sync python -m tools.affected_tests          # tests affected by the uncommitted change
-    uv run --no-sync python -m tools.affected_tests --all    # every suite
+    uv run --no-sync python -m tools.affected_tests              # tests affected by the uncommitted change
+    uv run --no-sync python -m tools.affected_tests --base main  # and by the branch's commits since main
+    uv run --no-sync python -m tools.affected_tests --all        # every suite
 """
 
 import argparse
@@ -58,7 +59,7 @@ SUITE_ENV = {"lib/haliax": {"JAX_NUM_CPU_DEVICES": "8"}}
 # the code it tests.
 HOST_EXCLUSIONS = (
     # tensorboardX is in Levanter's test dependency group, which the GPU environment does not
-    # install. P7 deletes the TensorBoard tracker.
+    # install. The TensorBoard tracker it tests is still in the tree (Deferred, decisions.md).
     "--ignore=lib/levanter/tests/test_tensorboard.py",
 )
 
@@ -323,9 +324,16 @@ def _collected_by_name(name: str) -> bool:
 
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Run the unit tests affected by the uncommitted change.")
-    parser.add_argument("--all", action="store_true", help="Run every suite instead.")
+    scope = parser.add_mutually_exclusive_group()
+    scope.add_argument("--all", action="store_true", help="Run every suite instead.")
+    scope.add_argument(
+        "--base",
+        default="HEAD",
+        metavar="REF",
+        help="Also count the commits made since the current branch left REF, such as main.",
+    )
     args = parser.parse_args(argv)
-    selections = all_suites(REPO_ROOT) if args.all else select(changed_files(REPO_ROOT), REPO_ROOT)
+    selections = all_suites(REPO_ROOT) if args.all else select(changed_files(REPO_ROOT, args.base), REPO_ROOT)
     run(pytest_runs(selections, HOST_EXCLUSIONS), REPO_ROOT)
     return 0
 

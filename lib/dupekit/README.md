@@ -34,18 +34,18 @@ uv sync --all-packages --extra=benchmark --group dev
 
 Benchmark (Takes a few minutes):
 ```shell
-uv run pytest lib/dupekit/tests/bench/test_dedupe.py --run-benchmark --benchmark-min-rounds=20
-uv run pytest lib/dupekit/tests/bench/test_marshaling.py --run-benchmark
-uv run pytest lib/dupekit/tests/bench/test_batch_tuning.py --run-benchmark
-uv run pytest lib/dupekit/tests/bench/test_io.py --run-benchmark
-uv run pytest lib/dupekit/tests/bench/test_hashing.py --run-benchmark
-uv run pytest lib/dupekit/tests/bench/test_minhash.py --run-benchmark
+uv run --no-sync pytest lib/dupekit/tests/bench/test_dedupe.py --run-benchmark --benchmark-min-rounds=20
+uv run --no-sync pytest lib/dupekit/tests/bench/test_marshaling.py --run-benchmark
+uv run --no-sync pytest lib/dupekit/tests/bench/test_batch_tuning.py --run-benchmark
+uv run --no-sync pytest lib/dupekit/tests/bench/test_io.py --run-benchmark
+uv run --no-sync pytest lib/dupekit/tests/bench/test_hashing.py --run-benchmark
+uv run --no-sync pytest lib/dupekit/tests/bench/test_minhash.py --run-benchmark
 ```
 Note: Run separated by type of benchmark (otherwise results are mixed within one table)
 
 Footprint (Note: sampling the stack might taint the mem measurements, so we disable benchmarking):
 ```shell
-uv run pytest lib/dupekit/tests/bench/test_marshaling.py \
+uv run --no-sync pytest lib/dupekit/tests/bench/test_marshaling.py \
   --run-benchmark \
   --benchmark-disable \
   --memray \

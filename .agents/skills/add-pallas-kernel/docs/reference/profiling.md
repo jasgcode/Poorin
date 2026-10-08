@@ -28,7 +28,7 @@ For every headline result, report at least:
 Enable Levanter profiler flags:
 
 ```bash
-uv run ... \
+uv run --no-sync ... \
   --trainer.profiler.enabled true \
   --trainer.profiler.start_step 5 \
   --trainer.profiler.num_steps 50 \

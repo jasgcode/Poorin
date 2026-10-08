@@ -5,22 +5,22 @@
 an interactive browser over all of them.
 
 ```bash
-uv run fsutil                        # interactive browser, starting at the bucket list
-uv run fsutil gs://marin-us-central2/scratch   # bare URL: browser on a directory, viewer on a file
-uv run fsutil buckets                # what is declared, and whether credentials are set
-uv run fsutil ls -l gs://marin-us-central2/scratch
-uv run fsutil ls -R gs://marin-us-central2/scratch/checkpoints
-uv run fsutil ls 's3://marin-us-east-02a/*/config.json'
-uv run fsutil cat s3://marin-us-east-02a/checkpoints/my-run/config.json
-uv run fsutil show gs://marin-us-central2/documents/shard-00000.parquet
-uv run fsutil du s3://marin-us-east-02a/checkpoints/my-run
-uv run fsutil usage s3://marin-us-east-02a -o usage-report.md
-uv run fsutil cp -r s3://marin-us-east-02a/checkpoints/my-run/logs /tmp/logs
-uv run fsutil mv /tmp/run.json gs://marin-us-central2/archive/
-uv run fsutil rsync --dry-run --delete /tmp/checkpoints gs://marin-us-central2/checkpoints
-uv run fsutil verified-copy gs://marin-us-central2/exports/model s3://marin-na/marin/exports/model
-uv run fsutil hash gs://marin-us-central2/archive/run.json
-uv run fsutil rm -R s3://marin-us-east-02a/tmp/expired-prefix s3://marin-us-east-02a/tmp/old-prefix
+uv run --no-sync fsutil                        # interactive browser, starting at the bucket list
+uv run --no-sync fsutil gs://marin-us-central2/scratch   # bare URL: browser on a directory, viewer on a file
+uv run --no-sync fsutil buckets                # what is declared, and whether credentials are set
+uv run --no-sync fsutil ls -l gs://marin-us-central2/scratch
+uv run --no-sync fsutil ls -R gs://marin-us-central2/scratch/checkpoints
+uv run --no-sync fsutil ls 's3://marin-us-east-02a/*/config.json'
+uv run --no-sync fsutil cat s3://marin-us-east-02a/checkpoints/my-run/config.json
+uv run --no-sync fsutil show gs://marin-us-central2/documents/shard-00000.parquet
+uv run --no-sync fsutil du s3://marin-us-east-02a/checkpoints/my-run
+uv run --no-sync fsutil usage s3://marin-us-east-02a -o usage-report.md
+uv run --no-sync fsutil cp -r s3://marin-us-east-02a/checkpoints/my-run/logs /tmp/logs
+uv run --no-sync fsutil mv /tmp/run.json gs://marin-us-central2/archive/
+uv run --no-sync fsutil rsync --dry-run --delete /tmp/checkpoints gs://marin-us-central2/checkpoints
+uv run --no-sync fsutil verified-copy gs://marin-us-central2/exports/model s3://marin-na/marin/exports/model
+uv run --no-sync fsutil hash gs://marin-us-central2/archive/run.json
+uv run --no-sync fsutil rm -R s3://marin-us-east-02a/tmp/expired-prefix s3://marin-us-east-02a/tmp/old-prefix
 ```
 
 Paths are always full URLs — `gs://bucket/key`, `s3://bucket/key`, or a local path.

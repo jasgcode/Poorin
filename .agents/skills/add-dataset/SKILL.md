@@ -8,7 +8,7 @@ description: Register a named Hugging Face dataset for Marin by inspecting its s
 Inspect the schema without downloading the full dataset:
 
 ```sh
-uv run lib/poorin/tools/get_hf_dataset_schema.py <dataset_name> [options]
+uv run --no-sync lib/poorin/tools/get_hf_dataset_schema.py <dataset_name> [options]
 ```
 
 For programmatic inspection:

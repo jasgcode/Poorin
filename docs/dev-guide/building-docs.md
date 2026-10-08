@@ -25,13 +25,13 @@ Before you begin, ensure you have the following installed:
 
 1. Start the local development server:
    ```bash
-   uv run mkdocs serve
+   uv run --no-sync mkdocs serve
    ```
    This will start a local server at `http://127.0.0.1:8000` where you can preview your changes in real-time.
 
 2. Build the documentation:
    ```bash
-   uv run mkdocs build
+   uv run --no-sync mkdocs build
    ```
    This will create a `site` directory containing the built documentation.
 
@@ -39,7 +39,7 @@ Before you begin, ensure you have the following installed:
 
 For production builds, use:
 ```bash
-uv run mkdocs build --clean
+uv run --no-sync mkdocs build --clean
 ```
 
 ## Documentation Structure
@@ -119,12 +119,12 @@ def process_data(data: List[str]) -> Dict[str, int]:
 
 1. Check for broken links:
    ```bash
-   uv run mkdocs build --strict
+   uv run --no-sync mkdocs build --strict
    ```
 
 2. Validate markdown:
    ```bash
-   uv run mkdocs build --strict --verbose
+   uv run --no-sync mkdocs build --strict --verbose
    ```
 
 ## Deployment
@@ -139,9 +139,9 @@ The documentation is automatically deployed when changes are pushed to the main 
 
 1. Create a new branch for your changes
 2. Make your changes
-3. Preview the docs locally with `uv run mkdocs serve`
+3. Preview the docs locally with `uv run --no-sync mkdocs serve`
 4. Run `uv run --no-sync python -m tools.lint --all-files --fix`
-5. Run `uv run mkdocs build --strict`
+5. Run `uv run --no-sync mkdocs build --strict`
 6. Submit a pull request whose body references an issue with `Fixes #NNNN` or `Part of #NNNN`
 
 For the full contributor workflow, including targeted test guidance, see
@@ -152,7 +152,7 @@ For the full contributor workflow, including targeted test guidance, see
 ### Broken Links
 - Use relative links for internal documentation
 - Use absolute URLs for external links
-- Run `uv run mkdocs build --strict` after docs edits to catch navigation and Markdown link failures
+- Run `uv run --no-sync mkdocs build --strict` after docs edits to catch navigation and Markdown link failures
 
 ### Build Errors
 - Check for syntax errors in markdown

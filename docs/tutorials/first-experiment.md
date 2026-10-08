@@ -134,13 +134,13 @@ missing.
 ## Running the experiment
 
 ```bash
-POORIN_PREFIX=local_store uv run python my_experiment.py
+POORIN_PREFIX=local_store uv run --no-sync python my_experiment.py
 ```
 
 `POORIN_PREFIX` sets the root directory for all outputs. It can be a local path or anything
 [fsspec](https://filesystem-spec.readthedocs.io/en/latest/) supports (e.g. `gs://`). A
 relative path such as `local_store` resolves against the directory you run from. If
-you already exported `POORIN_PREFIX` in your shell, just run `uv run python my_experiment.py`.
+you already exported `POORIN_PREFIX` in your shell, just run `uv run --no-sync python my_experiment.py`.
 See [Understanding `POORIN_PREFIX`](../explanations/poorin-prefix.md).
 
 Training reports metrics to Weights & Biases. Without an explicit `run_id`, `train_lm` names
@@ -151,7 +151,7 @@ keep the run local with `WANDB_MODE=offline`, or pass `run_id="<your-name>-nano-
 to `train_lm` so the run is yours:
 
 ```bash
-POORIN_PREFIX=local_store WANDB_MODE=offline uv run python my_experiment.py
+POORIN_PREFIX=local_store WANDB_MODE=offline uv run --no-sync python my_experiment.py
 ```
 
 This takes a few minutes on a CPU. The output ends with something like:
@@ -196,10 +196,10 @@ iterating, or a calendar version to pin outputs:
 
 ```bash
 # Print the CPU/TinyStories plan.
-uv run python -m experiments.tutorials.train_tiny_model \
+uv run --no-sync python -m experiments.tutorials.train_tiny_model \
   --device cpu --dataset tinystories --version dev
 
-uv run python -m experiments.tutorials.train_tiny_model \
+uv run --no-sync python -m experiments.tutorials.train_tiny_model \
   --device cpu --dataset tinystories --version dev --run
 ```
 
@@ -214,7 +214,7 @@ from Hugging Face and trains `llama_150m` from `experiments/llama.py`.
 current machine, so pick the entry that matches it. On a machine with one RTX 5090:
 
 ```bash
-uv run python -m experiments.tutorials.train_tiny_model \
+uv run --no-sync python -m experiments.tutorials.train_tiny_model \
   --device rtx5090x1 --dataset wikitext --version dev --run
 ```
 

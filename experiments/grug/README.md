@@ -43,13 +43,13 @@ citable checkpoint path. Calendar-versioned Grug runs use the shared `grug/...` 
 Print the plan (no run):
 
 ```bash
-uv run python experiments/grug/base/launch.py --version dev
+uv run --no-sync python experiments/grug/base/launch.py --version dev
 ```
 
 Local run (lowers the trial and runs it through the `StepRunner`):
 
 ```bash
-uv run python experiments/grug/base/launch.py --version dev --run
+uv run --no-sync python experiments/grug/base/launch.py --version dev --run
 ```
 
 ## Diffing a variant against base

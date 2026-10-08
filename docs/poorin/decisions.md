@@ -1299,8 +1299,8 @@ Known gaps left open on purpose. Each names where it gets resolved.
 | ty does not check `lib/dupekit/src`, which D47 keeps | P1 review | D89: ty checks it, and `lib/finelog/src` except protoc's generated stubs |
 | A deletion-only change skips ty in `tools.lint`; `prune_check` runs it regardless | P1 review | D89: any changed Python path runs ty, deletions included |
 | `tools.lint PATH` skips a path that does not exist without saying so | P1 review | D89: reported as a problem |
-| The contributing guide's PR checklist still says to verify GitHub CI, and `tools.affected_tests` has no mode for a committed branch | P1 review | Open |
-| Levanter's and Haliax's `AGENTS.md` and the `profile-training` skill show syncing `uv run` commands | P1 review | Open |
+| The contributing guide's PR checklist still says to verify GitHub CI, and `tools.affected_tests` has no mode for a committed branch | P1 review | D89: the guide names the local checks; `tools.affected_tests --base main` covers a branch |
+| Levanter's and Haliax's `AGENTS.md` and the `profile-training` skill show syncing `uv run` commands | P1 review | D89: `uv run --no-sync` there and in every Poorin doc and skill; Levanter's upstream install docs keep theirs |
 | `test_ruff_checks_marin_with_its_own_configuration_as_marin_did` only mirrors the `RUFF_CONFIGS` table | P1 review | D89: deleted |
 | `config/local.yaml`'s comment says outputs fall back to `/tmp/marin`; on a GCE VM, rigging falls back to `gs://marin-{region}` | P1 review | Sub-project 2 |
 | The ruff reformat's commit message says ruff checks each file's syntax tree; ruff has no such check, and a separate AST comparison confirmed the reformat | P1 review | Recorded here |
@@ -1308,3 +1308,4 @@ Known gaps left open on purpose. Each names where it gets resolved.
 | Haliax's docs fail `mkdocs build --strict` on 144 warnings, all present at `upstream-baseline`: unresolved cross-references to JAX, NumPy, and Equinox objects, and griffe docstring warnings | Cleanup | Open |
 | P1's timing columns in `prune-metrics.csv` are confounded by host load (load average about 250 from processes outside the checkout) and are not comparable with P0's | P1 | A rerun on a quiet machine |
 | Nothing serves Zephyr's dashboard: the coordinator builds its Starlette app, but no server has mounted it since Iris was deleted | D90 | Open |
+| Levanter's TensorBoard tracker is still in the tree, though D38 said P7 would delete it; its test needs `tensorboardX`, which the GPU environment does not install, so `tools.affected_tests` skips it | Backlog | Open |

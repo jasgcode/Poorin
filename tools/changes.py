@@ -7,13 +7,17 @@ import subprocess
 from pathlib import Path
 
 
-def changed_files(repo_root: Path) -> list[str]:
-    """Tracked paths that differ from ``HEAD``, plus untracked files: repository-relative, sorted.
+def changed_files(repo_root: Path, base: str = "HEAD") -> list[str]:
+    """Tracked paths that differ from where ``HEAD`` left ``base``, plus untracked files:
+    repository-relative, sorted.
 
+    With the default ``base``, that is the uncommitted change. With a branch such as ``main``, it
+    adds the commits made since the current branch left it, but not ones made on ``main`` after.
     Deleted paths are included, and a rename counts as a deletion plus an addition. Callers that
     read files skip the paths that no longer exist.
     """
-    tracked = _git(repo_root, "diff", "--name-only", "--no-renames", "HEAD")
+    [fork_point] = _git(repo_root, "merge-base", base, "HEAD")
+    tracked = _git(repo_root, "diff", "--name-only", "--no-renames", fork_point)
     untracked = _git(repo_root, "ls-files", "--others", "--exclude-standard")
     return sorted({*tracked, *untracked})
 

@@ -164,7 +164,7 @@ uv pip install -e .
 Tests run on Fray's `LocalClient`.
 
 ```bash
-uv run pytest lib/zephyr/tests
+uv run --no-sync pytest lib/zephyr/tests
 ```
 
 ## Design

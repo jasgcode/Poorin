@@ -123,7 +123,7 @@ you train a tiny language model on TinyStories on your CPU.  For a sneak preview
 
 ```bash
 wandb offline  # Disable WandB logging
-uv run python experiments/tutorials/train_tiny_model.py \
+uv run --no-sync python experiments/tutorials/train_tiny_model.py \
   --device cpu --dataset tinystories --version dev --run
 ```
 

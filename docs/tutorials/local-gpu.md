@@ -63,7 +63,7 @@ accepts a `--device` flag that selects the accelerator:
 ```bash
 export POORIN_PREFIX=local_store
 export WANDB_ENTITY=...
-uv run python experiments/tutorials/train_tiny_model.py \
+uv run --no-sync python experiments/tutorials/train_tiny_model.py \
   --device rtx5090x1 --dataset wikitext --version dev --run
 ```
 
@@ -90,5 +90,5 @@ The Grug base launcher, `experiments/grug/base/launch.py`, trains a 130M-paramet
 50 steps on 10M pretokenized FineWeb-Edu tokens, on one GPU:
 
 ```bash
-uv run python -m experiments.grug.base.launch --version dev --run
+uv run --no-sync python -m experiments.grug.base.launch --version dev --run
 ```
