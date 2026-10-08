@@ -274,8 +274,8 @@ def test_default_gpu_attention_falls_back_to_reference_outside_fa4_coverage(case
     )
     mask = AttentionMask(is_causal=False) if case == "non_causal" else AttentionMask.causal()
     if case == "cross_attention":
+        # Causal, so only the unequal query and key lengths keep this off FA4.
         q = q[:, :128]
-        mask = AttentionMask(is_causal=False)
     out = attention(q, k, v, mask)
     expected = attention(q, k, v, mask, implementation="reference")
     np.testing.assert_array_equal(np.asarray(out), np.asarray(expected))

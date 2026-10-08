@@ -1281,9 +1281,9 @@ Known gaps left open on purpose. Each names where it gets resolved.
 | `prune_check` passed no marker expression, so a broad selection ran Iris's suite | P0 review | D37, P1 Task 1 |
 | `tools.*` was not a root | P0 review | D40, P1 Task 1 |
 | `experiments/grug/README.md` documents `GRUG_RUN_ID`, `FERRY_DATE`, and backward flow every 50 steps | P0 review | P1 Task 14 |
-| `test_device_flops` asserts only that FLOPs are positive | P0 review | Open |
-| The cross-attention case in `test_attention.py` is non-causal, so it never exercises the `q_len != k_len` guard in `_fa4_supports` | P0 review | Open |
-| `test_append_metrics_row_rejects_a_row_with_missing_columns` is a guard test under `TESTING.md` | P0 review | Open |
+| `test_device_flops` asserts only that FLOPs are positive | P0 review | D89: asserts the RTX 5090's dense entries |
+| The cross-attention case in `test_attention.py` is non-causal, so it never exercises the `q_len != k_len` guard in `_fa4_supports` | P0 review | D89: the case is causal with unequal lengths |
+| `test_append_metrics_row_rejects_a_row_with_missing_columns` is a guard test under `TESTING.md` | P0 review | D89: deleted |
 | About 125 MB of untracked `logs/` and `wandb/` entries from P0's check runs sit in the checkout | P0 | Deleted on request, 2026-10-07, spike 0's runs included |
 | Set up `projects/` as a git-ignored, nested uv workspace member for `looped-diffusion-lm`, and scan `projects/*` for prune roots | D52 | Next step (D84), once `looped-diffusion-lm` has code |
 | Design the SkyRL integration: a Hugging Face mapping for grug, launching the owner's SkyRL fork from the executor, and moving checkpoints both ways | D68 | A later sub-project |
@@ -1301,7 +1301,7 @@ Known gaps left open on purpose. Each names where it gets resolved.
 | `tools.lint PATH` skips a path that does not exist without saying so | P1 review | Open |
 | The contributing guide's PR checklist still says to verify GitHub CI, and `tools.affected_tests` has no mode for a committed branch | P1 review | Open |
 | Levanter's and Haliax's `AGENTS.md` and the `profile-training` skill show syncing `uv run` commands | P1 review | Open |
-| `test_ruff_checks_marin_with_its_own_configuration_as_marin_did` only mirrors the `RUFF_CONFIGS` table | P1 review | Open |
+| `test_ruff_checks_marin_with_its_own_configuration_as_marin_did` only mirrors the `RUFF_CONFIGS` table | P1 review | D89: deleted |
 | `config/local.yaml`'s comment says outputs fall back to `/tmp/marin`; on a GCE VM, rigging falls back to `gs://marin-{region}` | P1 review | Sub-project 2 |
 | The ruff reformat's commit message says ruff checks each file's syntax tree; ruff has no such check, and a separate AST comparison confirmed the reformat | P1 review | Recorded here |
 | Code that only made sense under Iris survives the comment cleanup (D76): Zephyr's `MAX_IRIS_WORKER_REPLICAS` and the coordinator-owned worker group, Fray fields `LocalClient` ignores (`target_cluster`, `processes_per_task`, `setup_scripts`, `sync_packages`, actor retries), grug dispatch's forwarded environment, the profiler's `iris.oa.dev` xprof URL, `MARIN_PROVENANCE`, `LogClient.connect(resolver=...)`, and `EvalRecord`, which nothing writes | Cleanup | Pass 2 |

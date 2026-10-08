@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from tools.lint import file_problems, is_excluded, lint, ruff_config
+from tools.lint import file_problems, is_excluded, lint
 
 MARIN = "# Copyright The Marin Authors\n# SPDX-License-Identifier: Apache-2.0\n"
 HALIAX = "# Copyright The Levanter Authors\n#\n# SPDX-License-Identifier: Apache-2.0\n"
@@ -36,14 +36,6 @@ def test_each_library_requires_its_own_license_header(tmp_path):
     marin_header_in_haliax = write(tmp_path, "lib/haliax/src/haliax/other.py", MARIN + "X = 1\n")
     assert file_problems(tmp_path, haliax, fix=False) == []
     assert file_problems(tmp_path, marin_header_in_haliax, fix=False) == ["missing license header"]
-
-
-def test_ruff_checks_marin_with_its_own_configuration_as_marin_did():
-    # Ruff's per-file discovery classifies first-party imports differently from an explicit
-    # --config for lib/poorin, so Marin passed it explicitly; everything else uses discovery.
-    assert ruff_config("lib/poorin/src/poorin/evaluation/records.py") == "lib/poorin/pyproject.toml"
-    assert ruff_config("lib/levanter/src/levanter/main/train_lm.py") is None
-    assert ruff_config("tools/lint.py") is None
 
 
 def test_trailing_whitespace_and_a_missing_final_newline_are_fixed(tmp_path):

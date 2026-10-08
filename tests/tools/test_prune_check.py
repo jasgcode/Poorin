@@ -56,11 +56,6 @@ def test_append_metrics_row_writes_the_header_once(tmp_path):
     assert tuple(rows[0]) == METRIC_COLUMNS
 
 
-def test_append_metrics_row_rejects_a_row_with_missing_columns(tmp_path):
-    with pytest.raises(ValueError):
-        append_metrics_row(tmp_path / "metrics.csv", {"phase": "P0"})
-
-
 def test_remove_run_outputs_deletes_user_runs_and_keeps_shared_caches(tmp_path):
     (tmp_path / "users" / "someone" / "checkpoints" / "run").mkdir(parents=True)
     (tmp_path / "wikitext" / "2026.06.28").mkdir(parents=True)
