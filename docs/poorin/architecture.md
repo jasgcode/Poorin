@@ -62,22 +62,16 @@ Modules marked "(review)" below, grouped by why they look vestigial on a one-GPU
 
 - **Cluster and multi-region operations:** `zephyr.dashboard` (and its `app` and `coordinator`),
   whose web app nothing serves; `rigging.filesystem.mirror`, which copies from other regions'
-  `marin-*` buckets; `levanter.model_cache`, a region-local shared Hugging Face cache;
-  `levanter.infra.cli_helpers`, of which Marin uses only `get_git_commit`, `default_run_id`, and
-  `load_config`; `levanter.utils.cloud_utils`, which registers TPU VM shutdown.
+  `marin-*` buckets; `levanter.model_cache`, a region-local shared Hugging Face cache.
 - **NCCL stall diagnostics:** `rigging.telemetry.probes` and its `nccl`, `nccl_client`,
   `nccl_ras`, and `runner` modules, with `rigging.telemetry.metrics` and the fixtures in
   `rigging.testing`. A single-GPU run has no NCCL communicators.
 - **Upstream archive migration:** `finestore.migrations.m0001_manifest`, which upgrades upstream
   archives. (The evaluation leftovers of the deleted serving flow were removed by D88.)
-- **Code that no longer serves its purpose:** `levanter.recovery` and `levanter.recovery.types`,
-  of which only `EXIT_STALL` is used; `levanter.pipeline`, of which only the microbatch reshape
-  is used; `experiments.grug.fast_track.grugmuon_stacked`, written for deleted MoE weights;
-  `levanter.grug._moe.quack_symmetric_cute`, which raises on compute capability 12 (the RTX 5090);
-  `levanter.models.gpt2`, a test fixture and the harness's default model.
-- **Rules this tree breaks:** `fray.cluster` and `levanter.main.lora_dpo` are
-  backward-compatibility shims (AGENTS.md: no backward compatibility); `finelog.client`
-  re-exports `object_query_client` and `remote_log_handler`, which nothing else uses.
+- **Code that no longer serves its purpose:** `experiments.grug.fast_track.grugmuon_stacked`,
+  written for deleted MoE weights; `levanter.grug._moe.quack_symmetric_cute`, which raises on
+  compute capability 12 (the RTX 5090); `levanter.models.gpt2`, a test fixture and the harness's
+  default model.
 - **TPU-only code kept on purpose** (D81): `levanter.kernels.pallas.splash_attention`, the
   `pallas_tpu` fused cross-entropy, and `poorin.scaling_laws.tpu_utils`.
 
@@ -156,7 +150,7 @@ Modules marked "(review)" below, grouped by why they look vestigial on a one-GPU
 | `levanter.callbacks._metrics` | Per-step throughput and MFU computation, step logging, tqdm progress bar | R2 |
 | `levanter.callbacks.labeled_eval` | Periodic per-label LM loss evaluation on trace-chat datasets during training | R1 |
 | `levanter.callbacks.profiler` | Scheduled JAX profiler captures with XProf trace and XLA dump uploads | R2 |
-| `levanter.callbacks.progress_watchdog` | Watchdog that terminates training when steps or the pipeline stop progressing | R2 |
+| `levanter.callbacks.progress_watchdog` | Watchdog that terminates training with `EXIT_STALL` when steps or the pipeline stop progressing | R2 |
 | `levanter.callbacks.state_adapter` | Runs callback hooks against arbitrary training-state types via accessors | R2 |
 | `levanter.callbacks.tensorstore_callbacks` | Step hook logging TensorStore metrics when enabled by environment variable | R1 |
 | `levanter.callbacks.watch` | WatchCallback logging gradient, parameter, and optimizer-state statistics | R2 |
@@ -191,7 +185,7 @@ Modules marked "(review)" below, grouped by why they look vestigial on a one-GPU
 | `levanter.eval` | Tagged and labeled LM loss evaluators and their training callbacks | R2 |
 | `levanter.eval_harness` | Runs the EleutherAI LM Evaluation Harness on Levanter models | R1 |
 | `levanter.eval_harness_config` | LM Eval Harness task and run configs, importable without the harness | R1 |
-| `levanter.grad_accum` | Microbatched gradient accumulation wrapper for loss-and-gradient functions | R2 |
+| `levanter.grad_accum` | Microbatched gradient accumulation wrapper and the batch-to-microbatch reshape | R2 |
 | `levanter.grug` | Package marker for Grug's array-first attention, loss, and sharding primitives | R2 |
 | `levanter.grug._moe` | Package marker for private Grug CuTe kernel backends | package |
 | `levanter.grug._moe.quack_symmetric_cute` | QuACK symmetric GEMM for Grug Muon Newton-Schulz; SM90 and SM100 only (review) | `levanter.grug._moe.quack_symmetric_cute` |
@@ -210,7 +204,7 @@ Modules marked "(review)" below, grouped by why they look vestigial on a one-GPU
 | `levanter.inference.page_table` | Paged KV-cache page allocator and per-batch page info | R1 |
 | `levanter.inference.utils` | Jit-safe masked array operations and stop-sequence checks for decoding | R1 |
 | `levanter.infra` | Package marker | package |
-| `levanter.infra.cli_helpers` | CLI config loading, gcloud zone and TPU capacity args, git commit, run ID (review) | `levanter.infra.cli_helpers` |
+| `levanter.infra.cli_helpers` | Launch config loading, git commit, and default run ID | `levanter.infra.cli_helpers` |
 | `levanter.kernels` | Package marker for custom JAX kernels | R2 |
 | `levanter.kernels.pallas` | Package marker for Pallas kernels and their wrappers | R2 |
 | `levanter.kernels.pallas.autotune_utils` | Sharding-aware lowering and compile helpers for kernel autotune benchmarks | R2 |
@@ -272,9 +266,6 @@ Modules marked "(review)" below, grouped by why they look vestigial on a one-GPU
 | `levanter.optim.skipstep` | Optimizer wrapper skipping steps whose loss or gradient norm spikes | R1 |
 | `levanter.optim.soap` | SOAP optimizer | `levanter.optim.soap` |
 | `levanter.optim.util` | Optimizer helpers: linear-layer masks, Newton-Schulz, linear flattening, scan-aware clipping | R1 |
-| `levanter.pipeline` | Microbatch reshaping plus layer partitioning for pipeline parallelism (review) | R2 |
-| `levanter.recovery` | Docstring-only package describing GPU hang recovery; only types remains (review) | R2 |
-| `levanter.recovery.types` | JAX-free fault, run, and ablation types; only EXIT_STALL is used (review) | R2 |
 | `levanter.schedule` | Step-indexed value schedules and BatchSchedule for variable batch size | R1 |
 | `levanter.shapes` | NamedShapeSpec and conversion to raw shapes | R2 |
 | `levanter.sharding` | Reads partition specs and mesh axes from arrays and tracers | R2 |
@@ -312,7 +303,7 @@ Modules marked "(review)" below, grouped by why they look vestigial on a one-GPU
 | `levanter.utils.activation` | Activation function enum, including quick GELU and squared ReLU | R1 |
 | `levanter.utils.background_iterable` | Iterates an iterable on a background thread through a queue | R2 |
 | `levanter.utils.byte_budget` | Asyncio scheduler limiting in-flight host bytes against a target | R2 |
-| `levanter.utils.cloud_utils` | TPU VM shutdown and a temp-dir-then-upload context manager (review) | R2 |
+| `levanter.utils.cloud_utils` | Context manager that writes to a local temp dir, then uploads to a URL | R2 |
 | `levanter.utils.datetime_utils` | Parses and encodes timedelta strings for configs | R2 |
 | `levanter.utils.flop_utils` | Analytic forward FLOPs per token for LM configs | R2 |
 | `levanter.utils.hardware_topology` | Device topology summary: TPU coordinates and nvidia-smi topology matrix | R2 |
@@ -515,10 +506,8 @@ Modules marked "(review)" below, grouped by why they look vestigial on a one-GPU
 | Module | Purpose | Reached from |
 |---|---|---|
 | `finelog` | Package marker | R2 |
-| `finelog.client` | Re-exports LogClient, query client, log handler, errors, policy, table-spec types | R2 |
+| `finelog.client` | Re-exports LogClient, errors, policy, and table-spec types | R2 |
 | `finelog.client.log_client` | LogClient and Table: buffered, retried writes and queries against a Finelog server | R2 |
-| `finelog.client.object_query_client` | Client-side SQL over Finelog catalog snapshots in object storage (review) | R2 |
-| `finelog.client.remote_log_handler` | logging.Handler that ships log records through a LogClient (review) | R2 |
 | `finelog.embedded` | In-process Finelog server from the optional native Rust extension | `finelog.embedded` |
 | `finelog.errors` | Typed exceptions translated from Finelog ConnectRPC error codes | R2 |
 | `finelog.policy` | Per-namespace storage retention policy sent at table registration | R2 |

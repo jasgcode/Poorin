@@ -22,7 +22,6 @@ from finelog.client import (
     OperatingPolicy,
     PartitionField,
     PartitionSpec,
-    RemoteLogHandler,
     SourceLayout,
     StoragePolicy,
     TableSpec,
@@ -49,62 +48,6 @@ from finelog.schema import (
     schema_to_arrow,
     schema_to_proto,
 )
-
-
-class FakeLogClient:
-    def __init__(self, *, fail: bool = False) -> None:
-        self.batches: list[tuple[str, list[logging_pb2.LogEntry]]] = []
-        self._fail = fail
-
-    def write_batch(self, key: str, messages: list[logging_pb2.LogEntry]) -> None:
-        self.batches.append((key, list(messages)))
-        if self._fail:
-            raise ConnectionError("server unavailable")
-
-    def flush(self, timeout: float | None = None) -> FlushResult:
-        return FlushResult.SUCCEEDED
-
-    def close(self) -> None:
-        pass
-
-
-def test_handler_writes_batches():
-    client = FakeLogClient()
-    handler = RemoteLogHandler(client, key="test")
-    log = logging.getLogger("test_handler_push")
-    log.addHandler(handler)
-    log.setLevel(logging.DEBUG)
-    try:
-        log.info("hello")
-        assert len(client.batches) == 1
-        assert client.batches[0][1][0].data.endswith("hello")
-    finally:
-        log.removeHandler(handler)
-        handler.close()
-
-
-def test_no_deadlock_on_write_failure():
-    client = FakeLogClient(fail=True)
-    handler = RemoteLogHandler(client, key="test")
-    handler.setLevel(logging.DEBUG)
-    root = logging.getLogger()
-    root.addHandler(handler)
-    root.setLevel(logging.DEBUG)
-    done = threading.Event()
-
-    def log_one():
-        try:
-            logging.getLogger("test_deadlock").info("trigger flush")
-        finally:
-            done.set()
-
-    t = threading.Thread(target=log_one)
-    t.start()
-    finished = done.wait(timeout=2.0)
-    root.removeHandler(handler)
-    handler.close()
-    t.join(timeout=1.0)
-    assert finished, "RemoteLogHandler deadlocked on write failure"
 
 
 class _FakeStatsServiceClient:
@@ -1063,23 +1006,6 @@ def test_schema_to_arrow_maps_map_column_to_native_map():
     s = Schema(columns=(Column(name="labels", type=stats_pb2.COLUMN_TYPE_MAP),))
     arrow = schema_to_arrow(s)
     assert arrow.field("labels").type == MAP_STRING_STRING
-
-
-def test_remote_log_handler_writes_via_log_client(tracked_clients):
-    client = LogClient.connect("http://h:1")
-    handler = RemoteLogHandler(client, key="proc")
-    log = logging.getLogger("e2e_handler")
-    log.setLevel(logging.DEBUG)
-    log.addHandler(handler)
-    try:
-        log.info("end-to-end")
-        assert client.flush(timeout=5.0) == FlushResult.SUCCEEDED
-        decoded = _decode_ipc_table(tracked_clients[0].writes[0].arrow_ipc)
-        assert decoded.column("key").to_pylist() == ["proc"]
-    finally:
-        log.removeHandler(handler)
-        handler.close()
-        client.close()
 
 
 def test_table_flush_waits_for_in_flight(tracked_clients):

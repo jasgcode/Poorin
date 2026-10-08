@@ -66,8 +66,7 @@ class _QuietStreamHandler(logging.StreamHandler):
 
 
 logger = logging.getLogger(__name__)
-# RemoteLogHandler lives on the root logger and writes through this Table;
-# propagating to root would re-enter the same buffer during failure storms.
+# This logger prints through its own stderr handler; propagating to root would print each record twice.
 logger.propagate = False
 if not logger.handlers:
     _stderr_handler = _QuietStreamHandler(sys.stderr)

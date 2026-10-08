@@ -7,14 +7,16 @@ import haliax as hax
 import haliax.nn as hnn
 import jax
 import jax.numpy as jnp
+import numpy as np
 import pytest
 from chex import assert_trees_all_close
 from haliax.partitioning import ResourceAxis
 from haliax.quantization import Fp8DotGeneralOp
-from jax.sharding import NamedSharding, PartitionSpec
+from jax.sharding import AxisType, Mesh, NamedSharding, PartitionSpec
+from jax.sharding import PartitionSpec as P
 from levanter.testing.helpers import use_test_mesh
 
-from levanter.grad_accum import microbatched
+from levanter.grad_accum import microbatched, reshape_array_into_microbatches
 
 
 class Mlp(eqx.Module):
@@ -123,3 +125,24 @@ def test_accumulate_fp8_gradients_preserves_largest_amax_and_scale():
         jnp.array([32.0, 0.0, 0.0, 0.0]),
     )
     assert_trees_all_close(grads.dot_general.input_scale, linear.dot_general.input_scale)
+
+
+def test_reshape_array_into_microbatches_adds_a_leading_microbatch_axis():
+    reshaped = reshape_array_into_microbatches(jnp.arange(24).reshape(6, 4), 3)
+
+    assert reshaped.shape == (3, 2, 4)
+    np.testing.assert_array_equal(reshaped[1], np.arange(8, 16).reshape(2, 4))
+
+
+def test_reshape_array_into_microbatches_keeps_explicit_batch_sharding():
+    mesh = Mesh(np.asarray(jax.devices()[:1]), ("batch",), axis_types=(AxisType.Explicit,))
+    batch = jax.device_put(jnp.arange(24).reshape(6, 4), NamedSharding(mesh, P("batch", None)))
+
+    reshaped = reshape_array_into_microbatches(batch, 3)
+
+    assert reshaped.sharding.spec == P(None, "batch", None)
+
+
+def test_reshape_array_into_microbatches_rejects_an_indivisible_batch():
+    with pytest.raises(ValueError):
+        reshape_array_into_microbatches(jnp.zeros((5, 2)), 2)

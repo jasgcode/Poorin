@@ -81,7 +81,6 @@ trainer:
     start_step: 5
   require_accelerator: true
   seed: 0
-  shutdown_at_exit: false
   steps_per_eval: 10000
   tracker:
     entity: null

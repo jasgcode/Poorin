@@ -8,7 +8,7 @@ import pytest
 
 from levanter.callbacks import ProgressEvent, progress_watchdog as progress_watchdog_module
 from levanter.callbacks.progress_watchdog import ProgressWatchdog, ProgressWatchdogConfig
-from levanter.recovery.types import EXIT_STALL
+from levanter.callbacks.progress_watchdog import EXIT_STALL
 
 
 def test_watchdog_ignores_first_compile_then_times_out_a_steady_state_step(monkeypatch):

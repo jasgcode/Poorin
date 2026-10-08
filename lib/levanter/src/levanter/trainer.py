@@ -1,7 +1,6 @@
 # Copyright The Levanter Authors
 # SPDX-License-Identifier: Apache-2.0
 
-import atexit
 import copy
 import functools
 import logging as pylogging
@@ -25,7 +24,6 @@ from typing import (
     Sequence,
     Tuple,
     TypeVar,
-    Union,
 )
 
 import equinox as eqx
@@ -89,7 +87,6 @@ from levanter.tracker import TrackerConfig, capture_time
 from levanter.tracker.telemetry import TelemetryConfig, capture_stall_diagnostics
 from levanter.tracker.wandb import WandbConfig
 from levanter.trainer_state import InsideJitInfo, TrainerState, saveable_training_mask
-from levanter.utils import cloud_utils
 from levanter.utils.hardware_topology import hardware_topology_summary
 from levanter.utils.jax_utils import zeros_like_tree
 from levanter.utils.mesh import MeshConfig, create_mesh_from_axis_specs
@@ -966,9 +963,6 @@ class TrainerConfig:
     # default depends on the platform: on macos False, else True
     require_accelerator: Optional[bool] = None
 
-    # whether or not to shutdown the tpu at exit. If a float, shutdown after that many seconds. True = 5 minutes
-    shutdown_at_exit: Union[bool, float] = False
-
     @property
     def TrainBatch(self):
         if not isinstance(self.train_batch_size, int):
@@ -1024,12 +1018,6 @@ class TrainerConfig:
         levanter.utils.logging.init_logging(self.log_dir, f"{id}.log")
         _initialize_global_tracker(self.tracker, id)
         levanter.tracker.log_summary({"hardware_topology": hardware_topology_summary()})
-
-        if self.shutdown_at_exit is not False:
-            if isinstance(self.shutdown_at_exit, bool):
-                self.shutdown_at_exit = 5.0 * 60
-            logger.info(f"At end of run, shutting down TPU VM in {self.shutdown_at_exit} seconds")
-            atexit.register(cloud_utils.shutdown_tpu_vm, self.shutdown_at_exit)
 
     @property
     def device_mesh(self) -> Mesh:

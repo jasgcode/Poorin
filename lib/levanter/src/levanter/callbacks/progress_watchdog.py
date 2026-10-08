@@ -12,8 +12,10 @@ from time import monotonic
 from typing import Any, Callable
 
 from levanter.callbacks._core import Callback, ProgressEvent, StepInfo
-from levanter.recovery.types import EXIT_STALL
 
+
+# Exit code when the watchdog kills a stalled run; 124 is timeout(1)'s convention.
+EXIT_STALL = 124
 
 logger = logging.getLogger(__name__)
 

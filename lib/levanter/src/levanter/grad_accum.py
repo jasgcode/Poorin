@@ -9,19 +9,40 @@ import haliax as hax
 import haliax.quantization as hq
 import jax
 import jax.numpy as jnp
+from jax import core
 from haliax import Axis
 from haliax.partitioning import ResourceAxis
 from haliax.util import is_named_array
 from jax.lax import with_sharding_constraint
-from jax.sharding import PartitionSpec
+from jax.sharding import NamedSharding, PartitionSpec
 
 from levanter.metrics import Metric
 from levanter.metrics import fold as fold_metric
-from levanter.pipeline import reshape_array_into_microbatches
 from levanter.utils.jax_utils import zeros_like_tree
 
 Args = ParamSpec("Args")
 R = TypeVar("R")
+type ArrayValue = jax.Array | core.Tracer
+
+
+def reshape_array_into_microbatches(value: ArrayValue, num_microbatches: int) -> ArrayValue:
+    """Split an array's leading batch axis into microbatch and example axes, keeping its sharding."""
+    if num_microbatches <= 0:
+        raise ValueError(f"num_microbatches must be positive, got {num_microbatches}")
+    if value.ndim == 0:
+        return value
+    if value.shape[0] % num_microbatches != 0:
+        raise ValueError(f"batch axis size {value.shape[0]} must be divisible by num_microbatches={num_microbatches}")
+    microbatch_size = value.shape[0] // num_microbatches
+    sharding = jax.typeof(value).sharding
+    out_sharding = None
+    if isinstance(sharding, NamedSharding):
+        out_sharding = NamedSharding(sharding.mesh, PartitionSpec(None, *sharding.spec))
+    return jax.lax.reshape(
+        value,
+        (num_microbatches, microbatch_size, *value.shape[1:]),
+        out_sharding=out_sharding,
+    )
 
 
 # TODO: should we use a custom_jvp on microbatched?
