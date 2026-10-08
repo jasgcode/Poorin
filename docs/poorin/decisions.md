@@ -1110,8 +1110,10 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
   the module, but they annotate with `transformers.PretrainedConfig`: a transformers-free module
   would need a `TYPE_CHECKING` import, which AGENTS.md forbids, or weaker types on the interface
   sub-project 4 builds on.
-- **Cost if wrong:** Runs that never convert checkpoints, grug's R2 among them, pay about 0.9 s at
-  every launch.
+- **Cost if wrong:** Runs that never convert checkpoints pay for `transformers` at every launch.
+  Corrected 2026-10-08 (D89): for grug's R2 the saving would be about 0.4 s, not 0.9 s. FlashAttention
+  4's CuTe package imports PyTorch when grug's GPU attention first runs, so PyTorch's 0.5 s is paid
+  either way; only `transformers` (and, since D88, scikit-learn) would move.
 
 ### D83. Pass 2's ranked loop ends on Keep verdicts; architecture.md is checked by a test
 
