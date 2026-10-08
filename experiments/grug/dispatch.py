@@ -7,9 +7,8 @@ import re
 from collections.abc import Callable
 from typing import TypeVar
 
-from fray.cluster import ResourceConfig
 from fray.current_client import current_client
-from fray.types import Entrypoint, JobRequest, create_environment
+from fray.types import Entrypoint, JobRequest, ResourceConfig, create_environment
 from poorin.training.run_environment import extras_for_resources
 from poorin.training.training import resolve_training_env
 

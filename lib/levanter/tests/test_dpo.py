@@ -48,7 +48,6 @@ from levanter.dpo import (
     reference_eval_cache_metadata,
     reference_eval_cache_path,
 )
-from levanter.main.lora_dpo import LoraDpoConfig, _translate_legacy_lora_dpo_config
 from levanter.main.train_dpo import (
     AdapterBaseReferenceConfig,
     SeparateReferenceConfig,
@@ -286,36 +285,6 @@ def test_canonical_lora_dpo_config_parses_from_yaml(tmp_path: Path):
 
     assert isinstance(config.adapter, LoraAdaptorConfig)
     assert isinstance(config.reference, AdapterBaseReferenceConfig)
-
-
-def test_legacy_lora_dpo_config_translates_to_canonical(tmp_path: Path, monkeypatch):
-    config_path = tmp_path / "legacy_lora_dpo.yaml"
-    config_path.write_text(
-        "\n".join(
-            [
-                "initialize_from_hf: test-model",
-                "lora:",
-                "  r: 8",
-                "  alpha: 8.0",
-                "  zero_init_b: false",
-                "  a_init_mode: zero",
-                "hf_save_steps: 100",
-            ]
-        )
-    )
-
-    legacy_config = draccus.parse(LoraDpoConfig, str(config_path), args=[])
-    monkeypatch.setattr(
-        "levanter.main.lora_dpo.HFCheckpointConverter.from_hf",
-        lambda *args, **kwargs: SimpleNamespace(default_config=Gpt2Config()),
-    )
-
-    translated = _translate_legacy_lora_dpo_config(legacy_config)
-
-    assert isinstance(translated.adapter, LoraAdaptorConfig)
-    assert isinstance(translated.reference, AdapterBaseReferenceConfig)
-    assert translated.adapter.zero_init_b is False
-    assert translated.adapter.a_init_mode == "zero"
 
 
 def test_preference_chat_processor_skips_invalid_rows(tokenizer_path: Path):

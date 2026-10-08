@@ -235,7 +235,6 @@ Modules marked "(review)" below, grouped by why they look vestigial on a one-GPU
 | `levanter.main.eval_lm` | Script: evaluate an LM checkpoint's loss on a dataset | `levanter.main.eval_lm` |
 | `levanter.main.export_hf_to_lm` | Script: import a HuggingFace model as a Levanter TensorStore checkpoint | `levanter.main.export_hf_to_lm` |
 | `levanter.main.export_lm_to_hf` | Script: convert a Levanter LM checkpoint to HuggingFace format | `levanter.main.export_lm_to_hf` |
-| `levanter.main.lora_dpo` | Legacy LoRA-DPO config shim that translates and forwards to train_dpo (review) | `levanter.main.lora_dpo` |
 | `levanter.main.lora_lm` | Script: LoRA fine-tuning of a language model | `levanter.main.lora_lm` |
 | `levanter.main.model_init` | Loads a policy model from a Levanter or HF source for train_dpo | `levanter.main.train_dpo` |
 | `levanter.main.perplexity_gap` | Script: score documents with two models and report perplexity gaps | `levanter.main.perplexity_gap` |
@@ -506,7 +505,6 @@ Modules marked "(review)" below, grouped by why they look vestigial on a one-GPU
 | `fray` | Package docstring only; directs callers to import from submodules | R1 |
 | `fray.actor` | Actor protocols: handles, futures, method calls, actor groups, current-actor context | R1 |
 | `fray.client` | Client and JobHandle protocols for job submission, plus wait_all | R1 |
-| `fray.cluster` | Back-compat re-export of fray.types resource and job types (review) | R2 |
 | `fray.current_client` | Gets and sets the active Fray client, defaulting to LocalClient | R1 |
 | `fray.device_flops` | Peak FLOPS table per device type and dtype | R1 |
 | `fray.local_backend` | LocalClient: in-process Fray backend running jobs as threads or subprocesses | R1 |

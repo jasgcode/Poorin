@@ -13,7 +13,6 @@ Distributed execution abstraction layer. Start with the shared instructions in `
 - `src/fray/actor.py` — `ActorHandle`, `ActorGroup`, actor hosting
 - `src/fray/local_backend.py` — Local/thread backend, the only backend until sub-project 2
 - `src/fray/device_flops.py` — TPU/GPU flops calculation
-- `src/fray/cluster/` — type re-exports (back-compat shim for `from fray.cluster import ResourceConfig`)
 
 ## Conventions
 

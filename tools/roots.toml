@@ -50,7 +50,6 @@ modules = [
     # Light post-training kit (D9)
     "levanter.main.train_dpo",
     "levanter.main.lora_lm",
-    "levanter.main.lora_dpo",
     "levanter.main.sample_lm",
     # Hooks for RL post-training through the owner's SkyRL fork (D68): Hugging Face export of
     # Levanter checkpoints, during training or after it, and Marin's chat template.

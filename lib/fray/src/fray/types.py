@@ -1,12 +1,10 @@
 # Copyright The Marin Authors
 # SPDX-License-Identifier: Apache-2.0
 
-"""Type definitions for fray.
+"""Type definitions for fray: resources, devices, environments, and job requests.
 
-Standalone dataclasses with no v1 backend dependencies. Copied from
-fray.cluster.base with one structural change: `replicas` moves from
-ResourceConfig to JobRequest (it's a job-level gang-scheduling concern,
-not a per-task resource requirement).
+`replicas` lives on JobRequest, not ResourceConfig: gang scheduling is a job-level concern, not a
+per-task resource requirement.
 """
 
 import os

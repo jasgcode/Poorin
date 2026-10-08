@@ -6,7 +6,7 @@
 import json
 import logging
 
-from fray.cluster import ResourceConfig
+from fray.types import ResourceConfig
 from rigging.filesystem.atomic import atomic_rename
 from rigging.filesystem.factory import open_url
 from rigging.filesystem.storage_path import StoragePath, prefix_join

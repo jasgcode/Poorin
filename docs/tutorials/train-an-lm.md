@@ -86,7 +86,7 @@ A mixture is a dict with more than one entry; the weights need not sum to one.
 of them. The complete `build()` function:
 
 ```python
-from fray.cluster import ResourceConfig
+from fray.types import ResourceConfig
 from levanter.optim.config import AdamConfig
 from poorin.execution.lazy import ArtifactStep, lower
 from poorin.execution.step_runner import StepRunner

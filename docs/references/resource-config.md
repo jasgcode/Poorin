@@ -7,7 +7,7 @@ Marin dispatches jobs through Fray. Fray's only backend, `LocalClient`, runs eac
 The main entry point for resource configuration. Use the static factory methods to create configurations:
 
 ```python
-from fray.cluster import ResourceConfig
+from fray.types import ResourceConfig
 
 # TPU configuration
 tpu_config = ResourceConfig.with_tpu("v4-8")

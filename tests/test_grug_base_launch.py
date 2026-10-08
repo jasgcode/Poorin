@@ -1,7 +1,7 @@
 # Copyright The Marin Authors
 # SPDX-License-Identifier: Apache-2.0
 
-from fray.cluster import ResourceConfig
+from fray.types import ResourceConfig
 from levanter.data.text.datasets import LmDataConfig
 from levanter.optim.config import AdamConfig
 from levanter.tracker.telemetry import TelemetryConfig

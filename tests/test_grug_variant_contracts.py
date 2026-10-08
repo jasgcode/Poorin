@@ -22,7 +22,7 @@ import jax.numpy as jnp
 import jmp
 import optax
 import pytest
-from fray.cluster import ResourceConfig
+from fray.types import ResourceConfig
 from jax._src import config as jax_config
 from jax.sharding import use_abstract_mesh
 from levanter.checkpoint import CheckpointerConfig

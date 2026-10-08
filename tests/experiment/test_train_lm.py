@@ -18,7 +18,7 @@ import math
 from pathlib import Path
 
 import pytest
-from fray.cluster import ResourceConfig
+from fray.types import ResourceConfig
 from levanter.models.llama import LlamaConfig
 from levanter.optim.config import AdamConfig
 from poorin.execution.artifact import ArtifactRecord, write_record

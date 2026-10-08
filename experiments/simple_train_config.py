@@ -4,7 +4,7 @@
 import dataclasses
 from dataclasses import dataclass
 
-from fray.cluster import ResourceConfig
+from fray.types import ResourceConfig
 from levanter.callbacks.profiler import ProfilerConfig
 from levanter.callbacks.watch import WatchConfig
 from levanter.optim.config import OptimizerConfig

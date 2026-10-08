@@ -15,7 +15,7 @@ import jmp
 import levanter.callbacks as callbacks
 import levanter.tracker
 import optax
-from fray.cluster import ResourceConfig
+from fray.types import ResourceConfig
 from haliax import Axis
 from haliax.partitioning import set_mesh
 from jax.sharding import Mesh, NamedSharding

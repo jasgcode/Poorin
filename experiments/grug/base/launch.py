@@ -23,7 +23,7 @@ from datetime import timedelta
 
 import click
 import jmp
-from fray.cluster import ResourceConfig
+from fray.types import ResourceConfig
 from levanter.analysis.backward_flow import BackwardFlowConfig
 from levanter.callbacks.profiler import ProfilerConfig
 from levanter.callbacks.watch import WatchConfig
