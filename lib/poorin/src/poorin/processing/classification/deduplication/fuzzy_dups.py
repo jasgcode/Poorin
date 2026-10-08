@@ -32,7 +32,7 @@ from collections.abc import Iterator
 from fray.types import ResourceConfig
 from pydantic import BaseModel
 from zephyr import counters
-from zephyr.context import MAX_IRIS_WORKER_REPLICAS, ZephyrContext
+from zephyr.context import ZephyrContext
 from zephyr.dataset import Dataset
 from zephyr.worker_context import zephyr_worker_ctx
 from zephyr.writers import write_parquet_file
@@ -222,7 +222,7 @@ def compute_fuzzy_dups_attrs(
     output_path: str,
     cc_max_iterations: int = DEFAULT_CC_MAX_ITERATIONS,
     cc_resume: bool = False,
-    max_parallelism: int = MAX_IRIS_WORKER_REPLICAS,
+    max_parallelism: int,
     worker_resources: ResourceConfig | None = None,
     coordinator_resources: ResourceConfig | None = None,
     map_task_resources: ResourceConfig | None = None,

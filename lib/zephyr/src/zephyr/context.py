@@ -67,10 +67,6 @@ logger = logging.getLogger(__name__)
 K = TypeVar("K", bound=Hashable)
 V = TypeVar("V")
 
-# Keep a Zephyr worker actor group below the practical Iris/Kubernetes control-plane
-# ceiling. Additional shards are pulled by these long-lived replicas.
-MAX_IRIS_WORKER_REPLICAS = 1_000
-
 
 def _generate_execution_id() -> str:
     ts = datetime.now(UTC).strftime("%Y%m%d-%H%M%S")
@@ -202,11 +198,6 @@ class _OwnedPool:
             self.coordinator_group.shutdown()
 
 
-def _distributed_worker_limit(configured: int | None) -> int:
-    requested = configured or MAX_IRIS_WORKER_REPLICAS
-    return min(requested, MAX_IRIS_WORKER_REPLICAS)
-
-
 @dataclass
 class ZephyrContext:
     """Execute Zephyr pipelines with a dedicated or shared worker pool.
@@ -221,9 +212,8 @@ class ZephyrContext:
 
     Args:
         client: Fray client. Zephyr selects the current client when this is not set.
-        max_workers: Worker limit for a dedicated or owned shared pool. Distributed
-            pools are capped at 1,000 replicas; additional shards multiplex through
-            the existing workers. Local execution is uncapped.
+        max_workers: Worker limit for a dedicated or owned shared pool; one worker per CPU
+            when unset. Additional shards multiplex through the existing workers.
         resources: CPU, memory, and device resources for each worker.
         coordinator_resources: Resources for the coordinator actor.
         chunk_storage_prefix: Storage prefix for shared data, chunks, and results.
@@ -453,19 +443,7 @@ class ZephyrContext:
             )
 
     def _worker_limit(self) -> int:
-        assert self.client is not None
-        if isinstance(self.client, LocalClient):
-            return self.max_workers or os.cpu_count() or 1
-
-        limit = _distributed_worker_limit(self.max_workers)
-        if self.max_workers is not None and limit != self.max_workers:
-            logger.warning(
-                "Capping max_workers=%d at the Iris worker replica limit of %d; "
-                "remaining shards will be multiplexed through the worker pool",
-                self.max_workers,
-                limit,
-            )
-        return limit
+        return self.max_workers or os.cpu_count() or 1
 
     def _start_pool(
         self,

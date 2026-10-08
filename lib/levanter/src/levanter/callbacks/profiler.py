@@ -24,7 +24,6 @@ from levanter.utils.jax_utils import barrier_sync
 logger = logging.getLogger(__name__)
 
 AdvancedProfileOptionValue = bool | int | str
-DEFAULT_XPROF_SERVICE_URL = "https://iris.oa.dev/proxy/xprof"
 _XPROF_RUN_PATH = "plugins/profile"
 _XPROF_TTL_SEGMENT = re.compile(r"ttl=[1-9]\d*d")
 _XPROF_TTL_PREFIX = "xprof"
@@ -71,7 +70,8 @@ class XprofUploadConfig:
 
     enabled: bool = True
     ttl_days: int = 30
-    service_url: str = DEFAULT_XPROF_SERVICE_URL
+    service_url: str | None = None
+    """An XProf service that opens uploaded profiles; when set, the run logs a viewer link."""
 
     def destination_for_run(self, run_id: str) -> str:
         """Resolve the run's upload root."""

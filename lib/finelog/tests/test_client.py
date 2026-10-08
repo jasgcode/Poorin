@@ -3,7 +3,6 @@
 
 import io
 import logging
-import threading
 from dataclasses import dataclass
 from types import SimpleNamespace
 from typing import ClassVar
@@ -264,65 +263,8 @@ def test_connect_accepts_host_port_tuple(tracked_clients):
         client.close()
 
 
-def test_resolver_runs_per_resolve(tracked_clients):
-    addresses = iter(["http://primary:1", "http://secondary:1"])
-    resolver_calls: list[str] = []
-
-    def resolver(url: str) -> str:
-        resolver_calls.append(url)
-        return next(addresses)
-
-    client = LogClient.connect("/system/log-server", resolver=resolver)
-    try:
-        client.write_batch("k", [logging_pb2.LogEntry(source="t", data="x")])
-        assert client.flush(timeout=5.0) == FlushResult.SUCCEEDED
-    finally:
-        client.close()
-    assert resolver_calls == ["/system/log-server"]
-
-
-def test_write_batch_not_blocked_by_in_progress_resolve(tracked_clients):
-    """A blocked resolver must not wedge concurrent log writes.
-
-    The background flush thread resolves the stats endpoint under the client
-    lock, and in iris that resolver issues a blocking controller RPC. A
-    foreground log emit (``write_batch`` -> ``_get_log_table``) must not wait on
-    that same lock, or a shutdown-path ``logger.warning`` deadlocks teardown
-    against a hung resolve (observed as an iris smoke teardown timeout).
-    """
-    resolving = threading.Event()
-    release = threading.Event()
-
-    def resolver(url: str) -> str:
-        resolving.set()
-        assert release.wait(timeout=10.0), "resolver was never released"
-        return url
-
-    wrote = threading.Event()
-
-    def do_second_write():
-        client.write_batch("k", [logging_pb2.LogEntry(source="t", data="second")])
-        wrote.set()
-
-    client = LogClient.connect("http://h:1", resolver=resolver)
-    second_write = threading.Thread(target=do_second_write)
-    try:
-        # First write spins up the log Table; its flush thread enters the
-        # resolver and (pre-fix) parks there holding the client lock.
-        client.write_batch("k", [logging_pb2.LogEntry(source="t", data="first")])
-        assert resolving.wait(timeout=5.0), "flush thread never reached the resolver"
-
-        # A second write must not block on the lock held during the resolve.
-        second_write.start()
-        assert wrote.wait(timeout=2.0), "write_batch blocked behind an in-progress resolve"
-    finally:
-        release.set()
-        second_write.join(timeout=5.0)
-        client.close()
-
-
 def test_invalidates_on_connection_refused(tracked_clients, monkeypatch):
-    """Retryable failure invalidates the cached client; the next send re-resolves.
+    """Retryable failure invalidates the cached client; the next send reconnects.
 
     The client retries with exponential backoff. To keep this test
     deterministic (rather than racing a 0.5s timer) we shrink the
@@ -339,7 +281,7 @@ def test_invalidates_on_connection_refused(tracked_clients, monkeypatch):
         tracked_clients[0].errors.append(ConnectError(Code.UNAVAILABLE, "down"))
         client.write_batch("k", [logging_pb2.LogEntry(source="t", data="retry")])
         assert client.flush(timeout=5.0) == FlushResult.SUCCEEDED
-        assert len(tracked_clients) >= 2, "expected re-resolution to construct a new client"
+        assert len(tracked_clients) >= 2, "expected the reconnect to construct a new client"
 
         def _retry_landed(req):
             decoded = _decode_ipc_table(req.arrow_ipc)
@@ -690,7 +632,7 @@ def test_get_table_retries_transient_registration_failure(tracked_clients, monke
         table = client.get_table("iris.worker", WorkerStat)
         table.write([WorkerStat(worker_id="w-1", timestamp_ms=1, mem_bytes=128)])
         assert table.flush(timeout=5.0) == FlushResult.SUCCEEDED
-        # First attempt failed and re-resolved the endpoint; the retry registered
+        # First attempt failed and reconnected; the retry registered
         # and wrote against the freshly constructed client.
         assert calls["n"] >= 2
         landed = any(w.namespace == "iris.worker" for c in tracked_clients for w in c.writes)

@@ -659,15 +659,13 @@ class WandbConfig(TrackerConfig):
 def _git_run_config(commit: Optional[str], source_dir: str) -> dict[str, Any]:
     """Run-config entries for the commit and working-tree state of the launch.
 
-    A job that runs from a bundle without ``.git`` can inherit the submitter's git
-    provenance in ``POORIN_PROVENANCE``. Only the commit, the dirty flag,
-    and the tree hash are recorded: the full provenance also holds the submitter's
-    username, command line, and remote URL, which do not belong in a W&B config.
+    Only the commit, the dirty flag, and the tree hash are recorded: the full provenance also
+    holds the username, command line, and remote URL, which do not belong in a W&B config.
 
     Args:
         commit: The commit from ``GIT_COMMIT`` or a local checkout, if one was found.
-        source_dir: The checkout the commit was read from. Without ``POORIN_PROVENANCE``, the
-            dirty flag is read from this checkout, which can differ from the working directory.
+        source_dir: The checkout the commit was read from. The dirty flag is read from this
+            checkout, which can differ from the working directory.
     """
     provenance = Provenance.capture(Path(source_dir))
     if not provenance.base_commit:

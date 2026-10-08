@@ -21,7 +21,6 @@ import functools
 import getpass
 import json
 import logging
-import os
 import re
 import subprocess
 import sys
@@ -31,14 +30,6 @@ from datetime import datetime
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
-
-LAUNCH_PROVENANCE_ENV = "POORIN_PROVENANCE"
-"""Env var carrying the launch's :class:`Provenance` as JSON.
-
-A submitting client can stamp it into a job's environment, so a process running from a
-``.git``-less bundle inherits the submission's provenance — :meth:`Provenance.capture` prefers it
-over shelling out to git.
-"""
 
 
 @dataclass(frozen=True)
@@ -93,16 +84,10 @@ class Provenance:
         """Best-effort provenance of the current launch: git context plus the origin
         remote, capture time, and argv.
 
-        Prefers the provenance published in ``POORIN_PROVENANCE`` (stamped by the submitting
-        client) — returned verbatim, so a remote process reports the launch that produced it,
-        not itself. Otherwise tolerant git capture: every git field degrades to empty/``None``
-        outside a checkout or when the ``git`` binary is absent, so it never raises. Use to
-        stamp an artifact built by an arbitrary run.
+        Tolerant git capture: every git field degrades to empty/``None`` outside a checkout or
+        when the ``git`` binary is absent, so it never raises. Use to stamp an artifact built by
+        an arbitrary run.
         """
-        published = _provenance_from_env()
-        if published is not None:
-            return published
-
         cwd = str(repo_dir) if repo_dir is not None else None
 
         def g(*args: str) -> str:
@@ -164,21 +149,6 @@ class Provenance:
         return f"{self.base_commit}{suffix}"
 
 
-def _provenance_from_env() -> Provenance | None:
-    """The provenance published in ``POORIN_PROVENANCE``, or ``None`` when absent or malformed.
-
-    A malformed value must not break stamping or namespacing; callers fall back.
-    """
-    raw = os.environ.get(LAUNCH_PROVENANCE_ENV)
-    if not raw:
-        return None
-    try:
-        return Provenance.from_json(raw)
-    except (json.JSONDecodeError, KeyError, TypeError):
-        logger.warning("Ignoring malformed %s value: %r", LAUNCH_PROVENANCE_ENV, raw)
-        return None
-
-
 @functools.cache
 def _capture_once() -> Provenance:
     return Provenance.capture()
@@ -215,30 +185,24 @@ def _getuser() -> str | None:
 # A path segment is lowercase alphanumerics plus '_' and '-'; collapse anything else.
 _USER_SEGMENT_RE = re.compile(r"[^a-z0-9_-]+")
 
-# Machine/service logins that must never own a per-user namespace: resolving to one of
-# these means the launching human's identity was not threaded to this process.
+# Machine/service logins that should not own a per-user namespace: resolving to one of
+# these means the run was launched from a shared or service account.
 _MACHINE_LOGINS = frozenset({"root", "runner", "ubuntu", "exedev"})
 
 
 def username_segment() -> str:
     """The current user as a path-safe segment, for per-user artifact namespacing.
 
-    Resolves the same user that stamps provenance ``built_by``: the launch identity carried
-    in ``POORIN_PROVENANCE`` when present — so a remote worker namespaces under the submitting
-    human, not its own OS login — otherwise the local OS login. The raw name is reduced to a
-    clean segment: an email-like login drops its domain but keeps the whole local name
-    (``russell.power@host`` → ``russell-power``), and the result is lowercased with any
-    remaining character collapsed to ``-``. The full local name is kept so distinct users stay
+    Resolves the same user that stamps provenance ``built_by``: the local OS login. The raw
+    name is reduced to a clean segment: an email-like login drops its domain but keeps the
+    whole local name (``russell.power@host`` → ``russell-power``), and the result is
+    lowercased with any remaining character collapsed to ``-``. The full local name is kept so distinct users stay
     distinct. Raises ``RuntimeError`` if no username resolves — per-user namespacing must never
     silently fall back to a shared bucket.
     """
-    launch = _provenance_from_env()
-    raw = (launch.built_by if launch is not None else None) or _getuser()
+    raw = _getuser()
     if not raw:
-        raise RuntimeError(
-            "cannot resolve a username for per-user namespacing "
-            "(no launch provenance built_by, and getpass.getuser found none)"
-        )
+        raise RuntimeError("cannot resolve a username for per-user namespacing: getpass.getuser found none")
     name = raw.strip()
     if "@" in name:
         name = name.split("@", 1)[0]
@@ -247,8 +211,7 @@ def username_segment() -> str:
         raise RuntimeError(f"username {raw!r} did not sanitize to a usable path segment")
     if segment in _MACHINE_LOGINS:
         logger.warning(
-            "per-user namespace resolved to machine login %r — the launching human's identity "
-            "was not threaded to this process",
+            "per-user namespace resolved to machine login %r; launch from your own account",
             segment,
         )
     return segment

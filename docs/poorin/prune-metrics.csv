@@ -78,3 +78,4 @@ date,phase,step,first_party_lines,reachable_lines,reachable_modules,r1_imported_
 2026-10-08,Backlog,Delete the NCCL stall probes,133180,132202,423,6493,3.55,67.0,28.5,8017593240
 2026-10-08,Backlog,ty fails on warnings; lint runs ty on deletions,133191,132213,423,6493,3.57,67.8,29.4,8017593240
 2026-10-08,Backlog,affected_tests --base; uv run --no-sync in docs,133203,132225,423,6493,3.56,67.1,29.1,8017593240
+2026-10-08,Backlog,Delete the Iris-era defaults and launch provenance,133118,132140,423,6493,3.57,67.8,29.1,8017593240

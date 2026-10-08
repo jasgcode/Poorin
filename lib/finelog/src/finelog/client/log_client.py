@@ -238,7 +238,7 @@ class Table:
     """Handle to a registered namespace.
 
     Owns a bounded in-memory queue (oldest-drop on overflow), a background
-    flush thread, and retry/backoff with resolver invalidation on transient
+    flush thread, and retry/backoff with a reconnect on transient
     server failures. Created via :meth:`LogClient.get_table`; closing the
     LogClient drains every Table.
 
@@ -572,12 +572,10 @@ class LogClient:
         self,
         *,
         server_url: str,
-        resolver: Callable[[str], str] | None = None,
         timeout_ms: int = 10_000,
         interceptors: Iterable[Interceptor] = (),
     ) -> None:
         self._server_url = server_url
-        self._resolver: Callable[[str], str] = resolver if resolver is not None else (lambda url: url)
         self._timeout_ms = timeout_ms
         self._interceptors = tuple(interceptors)
 
@@ -587,7 +585,7 @@ class LogClient:
         self._log_service_client: LogServiceClientSync | None = None
 
         # The log namespace's Table is constructed lazily on first
-        # write_batch/fetch_logs so connect() does not pay the resolver cost
+        # write_batch/fetch_logs so connect() does not open a connection
         # when a caller only needs stats.
         self._tables: dict[str, Table] = {}
 
@@ -595,16 +593,13 @@ class LogClient:
     def connect(
         endpoint: str | tuple[str, int],
         *,
-        resolver: Callable[[str], str] | None = None,
         timeout_ms: int = 10_000,
         interceptors: Iterable[Interceptor] = (),
     ) -> "LogClient":
         """Construct a LogClient against ``endpoint``.
 
         ``endpoint`` is either an HTTP URL string or a ``(host, port)``
-        tuple. The optional ``resolver`` is invoked on each re-resolve so
-        callers who advertise their endpoint via a registry can plug that
-        lookup in here.
+        tuple.
         """
         if isinstance(endpoint, tuple):
             host, port = endpoint
@@ -613,7 +608,6 @@ class LogClient:
             server_url = endpoint
         return LogClient(
             server_url=server_url,
-            resolver=resolver,
             timeout_ms=timeout_ms,
             interceptors=interceptors,
         )
@@ -859,36 +853,24 @@ class LogClient:
             self._tables[LOG_NAMESPACE] = tbl
             return tbl
 
-    def _get_or_resolve_client(
+    def _get_or_create_client(
         self,
         cached: Callable[[], _ClientT | None],
         create: Callable[[str], _ClientT],
         label: str,
     ) -> _ClientT:
-        """Return the cached RPC client, resolving and building it once if absent.
+        """Return the cached RPC client, building it once if absent.
 
         ``create`` builds the client and installs it in its cache slot; it runs
-        under the lock so the install is atomic with the ``cached`` re-check.
+        under the lock so the install is atomic with the ``cached`` check.
         """
         with self._lock:
             if self._closed:
                 raise RuntimeError("LogClient is closed")
             if (client := cached()) is not None:
                 return client
-        # Resolve outside the lock: the resolver may block on a network RPC, and
-        # holding _lock across it stalls every other caller — notably a
-        # shutdown-path log emit parked on the same lock in _get_log_table, which
-        # deadlocks teardown. Re-check
-        # under the lock afterward so a caller that loses the resolve race reuses
-        # the winner's client instead of building a second one.
-        address = self._resolve()
-        with self._lock:
-            if self._closed:
-                raise RuntimeError("LogClient is closed")
-            if (client := cached()) is not None:
-                return client
-            client = create(address)
-            logger.info("LogClient resolved %s -> %s (%s)", self._server_url, address, label)
+            client = create(self._server_url)
+            logger.info("LogClient connected to %s (%s)", self._server_url, label)
             return client
 
     def _get_stats_client(self) -> StatsServiceClientSync:
@@ -902,7 +884,7 @@ class LogClient:
             )
             return self._stats_client
 
-        return self._get_or_resolve_client(lambda: self._stats_client, create, "stats")
+        return self._get_or_create_client(lambda: self._stats_client, create, "stats")
 
     def _get_log_service_client(self) -> LogServiceClientSync:
         def create(address: str) -> LogServiceClientSync:
@@ -915,13 +897,7 @@ class LogClient:
             )
             return self._log_service_client
 
-        return self._get_or_resolve_client(lambda: self._log_service_client, create, "log")
-
-    def _resolve(self) -> str:
-        address = self._resolver(self._server_url)
-        if not address:
-            raise ConnectionError(f"LogClient resolver returned empty address for {self._server_url!r}")
-        return address
+        return self._get_or_create_client(lambda: self._log_service_client, create, "log")
 
     def _invalidate(self, reason: str) -> None:
         with self._lock:

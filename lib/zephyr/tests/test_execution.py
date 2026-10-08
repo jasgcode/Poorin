@@ -22,9 +22,7 @@ from fray.types import ResourceConfig
 from zephyr import counters
 from zephyr.context import (
     _NON_RETRYABLE_ERRORS,
-    MAX_IRIS_WORKER_REPLICAS,
     ZephyrContext,
-    _distributed_worker_limit,
 )
 from zephyr.coordinator import (
     MAX_SHARD_FAILURES,
@@ -1690,18 +1688,6 @@ def test_report_from_a_previous_stage_is_rejected(coordinator):
         run.stage_generation,
     )
     assert run.completed_shards == 1
-
-
-@pytest.mark.parametrize(
-    ("configured", "expected"),
-    [
-        (None, MAX_IRIS_WORKER_REPLICAS),
-        (512, 512),
-        (4096, MAX_IRIS_WORKER_REPLICAS),
-    ],
-)
-def test_distributed_worker_limit_caps_iris_replicas(configured: int | None, expected: int):
-    assert _distributed_worker_limit(configured) == expected
 
 
 def test_failed_execution_drains_in_flight_tasks_before_teardown(coordinator):

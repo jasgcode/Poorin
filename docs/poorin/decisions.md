@@ -1269,6 +1269,20 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
 - **Cost if wrong:** About 1,000 lines and the Starlette dependency stay. Nothing serves the page
   yet: the coordinator builds the app, but nothing has mounted it since Iris was deleted (Deferred).
 
+### D91. Local defaults that replace the Iris-era ones
+
+- **When:** 2026-10-08, backlog. **Status:** Adopted.
+- **Decision:** With Zephyr's 1,000-replica Iris cap gone, an unset worker count is one worker
+  per CPU everywhere, as `LocalClient` already did. `compute_fuzzy_dups_attrs` requires
+  `max_parallelism`, as its step builder already did, instead of defaulting to the cap.
+  `verify_fuzzy_dups` falls back to one worker per shard, at most one per CPU. The profiler logs
+  an XProf viewer link only when `XprofUploadConfig.service_url` names a service; it defaulted to
+  `iris.oa.dev`.
+- **Why:** On `LocalClient` a worker is a thread in the launching process, so the old defaults
+  meant up to 1,000 threads for a dedup run, and a link to a service Poorin cannot reach.
+- **Cost if wrong:** A cloud backend (sub-project 2) chooses its own worker counts and passes
+  them explicitly.
+
 ---
 
 ## Deferred
@@ -1304,7 +1318,7 @@ Known gaps left open on purpose. Each names where it gets resolved.
 | `test_ruff_checks_marin_with_its_own_configuration_as_marin_did` only mirrors the `RUFF_CONFIGS` table | P1 review | D89: deleted |
 | `config/local.yaml`'s comment says outputs fall back to `/tmp/marin`; on a GCE VM, rigging falls back to `gs://marin-{region}` | P1 review | Sub-project 2 |
 | The ruff reformat's commit message says ruff checks each file's syntax tree; ruff has no such check, and a separate AST comparison confirmed the reformat | P1 review | Recorded here |
-| Code that only made sense under Iris survives the comment cleanup (D76): Zephyr's `MAX_IRIS_WORKER_REPLICAS` and the coordinator-owned worker group, Fray fields `LocalClient` ignores (`target_cluster`, `processes_per_task`, `setup_scripts`, `sync_packages`, actor retries), grug dispatch's forwarded environment, the profiler's `iris.oa.dev` xprof URL, `MARIN_PROVENANCE`, `LogClient.connect(resolver=...)`, and `EvalRecord`, which nothing writes | Cleanup | Pass 2 |
+| Code that only made sense under Iris survives the comment cleanup (D76): Zephyr's `MAX_IRIS_WORKER_REPLICAS` and the coordinator-owned worker group, Fray fields `LocalClient` ignores (`target_cluster`, `processes_per_task`, `setup_scripts`, `sync_packages`, actor retries), grug dispatch's forwarded environment, the profiler's `iris.oa.dev` xprof URL, `MARIN_PROVENANCE`, `LogClient.connect(resolver=...)`, and `EvalRecord`, which nothing writes | Cleanup | D89: the replica cap, the `iris.oa.dev` default, `POORIN_PROVENANCE` (renamed by D87), and the resolver are deleted; Fray's remote-only fields and grug's forwarded environment stay for sub-project 2, and `EvalRecord` with the kept evaluation workflow |
 | Haliax's docs fail `mkdocs build --strict` on 144 warnings, all present at `upstream-baseline`: unresolved cross-references to JAX, NumPy, and Equinox objects, and griffe docstring warnings | Cleanup | Open |
 | P1's timing columns in `prune-metrics.csv` are confounded by host load (load average about 250 from processes outside the checkout) and are not comparable with P0's | P1 | A rerun on a quiet machine |
 | Nothing serves Zephyr's dashboard: the coordinator builds its Starlette app, but no server has mounted it since Iris was deleted | D90 | Open |

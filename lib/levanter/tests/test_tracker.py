@@ -12,7 +12,6 @@ from typing import Tuple
 import draccus
 import pytest
 import yaml
-from rigging.provenance import LAUNCH_PROVENANCE_ENV, Provenance
 
 import levanter.tracker
 import levanter.tracker.tracker_fns as tracker_fns
@@ -195,56 +194,45 @@ def _init_with_fake_wandb(monkeypatch, config: WandbConfig) -> dict:
     return initialized
 
 
-def _launch_provenance(commit: str, dirty: bool) -> str:
-    return Provenance(tree_hash="5e1f2a3b4c", base_commit=commit, dirty=dirty, branch=None, built_by="ci").to_json()
-
-
-def test_wandb_run_records_launch_commit_and_dirty_state_from_iris_provenance(tmp_path, monkeypatch):
-    # An Iris task runs from a bundle without .git; only the submitter's provenance knows the commit.
-    monkeypatch.chdir(tmp_path)
-    monkeypatch.delenv("GIT_COMMIT", raising=False)
-    monkeypatch.setenv(LAUNCH_PROVENANCE_ENV, _launch_provenance("0123456789", dirty=True))
-
-    initialized = _init_with_fake_wandb(monkeypatch, WandbConfig(save_code=False, background=False))
-
-    assert initialized["config"] == {"git_commit": "0123456789", "git_dirty": True, "git_tree_hash": "5e1f2a3b4c"}
-    assert initialized["settings"] == {"git_commit": "0123456789"}
-
-
-def test_wandb_run_ignores_provenance_from_a_different_commit(tmp_path, monkeypatch):
-    monkeypatch.chdir(tmp_path)
-    monkeypatch.setenv("GIT_COMMIT", COMMIT)
-    monkeypatch.setenv(LAUNCH_PROVENANCE_ENV, _launch_provenance("fedcba9876", dirty=True))
-
-    initialized = _init_with_fake_wandb(monkeypatch, WandbConfig(save_code=False, background=False))
-
-    assert initialized["config"] == {"git_commit": COMMIT}
-
-
 def _git(args: list[str], cwd) -> str:
     return subprocess.run(["git", *args], cwd=cwd, check=True, capture_output=True, text=True).stdout.strip()
 
 
+def _dirty_checkout(path) -> None:
+    path.mkdir()
+    _git(["init", "-b", "main"], path)
+    _git(["config", "user.email", "t@example.com"], path)
+    _git(["config", "user.name", "tester"], path)
+    (path / "train.py").write_text("print('train')\n")
+    _git(["add", "train.py"], path)
+    _git(["commit", "-m", "init"], path)
+    (path / "train.py").write_text("print('edited')\n")
+
+
 def test_wandb_run_records_dirty_state_of_the_source_checkout_outside_the_working_directory(tmp_path, monkeypatch):
     source = tmp_path / "source"
-    source.mkdir()
-    _git(["init", "-b", "main"], source)
-    _git(["config", "user.email", "t@example.com"], source)
-    _git(["config", "user.name", "tester"], source)
-    (source / "train.py").write_text("print('train')\n")
-    _git(["add", "train.py"], source)
-    _git(["commit", "-m", "init"], source)
-    (source / "train.py").write_text("print('edited')\n")
+    _dirty_checkout(source)
     elsewhere = tmp_path / "elsewhere"
     elsewhere.mkdir()
     monkeypatch.chdir(elsewhere)
     monkeypatch.delenv("GIT_COMMIT", raising=False)
-    monkeypatch.delenv(LAUNCH_PROVENANCE_ENV, raising=False)
 
     initialized = _init_with_fake_wandb(monkeypatch, WandbConfig(save_code=str(source), background=False))
 
     assert initialized["config"]["git_commit"] == _git(["rev-parse", "HEAD"], source)
     assert initialized["config"]["git_dirty"] is True
+
+
+def test_wandb_run_ignores_the_checkout_state_when_git_commit_names_another_commit(tmp_path, monkeypatch):
+    source = tmp_path / "source"
+    _dirty_checkout(source)
+    monkeypatch.chdir(source)
+    monkeypatch.setenv("GIT_COMMIT", COMMIT)
+
+    initialized = _init_with_fake_wandb(monkeypatch, WandbConfig(save_code=str(source), background=False))
+
+    # The dirty flag describes the checkout, not the commit GIT_COMMIT names.
+    assert initialized["config"] == {"git_commit": COMMIT}
 
 
 def test_wandb_config_fork_initializes_child_without_resume(monkeypatch):

@@ -19,7 +19,7 @@ from fray.types import ResourceConfig
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from rigging.filesystem.storage_path import StoragePath, prefix_join
 from zephyr import counters
-from zephyr.context import MAX_IRIS_WORKER_REPLICAS, ZephyrContext
+from zephyr.context import ZephyrContext
 from zephyr.dataset import Dataset
 from zephyr.memory_store import MemoryStore, MemoryStoreUnavailable
 from zephyr.worker_context import zephyr_worker_ctx
@@ -824,9 +824,9 @@ def verify_fuzzy_dups(
 
     resources = worker_resources or ResourceConfig(cpu=2, ram="16g", disk=VERIFICATION_WORKER_SCRATCH)
     # The document store loads onto the worker pool, which must know its size,
-    # so an unset worker count falls back to one worker per shard.
+    # so an unset worker count falls back to one worker per shard, at most one per CPU.
     if max_workers is None:
-        max_workers = min(len(shards), MAX_IRIS_WORKER_REPLICAS)
+        max_workers = min(len(shards), os.cpu_count() or 1)
     if max_workers < 1:
         raise ValueError("max_workers must be at least 1")
     ctx_kwargs: dict[str, Any] = {
