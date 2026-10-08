@@ -1239,7 +1239,8 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
 
 ### D89. Verdicts on the review modules and the Deferred table
 
-- **When:** 2026-10-08. **Status:** Adopted. Plan: `plans/2026-10-08-backlog.md`.
+- **When:** 2026-10-08. **Status:** Adopted; superseded in part by D90 (Zephyr's dashboard
+  stays). Plan: `plans/2026-10-08-backlog.md`.
 - **Decision:** The plan's tables: delete the backward-compatibility shims (`fray.cluster`,
   `levanter.main.lora_dpo`), the Iris-era and fleet pieces (Zephyr's dashboard, Rigging's NCCL
   stall probes, Levanter's recovery types, pipeline partitioning, TPU VM shutdown, and gcloud
@@ -1252,6 +1253,21 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
   MuonH works locally.
 - **Cost if wrong:** A multi-node cloud run loses NCCL stall diagnostics, which return from
   `upstream-baseline` if needed.
+
+### D90. Keep Zephyr's dashboard
+
+- **When:** 2026-10-08, backlog. **Status:** Adopted.
+- **Decision:** Keep `zephyr.dashboard` as it is: the coordinator's status page (pipeline phase,
+  stage graph, shard progress, counters, workers), its read-only JSON API on Starlette, and the
+  queries over coordinator state. D89 had it deleted.
+- **Why:** The owner, 2026-10-08: it may be useful for local data runs, and it is already light.
+  It is one HTML page with no frontend build, about 1,000 lines in all, and Starlette is its only
+  dependency.
+- **Alternatives:** Serve the page with the standard library's `http.server` and drop Starlette;
+  write a static snapshot file instead of serving; replace it with a fuller progress log line.
+  The owner kept Starlette.
+- **Cost if wrong:** About 1,000 lines and the Starlette dependency stay. Nothing serves the page
+  yet: the coordinator builds the app, but nothing has mounted it since Iris was deleted (Deferred).
 
 ---
 
@@ -1291,3 +1307,4 @@ Known gaps left open on purpose. Each names where it gets resolved.
 | Code that only made sense under Iris survives the comment cleanup (D76): Zephyr's `MAX_IRIS_WORKER_REPLICAS` and the coordinator-owned worker group, Fray fields `LocalClient` ignores (`target_cluster`, `processes_per_task`, `setup_scripts`, `sync_packages`, actor retries), grug dispatch's forwarded environment, the profiler's `iris.oa.dev` xprof URL, `MARIN_PROVENANCE`, `LogClient.connect(resolver=...)`, and `EvalRecord`, which nothing writes | Cleanup | Pass 2 |
 | Haliax's docs fail `mkdocs build --strict` on 144 warnings, all present at `upstream-baseline`: unresolved cross-references to JAX, NumPy, and Equinox objects, and griffe docstring warnings | Cleanup | Open |
 | P1's timing columns in `prune-metrics.csv` are confounded by host load (load average about 250 from processes outside the checkout) and are not comparable with P0's | P1 | A rerun on a quiet machine |
+| Nothing serves Zephyr's dashboard: the coordinator builds its Starlette app, but no server has mounted it since Iris was deleted | D90 | Open |

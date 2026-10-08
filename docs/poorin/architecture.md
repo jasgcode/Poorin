@@ -16,8 +16,6 @@ that no longer exists. It runs in every full test run (`tools.affected_tests --a
   package `__init__` whose submodules are reached.
 - `uv run --no-sync python -m tools.reachability --why <module>` prints the full chain, and
   `--rank N` the modules that dominate the most reachable lines.
-- A purpose ending in "(review)" marks a module that looks vestigial for a one-GPU research stack and is a
-  candidate for the next pruning pass.
 
 ## Ranked verdicts
 
@@ -56,21 +54,22 @@ what was removed.
 Deleted outright: Iris (83,889), Verifyit (7,916), Shellbox (2,675), Ducky (2,074), and
 Taskcompendium (1,664). Levanter (85,297 to 62,330) keeps its name: its core is intact.
 
-## Candidates for the next pass
+## Reviewed and kept
 
-Modules marked "(review)" below, grouped by why they look vestigial on a one-GPU stack:
+These modules looked vestigial on a one-GPU stack. D89 and D90 reviewed them and kept each one
+for a stated user:
 
-- **Cluster and multi-region operations:** `zephyr.dashboard` (and its `app` and `coordinator`),
-  whose web app nothing serves; `rigging.filesystem.mirror`, which copies from other regions'
-  `marin-*` buckets; `levanter.model_cache`, a region-local shared Hugging Face cache.
-- **Upstream archive migration:** `finestore.migrations.m0001_manifest`, which upgrades upstream
-  archives. (The evaluation leftovers of the deleted serving flow were removed by D88.)
-- **Code that no longer serves its purpose:** `experiments.grug.fast_track.grugmuon_stacked`,
-  written for deleted MoE weights; `levanter.grug._moe.quack_symmetric_cute`, which raises on
-  compute capability 12 (the RTX 5090); `levanter.models.gpt2`, a test fixture and the harness's
-  default model.
-- **TPU-only code kept on purpose** (D81): `levanter.kernels.pallas.splash_attention`, the
-  `pallas_tpu` fused cross-entropy, and `poorin.scaling_laws.tpu_utils`.
+- `zephyr.dashboard` (with its `app` and `coordinator`): the coordinator's status page, kept for
+  local data runs (D90). Nothing serves it yet (Deferred, in `decisions.md`).
+- `rigging.filesystem.mirror`: Levanter stages tokenizers through `mirror://`.
+- `levanter.model_cache`: it is on the Hugging Face loading path.
+- `finestore.migrations.m0001_manifest`: Finestore runs it on every write.
+- `experiments.grug.fast_track.grugmuon_stacked` and `levanter.grug._moe.quack_symmetric_cute`:
+  fast-track's MuonH needs the stacked transform. QuACK runs only for expert-parallel meshes on
+  SM90 and SM100, which one GPU never forms.
+- `levanter.models.gpt2`: the tests' tiny model and Hugging Face round trips.
+- TPU-only code (D81): `levanter.kernels.pallas.splash_attention`, the `pallas_tpu` fused
+  cross-entropy, and `poorin.scaling_laws.tpu_utils`, which also feeds the AdamH heuristic.
 
 ## Modules
 
@@ -185,7 +184,7 @@ Modules marked "(review)" below, grouped by why they look vestigial on a one-GPU
 | `levanter.grad_accum` | Microbatched gradient accumulation wrapper and the batch-to-microbatch reshape | R2 |
 | `levanter.grug` | Package marker for Grug's array-first attention, loss, and sharding primitives | R2 |
 | `levanter.grug._moe` | Package marker for private Grug CuTe kernel backends | package |
-| `levanter.grug._moe.quack_symmetric_cute` | QuACK symmetric GEMM for Grug Muon Newton-Schulz; SM90 and SM100 only (review) | `levanter.grug._moe.quack_symmetric_cute` |
+| `levanter.grug._moe.quack_symmetric_cute` | QuACK symmetric GEMM for Grug Muon Newton-Schulz; SM90 and SM100 only | `levanter.grug._moe.quack_symmetric_cute` |
 | `levanter.grug.attention` | Re-exports Grug attention: masks, rotary, reference, FA4/CuTe, and XLA flash | R2 |
 | `levanter.grug.attention._core` | Grug attention dispatch, mask spec, rotary embedding, and reference attention | R2 |
 | `levanter.grug.attention._fa4_cute` | Sharded FA4/CuTe causal self-attention wrapper with packed-segment bounds | R2 |
@@ -210,11 +209,11 @@ Modules marked "(review)" below, grouped by why they look vestigial on a one-GPU
 | `levanter.kernels.pallas.fused_cross_entropy_loss.api` | Fused linear softmax cross-entropy dispatch across implementations, with block-size autotune cache | R2 |
 | `levanter.kernels.pallas.fused_cross_entropy_loss.batched_xla` | GPU batched-XLA fused cross-entropy with vocab tiling and custom backward | R2 |
 | `levanter.kernels.pallas.fused_cross_entropy_loss.config` | BlockSizes dataclass and per-device weight-tile byte budgets | R2 |
-| `levanter.kernels.pallas.fused_cross_entropy_loss.pallas_tpu` | TPU Pallas Mosaic kernels for fused cross-entropy forward and backward (review) | R2 |
+| `levanter.kernels.pallas.fused_cross_entropy_loss.pallas_tpu` | TPU Pallas Mosaic kernels for fused cross-entropy forward and backward | R2 |
 | `levanter.kernels.pallas.fused_cross_entropy_loss.reference` | Reference and streaming linear softmax cross-entropy without a fused kernel | R2 |
 | `levanter.kernels.pallas.fused_cross_entropy_loss.tuned_block_sizes` | Tuned fused cross-entropy block sizes by device kind and shape bucket | R2 |
 | `levanter.kernels.pallas.fused_cross_entropy_loss.xla` | Streaming vocab-blocked cross-entropy on plain XLA with custom VJP | R2 |
-| `levanter.kernels.pallas.splash_attention` | Lowering helpers for JAX TPU Splash Attention masks, segment IDs, block sizes (review) | R1 |
+| `levanter.kernels.pallas.splash_attention` | Lowering helpers for JAX TPU Splash Attention masks, segment IDs, block sizes | R1 |
 | `levanter.layers` | Re-exports attention and normalization layer classes | R1 |
 | `levanter.layers.attention` | Attention layers and backends (XLA, TE, Splash), gated, MLA, ragged paged attention | R1 |
 | `levanter.layers.attention_mask` | Structured AttentionMask (causal, segment, sliding window) and its materialization | R1 |
@@ -233,10 +232,10 @@ Modules marked "(review)" below, grouped by why they look vestigial on a one-GPU
 | `levanter.main.train_dpo` | Script: DPO training with a separate or adapter-base reference model | `levanter.main.train_dpo` |
 | `levanter.main.train_lm` | Script: Levanter LM training entrypoint and TrainLmConfig | R1 |
 | `levanter.metrics` | Metric type with reduction rules for aggregating across microbatches | R2 |
-| `levanter.model_cache` | Distributed-locked mirroring of HF model snapshots to a shared cache bucket (review) | R1 |
+| `levanter.model_cache` | Distributed-locked mirroring of HF model snapshots to a shared cache bucket | R1 |
 | `levanter.model_loading` | Loads and shards an LmHeadModel from a Levanter or HF checkpoint | R1 |
 | `levanter.models` | Package marker | R1 |
-| `levanter.models.gpt2` | GPT-2 model with HF conversion; production use is one config default (review) | R1 |
+| `levanter.models.gpt2` | GPT-2 model with HF conversion; production use is one config default | R1 |
 | `levanter.models.linear` | Marker base class identifying linear-like modules for optimizer routing | R1 |
 | `levanter.models.llama` | Llama model, config, and HF conversion | R1 |
 | `levanter.models.lm_model` | LM base classes: LmExample, LmConfig, LmHeadModel, and embedding resizing | R1 |
@@ -395,7 +394,7 @@ Modules marked "(review)" below, grouped by why they look vestigial on a one-GPU
 | `poorin.scaling_laws.eval_metrics_reader` | Reads `tracker_metrics.jsonl` eval records from finished runs, with W&B backfill | `poorin.scaling_laws.eval_metrics_reader` |
 | `poorin.scaling_laws.isoflop_analysis` | IsoFLOP scaling-law fitting and compute-optimal config prediction from run records | `poorin.scaling_laws.isoflop_analysis` |
 | `poorin.scaling_laws.scaling_plots` | Plotly isoFLOP and scaling-fit plots, saved locally or uploaded to W&B | `poorin.scaling_laws.scaling_plots` |
-| `poorin.scaling_laws.tpu_utils` | TPU v4/v5p memory specs and slice-size selection (review) | `poorin.scaling_laws.tpu_utils` |
+| `poorin.scaling_laws.tpu_utils` | TPU v4/v5p memory specs and slice-size selection | `poorin.scaling_laws.tpu_utils` |
 | `poorin.training` | Lazy re-export of LM and DPO pod training configs and run functions | R1 |
 | `poorin.training.run_environment` | Training-process env defaults (git commit, HF, TPU logging) and accelerator uv extras | R1 |
 | `poorin.training.training` | `LevanterCheckpoint` artifact, LM/DPO train configs, env setup, in-process Levanter launch | R1 |
@@ -413,9 +412,9 @@ Modules marked "(review)" below, grouped by why they look vestigial on a one-GPU
 | `zephyr.context` | ZephyrContext: runs pipelines on a dedicated or shared worker pool | R1 |
 | `zephyr.coordinator` | Coordinator actor: dispatches shard tasks to polling workers, tracks pipeline execution | R1 |
 | `zephyr.counters` | User-defined pipeline- and stage-scoped counters for task code | R1 |
-| `zephyr.dashboard` | Package marker for the pipeline dashboard (review) | R1 |
-| `zephyr.dashboard.app` | JSON API and standalone HTML dashboard ASGI app for pipeline status (review) | R1 |
-| `zephyr.dashboard.coordinator` | Builds dashboard responses from coordinator state (review) | R1 |
+| `zephyr.dashboard` | Package marker for the pipeline dashboard | R1 |
+| `zephyr.dashboard.app` | JSON API and standalone HTML dashboard ASGI app for pipeline status | R1 |
+| `zephyr.dashboard.coordinator` | Builds dashboard responses from coordinator state | R1 |
 | `zephyr.dataset` | Lazy Dataset API and logical ops: map, filter, group-by, reduce, join, write | R1 |
 | `zephyr.expr` | Column expressions for filter and projection pushdown, convertible to pyarrow | R1 |
 | `zephyr.input_file` | InputFileSpec describing one input file for datasets, plans, and readers | R1 |
@@ -456,7 +455,7 @@ Modules marked "(review)" below, grouped by why they look vestigial on a one-GPU
 | `rigging.filesystem.factory` | Guarded url_to_fs, open_url, filesystem with GCS region guard and S3 timeouts | R1 |
 | `rigging.filesystem.hashing` | Streaming MD5 of local and object-store files | `rigging.fsutil.cli` |
 | `rigging.filesystem.listing_cache` | Process-wide fsspec directory-listing cache defaults | R1 |
-| `rigging.filesystem.mirror` | mirror:// filesystem copying files from other-region marin-* GCS buckets on first read (review) | `rigging.filesystem.mirror` |
+| `rigging.filesystem.mirror` | mirror:// filesystem copying files from other-region marin-* GCS buckets on first read | `rigging.filesystem.mirror` |
 | `rigging.filesystem.paged_listing` | Paged single-level and recursive object listings for S3 and GCS | R1 |
 | `rigging.filesystem.protocols` | Normalizes fsspec protocol names | R1 |
 | `rigging.filesystem.s3_compat` | S3-compatible store setup: credentials, endpoints, addressing, request timeouts for CoreWeave and R2 | R1 |
@@ -522,7 +521,7 @@ Modules marked "(review)" below, grouped by why they look vestigial on a one-GPU
 | `finestore.eval` | EvalSample and rollout schemas with typed FineStore writer and reader for eval outputs | `poorin.evaluation.rollouts` |
 | `finestore.layout` | Format-v2 metadata models and object-key layout for FineStore archives | R2 |
 | `finestore.migrations` | Ordered on-disk format migrations, run before writes | R2 |
-| `finestore.migrations.m0001_manifest` | Upgrades listing-based v1 archives to transactional v2 manifests (review) | R2 |
+| `finestore.migrations.m0001_manifest` | Upgrades listing-based v1 archives to transactional v2 manifests | R2 |
 | `finestore.reader` | Snapshot reads, filtering, and deduplication over manifest-selected shards | R2 |
 | `finestore.schema` | Derives pyarrow schemas from pydantic models or dataclasses | `poorin.evaluation.rollouts` |
 | `finestore.shard_writer` | Streams Arrow batches into one atomically published Parquet shard | R2 |
@@ -551,7 +550,7 @@ Modules marked "(review)" below, grouped by why they look vestigial on a one-GPU
 | `experiments.grug.dispatch` | Submits a grug training entrypoint as a Fray job with forwarded runtime env | R2 |
 | `experiments.grug.fast_track` | Package marker | `experiments.grug.fast_track.heuristic` |
 | `experiments.grug.fast_track.adamh` | Local AdamH optimizer transform with sharding pinning before the hyperball norm | `experiments.grug.fast_track.heuristic` |
-| `experiments.grug.fast_track.grugmuon_stacked` | Distributed Newton-Schulz orthogonalization for stacked grug MoE expert weights (review) | `experiments.grug.fast_track.heuristic` |
+| `experiments.grug.fast_track.grugmuon_stacked` | Distributed Newton-Schulz orthogonalization for stacked grug MoE expert weights | `experiments.grug.fast_track.heuristic` |
 | `experiments.grug.fast_track.heuristic` | MoE heuristic setting MuonH/Adam LR, epsilon, beta2 from token budget and batch | `experiments.grug.fast_track.heuristic` |
 | `experiments.grug.fast_track.optimizer` | `GrugMoeMuonHConfig`: MuonH plus Adam with gate/router weight-decay masking | `experiments.grug.fast_track.heuristic` |
 | `experiments.grug.sharding_dump` | Dumps grug parameter and optimizer-state sharding specs as JSON artifacts | R2 |
