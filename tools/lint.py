@@ -13,7 +13,8 @@ Usage (from the repository root):
 Every file is checked for size, merge-conflict markers, trailing whitespace, and a final newline.
 Python, TOML, YAML, and JSON files must parse, and notebooks must have no outputs. Python files
 must start with their library's license header and pass ruff's linter and formatter, and ty
-checks the project when any Python file is linted. Ruff runs at the version Marin pinned (0.14.3)
+checks the project when any Python file changes, deleted ones included; ty's warnings fail the
+check as its errors do. A path named on the command line must exist. Ruff runs at the version Marin pinned (0.14.3)
 with each library's own configuration; ty runs at 0.0.84.
 
 A check fails when it finds a problem, even when ``--fix`` repaired it, so a fixed file is
@@ -37,8 +38,8 @@ from tools.reachability import REPO_ROOT
 
 RUFF = ("uvx", "ruff@0.14.3", "check")
 RUFF_FORMAT = ("uvx", "ruff@0.14.3", "format")
-# Errors fail the check; warnings are reported without failing it.
-TY = ("uvx", "ty@0.0.84", "check", "--exit-zero-on-warning")
+# Warnings fail the check too: the tree has none, so a new one is a regression.
+TY = ("uvx", "ty@0.0.84", "check", "--error-on-warning")
 MAX_FILE_BYTES = 500 * 1024
 # git treats a file as binary when its first 8000 bytes hold a NUL; NUL is still valid UTF-8.
 BINARY_SNIFF_BYTES = 8000
@@ -200,9 +201,9 @@ def _tool_output(command: Sequence[str], repo_root: Path) -> str | None:
     return None if result.returncode == 0 else (result.stdout + result.stderr).strip()
 
 
-def python_tool_problems(paths: Sequence[str], fix: bool, repo_root: Path) -> list[str]:
+def ruff_problems(paths: Sequence[str], fix: bool, repo_root: Path) -> list[str]:
     """Ruff's linter and formatter over every file, each file under its nearest configuration
-    unless ``ruff_config`` names one, and ty over the project."""
+    unless ``ruff_config`` names one."""
     if not paths:
         return []
     problems = []
@@ -220,17 +221,25 @@ def python_tool_problems(paths: Sequence[str], fix: bool, repo_root: Path) -> li
         problems.append(f"ruff format:\n{formatting}")
         if fix:
             _tool_output([*RUFF_FORMAT, *paths], repo_root)
-    ty = _tool_output(TY, repo_root)
-    if ty is not None:
-        problems.append(f"ty:\n{ty}")
     return problems
 
 
+def ty_problems(repo_root: Path) -> list[str]:
+    """ty over the project."""
+    ty = _tool_output(TY, repo_root)
+    return [] if ty is None else [f"ty:\n{ty}"]
+
+
 def lint(paths: Sequence[str], *, fix: bool, repo_root: Path = REPO_ROOT) -> list[str]:
-    """Problems in ``paths`` (repository-relative). Missing and excluded paths are skipped."""
-    files = sorted({path for path in paths if (repo_root / path).is_file() and not is_excluded(path)})
+    """Problems in ``paths`` (repository-relative). Excluded and missing paths get no file checks,
+    but a deleted Python file still runs ty, which checks the modules that imported it."""
+    included = [path for path in paths if not is_excluded(path)]
+    files = sorted({path for path in included if (repo_root / path).is_file()})
     problems = [f"{rel}: {problem}" for rel in files for problem in file_problems(repo_root, rel, fix)]
-    return problems + python_tool_problems([rel for rel in files if rel.endswith(".py")], fix, repo_root)
+    problems += ruff_problems([rel for rel in files if rel.endswith(".py")], fix, repo_root)
+    if any(path.endswith(".py") for path in included):
+        problems += ty_problems(repo_root)
+    return problems
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -248,7 +257,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         paths = staged_files(REPO_ROOT)
     else:
         paths = args.paths or changed_files(REPO_ROOT)
-    problems = lint(paths, fix=args.fix)
+    # A path named on the command line must exist; the changed-file lists may name deleted files.
+    problems = [f"{path}: no such file" for path in args.paths if not (REPO_ROOT / path).exists()]
+    problems += lint(paths, fix=args.fix)
     for problem in problems:
         print(problem)
     print("FAILED" if problems else "OK")

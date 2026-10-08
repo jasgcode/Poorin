@@ -13,17 +13,16 @@
 
 import sys
 import types
+from collections.abc import MutableSequence
 
-__path__: list[str]
+# Declared so linters know the star import below does not define it.
+__path__: MutableSequence[str]
 
 try:
     from dupekit_native import *  # noqa: F403
-    from dupekit_native import (
-        Bloom,
-        Document,
-        HashAlgorithm,
-        Transformation,
-    )
+
+    # ty cannot see a compiled extension's members; __init__.pyi types this package's API.
+    from dupekit_native import Bloom, Document, HashAlgorithm, Transformation  # ty: ignore[unresolved-import]
 except ImportError:
     _INSTALL_MSG = (
         "dupekit native extension (dupekit_native) is not installed. "

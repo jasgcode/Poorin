@@ -45,8 +45,8 @@ a non-trivial task, check whether a skill matches; if one does, follow it.
 # Lint and format the uncommitted change (--all-files for the whole tree)
 uv run --no-sync python -m tools.lint --fix
 
-# Type checking: errors fail, warnings are printed (tools.lint also runs it when Python files change)
-uvx ty@0.0.84 check --exit-zero-on-warning
+# Type checking: errors and warnings fail (tools.lint also runs it when Python files change)
+uvx ty@0.0.84 check --error-on-warning
 
 # Unit tests affected by the uncommitted change (--all for every suite)
 uv run --no-sync python -m tools.affected_tests

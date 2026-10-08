@@ -339,7 +339,8 @@ def _eval_pad_token_id(tokenizer: MarinTokenizer) -> int:
     return eos_token_id
 
 
-class LevanterHarnessLM(TemplateLM):
+# The base is `object` when lm-eval is absent, so ty sees a union of two classes.
+class LevanterHarnessLM(TemplateLM):  # ty: ignore[unsupported-base]
     """
     Levanter implementation of the LM Eval Harness TemplateLM interface.
 

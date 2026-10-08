@@ -1294,11 +1294,11 @@ Known gaps left open on purpose. Each names where it gets resolved.
 | `prune_check` starts a local Finelog server and confirms R2's metric rows (spec invariant item 5); R2 needs a way to receive the URL | D74 | D77 |
 | `experiments/rl_data_reviews/publish_review.py` imports the deleted `marina` package; it is unreachable and untested | P1 Task 7 | P2 |
 | Links to deleted skills remain in `experiments/grug/moe/agent.md`, `experiments/grug/fast_track/agent.md`, and `experiments/post_training/cat_count_canary/README.md` | P1 review | P2, P7, D75 |
-| ty's three noisy warning rules could be set per rule, so other warning rules would fail; `tools.lint` prints ty's warnings only when ty fails | P1 review | Pass 2 |
+| ty's three noisy warning rules could be set per rule, so other warning rules would fail; `tools.lint` prints ty's warnings only when ty fails | P1 review | D89: ty fails on warnings; the one left, an optional base class, is suppressed with its reason |
 | 26 code comments name pyrefly as the reason for a workaround | P1 review | Pass 2: workarounds ty does not need removed, the rest name ty |
-| ty does not check `lib/dupekit/src`, which D47 keeps | P1 review | Open |
-| A deletion-only change skips ty in `tools.lint`; `prune_check` runs it regardless | P1 review | Open |
-| `tools.lint PATH` skips a path that does not exist without saying so | P1 review | Open |
+| ty does not check `lib/dupekit/src`, which D47 keeps | P1 review | D89: ty checks it, and `lib/finelog/src` except protoc's generated stubs |
+| A deletion-only change skips ty in `tools.lint`; `prune_check` runs it regardless | P1 review | D89: any changed Python path runs ty, deletions included |
+| `tools.lint PATH` skips a path that does not exist without saying so | P1 review | D89: reported as a problem |
 | The contributing guide's PR checklist still says to verify GitHub CI, and `tools.affected_tests` has no mode for a committed branch | P1 review | Open |
 | Levanter's and Haliax's `AGENTS.md` and the `profile-training` skill show syncing `uv run` commands | P1 review | Open |
 | `test_ruff_checks_marin_with_its_own_configuration_as_marin_did` only mirrors the `RUFF_CONFIGS` table | P1 review | D89: deleted |

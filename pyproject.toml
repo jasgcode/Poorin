@@ -192,8 +192,12 @@ include = [
     "lib/rigging/src",
     "lib/zephyr/src",
     "lib/finestore/src",
+    "lib/finelog/src",
+    "lib/dupekit/src",
     "tools",
 ]
+# protoc's generated stubs give enums a metaclass that ty rejects.
+exclude = ["lib/finelog/src/finelog/rpc/*_pb2.pyi"]
 
 [tool.ty.rules]
 # Mostly third-party stub noise (JAX, Equinox, NumPy arrays); pyrefly's configuration turned

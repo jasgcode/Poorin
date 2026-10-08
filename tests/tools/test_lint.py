@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from tools.lint import file_problems, is_excluded, lint
+from tools.lint import file_problems, is_excluded, lint, main
 
 MARIN = "# Copyright The Marin Authors\n# SPDX-License-Identifier: Apache-2.0\n"
 HALIAX = "# Copyright The Levanter Authors\n#\n# SPDX-License-Identifier: Apache-2.0\n"
@@ -104,4 +104,18 @@ def test_a_run_that_fixed_a_file_still_fails_and_the_next_run_passes(tmp_path):
 
 
 def test_paths_that_no_longer_exist_are_skipped(tmp_path):
+    assert lint(["deleted.md"], fix=False, repo_root=tmp_path) == []
+
+
+def test_a_deleted_python_file_still_runs_ty(tmp_path, monkeypatch):
+    # Regression: a deletion-only change skipped ty, which would have caught the modules still
+    # importing the deleted one.
+    runs = []
+    monkeypatch.setattr("tools.lint.ty_problems", lambda repo_root: runs.append(repo_root) or [])
     assert lint(["deleted.py"], fix=False, repo_root=tmp_path) == []
+    assert runs == [tmp_path]
+
+
+def test_a_path_named_on_the_command_line_must_exist(capsys):
+    assert main(["no/such/notes.md"]) == 1
+    assert "no/such/notes.md: no such file" in capsys.readouterr().out
