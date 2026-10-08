@@ -1235,6 +1235,22 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
   every launch imports about 540 more modules and spends about 0.25 s longer in imports (R1: 3.37 s
   to 3.62 s); the cut D82 defers to sub-project 4 would remove it.
 
+### D89. Verdicts on the review modules and the Deferred table
+
+- **When:** 2026-10-08. **Status:** Adopted. Plan: `plans/2026-10-08-backlog.md`.
+- **Decision:** The plan's tables: delete the backward-compatibility shims (`fray.cluster`,
+  `levanter.main.lora_dpo`), the Iris-era and fleet pieces (Zephyr's dashboard, Rigging's NCCL
+  stall probes, Levanter's recovery types, pipeline partitioning, TPU VM shutdown, and gcloud
+  arguments), and two unused Finelog client modules; keep the TPU kernels, GPT-2, the Hugging Face
+  model cache, `mirror://`, Finestore's migration, and fast-track's QuACK path, each for a stated
+  user. Close every open Deferred row: fix the tests and tools it names, make ty fail on warnings
+  now that none remain, and record the rows not worth fixing.
+- **Why:** The owner, 2026-10-08: address the backlog. QuACK was flagged for not running on the
+  RTX 5090; it runs only for expert-parallel meshes, which one GPU never forms, so fast-track's
+  MuonH works locally.
+- **Cost if wrong:** A multi-node cloud run loses NCCL stall diagnostics, which return from
+  `upstream-baseline` if needed.
+
 ---
 
 ## Deferred
