@@ -22,6 +22,7 @@ import time
 from collections.abc import Sequence
 
 from datasets import load_dataset_builder
+from fray.types import ResourceConfig
 from levanter.data.text.datasets import (
     DatasetComponent,
     HfDatasetSourceConfig,
@@ -31,8 +32,7 @@ from levanter.data.text.datasets import (
 from levanter.data.text.formats import LmDatasetFormatBase, TextLmDatasetFormat
 from levanter.store.cache import ShardedCacheLayout
 from levanter.tokenizers import TokenizerBackend
-from poorin_fray.types import ResourceConfig
-from poorin_rigging.filesystem.storage_path import StoragePath, prefix_join
+from rigging.filesystem.storage_path import StoragePath, prefix_join
 from zephyr.context import ZephyrContext
 from zephyr.dataset import Dataset, FileEntry
 from zephyr.readers import load_file

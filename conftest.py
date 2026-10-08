@@ -9,8 +9,8 @@ kept as fixtures in ``config/testing/``. The setting starts at configuration tim
 experiment modules resolve temp-bucket paths when they are imported, before any fixture runs.
 """
 
-import poorin_rigging.filesystem.cluster_config as cluster_config
 import pytest
+import rigging.filesystem.cluster_config as cluster_config
 
 MARIN_FIXTURE_CLUSTERS = "config/testing"
 _marin_layout = pytest.MonkeyPatch()

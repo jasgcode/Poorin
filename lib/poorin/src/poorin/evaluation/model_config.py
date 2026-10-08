@@ -11,7 +11,7 @@ from enum import StrEnum
 from pathlib import Path
 
 import draccus
-from poorin_rigging.filesystem.storage_path import StoragePath
+from rigging.filesystem.storage_path import StoragePath
 
 
 class ServeBackend(StrEnum):

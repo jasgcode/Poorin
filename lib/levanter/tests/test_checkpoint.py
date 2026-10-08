@@ -28,9 +28,9 @@ from fsspec.implementations.memory import MemoryFileSystem
 from haliax import Axis
 from jax import ShapeDtypeStruct
 from jax import numpy as jnp
-from poorin_rigging import telemetry
-from poorin_rigging.filesystem.storage_path import StoragePath
-from poorin_rigging.testing import RecordingTelemetryTransport
+from rigging import telemetry
+from rigging.filesystem.storage_path import StoragePath
+from rigging.testing import RecordingTelemetryTransport
 from levanter.testing.helpers import MLP, arrays_only, assert_trees_not_close, use_test_mesh
 
 from levanter.callbacks import StepInfo

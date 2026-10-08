@@ -8,7 +8,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 import pytest
-from poorin_rigging.filesystem.storage_path import StoragePath
+from rigging.filesystem.storage_path import StoragePath
 
 from levanter.store.jagged_array import JaggedArrayStore, PreparedBatch, _ts_open_async
 

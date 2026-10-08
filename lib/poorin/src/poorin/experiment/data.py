@@ -29,10 +29,10 @@ weights live in the experiment that chose them, not buried in a catalog constant
 from collections.abc import Callable, Mapping, Sequence
 
 import click
+from fray.types import ResourceConfig
 from levanter.data.text.datasets import DEFAULT_LM_DATA_SHUFFLE, BlockShuffleConfig, LmDataConfig, UrlDatasetSourceConfig
 from levanter.data.text.formats import TextLmDatasetFormat
-from poorin_fray.types import ResourceConfig
-from poorin_rigging.filesystem.storage_path import prefix_join
+from rigging.filesystem.storage_path import prefix_join
 
 from poorin.datakit.download.huggingface import DownloadConfig, download_hf
 from poorin.execution.artifact import Artifact

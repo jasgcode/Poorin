@@ -6,8 +6,8 @@ from collections.abc import Iterator, Sequence
 from typing import Any, TypedDict
 
 import dupekit
-from poorin_fray.types import ResourceConfig
-from poorin_rigging.filesystem.storage_path import StoragePath
+from fray.types import ResourceConfig
+from rigging.filesystem.storage_path import StoragePath
 from zephyr import counters
 from zephyr.context import ZephyrContext
 from zephyr.dataset import Dataset, ShardInfo

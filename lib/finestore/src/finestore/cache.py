@@ -10,8 +10,8 @@ import logging
 import threading
 from collections.abc import Callable
 
-from poorin_rigging.filesystem.cluster_config import marin_temp_bucket
-from poorin_rigging.filesystem.storage_path import StoragePath
+from rigging.filesystem.cluster_config import marin_temp_bucket
+from rigging.filesystem.storage_path import StoragePath
 
 from finestore.reader import ReadView
 from finestore.store import DataStore

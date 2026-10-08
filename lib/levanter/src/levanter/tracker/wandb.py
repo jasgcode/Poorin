@@ -22,7 +22,7 @@ import numpy as np
 import wandb
 from draccus import field
 from git import InvalidGitRepositoryError, NoSuchPathError, Repo
-from poorin_rigging.provenance import Provenance
+from rigging.provenance import Provenance
 
 from levanter.tracker.background import maybe_wrap_background
 from levanter.tracker.helpers import generate_pip_freeze, infer_experiment_git_root

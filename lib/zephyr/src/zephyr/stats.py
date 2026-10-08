@@ -24,7 +24,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import ClassVar
 
-from poorin_finelog.client import LogClient, Table
+from finelog.client import LogClient, Table
 
 logger = logging.getLogger(__name__)
 

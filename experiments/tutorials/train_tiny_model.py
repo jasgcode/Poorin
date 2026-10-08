@@ -18,6 +18,7 @@ versions — they are shared caches that should not rebuild on a mutable version
 """
 
 import click
+from fray.types import ANY_REGION, ResourceConfig
 from levanter.optim.config import AdamConfig
 from poorin.execution.lazy import ArtifactStep
 from poorin.experiment.cli import build_options
@@ -25,7 +26,6 @@ from poorin.experiment.data import pretokenized, tokenized
 from poorin.experiment.train import train_lm
 from poorin.processing.tokenize.tokenize import TokenizedCache
 from poorin.training.training import LevanterCheckpoint
-from poorin_fray.types import ANY_REGION, ResourceConfig
 
 from experiments.llama import llama_150m, llama_nano
 from experiments.marin_tokenizer import marin_tokenizer

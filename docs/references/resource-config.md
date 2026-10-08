@@ -7,7 +7,7 @@ Marin dispatches jobs through Fray. Fray's only backend, `LocalClient`, runs eac
 The main entry point for resource configuration. Use the static factory methods to create configurations:
 
 ```python
-from poorin_fray.cluster import ResourceConfig
+from fray.cluster import ResourceConfig
 
 # TPU configuration
 tpu_config = ResourceConfig.with_tpu("v4-8")
@@ -21,7 +21,7 @@ single_gpu = ResourceConfig.with_gpu("H100")  # count defaults to 1
 cpu_config = ResourceConfig.with_cpu()
 ```
 
-::: poorin_fray.types.ResourceConfig
+::: fray.types.ResourceConfig
 
 ## Device Configurations
 
@@ -29,12 +29,12 @@ These are the underlying device types wrapped by `ResourceConfig`:
 
 ### CPU
 
-::: poorin_fray.types.CpuConfig
+::: fray.types.CpuConfig
 
 ### GPU
 
-::: poorin_fray.types.GpuConfig
+::: fray.types.GpuConfig
 
 ### TPU
 
-::: poorin_fray.types.TpuConfig
+::: fray.types.TpuConfig

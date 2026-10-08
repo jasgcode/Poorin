@@ -8,8 +8,8 @@ import os
 import subprocess
 
 import pytest
+from finelog.embedded import require_embedded_server
 from levanter.tracker.finelog_metrics import LevanterMetricsWriter
-from poorin_finelog.embedded import require_embedded_server
 
 from tools.prune_check import (
     METRIC_COLUMNS,

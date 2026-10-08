@@ -9,7 +9,7 @@ import finestore.cache as cache_module
 from finestore.cache import PersistentKvCache
 from finestore.reader import ReadView
 from finestore.store import DataStore
-from poorin_rigging.filesystem.storage_path import StoragePath
+from rigging.filesystem.storage_path import StoragePath
 
 _CACHE_PROCESS = textwrap.dedent(
     """
@@ -20,7 +20,7 @@ _CACHE_PROCESS = textwrap.dedent(
     import finestore.cache as cache_module
     from finestore.cache import PersistentKvCache
     from finestore.store import DataStore
-    from poorin_rigging.filesystem.storage_path import StoragePath
+    from rigging.filesystem.storage_path import StoragePath
 
     root, mode = sys.argv[1:]
     StoragePath.is_remote = property(lambda self: True)

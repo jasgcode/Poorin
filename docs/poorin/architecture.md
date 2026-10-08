@@ -42,15 +42,16 @@ Pass 2's edge cuts and their measurements are in `decisions.md` (D81, D82) and
 
 ## Libraries forked and made lighter
 
-Poorin renamed the libraries it cut heavily (D85). Source lines against `upstream-baseline`; each
-library's README lists what was removed.
+Poorin renamed Marin's core package to `poorin` and gave the other libraries it cut heavily `poorin-`
+distribution names (D85, D86). Source lines against `upstream-baseline`; each library's README lists
+what was removed.
 
-| Library | Poorin name | Upstream name | Before | Now |
+| Library | Import | Distribution (upstream) | Before | Now |
 |---|---|---|---|---|
-| Experiment framework | `poorin` | `marin` (`marin-core`) | 65,588 | 23,602 |
-| Finelog client | `poorin_finelog` | `finelog` | 10,023 Python, plus 74,921 Rust | 3,417 Python |
-| Rigging | `poorin_rigging` | `rigging` | 14,465 | 10,352 |
-| Fray | `poorin_fray` | `fray` | 2,768 | 1,925 |
+| Experiment framework | `poorin` (was `marin`) | `poorin` (`marin-core`) | 65,588 | 23,602 |
+| Finelog client | `finelog` | `poorin-finelog` (`marin-finelog`) | 10,023 Python, plus 74,921 Rust | 3,417 Python |
+| Rigging | `rigging` | `poorin-rigging` (`marin-rigging`) | 14,465 | 10,352 |
+| Fray | `fray` | `poorin-fray` (`marin-fray`) | 2,768 | 1,925 |
 
 Deleted outright: Iris (83,889), Verifyit (7,916), Shellbox (2,675), Ducky (2,074), and
 Taskcompendium (1,664). Levanter (85,297 to 62,330) keeps its name: its core is intact.
@@ -60,13 +61,13 @@ Taskcompendium (1,664). Levanter (85,297 to 62,330) keeps its name: its core is 
 Modules marked "(review)" below, grouped by why they look vestigial on a one-GPU stack:
 
 - **Cluster and multi-region operations:** `zephyr.dashboard` (and its `app` and `coordinator`),
-  whose web app nothing serves; `poorin_rigging.filesystem.mirror`, which copies from other regions'
+  whose web app nothing serves; `rigging.filesystem.mirror`, which copies from other regions'
   `marin-*` buckets; `levanter.model_cache`, a region-local shared Hugging Face cache;
   `levanter.infra.cli_helpers`, of which Marin uses only `get_git_commit`, `default_run_id`, and
   `load_config`; `levanter.utils.cloud_utils`, which registers TPU VM shutdown.
-- **NCCL stall diagnostics:** `poorin_rigging.telemetry.probes` and its `nccl`, `nccl_client`,
-  `nccl_ras`, and `runner` modules, with `poorin_rigging.telemetry.metrics` and the fixtures in
-  `poorin_rigging.testing`. A single-GPU run has no NCCL communicators.
+- **NCCL stall diagnostics:** `rigging.telemetry.probes` and its `nccl`, `nccl_client`,
+  `nccl_ras`, and `runner` modules, with `rigging.telemetry.metrics` and the fixtures in
+  `rigging.testing`. A single-GPU run has no NCCL communicators.
 - **Evaluation leftovers from the deleted serving flow:** `poorin.evaluation.eval_env`,
   `model_config`, `model_identity`, and most of `lm_eval_samples`;
   `finestore.migrations.m0001_manifest`, which upgrades upstream archives.
@@ -75,8 +76,8 @@ Modules marked "(review)" below, grouped by why they look vestigial on a one-GPU
   is used; `experiments.grug.fast_track.grugmuon_stacked`, written for deleted MoE weights;
   `levanter.grug._moe.quack_symmetric_cute`, which raises on compute capability 12 (the RTX 5090);
   `levanter.models.gpt2`, a test fixture and the harness's default model.
-- **Rules this tree breaks:** `poorin_fray.cluster` and `levanter.main.lora_dpo` are
-  backward-compatibility shims (AGENTS.md: no backward compatibility); `poorin_finelog.client`
+- **Rules this tree breaks:** `fray.cluster` and `levanter.main.lora_dpo` are
+  backward-compatibility shims (AGENTS.md: no backward compatibility); `finelog.client`
   re-exports `object_query_client` and `remote_log_handler`, which nothing else uses.
 - **TPU-only code kept on purpose** (D81): `levanter.kernels.pallas.splash_attention`, the
   `pallas_tpu` fused cross-entropy, and `poorin.scaling_laws.tpu_utils`.
@@ -319,7 +320,7 @@ Modules marked "(review)" below, grouped by why they look vestigial on a one-GPU
 | `levanter.utils.hardware_topology` | Device topology summary: TPU coordinates and nvidia-smi topology matrix | R2 |
 | `levanter.utils.hf_utils` | UTF-8 byte length of a tokenizer token | R2 |
 | `levanter.utils.jax_utils` | JAX helpers: CPU-device contexts, multihost sync and barriers, tree key paths, sharding | R1 |
-| `levanter.utils.logging` | Logging setup via poorin_rigging, loading-time iterator, transformers warning suppression | R2 |
+| `levanter.utils.logging` | Logging setup via rigging, loading-time iterator, transformers warning suppression | R2 |
 | `levanter.utils.mesh` | MeshConfig and JAX mesh construction from ICI and DCN axis sizes | R1 |
 | `levanter.utils.profile_dirs` | Resolves and mirrors profiler output directories for a W&B run | `poorin.profiling.cli` |
 | `levanter.utils.py_utils` | CPU core count, dataclass default init, global RNG seeding, fail-safe JSON encoder | R1 |
@@ -456,87 +457,87 @@ Modules marked "(review)" below, grouped by why they look vestigial on a one-GPU
 | `zephyr.worker_context` | Worker context exposed to task code, with counter snapshot types | R1 |
 | `zephyr.writers` | Writers for JSONL, Parquet, Vortex, and binary outputs, plus a threaded batch writer | R1 |
 
-### poorin_rigging
+### rigging
 
 | Module | Purpose | Reached from |
 |---|---|---|
-| `poorin_rigging` | Package marker | R1 |
-| `poorin_rigging.cache` | Content hashes of files, directories, and dependencies for compiled-artifact cache keys | R2 |
-| `poorin_rigging.config_discovery` | Finds the project root and cluster YAML config files | R1 |
-| `poorin_rigging.filesystem` | Package marker for storage paths, cluster data config, guarded filesystem access | R1 |
-| `poorin_rigging.filesystem.atomic` | Atomic local downloads and object-store write-then-rename | R2 |
-| `poorin_rigging.filesystem.buckets` | Routes each bucket URL to its declared backend filesystem (GCS, CoreWeave, R2) | R1 |
-| `poorin_rigging.filesystem.bulk_deletion` | Batched, throttled bulk deletion attached to S3 and GCS filesystems | R1 |
-| `poorin_rigging.filesystem.cluster_config` | Cluster DataConfig: bucket and region resolution, storage prefix, temp buckets, GCS location checks | R1 |
-| `poorin_rigging.filesystem.conditional_object` | Compare-and-swap reads and writes of one object on local, GCS, or S3 | R1 |
-| `poorin_rigging.filesystem.cross_region` | Cross-region GCS read guard and process-wide transfer byte budget | R1 |
-| `poorin_rigging.filesystem.distributed_lock` | Lease-based distributed locks on GCS, S3, local files, or fsspec | R1 |
-| `poorin_rigging.filesystem.factory` | Guarded url_to_fs, open_url, filesystem with GCS region guard and S3 timeouts | R1 |
-| `poorin_rigging.filesystem.hashing` | Streaming MD5 of local and object-store files | `poorin_rigging.fsutil.cli` |
-| `poorin_rigging.filesystem.listing_cache` | Process-wide fsspec directory-listing cache defaults | R1 |
-| `poorin_rigging.filesystem.mirror` | mirror:// filesystem copying files from other-region marin-* GCS buckets on first read (review) | `poorin_rigging.filesystem.mirror` |
-| `poorin_rigging.filesystem.paged_listing` | Paged single-level and recursive object listings for S3 and GCS | R1 |
-| `poorin_rigging.filesystem.protocols` | Normalizes fsspec protocol names | R1 |
-| `poorin_rigging.filesystem.s3_compat` | S3-compatible store setup: credentials, endpoints, addressing, request timeouts for CoreWeave and R2 | R1 |
-| `poorin_rigging.filesystem.s3_errors` | Classifies retryable S3 and object-store transport errors | R2 |
-| `poorin_rigging.filesystem.storage_path` | StoragePath value type: parsed storage URL with I/O verbs and path helpers | R1 |
-| `poorin_rigging.filesystem.transfer` | Copy, move, and sync plans and execution across routed filesystems | `poorin_rigging.fsutil.cli` |
-| `poorin_rigging.fsutil` | Package marker for the fsutil bucket browser and CLI | `poorin_rigging.fsutil.cli` |
-| `poorin_rigging.fsutil.cli` | fsutil command line: list, read, size, copy, sync, remove across buckets | `poorin_rigging.fsutil.cli` |
-| `poorin_rigging.fsutil.compression` | Compression detection for file previews | `poorin_rigging.fsutil.compression` |
-| `poorin_rigging.fsutil.deletion` | Streamed parallel deletion of object-store prefixes | `poorin_rigging.fsutil.deletion` |
-| `poorin_rigging.fsutil.listing` | Directory-listing entries and file previews over bucket-routed filesystems | `poorin_rigging.fsutil.listing` |
-| `poorin_rigging.fsutil.parquet` | Parquet schema, summary, and row previews for fsutil | `poorin_rigging.fsutil.parquet` |
-| `poorin_rigging.fsutil.render` | Renders sizes, listings, JSON tables, and file previews as text | `poorin_rigging.fsutil.render` |
-| `poorin_rigging.fsutil.tui` | Curses bucket browser and file viewer for fsutil browse and show | `poorin_rigging.fsutil.tui` |
-| `poorin_rigging.fsutil.usage` | Object-storage usage scans and deletion-candidate reports | `poorin_rigging.fsutil.usage` |
-| `poorin_rigging.fsutil.verified_copy` | Resumable, hash-verified prefix copies across routed filesystems | `poorin_rigging.fsutil.verified_copy` |
-| `poorin_rigging.log_setup` | Logging setup: level-prefix formatter, log ring buffer, fault handler | R1 |
-| `poorin_rigging.provenance` | Build provenance: content tree hash plus git, user, and launch context | R1 |
-| `poorin_rigging.telemetry` | Bounded, best-effort counters, gauges, histograms, and events exported to Finelog | R2 |
-| `poorin_rigging.telemetry.metrics` | Publishes externally collected metric snapshots into telemetry (review) | R2 |
-| `poorin_rigging.telemetry.probes` | Package marker for NVIDIA and NCCL telemetry probes (review) | R2 |
-| `poorin_rigging.telemetry.probes.nccl` | Periodic NCCL RAS collection and stall capture published as telemetry (review) | R2 |
-| `poorin_rigging.telemetry.probes.nccl_client` | Bounded client for NCCL's RAS text protocol (review) | R2 |
-| `poorin_rigging.telemetry.probes.nccl_ras` | Parses and reduces NCCL RAS status responses into per-rank reports (review) | R2 |
-| `poorin_rigging.telemetry.probes.runner` | Bounded subprocess runner and periodic driver for hardware probes (review) | R2 |
-| `poorin_rigging.telemetry.serialization` | Bounded JSON serialization and validation for telemetry records | R2 |
-| `poorin_rigging.testing` | Recording telemetry transport and NCCL RAS payload fixture for tests (review) | test support |
-| `poorin_rigging.timing` | Time types and helpers: Deadline, Duration, Timer, rate limiters, backoff retry | R1 |
+| `rigging` | Package marker | R1 |
+| `rigging.cache` | Content hashes of files, directories, and dependencies for compiled-artifact cache keys | R2 |
+| `rigging.config_discovery` | Finds the project root and cluster YAML config files | R1 |
+| `rigging.filesystem` | Package marker for storage paths, cluster data config, guarded filesystem access | R1 |
+| `rigging.filesystem.atomic` | Atomic local downloads and object-store write-then-rename | R2 |
+| `rigging.filesystem.buckets` | Routes each bucket URL to its declared backend filesystem (GCS, CoreWeave, R2) | R1 |
+| `rigging.filesystem.bulk_deletion` | Batched, throttled bulk deletion attached to S3 and GCS filesystems | R1 |
+| `rigging.filesystem.cluster_config` | Cluster DataConfig: bucket and region resolution, storage prefix, temp buckets, GCS location checks | R1 |
+| `rigging.filesystem.conditional_object` | Compare-and-swap reads and writes of one object on local, GCS, or S3 | R1 |
+| `rigging.filesystem.cross_region` | Cross-region GCS read guard and process-wide transfer byte budget | R1 |
+| `rigging.filesystem.distributed_lock` | Lease-based distributed locks on GCS, S3, local files, or fsspec | R1 |
+| `rigging.filesystem.factory` | Guarded url_to_fs, open_url, filesystem with GCS region guard and S3 timeouts | R1 |
+| `rigging.filesystem.hashing` | Streaming MD5 of local and object-store files | `rigging.fsutil.cli` |
+| `rigging.filesystem.listing_cache` | Process-wide fsspec directory-listing cache defaults | R1 |
+| `rigging.filesystem.mirror` | mirror:// filesystem copying files from other-region marin-* GCS buckets on first read (review) | `rigging.filesystem.mirror` |
+| `rigging.filesystem.paged_listing` | Paged single-level and recursive object listings for S3 and GCS | R1 |
+| `rigging.filesystem.protocols` | Normalizes fsspec protocol names | R1 |
+| `rigging.filesystem.s3_compat` | S3-compatible store setup: credentials, endpoints, addressing, request timeouts for CoreWeave and R2 | R1 |
+| `rigging.filesystem.s3_errors` | Classifies retryable S3 and object-store transport errors | R2 |
+| `rigging.filesystem.storage_path` | StoragePath value type: parsed storage URL with I/O verbs and path helpers | R1 |
+| `rigging.filesystem.transfer` | Copy, move, and sync plans and execution across routed filesystems | `rigging.fsutil.cli` |
+| `rigging.fsutil` | Package marker for the fsutil bucket browser and CLI | `rigging.fsutil.cli` |
+| `rigging.fsutil.cli` | fsutil command line: list, read, size, copy, sync, remove across buckets | `rigging.fsutil.cli` |
+| `rigging.fsutil.compression` | Compression detection for file previews | `rigging.fsutil.compression` |
+| `rigging.fsutil.deletion` | Streamed parallel deletion of object-store prefixes | `rigging.fsutil.deletion` |
+| `rigging.fsutil.listing` | Directory-listing entries and file previews over bucket-routed filesystems | `rigging.fsutil.listing` |
+| `rigging.fsutil.parquet` | Parquet schema, summary, and row previews for fsutil | `rigging.fsutil.parquet` |
+| `rigging.fsutil.render` | Renders sizes, listings, JSON tables, and file previews as text | `rigging.fsutil.render` |
+| `rigging.fsutil.tui` | Curses bucket browser and file viewer for fsutil browse and show | `rigging.fsutil.tui` |
+| `rigging.fsutil.usage` | Object-storage usage scans and deletion-candidate reports | `rigging.fsutil.usage` |
+| `rigging.fsutil.verified_copy` | Resumable, hash-verified prefix copies across routed filesystems | `rigging.fsutil.verified_copy` |
+| `rigging.log_setup` | Logging setup: level-prefix formatter, log ring buffer, fault handler | R1 |
+| `rigging.provenance` | Build provenance: content tree hash plus git, user, and launch context | R1 |
+| `rigging.telemetry` | Bounded, best-effort counters, gauges, histograms, and events exported to Finelog | R2 |
+| `rigging.telemetry.metrics` | Publishes externally collected metric snapshots into telemetry (review) | R2 |
+| `rigging.telemetry.probes` | Package marker for NVIDIA and NCCL telemetry probes (review) | R2 |
+| `rigging.telemetry.probes.nccl` | Periodic NCCL RAS collection and stall capture published as telemetry (review) | R2 |
+| `rigging.telemetry.probes.nccl_client` | Bounded client for NCCL's RAS text protocol (review) | R2 |
+| `rigging.telemetry.probes.nccl_ras` | Parses and reduces NCCL RAS status responses into per-rank reports (review) | R2 |
+| `rigging.telemetry.probes.runner` | Bounded subprocess runner and periodic driver for hardware probes (review) | R2 |
+| `rigging.telemetry.serialization` | Bounded JSON serialization and validation for telemetry records | R2 |
+| `rigging.testing` | Recording telemetry transport and NCCL RAS payload fixture for tests (review) | test support |
+| `rigging.timing` | Time types and helpers: Deadline, Duration, Timer, rate limiters, backoff retry | R1 |
 
-### poorin_fray
-
-| Module | Purpose | Reached from |
-|---|---|---|
-| `poorin_fray` | Package docstring only; directs callers to import from submodules | R1 |
-| `poorin_fray.actor` | Actor protocols: handles, futures, method calls, actor groups, current-actor context | R1 |
-| `poorin_fray.client` | Client and JobHandle protocols for job submission, plus wait_all | R1 |
-| `poorin_fray.cluster` | Back-compat re-export of poorin_fray.types resource and job types (review) | R2 |
-| `poorin_fray.current_client` | Gets and sets the active Fray client, defaulting to LocalClient | R1 |
-| `poorin_fray.device_flops` | Peak FLOPS table per device type and dtype | R1 |
-| `poorin_fray.local_backend` | LocalClient: in-process Fray backend running jobs as threads or subprocesses | R1 |
-| `poorin_fray.types` | Job request, resource (CPU/GPU/TPU), environment, and entrypoint dataclasses | R1 |
-
-### poorin_finelog
+### fray
 
 | Module | Purpose | Reached from |
 |---|---|---|
-| `poorin_finelog` | Package marker | R2 |
-| `poorin_finelog.client` | Re-exports LogClient, query client, log handler, errors, policy, table-spec types | R2 |
-| `poorin_finelog.client.log_client` | LogClient and Table: buffered, retried writes and queries against a Finelog server | R2 |
-| `poorin_finelog.client.object_query_client` | Client-side SQL over Finelog catalog snapshots in object storage (review) | R2 |
-| `poorin_finelog.client.remote_log_handler` | logging.Handler that ships log records through a LogClient (review) | R2 |
-| `poorin_finelog.embedded` | In-process Finelog server from the optional native Rust extension | `poorin_finelog.embedded` |
-| `poorin_finelog.errors` | Typed exceptions translated from Finelog ConnectRPC error codes | R2 |
-| `poorin_finelog.policy` | Per-namespace storage retention policy sent at table registration | R2 |
-| `poorin_finelog.rpc` | Package marker for generated proto bindings | R2 |
-| `poorin_finelog.rpc.finelog_stats_connect` | Generated ConnectRPC client and server stubs for the stats service | R2 |
-| `poorin_finelog.rpc.finelog_stats_pb2` | Generated protobuf messages for the stats service | R2 |
-| `poorin_finelog.rpc.logging_connect` | Generated ConnectRPC client and server stubs for the log service | R2 |
-| `poorin_finelog.rpc.logging_pb2` | Generated protobuf messages for the log service | R2 |
-| `poorin_finelog.schema` | Table Schema and Column dataclasses with proto and Arrow conversion | R2 |
-| `poorin_finelog.table_spec` | Versioned table layout, partitioning, and operating-policy declarations | R2 |
-| `poorin_finelog.types` | Log-writer protocol, log-level parsing, and retryable-error check | R2 |
+| `fray` | Package docstring only; directs callers to import from submodules | R1 |
+| `fray.actor` | Actor protocols: handles, futures, method calls, actor groups, current-actor context | R1 |
+| `fray.client` | Client and JobHandle protocols for job submission, plus wait_all | R1 |
+| `fray.cluster` | Back-compat re-export of fray.types resource and job types (review) | R2 |
+| `fray.current_client` | Gets and sets the active Fray client, defaulting to LocalClient | R1 |
+| `fray.device_flops` | Peak FLOPS table per device type and dtype | R1 |
+| `fray.local_backend` | LocalClient: in-process Fray backend running jobs as threads or subprocesses | R1 |
+| `fray.types` | Job request, resource (CPU/GPU/TPU), environment, and entrypoint dataclasses | R1 |
+
+### finelog
+
+| Module | Purpose | Reached from |
+|---|---|---|
+| `finelog` | Package marker | R2 |
+| `finelog.client` | Re-exports LogClient, query client, log handler, errors, policy, table-spec types | R2 |
+| `finelog.client.log_client` | LogClient and Table: buffered, retried writes and queries against a Finelog server | R2 |
+| `finelog.client.object_query_client` | Client-side SQL over Finelog catalog snapshots in object storage (review) | R2 |
+| `finelog.client.remote_log_handler` | logging.Handler that ships log records through a LogClient (review) | R2 |
+| `finelog.embedded` | In-process Finelog server from the optional native Rust extension | `finelog.embedded` |
+| `finelog.errors` | Typed exceptions translated from Finelog ConnectRPC error codes | R2 |
+| `finelog.policy` | Per-namespace storage retention policy sent at table registration | R2 |
+| `finelog.rpc` | Package marker for generated proto bindings | R2 |
+| `finelog.rpc.finelog_stats_connect` | Generated ConnectRPC client and server stubs for the stats service | R2 |
+| `finelog.rpc.finelog_stats_pb2` | Generated protobuf messages for the stats service | R2 |
+| `finelog.rpc.logging_connect` | Generated ConnectRPC client and server stubs for the log service | R2 |
+| `finelog.rpc.logging_pb2` | Generated protobuf messages for the log service | R2 |
+| `finelog.schema` | Table Schema and Column dataclasses with proto and Arrow conversion | R2 |
+| `finelog.table_spec` | Versioned table layout, partitioning, and operating-policy declarations | R2 |
+| `finelog.types` | Log-writer protocol, log-level parsing, and retryable-error check | R2 |
 
 ### finestore
 

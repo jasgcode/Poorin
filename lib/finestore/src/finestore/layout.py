@@ -14,8 +14,8 @@ from dataclasses import dataclass
 from enum import StrEnum
 from urllib.parse import urlsplit
 
-from poorin_rigging.filesystem.storage_path import prefix_join
 from pydantic import BaseModel, ConfigDict, Field
+from rigging.filesystem.storage_path import prefix_join
 
 ARCHIVE_FILE = "_archive.json"
 HEAD_FILE = "HEAD"

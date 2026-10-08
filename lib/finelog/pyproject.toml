@@ -1,0 +1,45 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "poorin-finelog"
+version = "0.2.11"
+description = "Python client for the Finelog log and metrics store."
+requires-python = ">=3.12,<3.14"
+# duckdb runs SQL over Parquet objects in-process for the object query client.
+dependencies = [
+    "poorin-rigging",
+    "connect-python>=0.9.0",
+    "duckdb>=1.0.0",
+    "protobuf>=5.0",
+    "pyarrow>=23.0.0",
+    "zstandard>=0.22",
+]
+
+[dependency-groups]
+test = [
+    # The native in-process server (module `finelog_server`) is not a runtime dependency of the
+    # client; the embedded-server test needs it. It is the published marin-finelog-server wheel.
+    "marin-finelog-server==0.2.46.dev33324331711",
+    "pytest>=8.4",
+    "pytest-timeout",
+    "pytest-xdist",
+]
+dev = [{ include-group = "test" }]
+
+[tool.hatch.build.targets.sdist]
+only-include = ["src/finelog", "tests"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/finelog"]
+
+[tool.pytest.ini_options]
+timeout = 10
+timeout_method = "thread"
+addopts = "-n auto --durations=25 -v --import-mode=importlib"
+pythonpath = ["src", "tests"]
+filterwarnings = ["ignore::DeprecationWarning"]
+log_level = "INFO"
+log_format = "%(asctime)s %(levelname)s %(message)s"
+log_date_format = "%Y-%m-%d %H:%M:%S"

@@ -16,9 +16,9 @@ from unittest.mock import MagicMock
 import cloudpickle
 import pytest
 import zephyr.coordinator as coordinator_module
-from poorin_fray.actor import ActorContext
-from poorin_fray.local_backend import LocalClient
-from poorin_fray.types import ResourceConfig
+from fray.actor import ActorContext
+from fray.local_backend import LocalClient
+from fray.types import ResourceConfig
 from zephyr import counters
 from zephyr.context import (
     _NON_RETRYABLE_ERRORS,
@@ -58,7 +58,7 @@ from zephyr.worker_context import CounterEntry, CounterSnapshot, zephyr_worker_c
 
 
 class _UnpicklableError(Exception):
-    """Mimics poorin_rigging's old TransferBudgetExceeded: __init__ args don't match self.args."""
+    """Mimics rigging's old TransferBudgetExceeded: __init__ args don't match self.args."""
 
     def __init__(self, a, b, c):
         self.a, self.b, self.c = a, b, c

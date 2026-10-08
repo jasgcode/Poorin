@@ -11,8 +11,8 @@ import pyarrow as pa
 import pyarrow.compute as pc
 import pyarrow.parquet as pq
 import pytest
-from poorin_fray.local_backend import LocalClient
-from poorin_fray.types import ResourceConfig
+from fray.local_backend import LocalClient
+from fray.types import ResourceConfig
 from zephyr._test_helpers import SampleDataclass
 from zephyr.context import ZephyrContext
 from zephyr.dataset import Dataset, FilterOp, GlobSource, MapOp, WindowOp, resolve_glob

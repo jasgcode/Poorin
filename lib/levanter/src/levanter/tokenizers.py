@@ -37,9 +37,9 @@ import jinja2.sandbox
 from huggingface_hub import __version__ as _hf_hub_version
 from huggingface_hub import hf_hub_download, snapshot_download
 from huggingface_hub.utils import EntryNotFoundError, RepositoryNotFoundError
-from poorin_rigging.filesystem.atomic import fetch_file_atomic
-from poorin_rigging.filesystem.buckets import filesystem_for
-from poorin_rigging.filesystem.factory import filesystem, open_url
+from rigging.filesystem.atomic import fetch_file_atomic
+from rigging.filesystem.buckets import filesystem_for
+from rigging.filesystem.factory import filesystem, open_url
 from tokenizers import Encoding as HfEncoding
 from tokenizers import Tokenizer as HfBaseTokenizer
 

@@ -31,9 +31,9 @@ from finestore.layout import (
 from finestore.migrations import LegacyReadView, migrate
 from finestore.reader import BlobCorruptionError, ReadView
 from finestore.store import OBJECT_PART_BYTES, DataStore, DataTable, PrimaryKeyConflict, TransactionTooLarge
-from poorin_rigging import timing
-from poorin_rigging.filesystem.conditional_object import ConditionalWriteError
-from poorin_rigging.filesystem.storage_path import StoragePath
+from rigging import timing
+from rigging.filesystem.conditional_object import ConditionalWriteError
+from rigging.filesystem.storage_path import StoragePath
 
 
 def _rows(reader: ReadView, table: str, **kwargs) -> list[dict]:

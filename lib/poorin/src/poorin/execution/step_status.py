@@ -19,15 +19,15 @@ from collections.abc import Generator
 from threading import Event, Thread
 from time import sleep
 
-from poorin_rigging.filesystem.distributed_lock import (
+from rigging.filesystem.distributed_lock import (
     HEARTBEAT_INTERVAL,
     LeaseLostError,
     create_lock,
     default_worker_id,
 )
-from poorin_rigging.filesystem.factory import url_to_fs
-from poorin_rigging.filesystem.storage_path import prefix_join
-from poorin_rigging.timing import RateLimiter
+from rigging.filesystem.factory import url_to_fs
+from rigging.filesystem.storage_path import prefix_join
+from rigging.timing import RateLimiter
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +51,7 @@ class StatusFile:
       Contains {worker_id, timestamp}. Must be refreshed periodically.
     - Status file (simple text): Step state - SUCCESS, FAILED, DEP_FAILED, or RUNNING.
 
-    Lock acquisition and release delegate to ``poorin_rigging.filesystem.distributed_lock``.
+    Lock acquisition and release delegate to ``rigging.filesystem.distributed_lock``.
     """
 
     def __init__(self, output_path: str, worker_id: str):

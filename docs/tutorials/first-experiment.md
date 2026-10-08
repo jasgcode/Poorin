@@ -82,7 +82,7 @@ argument and returns an `ArtifactStep[LevanterCheckpoint]` handle. It handles th
 plumbing — the mesh, the checkpointer, the Fray dispatch — while you supply the policy.
 
 ```python
-from poorin_fray.cluster import ResourceConfig
+from fray.cluster import ResourceConfig
 from levanter.optim.config import AdamConfig
 from poorin.execution.lazy import ArtifactStep
 from poorin.experiment.train import train_lm

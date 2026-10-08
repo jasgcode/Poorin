@@ -16,7 +16,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import plotly.io as pio
 import wandb
-from poorin_rigging.filesystem.storage_path import prefix_join
+from rigging.filesystem.storage_path import prefix_join
 
 from poorin.scaling_laws.isoflop_analysis import QuadraticFitCoeffs, ScalingFit
 from poorin.utilities.wandb_utils import WANDB_ENTITY, WANDB_PROJECT

@@ -1,6 +1,8 @@
 # Library renames: Poorin's lighter forks
 
-Status: approved design, 2026-10-07. Plan: `plans/2026-10-07-library-renames.md`. Decision: D85.
+Status: approved design, 2026-10-07; implemented. Plan: `plans/2026-10-07-library-renames.md`.
+Decision: D85. Amended 2026-10-08 by D86: `fray`, `finelog`, and `rigging` keep their import names
+and directories; only their distributions carry the `poorin-` prefix.
 
 ## Goal
 

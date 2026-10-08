@@ -18,7 +18,7 @@ import jaxlib
 from jax._src.mesh import get_concrete_mesh
 from jaxtyping import Array, Float, Int
 from finestore.cache import PersistentKvCache
-from poorin_rigging.cache import (
+from rigging.cache import (
     combined_content_hash,
     directory_content_hash,
     file_content_hash,

@@ -11,6 +11,8 @@ import dupekit
 import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
+from fray.current_client import set_current_client
+from fray.local_backend import LocalClient
 from poorin.datakit.normalize import NormalizedData, generate_id, normalize_to_parquet
 from poorin.processing.classification.deduplication.fuzzy_dups import compute_fuzzy_dups_attrs
 from poorin.processing.classification.deduplication.fuzzy_minhash import (
@@ -19,8 +21,6 @@ from poorin.processing.classification.deduplication.fuzzy_minhash import (
     _minhash_batch,
     compute_minhash_attrs,
 )
-from poorin_fray.current_client import set_current_client
-from poorin_fray.local_backend import LocalClient
 from zephyr.writers import write_jsonl_file, write_parquet_file
 
 TEST_MINHASH_PARAMS = MinHashParams(num_perms=286, num_bands=26, ngram_size=5, seed=42)

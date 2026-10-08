@@ -41,9 +41,9 @@ import numpy as np
 import polars as pl
 import pyarrow as pa
 import pyarrow.parquet as pq
-from poorin_rigging.filesystem.cluster_config import marin_temp_bucket
-from poorin_rigging.filesystem.factory import open_url
-from poorin_rigging.filesystem.storage_path import StoragePath
+from rigging.filesystem.cluster_config import marin_temp_bucket
+from rigging.filesystem.factory import open_url
+from rigging.filesystem.storage_path import StoragePath
 from zephyr import memory_budget
 from zephyr.parquet_scan import scan_parquet
 from zephyr.shuffle import (

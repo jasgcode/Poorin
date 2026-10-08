@@ -11,8 +11,8 @@ import jax.tree_util as jtu
 import numpy as np
 from haliax.jax_utils import is_jax_array_like
 from jaxtyping import PyTree
-from poorin_rigging.filesystem.factory import url_to_fs
-from poorin_rigging.filesystem.storage_path import StoragePath
+from rigging.filesystem.factory import url_to_fs
+from rigging.filesystem.storage_path import StoragePath
 
 from .jagged_array import JaggedArrayStore, charge_store_read_budget
 

@@ -21,13 +21,13 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
 from typing import Any
 
-from poorin_fray.client import JobHandle, JobStatus
-from poorin_fray.current_client import _current_client_var, current_client, set_current_client
-from poorin_fray.local_backend import LocalJobHandle
-from poorin_fray.types import Entrypoint, JobRequest, ResourceConfig, create_environment
-from poorin_rigging.filesystem.factory import url_to_fs
-from poorin_rigging.filesystem.storage_path import StoragePath
-from poorin_rigging.log_setup import configure_logging
+from fray.client import JobHandle, JobStatus
+from fray.current_client import _current_client_var, current_client, set_current_client
+from fray.local_backend import LocalJobHandle
+from fray.types import Entrypoint, JobRequest, ResourceConfig, create_environment
+from rigging.filesystem.factory import url_to_fs
+from rigging.filesystem.storage_path import StoragePath
+from rigging.log_setup import configure_logging
 
 from poorin.execution.artifact import (
     FINGERPRINT_KEY,
@@ -188,14 +188,12 @@ class StepRunner:
         if max_workers < 1:
             raise ValueError(f"max_concurrent must be >= 1, got {max_concurrent}")
 
-        # Capture the poorin_fray client on the calling thread so worker threads can
+        # Capture the fray client on the calling thread so worker threads can
         # inherit it explicitly. More robust than contextvars.copy_context()
         # alone, which can lose state across thread-pool reuse patterns.
         caller_fray_client = _current_client_var.get()
         if caller_fray_client is not None:
-            logger.info(
-                "StepRunner: captured poorin_fray client %s for worker threads", type(caller_fray_client).__name__
-            )
+            logger.info("StepRunner: captured fray client %s for worker threads", type(caller_fray_client).__name__)
 
         local_pool = ThreadPoolExecutor(max_workers=max_workers, thread_name_prefix="marin-step-runner")
 
@@ -370,7 +368,7 @@ class StepRunner:
         worker_fn.__qualname__ = step_name
         worker_fn.__name__ = step_name
 
-        # Also copy the full context for any other context vars (not just poorin_fray).
+        # Also copy the full context for any other context vars (not just fray).
         ctx = contextvars.copy_context()
         future = local_pool.submit(ctx.run, worker_fn)
         return LocalJobHandle(f"local-{step_name}", future)

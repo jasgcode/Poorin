@@ -50,9 +50,9 @@ from jax._src.partition_spec import PartitionSpec
 from jax.experimental import multihost_utils
 from jax.random import PRNGKey
 from jaxtyping import Array, PRNGKeyArray
-from poorin_rigging.filesystem.atomic import fetch_file_atomic
-from poorin_rigging.filesystem.factory import url_to_fs
-from poorin_rigging.filesystem.storage_path import StoragePath, prefix_join
+from rigging.filesystem.atomic import fetch_file_atomic
+from rigging.filesystem.factory import url_to_fs
+from rigging.filesystem.storage_path import StoragePath, prefix_join
 from tqdm_loggable.auto import tqdm
 
 from levanter.callbacks import StepInfo

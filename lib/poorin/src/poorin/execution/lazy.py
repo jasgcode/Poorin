@@ -35,10 +35,10 @@ from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass, field
 from typing import Any, Final, Generic, TypeVar, cast
 
-from poorin_rigging.filesystem.cluster_config import marin_prefix, marin_region
-from poorin_rigging.filesystem.factory import url_to_fs
-from poorin_rigging.filesystem.storage_path import prefix_join
-from poorin_rigging.provenance import Provenance
+from rigging.filesystem.cluster_config import marin_prefix, marin_region
+from rigging.filesystem.factory import url_to_fs
+from rigging.filesystem.storage_path import prefix_join
+from rigging.provenance import Provenance
 
 from poorin.execution.artifact import (
     EXPECTED_FINGERPRINT_KEY,

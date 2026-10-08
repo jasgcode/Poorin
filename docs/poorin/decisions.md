@@ -1160,7 +1160,8 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
 
 ### D85. The libraries Poorin cut heavily take poorin_ names
 
-- **When:** 2026-10-07. **Status:** Adopted. Spec: `specs/2026-10-07-library-renames-design.md`.
+- **When:** 2026-10-07. **Status:** Adopted; D86 restores the bare import names of `fray`,
+  `finelog`, and `rigging`. Spec: `specs/2026-10-07-library-renames-design.md`.
 - **Decision:** `fray`, `finelog`, `rigging`, and `marin` become `poorin_fray`, `poorin_finelog`,
   `poorin_rigging`, and `poorin`: import names, distribution names (`poorin-fray`,
   `poorin-finelog`, `poorin-rigging`, `poorin`), and directories under `lib/`. The workspace root
@@ -1178,6 +1179,21 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
 - **Cost if wrong:** Reading upstream code needs the name map in AGENTS.md. Artifact records name
   their class by module path, so cached artifacts are migrated once with
   `find ~/.cache/poorin -name .artifact.json -exec sed -i 's/"result_type": "marin\./"result_type": "poorin./' {} +`.
+
+### D86. fray, finelog, and rigging keep their import names
+
+- **When:** 2026-10-08. **Status:** Adopted. Amends D85.
+- **Decision:** The imports and directories of `poorin_fray`, `poorin_finelog`, and
+  `poorin_rigging` go back to `fray`, `finelog`, and `rigging` (`lib/fray`, `lib/finelog`,
+  `lib/rigging`). Their distributions stay `poorin-fray`, `poorin-finelog`, and `poorin-rigging`,
+  so the lockfile still marks them as Poorin's forks, and their READMEs keep the lists of what was
+  removed. Marin's core stays `poorin`.
+- **Why:** The owner, 2026-10-08: the utility libraries do not need the prefix. Upstream used the
+  same split, `marin-rigging` installing `rigging`.
+- **Alternatives:** Bare distribution names too, which collide with unrelated PyPI projects such as
+  `rigging`; return to upstream's `marin-` distribution names.
+- **Cost if wrong:** None at runtime; reading code no longer shows which utility libraries Poorin
+  forked, which their READMEs and the AGENTS.md map still record.
 
 ---
 

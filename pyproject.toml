@@ -83,13 +83,13 @@ conflicts = [
 
 [tool.uv.workspace]
 members = [
-    "lib/poorin_fray",
-    "lib/poorin_finelog",
+    "lib/fray",
+    "lib/finelog",
     "lib/dupekit",
     "lib/haliax",
     "lib/levanter",
     "lib/poorin",
-    "lib/poorin_rigging",
+    "lib/rigging",
     "lib/zephyr",
     "lib/finestore",
 ]
@@ -188,8 +188,8 @@ include = [
     "lib/poorin/src",
     "lib/levanter/src",
     "lib/haliax/src",
-    "lib/poorin_fray/src",
-    "lib/poorin_rigging/src",
+    "lib/fray/src",
+    "lib/rigging/src",
     "lib/zephyr/src",
     "lib/finestore/src",
     "tools",

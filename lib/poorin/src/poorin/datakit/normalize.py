@@ -26,10 +26,10 @@ from typing import Any
 
 import dupekit
 import pyarrow as pa
-from poorin_fray.types import ResourceConfig
-from poorin_rigging.filesystem.factory import url_to_fs
-from poorin_rigging.filesystem.storage_path import prefix_join
+from fray.types import ResourceConfig
 from pydantic import BaseModel, ValidationInfo, model_validator
+from rigging.filesystem.factory import url_to_fs
+from rigging.filesystem.storage_path import prefix_join
 from zephyr import counters
 from zephyr.context import ZephyrContext
 from zephyr.dataset import Dataset, ShardInfo

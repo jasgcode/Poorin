@@ -12,7 +12,7 @@ mutable training steps. Fixed checkpoints and datasets otherwise keep their
 shared names, so published runs stay citable and tokenized caches remain shared.
 """
 
-from poorin_rigging.provenance import username_segment
+from rigging.provenance import username_segment
 
 from poorin.execution.artifact import is_mutable_version
 

@@ -12,10 +12,10 @@ import os
 from dataclasses import dataclass
 
 import pytest
+from fray.types import ResourceConfig
 from poorin.execution.artifact import Artifact, ArtifactTypeMismatchError
 from poorin.execution.lazy import OUT, ArtifactStep, StepContext, apply, lower, materialized_config, resolve, run
 from poorin.execution.remote import remote
-from poorin_fray.types import ResourceConfig
 
 # --- Toy configs/fns standing in for tokenize + train --------------------------
 

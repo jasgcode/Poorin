@@ -26,7 +26,7 @@ Lazy dataset processing library. Start with the shared instructions in `/AGENTS.
 Actor-based, pull-based task distribution. Workers are persistent across stages.
 
 ```
-ZephyrContext → ZephyrCoordinator (poorin_fray actor) → ZephyrWorker actors (poorin_fray actor_group)
+ZephyrContext → ZephyrCoordinator (fray actor) → ZephyrWorker actors (fray actor_group)
 ```
 
 ### Data flow between stages
@@ -53,4 +53,4 @@ Shared data is uploaded to filesystem by `ZephyrContext._upload_shared_data()` b
 
 ### Backends
 
-`ZephyrContext` uses `poorin_fray.current_client.current_client()`, which returns the client set with `set_current_client` or, by default, a `LocalClient`.
+`ZephyrContext` uses `fray.current_client.current_client()`, which returns the client set with `set_current_client` or, by default, a `LocalClient`.

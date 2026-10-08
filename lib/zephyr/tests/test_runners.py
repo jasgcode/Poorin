@@ -12,12 +12,12 @@ from threading import Lock
 
 import polars as pl
 import pytest
+from finelog.client import LogClient
+from finelog.embedded import EmbeddedServer
+from fray.types import ResourceConfig
 from fsspec.implementations.local import LocalFileSystem
-from poorin_finelog.client import LogClient
-from poorin_finelog.embedded import EmbeddedServer
-from poorin_fray.types import ResourceConfig
-from poorin_rigging.filesystem.storage_path import StoragePath
-from poorin_rigging.timing import Duration, ExponentialBackoff
+from rigging.filesystem.storage_path import StoragePath
+from rigging.timing import Duration, ExponentialBackoff
 from zephyr import counters, runners, worker
 from zephyr.context import ZephyrContext
 from zephyr.dataset import Dataset

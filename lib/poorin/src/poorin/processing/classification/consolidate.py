@@ -20,8 +20,8 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from enum import StrEnum
 
-from poorin_fray.types import ResourceConfig
-from poorin_rigging.filesystem.storage_path import StoragePath, rebase_file_path
+from fray.types import ResourceConfig
+from rigging.filesystem.storage_path import StoragePath, rebase_file_path
 from zephyr.context import ZephyrContext
 from zephyr.coordinator import ZephyrExecutionResult
 from zephyr.dataset import Dataset

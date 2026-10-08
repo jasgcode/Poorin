@@ -18,6 +18,7 @@ import math
 from pathlib import Path
 
 import pytest
+from fray.cluster import ResourceConfig
 from levanter.models.llama import LlamaConfig
 from levanter.optim.config import AdamConfig
 from poorin.execution.artifact import ArtifactRecord, write_record
@@ -25,7 +26,6 @@ from poorin.execution.lazy import ArtifactStep, materialized_config
 from poorin.experiment.data import tokenized
 from poorin.experiment.train import EvalSuite, train_lm
 from poorin.processing.tokenize.tokenize import TokenizedCache
-from poorin_fray.cluster import ResourceConfig
 
 from experiments.evals.task_configs import CORE_TASKS
 
@@ -247,7 +247,7 @@ def test_num_train_epochs_rejects_a_mixture():
 
 def test_dev_checkpoints_are_per_user_while_datasets_stay_shared(tmp_path, monkeypatch):
     def build_as(user: str):
-        monkeypatch.setattr("poorin_rigging.provenance._getuser", lambda: user)
+        monkeypatch.setattr("rigging.provenance._getuser", lambda: user)
         return train_lm(
             name="checkpoints/unit",
             model=_MODEL,

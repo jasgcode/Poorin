@@ -28,11 +28,11 @@ from dataclasses import asdict, dataclass, is_dataclass
 from typing import Self, TypeVar
 from urllib.parse import urlparse
 
-from poorin_rigging.filesystem.cluster_config import marin_prefix
-from poorin_rigging.filesystem.factory import url_to_fs
-from poorin_rigging.filesystem.storage_path import StoragePath, prefix_join
-from poorin_rigging.provenance import Provenance, launch_provenance
 from pydantic import BaseModel, ConfigDict, Field
+from rigging.filesystem.cluster_config import marin_prefix
+from rigging.filesystem.factory import url_to_fs
+from rigging.filesystem.storage_path import StoragePath, prefix_join
+from rigging.provenance import Provenance, launch_provenance
 
 from poorin.execution.fingerprint import describe_drift
 from poorin.execution.step_spec import StepSpec, _is_relative_path

@@ -22,7 +22,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import vortex
 import zstandard as zstd
-from poorin_rigging.filesystem.factory import open_url, url_to_fs
+from rigging.filesystem.factory import open_url, url_to_fs
 
 from zephyr import counters
 from zephyr.expr import referenced_columns, to_pyarrow_expr
@@ -53,7 +53,7 @@ def iter_parquet_row_groups(
         row_start: First row to include (inclusive, before filtering).
         row_end: Last row to include (exclusive, before filtering).
     """
-    # Open string paths through open_file (poorin_rigging fsspec) rather than letting
+    # Open string paths through open_file (rigging fsspec) rather than letting
     # pyarrow build a native S3FileSystem from the URI: pyarrow's default S3
     # client uses path-style addressing, which CoreWeave object storage rejects
     # with HTTP 400. open_file routes through the correctly-addressed fsspec fs

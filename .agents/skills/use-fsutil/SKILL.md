@@ -14,4 +14,4 @@ Let the task determine which command and verification are appropriate.
 
 Use this interface before provider-specific CLIs, hand-built S3 endpoints, or
 custom transfer scripts. For Python code that needs the same bucket routing, use
-`poorin_rigging.filesystem.buckets.filesystem_for(url)`.
+`rigging.filesystem.buckets.filesystem_for(url)`.

@@ -8,6 +8,8 @@ from pathlib import Path
 
 import poorin.execution.step_runner as step_runner_module
 import pytest
+from fray.current_client import current_client, set_current_client
+from fray.types import ResourceConfig
 from poorin.execution.artifact import (
     FINGERPRINT_KEY,
     VERSION_KEY,
@@ -20,8 +22,6 @@ from poorin.execution.remote import RemoteCallable, remote
 from poorin.execution.step_runner import StepRunner
 from poorin.execution.step_spec import StepSpec
 from poorin.execution.step_status import STATUS_SUCCESS, StatusFile, worker_id
-from poorin_fray.current_client import current_client, set_current_client
-from poorin_fray.types import ResourceConfig
 from pydantic import BaseModel
 
 # ---------------------------------------------------------------------------
@@ -695,7 +695,7 @@ def test_step_with_remote_fn_uses_fray(tmp_path: Path):
 
 
 class _SubmitSpy:
-    """Wraps a poorin_fray client and captures every ``submit`` call's request."""
+    """Wraps a fray client and captures every ``submit`` call's request."""
 
     def __init__(self, inner):
         self._inner = inner
@@ -854,7 +854,7 @@ def test_remote_decorator_with_custom_resources():
 def test_runner_propagates_context_vars(tmp_path):
     """StepRunner must propagate contextvars to worker threads.
 
-    This ensures that poorin_fray's ``set_current_client`` is visible inside step
+    This ensures that fray's ``set_current_client`` is visible inside step
     functions dispatched by the thread pool, so ZephyrContext (and anything
     else that calls ``current_client()``) picks up the correct client.
     """
@@ -880,7 +880,7 @@ def test_runner_propagates_context_vars(tmp_path):
 
 
 def test_runner_propagates_fray_client(tmp_path):
-    """StepRunner explicitly propagates the poorin_fray client to worker threads.
+    """StepRunner explicitly propagates the fray client to worker threads.
 
     This tests the explicit client capture path (not just generic contextvars)
     to ensure current_client() returns the correct client inside step functions.

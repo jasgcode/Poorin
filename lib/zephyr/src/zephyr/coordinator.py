@@ -19,13 +19,13 @@ from datetime import UTC, datetime
 from typing import Any
 
 import cloudpickle
-from poorin_fray.actor import ActorGroup, ActorHandle, current_actor
-from poorin_fray.current_client import current_client
-from poorin_fray.local_backend import LocalClient
-from poorin_fray.types import ActorConfig, ResourceConfig
-from poorin_rigging import telemetry
-from poorin_rigging.filesystem.storage_path import StoragePath
-from poorin_rigging.timing import Duration, ExponentialBackoff, RateLimiter, Timestamp, log_time
+from fray.actor import ActorGroup, ActorHandle, current_actor
+from fray.current_client import current_client
+from fray.local_backend import LocalClient
+from fray.types import ActorConfig, ResourceConfig
+from rigging import telemetry
+from rigging.filesystem.storage_path import StoragePath
+from rigging.timing import Duration, ExponentialBackoff, RateLimiter, Timestamp, log_time
 from starlette.types import ASGIApp
 
 from zephyr.dashboard.app import (

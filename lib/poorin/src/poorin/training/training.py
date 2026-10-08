@@ -13,15 +13,15 @@ from dataclasses import dataclass, replace
 from typing import Any, Protocol, TypeVar, cast, runtime_checkable
 
 from draccus.utils import DataclassInstance
+from fray.types import CpuConfig, GpuConfig, ResourceConfig, TpuConfig
 from levanter.adaptor import AdaptorConfig, NoAdaptorConfig
 from levanter.checkpoint import CheckpointerConfig
 from levanter.schedule import BatchSchedule
 from mergedeep import mergedeep
-from poorin_fray.types import CpuConfig, GpuConfig, ResourceConfig, TpuConfig
-from poorin_rigging.filesystem.cluster_config import check_gcs_paths_same_region, marin_temp_bucket
-from poorin_rigging.filesystem.factory import url_to_fs
-from poorin_rigging.filesystem.storage_path import StoragePath, prefix_join
 from pydantic import BaseModel
+from rigging.filesystem.cluster_config import check_gcs_paths_same_region, marin_temp_bucket
+from rigging.filesystem.factory import url_to_fs
+from rigging.filesystem.storage_path import StoragePath, prefix_join
 
 from poorin.execution.artifact import Artifact
 from poorin.processing.tokenize import read_tokenized_cache_stats

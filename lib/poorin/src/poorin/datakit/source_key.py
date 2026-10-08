@@ -5,9 +5,9 @@
 
 from typing import Annotated
 
-from poorin_rigging.filesystem.cluster_config import StoreType, data_buckets, marin_prefix
-from poorin_rigging.filesystem.storage_path import StoragePath, prefix_join
 from pydantic import BeforeValidator, PlainSerializer, ValidationInfo
+from rigging.filesystem.cluster_config import StoreType, data_buckets, marin_prefix
+from rigging.filesystem.storage_path import StoragePath, prefix_join
 
 from poorin.execution.artifact import ARTIFACT_LOAD_CONTEXT_KEY
 

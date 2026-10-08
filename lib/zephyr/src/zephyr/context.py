@@ -19,15 +19,15 @@ from typing import Any, TypeVar
 
 import cloudpickle
 import humanfriendly
-from poorin_fray.actor import ActorFuture, ActorGroup, ActorHandle, ActorUnavailableError
-from poorin_fray.client import Client
-from poorin_fray.current_client import current_client
-from poorin_fray.local_backend import LocalClient
-from poorin_fray.types import ActorConfig, ResourceConfig
-from poorin_rigging.filesystem.cluster_config import marin_temp_bucket
-from poorin_rigging.filesystem.cross_region import TransferBudgetExceeded
-from poorin_rigging.filesystem.storage_path import StoragePath
-from poorin_rigging.timing import ExponentialBackoff
+from fray.actor import ActorFuture, ActorGroup, ActorHandle, ActorUnavailableError
+from fray.client import Client
+from fray.current_client import current_client
+from fray.local_backend import LocalClient
+from fray.types import ActorConfig, ResourceConfig
+from rigging.filesystem.cluster_config import marin_temp_bucket
+from rigging.filesystem.cross_region import TransferBudgetExceeded
+from rigging.filesystem.storage_path import StoragePath
+from rigging.timing import ExponentialBackoff
 
 from zephyr.coordinator import (
     MAX_CONCURRENT_PIPELINES,

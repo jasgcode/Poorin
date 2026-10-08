@@ -16,8 +16,8 @@ from types import TracebackType
 from typing import Protocol
 
 import pyarrow as pa
-from poorin_rigging.filesystem.s3_errors import is_transient_s3_error
-from poorin_rigging.timing import ExponentialBackoff
+from rigging.filesystem.s3_errors import is_transient_s3_error
+from rigging.timing import ExponentialBackoff
 
 from finestore.commit import ClearSeal, CommitCoordinator, CommitDelta, TableAddition, initialize_archive, write_schema
 from finestore.compaction import CompactionResult, compact_table

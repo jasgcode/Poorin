@@ -73,15 +73,15 @@ modules = [
     "poorin.pytest_timeout_guard",
     "zephyr.shard_subprocess",
     "haliax.__about__",
-    "poorin_rigging.fsutil.*",
-    "poorin_finelog.embedded",
+    "rigging.fsutil.*",
+    "finelog.embedded",
     # Loaded with importlib.import_module and a literal name: Marin's training launch helpers,
     # grug's segmented FA4 backward pass, and the QuACK kernel behind fast-track's stacked MuonH.
     "levanter.infra.cli_helpers",
     "levanter.grug.attention._fa4_cute_segmented_bwd",
     "levanter.grug._moe.quack_symmetric_cute",
     # Registered with fsspec by a dotted name; Levanter stages tokenizers through mirror://.
-    "poorin_rigging.filesystem.mirror",
+    "rigging.filesystem.mirror",
     # Plugin registry members: draccus finds these by name, so static imports do not reach them.
     "levanter.optim.*",
     "levanter.data.text.*",

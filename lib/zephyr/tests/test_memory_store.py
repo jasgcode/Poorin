@@ -11,7 +11,7 @@ import pyarrow.parquet as pq
 import pytest
 from connectrpc.code import Code
 from connectrpc.errors import ConnectError
-from poorin_fray.actor import ActorHandle, ActorUnavailableError
+from fray.actor import ActorHandle, ActorUnavailableError
 from zephyr.context import ZephyrContext
 from zephyr.dataset import Dataset
 from zephyr.memory_store import (

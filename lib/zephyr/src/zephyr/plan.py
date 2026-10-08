@@ -18,8 +18,8 @@ from enum import StrEnum, auto
 from itertools import groupby, islice
 from typing import Any
 
-from poorin_rigging.filesystem.storage_path import StoragePath
-from poorin_rigging.log_setup import configure_logging
+from rigging.filesystem.storage_path import StoragePath
+from rigging.log_setup import configure_logging
 
 from zephyr import counters
 from zephyr.dataset import (

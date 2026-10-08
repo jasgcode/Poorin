@@ -19,16 +19,16 @@ from dataclasses import dataclass
 from enum import StrEnum
 from typing import Literal
 
-from poorin_rigging.filesystem.factory import open_url, url_to_fs
-from poorin_rigging.filesystem.storage_path import prefix_join
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field, model_validator
+from rigging.filesystem.factory import open_url, url_to_fs
+from rigging.filesystem.storage_path import prefix_join
 
 logger = logging.getLogger(__name__)
 
 DEFAULT_RECORDS_PREFIX = "gs://marin-eval-metadata/evals"
 # CoreWeave runs write records to the CW-local object store: their workers hold CW S3
 # credentials but no GCP ones. The dashboard's ingest scans both prefixes. Access from outside
-# the cluster needs `poorin_rigging.filesystem.s3_compat.configure_coreweave_s3()` first.
+# the cluster needs `rigging.filesystem.s3_compat.configure_coreweave_s3()` first.
 CW_RECORDS_PREFIX = "s3://marin-us-east-02a/marin/evals"
 LEGACY_GCP_RECORDS_PREFIX = "gs://marin-eval-metadata/runs"
 LEGACY_CW_RECORDS_PREFIX = "s3://marin-us-east-02a/marin/eval-metadata/runs"

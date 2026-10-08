@@ -10,7 +10,7 @@ selecting appropriate TPU slice sizes for training runs.
 import math
 from dataclasses import dataclass
 
-from poorin_fray.types import tpu_hbm_bytes_per_chip
+from fray.types import tpu_hbm_bytes_per_chip
 
 
 @dataclass(frozen=True)

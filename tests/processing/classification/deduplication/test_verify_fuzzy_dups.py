@@ -7,6 +7,8 @@ from random import Random
 
 import pyarrow.parquet as pq
 import pytest
+from fray.current_client import set_current_client
+from fray.local_backend import LocalClient
 from poorin.datakit.normalize import NormalizedData
 from poorin.datakit.source_key import datakit_source_key
 from poorin.processing.classification.deduplication.fuzzy_dups import FuzzyDupsAttrData, FuzzyDupsPerSource
@@ -19,8 +21,6 @@ from poorin.processing.classification.deduplication.verify_fuzzy_dups import (
 from poorin.processing.classification.deduplication.verify_fuzzy_dups import (
     verify_fuzzy_dups as _verify_fuzzy_dups,
 )
-from poorin_fray.current_client import set_current_client
-from poorin_fray.local_backend import LocalClient
 from zephyr.stage_io import ZephyrWorkerError
 from zephyr.writers import write_parquet_file
 

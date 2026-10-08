@@ -10,9 +10,9 @@ import threading
 import uuid
 from dataclasses import dataclass, field
 
-from poorin_rigging.filesystem.conditional_object import ConditionalWriteError, conditional_object
-from poorin_rigging.filesystem.storage_path import StoragePath
-from poorin_rigging.timing import ExponentialBackoff, retry_with_backoff
+from rigging.filesystem.conditional_object import ConditionalWriteError, conditional_object
+from rigging.filesystem.storage_path import StoragePath
+from rigging.timing import ExponentialBackoff, retry_with_backoff
 
 from finestore.layout import (
     FORMAT_VERSION,

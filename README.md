@@ -82,7 +82,7 @@ You can check out the [full script](https://github.com/marin-community/marin/blo
 <!--marin-example-start-->
 
 ```python
-from poorin_fray.cluster import ResourceConfig
+from fray.cluster import ResourceConfig
 from levanter.optim.config import AdamConfig
 from poorin.execution.lazy import lower
 from poorin.execution.step_runner import StepRunner

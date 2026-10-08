@@ -29,7 +29,7 @@ from typing import Any, Callable
 
 import jax
 from finestore.cache import PersistentKvCache
-from poorin_rigging.cache import combined_content_hash, directory_content_hash, dependencies_hash
+from rigging.cache import combined_content_hash, directory_content_hash, dependencies_hash
 
 logger = logging.getLogger(__name__)
 

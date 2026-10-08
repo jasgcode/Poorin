@@ -22,8 +22,8 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Generic, ParamSpec, TypeVar, overload
 
-from poorin_fray.current_client import current_client
-from poorin_fray.types import Entrypoint, JobRequest, ResourceConfig, create_environment
+from fray.current_client import current_client
+from fray.types import Entrypoint, JobRequest, ResourceConfig, create_environment
 
 from poorin.training.run_environment import dependency_groups_for_resources
 

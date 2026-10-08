@@ -40,9 +40,9 @@ import time
 from collections.abc import Iterator
 
 import click
-from poorin_fray.types import ResourceConfig
-from poorin_rigging.filesystem.storage_path import StoragePath
-from poorin_rigging.log_setup import configure_logging
+from fray.types import ResourceConfig
+from rigging.filesystem.storage_path import StoragePath
+from rigging.log_setup import configure_logging
 from zephyr import memory_budget
 from zephyr.context import ZephyrContext
 from zephyr.dataset import Dataset, ShardInfo

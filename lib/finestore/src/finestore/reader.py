@@ -13,13 +13,13 @@ from collections.abc import Generator, Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from typing import BinaryIO, ClassVar, Protocol
 
-import poorin_rigging.filesystem.factory as factory
 import pyarrow as pa
 import pyarrow.compute as pc
 import pyarrow.dataset as pds
 import pyarrow.parquet as pq
-from poorin_rigging.filesystem.storage_path import StoragePath
+import rigging.filesystem.factory as factory
 from pyarrow.fs import FSSpecHandler, PyFileSystem
+from rigging.filesystem.storage_path import StoragePath
 
 from finestore.commit import ArchiveSnapshot, read_snapshot, validate_archive
 from finestore.layout import (

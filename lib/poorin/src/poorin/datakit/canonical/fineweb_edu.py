@@ -16,7 +16,7 @@ Subsets available on HuggingFace:
 - sample/350BT   — 350B token sample
 """
 
-from poorin_fray.types import ResourceConfig
+from fray.types import ResourceConfig
 
 from poorin.datakit.download.huggingface import download_hf_step
 from poorin.execution.step_spec import StepSpec

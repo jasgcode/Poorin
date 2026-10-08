@@ -1897,7 +1897,7 @@ test = [
 
 [package.metadata]
 requires-dist = [
-    { name = "poorin-rigging", editable = "lib/poorin_rigging" },
+    { name = "poorin-rigging", editable = "lib/rigging" },
     { name = "pyarrow", specifier = ">=23.0.0" },
     { name = "pydantic", specifier = ">=2.0" },
 ]
@@ -2103,9 +2103,9 @@ requires-dist = [
     { name = "nvidia-nccl-cu13", marker = "sys_platform == 'linux' and extra == 'gpu'", specifier = ">=2.29.3" },
     { name = "optax", specifier = ">=0.1.9,<0.2.7" },
     { name = "peft", marker = "extra == 'torch-test'", specifier = ">=0.12.0" },
-    { name = "poorin-finelog", editable = "lib/poorin_finelog" },
-    { name = "poorin-fray", editable = "lib/poorin_fray" },
-    { name = "poorin-rigging", editable = "lib/poorin_rigging" },
+    { name = "poorin-finelog", editable = "lib/finelog" },
+    { name = "poorin-fray", editable = "lib/fray" },
+    { name = "poorin-rigging", editable = "lib/rigging" },
     { name = "protobuf", specifier = ">=6" },
     { name = "pyarrow", specifier = ">=23.0.0" },
     { name = "pydantic", specifier = "<3" },
@@ -2195,8 +2195,8 @@ requires-dist = [
     { name = "msgspec", specifier = ">=0.18.0" },
     { name = "numpy", specifier = ">=2.0" },
     { name = "polars", specifier = ">=1.41.0" },
-    { name = "poorin-fray", editable = "lib/poorin_fray" },
-    { name = "poorin-rigging", editable = "lib/poorin_rigging" },
+    { name = "poorin-fray", editable = "lib/fray" },
+    { name = "poorin-rigging", editable = "lib/rigging" },
     { name = "psutil", specifier = ">=7.2.2" },
     { name = "starlette", specifier = ">=0.50.0" },
     { name = "vortex-data", specifier = ">=0.61.0" },
@@ -3531,8 +3531,8 @@ requires-dist = [
     { name = "nvidia-nccl-cu13", marker = "sys_platform == 'linux' and extra == 'gpu'", specifier = ">=2.29.3" },
     { name = "pandas", specifier = ">=2.0" },
     { name = "plotly" },
-    { name = "poorin-fray", editable = "lib/poorin_fray" },
-    { name = "poorin-rigging", editable = "lib/poorin_rigging" },
+    { name = "poorin-fray", editable = "lib/fray" },
+    { name = "poorin-rigging", editable = "lib/rigging" },
     { name = "pyarrow", specifier = ">=23.0.0" },
     { name = "pydantic", specifier = "<3" },
     { name = "regex" },
@@ -3596,7 +3596,7 @@ test = [
 [[package]]
 name = "poorin-finelog"
 version = "0.2.11"
-source = { editable = "lib/poorin_finelog" }
+source = { editable = "lib/finelog" }
 dependencies = [
     { name = "connect-python", marker = "sys_platform == 'linux' or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-14-marin-levanter-tpu') or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-6-poorin-cpu') or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-6-poorin-tpu') or (extra == 'extra-14-marin-levanter-tpu' and extra == 'extra-6-poorin-gpu') or (extra == 'extra-6-poorin-cpu' and extra == 'extra-6-poorin-gpu') or (extra == 'extra-6-poorin-gpu' and extra == 'extra-6-poorin-tpu')" },
     { name = "duckdb", marker = "sys_platform == 'linux' or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-14-marin-levanter-tpu') or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-6-poorin-cpu') or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-6-poorin-tpu') or (extra == 'extra-14-marin-levanter-tpu' and extra == 'extra-6-poorin-gpu') or (extra == 'extra-6-poorin-cpu' and extra == 'extra-6-poorin-gpu') or (extra == 'extra-6-poorin-gpu' and extra == 'extra-6-poorin-tpu')" },
@@ -3625,7 +3625,7 @@ test = [
 requires-dist = [
     { name = "connect-python", specifier = ">=0.9.0" },
     { name = "duckdb", specifier = ">=1.0.0" },
-    { name = "poorin-rigging", editable = "lib/poorin_rigging" },
+    { name = "poorin-rigging", editable = "lib/rigging" },
     { name = "protobuf", specifier = ">=5.0" },
     { name = "pyarrow", specifier = ">=23.0.0" },
     { name = "zstandard", specifier = ">=0.22" },
@@ -3648,7 +3648,7 @@ test = [
 [[package]]
 name = "poorin-fray"
 version = "0.2.0"
-source = { editable = "lib/poorin_fray" }
+source = { editable = "lib/fray" }
 dependencies = [
     { name = "humanfriendly", marker = "sys_platform == 'linux' or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-14-marin-levanter-tpu') or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-6-poorin-cpu') or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-6-poorin-tpu') or (extra == 'extra-14-marin-levanter-tpu' and extra == 'extra-6-poorin-gpu') or (extra == 'extra-6-poorin-cpu' and extra == 'extra-6-poorin-gpu') or (extra == 'extra-6-poorin-gpu' and extra == 'extra-6-poorin-tpu')" },
     { name = "poorin-rigging", marker = "sys_platform == 'linux' or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-14-marin-levanter-tpu') or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-6-poorin-cpu') or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-6-poorin-tpu') or (extra == 'extra-14-marin-levanter-tpu' and extra == 'extra-6-poorin-gpu') or (extra == 'extra-6-poorin-cpu' and extra == 'extra-6-poorin-gpu') or (extra == 'extra-6-poorin-gpu' and extra == 'extra-6-poorin-tpu')" },
@@ -3669,7 +3669,7 @@ test = [
 [package.metadata]
 requires-dist = [
     { name = "humanfriendly", specifier = ">=10.0" },
-    { name = "poorin-rigging", editable = "lib/poorin_rigging" },
+    { name = "poorin-rigging", editable = "lib/rigging" },
 ]
 
 [package.metadata.requires-dev]
@@ -3687,7 +3687,7 @@ test = [
 [[package]]
 name = "poorin-rigging"
 version = "0.2.0"
-source = { editable = "lib/poorin_rigging" }
+source = { editable = "lib/rigging" }
 dependencies = [
     { name = "aiobotocore", marker = "sys_platform == 'linux' or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-14-marin-levanter-tpu') or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-6-poorin-cpu') or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-6-poorin-tpu') or (extra == 'extra-14-marin-levanter-tpu' and extra == 'extra-6-poorin-gpu') or (extra == 'extra-6-poorin-cpu' and extra == 'extra-6-poorin-gpu') or (extra == 'extra-6-poorin-gpu' and extra == 'extra-6-poorin-tpu')" },
     { name = "aiohttp", marker = "sys_platform == 'linux' or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-14-marin-levanter-tpu') or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-6-poorin-cpu') or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-6-poorin-tpu') or (extra == 'extra-14-marin-levanter-tpu' and extra == 'extra-6-poorin-gpu') or (extra == 'extra-6-poorin-cpu' and extra == 'extra-6-poorin-gpu') or (extra == 'extra-6-poorin-gpu' and extra == 'extra-6-poorin-tpu')" },
@@ -3771,9 +3771,9 @@ requires-dist = [
     { name = "marin-levanter", editable = "lib/levanter" },
     { name = "marin-zephyr", editable = "lib/zephyr" },
     { name = "poorin", editable = "lib/poorin" },
-    { name = "poorin-finelog", editable = "lib/poorin_finelog" },
-    { name = "poorin-fray", editable = "lib/poorin_fray" },
-    { name = "poorin-rigging", editable = "lib/poorin_rigging" },
+    { name = "poorin-finelog", editable = "lib/finelog" },
+    { name = "poorin-fray", editable = "lib/fray" },
+    { name = "poorin-rigging", editable = "lib/rigging" },
 ]
 
 [[package]]
