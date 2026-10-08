@@ -105,8 +105,8 @@ Marin runs on multiple types of hardware (CPU, GPU, TPU).
          Finally install Python deps for GPU setup:
 
          ```bash
-         # Install GPU-specific dependencies (local package included)
-         uv sync --all-packages --extra=gpu
+         # Install GPU-specific dependencies and the lm-eval harness (local packages included)
+         uv sync --locked --all-packages --extra=gpu --extra=lm_eval
          ```
 
     === "TPU"

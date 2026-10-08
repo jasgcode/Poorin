@@ -57,7 +57,8 @@ uv run --no-sync python -m tools.prune_check --phase P<n> --step "<short label>"
 
 - Run every project command with `uv run --no-sync`. A syncing `uv run` installs no extras, so
   it removes the CUDA build of JAX. Sync the environment explicitly from the lockfile:
-  `uv sync --locked --all-packages --extra=gpu`.
+  `uv sync --locked --all-packages --extra=gpu --extra=lm_eval` (the `lm_eval` extra makes the
+  lm-eval harness runnable).
 - Unit tests run on CPU: `tools.affected_tests` sets `JAX_PLATFORMS=cpu`. Run one test file
   in-process with `-n 0`; run GPU tests the same way, without `JAX_PLATFORMS=cpu`.
 - Do not pass a partial marker expression such as `-m "not slow"`: it replaces the default

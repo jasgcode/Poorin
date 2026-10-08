@@ -25,10 +25,11 @@ nvidia-smi
 
 Marin uses [JAX](https://docs.jax.dev/en/latest/index.html) as a core library. The workspace
 members' `gpu` extra installs the CUDA 13 JAX runtime, including CUDA, cuDNN, and NCCL Python
-wheels:
+wheels; the `lm_eval` extra installs the lm-eval harness for in-training and standalone
+evaluation:
 
 ```bash
-uv sync --locked --all-packages --extra=gpu
+uv sync --locked --all-packages --extra=gpu --extra=lm_eval
 ```
 
 Run commands with `uv run --no-sync` afterwards: a syncing `uv run` installs no extras, so it

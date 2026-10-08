@@ -70,3 +70,4 @@ date,phase,step,first_party_lines,reachable_lines,reachable_modules,r1_imported_
 2026-10-08,Rename,Rename MARIN_ settings to POORIN_,137616,136593,446,5972,3.37,67.3,28.3,7830018141
 2026-10-08,Verdicts,Delete the Delphi dataset recipes,136918,135893,440,5972,3.35,66.4,28.1,7830018141
 2026-10-08,Verdicts,Delete the evaluation serving leftovers,135574,134549,436,5972,3.37,66.3,29.1,7830018141
+2026-10-08,Verdicts,Install the lm_eval extra,135574,134549,436,6512,3.62,70.5,28.3,7935313583

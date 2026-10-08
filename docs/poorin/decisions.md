@@ -1228,7 +1228,10 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
   data under the prefix that is not there (Nemotron-CC is terabytes in upstream buckets); the
   evaluation leftovers describe a serving and Evalchemy flow that P3 removed; the kept workflows
   had no evidence they still run.
-- **Cost if wrong:** Reproducing Delphi's data mix needs the recipes from `upstream-baseline`.
+- **Cost if wrong:** Reproducing Delphi's data mix needs the recipes from `upstream-baseline`. The
+  `lm_eval` extra installs scikit-learn, which `transformers` imports at load time when present, so
+  every launch imports about 540 more modules and spends about 0.25 s longer in imports (R1: 3.37 s
+  to 3.62 s); the cut D82 defers to sub-project 4 would remove it.
 
 ---
 
