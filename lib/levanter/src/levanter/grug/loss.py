@@ -10,6 +10,7 @@ reference implementation on non-TPU backends.
 import jax
 import jax.numpy as jnp
 from jax.sharding import PartitionSpec as P
+from jax.typing import DTypeLike
 
 from haliax.jax_utils import named_call
 from levanter.grug.sharding import _axis_names, _current_mesh, _reshard_for_shard_map
@@ -48,7 +49,7 @@ def fused_linear_softmax_cross_entropy_loss(
     weight: jax.Array | None = None,
     reduction: str = "mean",
     logsumexp_weight: float | None = None,
-    dtype: jnp.dtype = jnp.float32,
+    dtype: DTypeLike = jnp.float32,
     precision: jax.lax.PrecisionLike = None,
     implementation: str | tuple[str, ...] | None = None,
     block_sizes: BlockSizes | None = None,

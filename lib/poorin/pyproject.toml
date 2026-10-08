@@ -53,6 +53,8 @@ test = [
     "pytest-json-report>=1.5",
     "pytest-xdist",
     "pytest-timeout",
+    # Runtime checker behind jaxtyping's import hook in the grug test suites.
+    "beartype>=0.19",
     # for scaling law plotting tests
     "plotly",
 ]

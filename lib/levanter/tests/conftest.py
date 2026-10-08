@@ -7,10 +7,16 @@ import tempfile
 from pathlib import Path
 
 import pytest
+from jaxtyping import install_import_hook
 from tokenizers import Tokenizer as HfBaseTokenizer
 
 from levanter.testing.tokenizer import stage_gpt2_tokenizer
 from levanter.tokenizers import HfMarinTokenizer, load_tokenizer
+
+# Check grug's jaxtyping annotations at run time: every function and dataclass in these packages is
+# wrapped with beartype as it is imported, so a wrong shape or dtype fails the test that hit it. The
+# hook must be installed before any test imports the packages.
+install_import_hook(["levanter.grug"], "beartype.beartype")
 
 
 @pytest.fixture(scope="session")

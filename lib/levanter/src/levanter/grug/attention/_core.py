@@ -14,6 +14,7 @@ from jax import numpy as jnp
 from jax import shard_map
 from jax.experimental.pallas.ops.tpu.splash_attention import splash_attention_kernel
 from jax.sharding import NamedSharding, auto_axes
+from jax.typing import DTypeLike
 from jaxtyping import Array, Bool, Float, Int
 
 from levanter.kernels.pallas.autotune_utils import named_sharding_of
@@ -229,7 +230,7 @@ def _reference_attention_math(
     v: Float[Array, "B K Hkv D"],
     mask: AttentionMask | Bool[Array, "B Q K"] | Float[Array, "B Q K"] | None,
     *,
-    logits_dtype: jnp.dtype | None,
+    logits_dtype: DTypeLike | None,
 ) -> Float[Array, "B Q Hq D"]:
     head_dim = q.shape[-1]
     num_q_heads = q.shape[2]
@@ -279,7 +280,7 @@ def reference_attention(
     v: Float[Array, "B K Hkv D"],
     mask: AttentionMask | Bool[Array, "B Q K"] | Float[Array, "B Q K"] | None,
     *,
-    logits_dtype: jnp.dtype | None,
+    logits_dtype: DTypeLike | None,
 ) -> Float[Array, "B Q Hq D"]:
     """Reference attention whose output sharding follows ``q``."""
     out_sharding = named_sharding_of(q)

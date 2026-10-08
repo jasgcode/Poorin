@@ -6,6 +6,7 @@ import functools
 import logging
 import time
 from dataclasses import dataclass, field
+from typing import no_type_check
 
 import equinox as eqx
 import jax
@@ -297,6 +298,9 @@ def _write_backward_flow_artifact(
     )
 
 
+# A JAX pytree: JAX rebuilds it with stand-in leaves (boolean masks, ShapeDtypeStructs), so its
+# constructor is exempt from the tests' runtime type checks.
+@no_type_check
 @register_dataclass
 @dataclass(frozen=True)
 class GrugTrainState:

@@ -11,6 +11,12 @@ experiment modules resolve temp-bucket paths when they are imported, before any 
 
 import pytest
 import rigging.filesystem.cluster_config as cluster_config
+from jaxtyping import install_import_hook
+
+# Check grug's jaxtyping annotations at run time: every function and dataclass in these packages is
+# wrapped with beartype as it is imported, so a wrong shape or dtype fails the test that hit it. The
+# hook must be installed before any test imports the packages.
+install_import_hook(["experiments.grug", "levanter.grug"], "beartype.beartype")
 
 POORIN_FIXTURE_CLUSTERS = "config/testing"
 _poorin_layout = pytest.MonkeyPatch()

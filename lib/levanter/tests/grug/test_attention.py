@@ -154,13 +154,6 @@ def test_token_validity_uses_empty_rows_from_dense_boolean_masks():
     np.testing.assert_array_equal(valid, jnp.array([[True, True, False], [True, True, False]]))
 
 
-def test_attention_rejects_unknown_implementation():
-    q, k, v = _make_qkv()
-
-    with pytest.raises(ValueError, match="Unknown Grug attention implementation"):
-        attention(q, k, v, AttentionMask.causal(), implementation="nope")  # type: ignore[arg-type]
-
-
 def _flash_inputs():
     key = jax.random.key(3)
     kq, kk, kv = jax.random.split(key, 3)

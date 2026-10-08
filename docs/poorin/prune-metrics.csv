@@ -72,3 +72,4 @@ date,phase,step,first_party_lines,reachable_lines,reachable_modules,r1_imported_
 2026-10-08,Verdicts,Delete the evaluation serving leftovers,135574,134549,436,5972,3.37,66.3,29.1,7830018141
 2026-10-08,Verdicts,Install the lm_eval extra,135574,134549,436,6512,3.62,70.5,28.3,7935313583
 2026-10-08,Verdicts,Smoke-run DPO and LoRA; fix lora_lm,135576,134551,436,6512,3.6,67.2,29.7,7935313583
+2026-10-08,Backlog,Check grug's jaxtyping annotations in tests,135585,134560,436,6512,3.61,67.1,28.3,8017593240

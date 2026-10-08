@@ -20,6 +20,7 @@ from levanter.grug.attention import (
     reference_attention,
 )
 from levanter.grug.attention._fa4_cute import _segmented_kernel_config, _simple_causal_lower_bounds
+from levanter.grug.attention._fa4_cute_config import Flash4CuteKernelConfig
 from levanter.grug.attention._fa4_cute_config import SM100_GQA_RATIOS, SM100_HEAD_DIM
 from levanter.grug.sharding import compact_grug_mesh
 from levanter.testing.cpu_devices import run_on_cpu_devices
@@ -193,7 +194,11 @@ def test_fa4_frontend_shards_metadata_with_qkv_batch_axis(monkeypatch):
         return q
 
     monkeypatch.setattr(jax, "default_backend", lambda: "gpu")
-    monkeypatch.setattr(fa4_cute, "_segmented_kernel_config", lambda head_dim: object())
+    monkeypatch.setattr(
+        fa4_cute,
+        "_segmented_kernel_config",
+        lambda head_dim: Flash4CuteKernelConfig(forward_tile=(64, 64), backward_tile=(64, 64), num_threads=128),
+    )
     monkeypatch.setattr(fa4_cute, "fa4_cute_attention_forward", fake_forward)
     mesh = AbstractMesh(
         axis_sizes=(1, 2, 8, 1),
@@ -224,7 +229,11 @@ def _fake_unsharded_forward(q, k, v, lower_bounds, valid, *, sm_scale, kernel_co
 
 def test_fa4_rejects_kv_batch_sharded_over_query_sequence_axis(monkeypatch):
     monkeypatch.setattr(jax, "default_backend", lambda: "gpu")
-    monkeypatch.setattr(fa4_cute, "_segmented_kernel_config", lambda head_dim: object())
+    monkeypatch.setattr(
+        fa4_cute,
+        "_segmented_kernel_config",
+        lambda head_dim: Flash4CuteKernelConfig(forward_tile=(64, 64), backward_tile=(64, 64), num_threads=128),
+    )
     monkeypatch.setattr(fa4_cute, "fa4_cute_attention_forward", _fake_unsharded_forward)
     mesh = AbstractMesh(
         axis_sizes=(1, 2, 8, 1),
@@ -251,7 +260,11 @@ def test_fa4_rejects_kv_batch_sharded_over_query_sequence_axis(monkeypatch):
 @pytest.mark.parametrize("context_entry", ["context", ("context", "model")])
 def test_fa4_accepts_unit_context_axis(monkeypatch, context_entry):
     monkeypatch.setattr(jax, "default_backend", lambda: "gpu")
-    monkeypatch.setattr(fa4_cute, "_segmented_kernel_config", lambda head_dim: object())
+    monkeypatch.setattr(
+        fa4_cute,
+        "_segmented_kernel_config",
+        lambda head_dim: Flash4CuteKernelConfig(forward_tile=(64, 64), backward_tile=(64, 64), num_threads=128),
+    )
     monkeypatch.setattr(fa4_cute, "fa4_cute_attention_forward", _fake_unsharded_forward)
     mesh = AbstractMesh(
         axis_sizes=(1, 2, 1, 8, 1),
@@ -280,7 +293,11 @@ def test_fa4_accepts_unit_context_axis(monkeypatch, context_entry):
 
 def test_fa4_precomputed_bounds_reject_mismatched_context_lengths(monkeypatch):
     monkeypatch.setattr(jax, "default_backend", lambda: "gpu")
-    monkeypatch.setattr(fa4_cute, "_segmented_kernel_config", lambda head_dim: object())
+    monkeypatch.setattr(
+        fa4_cute,
+        "_segmented_kernel_config",
+        lambda head_dim: Flash4CuteKernelConfig(forward_tile=(64, 64), backward_tile=(64, 64), num_threads=128),
+    )
     mesh = AbstractMesh((2,), ("context",), axis_types=(AxisType.Explicit,))
     q = jax.ShapeDtypeStruct((1, 8, 2, 8), jnp.bfloat16, sharding=NamedSharding(mesh, P(None, "context")))
     k = jax.ShapeDtypeStruct((1, 4, 1, 8), jnp.bfloat16, sharding=NamedSharding(mesh, P()))

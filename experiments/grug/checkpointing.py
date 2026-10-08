@@ -7,7 +7,7 @@ import logging
 import os
 import urllib.parse
 from collections.abc import Callable, Sequence
-from typing import ClassVar, Protocol, TypeVar, cast
+from typing import ClassVar, Protocol, TypeVar, cast, runtime_checkable
 
 import fsspec
 import jax
@@ -33,6 +33,7 @@ MASTER_PARAMS_KEY = "master_params"
 RESTORE_BARRIER_TIMEOUT = 40 * 60
 
 
+@runtime_checkable
 class _GrugState(Protocol):
     __dataclass_fields__: ClassVar[dict[str, dataclasses.Field[object]]]
 

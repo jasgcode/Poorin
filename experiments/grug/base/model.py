@@ -12,6 +12,7 @@ from haliax.jax_utils import named_call
 from jax import random
 from jax.sharding import PartitionSpec as P
 from jax.sharding import reshard
+from jax.typing import DTypeLike
 from jaxtyping import Array, Float, Int, PRNGKeyArray
 from levanter.analysis.backward_flow import (
     is_backward_flow_active,
@@ -219,7 +220,7 @@ class Transformer(eqx.Module):
         mask: AttentionMask | jax.Array | None = None,
         reduction: str = "mean",
         logsumexp_weight: float | None = None,
-        loss_dtype: jnp.dtype = jnp.float32,
+        loss_dtype: DTypeLike = jnp.float32,
         loss_implementation: str | tuple[str, ...] | None = None,
     ) -> jax.Array:
         """Compute next-token cross-entropy loss for a batch."""

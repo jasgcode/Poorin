@@ -3,7 +3,7 @@
 
 import json
 from pathlib import Path
-from typing import Any, Protocol
+from typing import Any, Protocol, runtime_checkable
 
 import jax
 from haliax.jax_utils import is_jax_array_like
@@ -14,6 +14,7 @@ GRUG_SHARDING_ARTIFACT_NAME = "grug_sharding_spec"
 GRUG_SHARDING_DUMP_FILENAME = f"{GRUG_SHARDING_ARTIFACT_NAME}.json"
 
 
+@runtime_checkable
 class GrugStateWithSharding(Protocol):
     params: object
     opt_state: object
