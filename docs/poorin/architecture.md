@@ -68,9 +68,8 @@ Modules marked "(review)" below, grouped by why they look vestigial on a one-GPU
 - **NCCL stall diagnostics:** `rigging.telemetry.probes` and its `nccl`, `nccl_client`,
   `nccl_ras`, and `runner` modules, with `rigging.telemetry.metrics` and the fixtures in
   `rigging.testing`. A single-GPU run has no NCCL communicators.
-- **Evaluation leftovers from the deleted serving flow:** `poorin.evaluation.eval_env`,
-  `model_config`, `model_identity`, and most of `lm_eval_samples`;
-  `finestore.migrations.m0001_manifest`, which upgrades upstream archives.
+- **Upstream archive migration:** `finestore.migrations.m0001_manifest`, which upgrades upstream
+  archives. (The evaluation leftovers of the deleted serving flow were removed by D88.)
 - **Code that no longer serves its purpose:** `levanter.recovery` and `levanter.recovery.types`,
   of which only `EXIT_STALL` is used; `levanter.pipeline`, of which only the microbatch reshape
   is used; `experiments.grug.fast_track.grugmuon_stacked`, written for deleted MoE weights;
@@ -349,15 +348,11 @@ Modules marked "(review)" below, grouped by why they look vestigial on a one-GPU
 | `poorin.datakit.source_key` | Strips Marin bucket and prefix roots to give Datakit artifacts stable source keys | R1 |
 | `poorin.evaluation` | Package marker | R1 |
 | `poorin.evaluation.endpoint` | OpenAI-compatible endpoint and tokenizer types for a served model under evaluation | `poorin.evaluation.lm_eval` |
-| `poorin.evaluation.eval_env` | Env-var allowlist an eval orchestrator forwards to serve and harness jobs (review) | `poorin.evaluation.eval_env` |
 | `poorin.evaluation.eval_measurements` | Converts eval run records into statistics-engine measurements; owns harness output shapes | `poorin.evaluation.eval_measurements` |
 | `poorin.evaluation.eval_stats` | Eval statistics: measurements, coverage, Wilson and attrition-widened intervals, cohort selection | `poorin.evaluation.eval_stats` |
 | `poorin.evaluation.evaluation_config` | `EvalTaskConfig` lm-eval task spec, results-directory identity, Levanter task conversion | R1 |
 | `poorin.evaluation.lm_eval` | Runs lm-evaluation-harness in an isolated uv env against an OpenAI-compatible endpoint | `poorin.evaluation.lm_eval` |
-| `poorin.evaluation.lm_eval_samples` | Exports lm-eval sample archives and summarizes Evalchemy output into task coverage (review) | `poorin.evaluation.eval_measurements` |
 | `poorin.evaluation.metric_selection` | Picks the primary lm-eval metric and extraction filter for a task | `poorin.evaluation.metric_selection` |
-| `poorin.evaluation.model_config` | Model catalog schema: vLLM serve, generation, Harbor agent configs loaded from YAML (review) | `poorin.evaluation.model_config` |
-| `poorin.evaluation.model_identity` | Config digest that separates eval runs sharing a model display name (review) | `poorin.evaluation.model_identity` |
 | `poorin.evaluation.model_loading` | Loads a Levanter or Hugging Face checkpoint for Levanter-based eval entrypoints | `poorin.evaluation.trace_labeled_eval` |
 | `poorin.evaluation.records` | Pydantic eval-run record schema and its `record.json` object-store read and write | `poorin.evaluation.records` |
 | `poorin.evaluation.rollouts` | Builds the FineStore rollout table from archived eval samples and steps | `poorin.evaluation.rollouts` |

@@ -27,9 +27,7 @@ at it. A local orchestrator that does this for you is planned
 
 One evaluation writes one `record.json` (`poorin.evaluation.records`): what model was evaluated,
 on what hardware, whether it succeeded, and the per-task metrics it produced. The record is the
-source of truth for a run. `poorin.evaluation.model_config` validates the model description a
-record carries, and `poorin.evaluation.model_identity` gives two configurations of the same model
-one comparison identity.
+source of truth for a run.
 
 ## Normalized rollout table
 

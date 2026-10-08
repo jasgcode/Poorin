@@ -14,6 +14,7 @@ in these two modules alone.
 from __future__ import annotations
 
 import math
+import re
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 
@@ -26,7 +27,6 @@ from poorin.evaluation.eval_stats import (
     ResultFlag,
 )
 from poorin.evaluation.evaluation_config import eval_task_directory
-from poorin.evaluation.lm_eval_samples import is_scratch_artifact
 from poorin.evaluation.metric_selection import (
     LM_EVAL_STDERR_SUFFIX,
     REPEAT_MEAN_SUFFIX,
@@ -36,6 +36,10 @@ from poorin.evaluation.metric_selection import (
 )
 from poorin.evaluation.records import EvalRunRecord, EvalTaskRef, MetricKind
 from poorin.evaluation.records import TaskCoverage as RecordTaskCoverage
+
+# A retried harness run leaves a second copy of its result tree under a ``tmp<random>/`` scratch
+# segment; only the canonical copy produced the record's metrics.
+_SCRATCH_SEGMENT = re.compile(r"(?:^|/)tmp[a-z0-9_]{6,}/")
 
 # A value derived from n items is integral in k to within this tolerance when it really is k/n.
 _INTEGRALITY_TOLERANCE = 1e-6
@@ -102,7 +106,7 @@ def _task_ref(record: EvalRunRecord, task_key: str) -> EvalTaskRef | None:
 
 
 def _is_scratch_task_key(task_key: str) -> bool:
-    return is_scratch_artifact(f"{task_key}/")
+    return _SCRATCH_SEGMENT.search(f"{task_key}/") is not None
 
 
 def _canonical_task_scores(record: EvalRunRecord) -> tuple[list[_TaskScore], bool]:
