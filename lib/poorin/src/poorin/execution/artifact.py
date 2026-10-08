@@ -29,7 +29,7 @@ from typing import Self, TypeVar
 from urllib.parse import urlparse
 
 from pydantic import BaseModel, ConfigDict, Field
-from rigging.filesystem.cluster_config import marin_prefix
+from rigging.filesystem.cluster_config import poorin_prefix
 from rigging.filesystem.factory import url_to_fs
 from rigging.filesystem.storage_path import StoragePath, prefix_join
 from rigging.provenance import Provenance, launch_provenance
@@ -221,12 +221,12 @@ def validate_version(version: str) -> None:
 
 
 def _resolved(output_path: str) -> str:
-    """A relative output path is rooted at ``marin_prefix()``; an absolute/URL path is used as-is.
+    """A relative output path is rooted at ``poorin_prefix()``; an absolute/URL path is used as-is.
 
     Mirrors the launcher's path resolution so a manual ``read_artifact``/``read_record`` of a
     relative step name reads the same location the runner wrote.
     """
-    return prefix_join(marin_prefix(), output_path) if _is_relative_path(output_path) else output_path
+    return prefix_join(poorin_prefix(), output_path) if _is_relative_path(output_path) else output_path
 
 
 def _read_text(output_path: str, filename: str) -> str | None:

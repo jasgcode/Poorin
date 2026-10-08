@@ -207,7 +207,7 @@ def _write_normalized_fixture(tmp_path, texts: list[str]) -> NormalizedData:
 def test_split_pipeline_matches_legacy_tokenize(tmp_path, monkeypatch):
     """Stage A → Stage B should produce a Levanter cache with the same token count
     as the legacy raw-input ``tokenize()`` path on the same texts."""
-    monkeypatch.setenv("MARIN_PREFIX", str(tmp_path))
+    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
     texts = [
         "The quick brown fox jumps over the lazy dog.",
         "Pack my box with five dozen liquor jugs.",

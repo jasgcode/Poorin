@@ -52,7 +52,7 @@ from tools.reachability import ROOTS_FILE, RunnableRoot, expand, load_roots, sum
 REPO_ROOT = Path(__file__).resolve().parents[1]
 METRICS_FILE = REPO_ROOT / "docs" / "poorin" / "prune-metrics.csv"
 CACHE_HOME = Path.home() / ".cache" / "poorin"
-MARIN_PREFIX = CACHE_HOME / "prune-check"
+POORIN_PREFIX = CACHE_HOME / "prune-check"
 # Levanter writes run logs under ./logs and W&B under ./wandb; runnable roots run from REPO_ROOT.
 RUN_LOG_DIRS = (REPO_ROOT / "logs", REPO_ROOT / "wandb")
 # The runnable root whose metrics must reach Finelog (spec invariant item 5).
@@ -146,7 +146,7 @@ def directory_size(path: Path) -> int:
 def run_env() -> dict[str, str]:
     """Environment for runnable roots. Levanter enables the compilation cache and preloads NVRTC itself."""
     env = dict(os.environ)
-    env.update(MARIN_PREFIX=str(MARIN_PREFIX), WANDB_MODE="offline")
+    env.update(POORIN_PREFIX=str(POORIN_PREFIX), WANDB_MODE="offline")
     return env
 
 
@@ -240,7 +240,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     with tempfile.TemporaryDirectory() as finelog_dir, require_embedded_server()(log_dir=finelog_dir) as finelog:
         runnable = with_finelog_url(roots.runnable, finelog.address)
-        warm = train_roots(runnable, run_env(), prefix=MARIN_PREFIX, log_dirs=RUN_LOG_DIRS)
+        warm = train_roots(runnable, run_env(), prefix=POORIN_PREFIX, log_dirs=RUN_LOG_DIRS)
         metric_rows = levanter_metric_rows(finelog.address)
     if metric_rows == 0:
         raise RuntimeError(f"{FINELOG_ROOT} trained but wrote no metric rows to Finelog")

@@ -60,13 +60,13 @@ The unified tutorial script [`experiments/tutorials/train_tiny_model.py`](https:
 accepts a `--device` flag that selects the accelerator:
 
 ```bash
-export MARIN_PREFIX=local_store
+export POORIN_PREFIX=local_store
 export WANDB_ENTITY=...
 uv run python experiments/tutorials/train_tiny_model.py \
   --device rtx5090x1 --dataset wikitext --version dev --run
 ```
 
-`MARIN_PREFIX` sets the root directory for all outputs; it can be a local path or anything
+`POORIN_PREFIX` sets the root directory for all outputs; it can be a local path or anything
 fsspec supports, such as `s3://` or `gs://`.
 
 The same script runs on CPU, GPU, and TPU — only `--device` and `--dataset` change. The GPU

@@ -123,7 +123,7 @@ def test_version_and_resume_are_mutually_exclusive(runner):
 
 
 def test_run_executes_the_build_and_plan_does_not(runner, tmp_path, monkeypatch):
-    monkeypatch.setenv("MARIN_PREFIX", str(tmp_path))
+    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
 
     def build():
         return apply("scratch/marker", _write_marker, out=OUT)

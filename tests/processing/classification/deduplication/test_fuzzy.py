@@ -89,7 +89,7 @@ def test_minhash_batch_preserves_arrow_and_filters_null_text():
 
 def test_minhash_attrs_co_partitioned_with_source(fox_corpus, monkeypatch):
     """Each source shard produces a same-named MinHash attr parquet with {id, buckets}."""
-    monkeypatch.setenv("MARIN_PREFIX", fox_corpus["output_dir"])
+    monkeypatch.setenv("POORIN_PREFIX", fox_corpus["output_dir"])
     norm_dir = os.path.join(fox_corpus["output_dir"], "normalized")
     minhash_dir = os.path.join(fox_corpus["output_dir"], "minhash")
 

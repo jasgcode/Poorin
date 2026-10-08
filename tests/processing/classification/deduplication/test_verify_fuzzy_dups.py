@@ -121,7 +121,7 @@ def _output_rows(verified, source_key: str) -> list[dict]:
 
 
 def test_verifier_accepts_only_direct_subset_and_filters_singletons(tmp_path, monkeypatch):
-    monkeypatch.setenv("MARIN_PREFIX", str(tmp_path))
+    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
     representative = "alpha beta gamma delta epsilon zeta eta theta iota kappa lambda mu"
     accepted = "alpha beta gamma delta epsilon zeta eta theta"
     rejected = "alpha beta gamma delta epsilon zeta eta other theta"
@@ -216,7 +216,7 @@ def test_verifier_removes_a_member_that_contains_the_canonical(tmp_path, monkeyp
     never its own removal candidate, and every longer member failed the length
     test before containment was ever computed.
     """
-    monkeypatch.setenv("MARIN_PREFIX", str(tmp_path))
+    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
     canonical_text = "alpha beta gamma delta epsilon zeta"
     longer_text = f"{canonical_text} eta theta iota kappa lambda mu nu xi omicron"
     source_key, source = _write_source(
@@ -259,7 +259,7 @@ def test_verifier_removes_a_member_that_contains_the_canonical(tmp_path, monkeyp
 
 
 def test_representative_selection_is_stable_across_input_order(tmp_path, monkeypatch):
-    monkeypatch.setenv("MARIN_PREFIX", str(tmp_path))
+    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
     representative_text = "alpha beta gamma delta epsilon zeta eta theta iota kappa"
     member_text = "alpha beta gamma delta epsilon zeta eta theta"
     source_a_key, source_a = _write_source(
@@ -317,7 +317,7 @@ def test_representative_selection_is_stable_across_input_order(tmp_path, monkeyp
 
 
 def test_verifier_defers_exact_copies_to_global_exact_dedup(tmp_path, monkeypatch):
-    monkeypatch.setenv("MARIN_PREFIX", str(tmp_path))
+    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
     text = "alpha beta gamma delta epsilon zeta eta theta"
     source_a_key, source_a = _write_source(
         root=tmp_path,
@@ -359,7 +359,7 @@ def test_verifier_defers_exact_copies_to_global_exact_dedup(tmp_path, monkeypatc
 
 
 def test_local_verifier_rejects_different_token_sequences(tmp_path, monkeypatch):
-    monkeypatch.setenv("MARIN_PREFIX", str(tmp_path))
+    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
     local_text = "alpha beta gamma delta epsilon zeta eta theta iota kappa lambda mu nu xi omicron pi rho sigma tau"
     duplicate_text = "alpha beta gamma delta epsilon zeta eta theta iota kappa lambda mu nu xi omicron pi rho sigma"
     source_key, source = _write_source(
@@ -410,7 +410,7 @@ def test_local_verifier_rejects_different_token_sequences(tmp_path, monkeypatch)
 
 
 def test_local_verifier_accepts_equal_token_sequences_with_different_whitespace(tmp_path, monkeypatch):
-    monkeypatch.setenv("MARIN_PREFIX", str(tmp_path))
+    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
     tokens = [f"t{index}" for index in range(40)]
     representative_text = "   ".join(tokens)
     member_text = "\t".join(tokens)
@@ -460,7 +460,7 @@ def test_local_verifier_accepts_equal_token_sequences_with_different_whitespace(
 
 
 def test_local_verifier_rejects_collapsed_line_structure(tmp_path, monkeypatch):
-    monkeypatch.setenv("MARIN_PREFIX", str(tmp_path))
+    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
     tokens = [f"t{index}" for index in range(40)]
     representative_text = "\n".join(tokens)
     member_text = " ".join(tokens)
@@ -513,7 +513,7 @@ def test_verifier_rejects_token_ngram_saturation(tmp_path, monkeypatch):
     20,000 and 40,000 random binary tokens share every distinct token 3-gram
     and character 13-gram. The verifier must retain the independent member.
     """
-    monkeypatch.setenv("MARIN_PREFIX", str(tmp_path))
+    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
 
     def digit_text(seed: int, size: int) -> str:
         random = Random(seed)
@@ -572,7 +572,7 @@ def test_verifier_rejects_token_ngram_saturation(tmp_path, monkeypatch):
 
 
 def test_local_representative_selection_is_stable_across_input_order(tmp_path, monkeypatch):
-    monkeypatch.setenv("MARIN_PREFIX", str(tmp_path))
+    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
     local_text = "alpha beta gamma delta epsilon zeta eta theta iota kappa lambda mu nu xi omicron pi rho sigma tau"
     duplicate_text = "\t".join(local_text.split())
     source_a_key, source_a = _write_source(
@@ -650,7 +650,7 @@ def test_local_representative_selection_is_stable_across_input_order(tmp_path, m
 
 
 def test_verifier_ranks_local_nominees_and_bounds_comparisons(tmp_path, monkeypatch):
-    monkeypatch.setenv("MARIN_PREFIX", str(tmp_path))
+    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
     b_text = "alpha beta gamma delta epsilon zeta eta theta iota kappa lambda mu nu xi omicron pi rho sigma tau"
     target_text = "\t".join(b_text.split())
     source_key, source = _write_source(
@@ -725,7 +725,7 @@ def test_verifier_ranks_local_nominees_and_bounds_comparisons(tmp_path, monkeypa
 
 
 def test_verifier_bounds_representative_count_and_text(tmp_path, monkeypatch):
-    monkeypatch.setenv("MARIN_PREFIX", str(tmp_path))
+    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
     long_text = " ".join(f"token-{index}" for index in range(30))
     short_duplicate = " ".join(f"token-{index}" for index in range(29))
     rows = [
@@ -791,7 +791,7 @@ def test_verifier_bounds_representative_count_and_text(tmp_path, monkeypatch):
 
 
 def test_repeated_noncanonical_ids_stay_available_as_local_representatives(tmp_path, monkeypatch):
-    monkeypatch.setenv("MARIN_PREFIX", str(tmp_path))
+    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
     exact_text = "alpha beta gamma delta epsilon zeta eta theta iota kappa lambda mu nu xi omicron pi rho sigma tau"
     near_text = "\t".join(exact_text.split())
     source_a_key, source_a = _write_source(
@@ -870,7 +870,7 @@ def test_repeated_noncanonical_ids_stay_available_as_local_representatives(tmp_p
 
 
 def test_verifier_rejects_different_text_for_canonical_content_id(tmp_path, monkeypatch):
-    monkeypatch.setenv("MARIN_PREFIX", str(tmp_path))
+    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
     source_a_key, source_a = _write_source(
         root=tmp_path,
         name="source-a",
@@ -908,7 +908,7 @@ def test_verifier_rejects_different_text_for_canonical_content_id(tmp_path, monk
 
 
 def test_verifier_rejects_more_than_one_candidate_canonical(tmp_path, monkeypatch):
-    monkeypatch.setenv("MARIN_PREFIX", str(tmp_path))
+    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
     source_key, source = _write_source(
         root=tmp_path,
         name="source",
@@ -947,7 +947,7 @@ def test_verifier_rejects_more_than_one_candidate_canonical(tmp_path, monkeypatc
 
 
 def test_verifier_rejects_mismatched_source_sets(tmp_path, monkeypatch):
-    monkeypatch.setenv("MARIN_PREFIX", str(tmp_path))
+    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
     source_key, source = _write_source(
         root=tmp_path,
         name="source",
@@ -974,7 +974,7 @@ def test_verifier_falls_back_when_a_cluster_lost_its_canonical(tmp_path, monkeyp
     on the longest of them and reports ``cluster_longest`` instead of failing
     the job.
     """
-    monkeypatch.setenv("MARIN_PREFIX", str(tmp_path))
+    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
     source_key, source = _write_source(
         root=tmp_path,
         name="source",
@@ -1020,7 +1020,7 @@ def test_verifier_accepts_repeated_source_ids(tmp_path, monkeypatch):
     Their IDs come from an upstream content hash, so a repeat means the same
     text twice and the join can bind either row.
     """
-    monkeypatch.setenv("MARIN_PREFIX", str(tmp_path))
+    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
     source_key, source = _write_source(
         root=tmp_path,
         name="source",

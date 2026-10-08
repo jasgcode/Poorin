@@ -65,7 +65,7 @@ class MockNestedConfig:
 def test_lm_config_with_train_urls_allowed_out_of_region(trainer_config):
     """train/validation source URLs are exempt from region checks."""
     with (
-        patch("rigging.filesystem.cluster_config.marin_region", return_value="us-central1"),
+        patch("rigging.filesystem.cluster_config.poorin_region", return_value="us-central1"),
         patch("rigging.filesystem.cluster_config.get_bucket_location", return_value="us-east1"),
     ):
         config = TrainLmOnPodConfig(
@@ -82,8 +82,8 @@ def test_temporary_checkpoint_base_path_uses_cluster_local_scratch():
     with patch.dict(
         os.environ,
         {
-            "MARIN_PREFIX": "s3://marin-us-east-02a/marin",
-            "MARIN_TEMP_PREFIX": "s3://hero-checkpoints",
+            "POORIN_PREFIX": "s3://marin-us-east-02a/marin",
+            "POORIN_TEMP_PREFIX": "s3://hero-checkpoints",
         },
     ):
         assert temporary_checkpoint_base_path("s3://marin-us-east-02a/experiments/grug/base-trial") == (
@@ -95,7 +95,7 @@ def test_temporary_checkpoint_base_path_uses_cluster_local_scratch():
 def test_apply_output_path_sets_run_specific_temp_checkpoints(trainer_config):
     with (
         patch("rigging.filesystem.cluster_config.urllib.request.urlopen", side_effect=OSError("not on GCP")),
-        patch.dict(os.environ, {"MARIN_PREFIX": "gs://marin-us-central1/scratch"}),
+        patch.dict(os.environ, {"POORIN_PREFIX": "gs://marin-us-central1/scratch"}),
     ):
         updated = apply_output_path(
             train_lm.TrainLmConfig(trainer=trainer_config),
@@ -113,7 +113,7 @@ def test_apply_output_path_sets_run_specific_temp_checkpoints(trainer_config):
 
 def test_apply_output_path_does_not_enable_adapter_hf_export_without_steps(trainer_config):
     with patch(
-        "poorin.training.training.marin_temp_bucket",
+        "poorin.training.training.poorin_temp_bucket",
         return_value="gs://tmp/ttl=14d/checkpoints-temp/example-run",
     ):
         updated = apply_output_path(
@@ -131,7 +131,7 @@ def test_apply_output_path_does_not_enable_adapter_hf_export_without_steps(train
 
 def test_apply_output_path_routes_adapter_hf_export_to_peft(trainer_config):
     with patch(
-        "poorin.training.training.marin_temp_bucket",
+        "poorin.training.training.poorin_temp_bucket",
         return_value="gs://tmp/ttl=14d/checkpoints-temp/example-run",
     ):
         updated = apply_output_path(
@@ -151,7 +151,7 @@ def test_apply_output_path_routes_adapter_hf_export_to_peft(trainer_config):
 def test_recursive_path_checking(trainer_config):
     """Paths are checked recursively in nested structures."""
     with (
-        patch("rigging.filesystem.cluster_config.marin_region", return_value="us-central1"),
+        patch("rigging.filesystem.cluster_config.poorin_region", return_value="us-central1"),
         patch("rigging.filesystem.cluster_config.get_bucket_location", return_value="us-east1"),
     ):
         nested_data = MockNestedDataConfig(
@@ -171,7 +171,7 @@ def test_recursive_path_checking(trainer_config):
 def test_dataclass_recursive_checking(trainer_config):
     """Paths are checked recursively in dataclass objects."""
     with (
-        patch("rigging.filesystem.cluster_config.marin_region", return_value="us-central1"),
+        patch("rigging.filesystem.cluster_config.poorin_region", return_value="us-central1"),
         patch("rigging.filesystem.cluster_config.get_bucket_location", return_value="us-east1"),
     ):
         config = TrainLmOnPodConfig(
@@ -188,7 +188,7 @@ def test_dataclass_recursive_checking(trainer_config):
 def test_pathlib_path_handling(trainer_config):
     """pathlib.Path objects that represent GCS URIs are handled correctly."""
     with (
-        patch("rigging.filesystem.cluster_config.marin_region", return_value="us-central1"),
+        patch("rigging.filesystem.cluster_config.poorin_region", return_value="us-central1"),
         patch("rigging.filesystem.cluster_config.get_bucket_location", return_value="us-east1"),
     ):
         config = TrainLmOnPodConfig(

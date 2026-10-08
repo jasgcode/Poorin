@@ -26,7 +26,7 @@ profile with no XPlane protobuf.
 ## Capture Profiles
 Use Levanter profiler flags so profiles land under
 `<trainer.log_dir>/<run_id>/profiler`. Remote Marin runs also upload to
-`MARIN_PREFIX` TTL storage and print an XProf link:
+`POORIN_PREFIX` TTL storage and print an XProf link:
 
 ```bash
 uv run ... \
@@ -101,7 +101,7 @@ must retain an uncommitted analysis artifact.
 # /tmp (ephemeral)
 uv run python lib/poorin/tools/profile_summary.py summarize \
   --run-target marin-community/marin/<run_id> \
-  --download-root /tmp/marin-profiles \
+  --download-root /tmp/poorin-profiles \
   --breakdown-mode exclusive_global \
   --output /tmp/profile_summary.json
 
@@ -112,7 +112,7 @@ uv run python lib/poorin/tools/profile_summary.py summarize \
 ```bash
 uv run python lib/poorin/tools/profile_summary.py summarize \
   --artifact marin-community/marin/run-grug-125m-profile-apples-pallas_tpu-20260217-225239-055ab2-profiler:v0 \
-  --download-root /tmp/marin-profiles \
+  --download-root /tmp/poorin-profiles \
   --output /tmp/profile_summary.json
 ```
 

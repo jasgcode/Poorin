@@ -90,7 +90,7 @@ class NormalizedData(BaseModel):
         main_output_dir: Directory containing the main output Parquet files.
         dup_output_dir: Directory containing the duplicate side output Parquet
             files. A v2 artifact stores both directories relative to
-            ``MARIN_PREFIX`` when they are under the active prefix.
+            ``POORIN_PREFIX`` when they are under the active prefix.
         counters: Aggregated zephyr counters.
     """
 

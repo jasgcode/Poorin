@@ -113,7 +113,7 @@ def test_upload_destination_uses_xprof_ttl_path(monkeypatch):
         calls.append((ttl_days, prefix))
         return f"gs://marin-us-east5/tmp/ttl={ttl_days}d/{prefix}"
 
-    monkeypatch.setattr(profiler_module, "marin_temp_bucket", temp_bucket)
+    monkeypatch.setattr(profiler_module, "poorin_temp_bucket", temp_bucket)
 
     assert XprofUploadConfig().destination_for_run("run-123") == "gs://marin-us-east5/tmp/ttl=30d/xprof/run-123"
     assert calls == [(30, "xprof/run-123")]
@@ -123,7 +123,7 @@ def test_xla_dump_uploads_at_start_and_after_hooks(monkeypatch, tmp_path):
     uploads = []
     monkeypatch.setenv("XLA_FLAGS", f"--xla_dump_to={tmp_path / 'dumps'}")
     monkeypatch.setattr(profiler_module.jax, "process_index", lambda: 2)
-    monkeypatch.setattr(profiler_module, "marin_temp_bucket", lambda _ttl_days, prefix: f"file://{tmp_path}/{prefix}")
+    monkeypatch.setattr(profiler_module, "poorin_temp_bucket", lambda _ttl_days, prefix: f"file://{tmp_path}/{prefix}")
     monkeypatch.setattr(profiler_module, "upload_xla_dumps", lambda *args: uploads.append(args))
 
     callback = XlaDumpUploadConfig(enabled=True).build("run-123")
@@ -190,7 +190,7 @@ def test_non_ttl_marin_fallback_does_not_copy_or_log_hosted_link(monkeypatch, tm
     monkeypatch.setattr(profiler_module, "profile", fake_profile)
     monkeypatch.setattr(
         profiler_module,
-        "marin_temp_bucket",
+        "poorin_temp_bucket",
         lambda _ttl_days, prefix: fallback.format(tmp_path=tmp_path, prefix=prefix),
     )
     ProfilerConfig().build(str(tmp_path / "capture"), run_id="local-run")

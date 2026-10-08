@@ -115,7 +115,7 @@ def test_relative_shard_path_requires_child_uri_paths():
 
 
 def test_relative_shard_path_tolerates_double_slash_output():
-    # A trailing slash in MARIN_PREFIX yields a `//` after the StepSpec path join,
+    # A trailing slash in POORIN_PREFIX yields a `//` after the StepSpec path join,
     # while shard writes normalize `//`->`/`. Consolidation must treat both as the
     # same location instead of raising "not under output path".
     output_path = "s3://marin-na/marin//slimpajama-6b/2026.06.28/train"

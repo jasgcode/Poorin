@@ -9,7 +9,7 @@ instances in the process (default 10 GB). Both :class:`CrossRegionGuardedFS`
 global budget. Prefer the guarded helpers in :mod:`rigging.filesystem.factory`
 (``url_to_fs``, ``open_url``, ``filesystem``) over the raw fsspec equivalents;
 they automatically wrap GCS filesystems in the guard. Set the
-``MARIN_I_WILL_PAY_FOR_ALL_FEES`` env var to override the guard.
+``POORIN_I_WILL_PAY_FOR_ALL_FEES`` env var to override the guard.
 """
 
 import contextlib
@@ -21,18 +21,18 @@ import threading
 from collections.abc import Callable, Generator
 from typing import Any
 
-from rigging.filesystem.cluster_config import get_bucket_location, marin_region
+from rigging.filesystem.cluster_config import get_bucket_location, poorin_region
 from rigging.filesystem.storage_path import StoragePath
 
 logger = logging.getLogger(__name__)
 
-MARIN_CROSS_REGION_OVERRIDE_ENV: str = "MARIN_I_WILL_PAY_FOR_ALL_FEES"
-MARIN_MIRROR_BUDGET_ENV: str = "MARIN_MIRROR_BUDGET_GB"
+POORIN_CROSS_REGION_OVERRIDE_ENV: str = "POORIN_I_WILL_PAY_FOR_ALL_FEES"
+POORIN_MIRROR_BUDGET_ENV: str = "POORIN_MIRROR_BUDGET_GB"
 _DEFAULT_TRANSFER_LIMIT_GB: int = 10
 
 
 def _transfer_limit_bytes() -> int:
-    raw = os.environ.get(MARIN_MIRROR_BUDGET_ENV, "")
+    raw = os.environ.get(POORIN_MIRROR_BUDGET_ENV, "")
     if raw:
         return int(float(raw) * 1024 * 1024 * 1024)
     return _DEFAULT_TRANSFER_LIMIT_GB * 1024 * 1024 * 1024
@@ -153,9 +153,9 @@ def mirror_budget(budget_gb: float) -> Generator[None, None, None]:
 
 
 @functools.lru_cache(maxsize=1)
-def cached_marin_region() -> str | None:
+def cached_poorin_region() -> str | None:
     """Return the current VM region, cached for the process lifetime (the VM region is stable)."""
-    return marin_region()
+    return poorin_region()
 
 
 @functools.lru_cache(maxsize=256)
@@ -212,12 +212,12 @@ def _bucket_from_gcs_url(url: str) -> str | None:
 
 def _is_cross_region_url(url: str) -> bool:
     """Return True if *url* points to a GCS bucket in a different region than the VM."""
-    if os.environ.get(MARIN_CROSS_REGION_OVERRIDE_ENV):
+    if os.environ.get(POORIN_CROSS_REGION_OVERRIDE_ENV):
         return False
     bucket = _bucket_from_gcs_url(url)
     if bucket is None:
         return False
-    vm_region = cached_marin_region()
+    vm_region = cached_poorin_region()
     if vm_region is None:
         return False
     bucket_location = _cached_bucket_location(bucket)
@@ -294,7 +294,7 @@ class CrossRegionGuardedFS:
     ):
         self._fs = fs
         self._cross_region_checker = cross_region_checker
-        self._current_region = None if cross_region_checker else cached_marin_region()
+        self._current_region = None if cross_region_checker else cached_poorin_region()
         self._budget = budget if budget is not None else _global_transfer_budget
 
     # -- cross-region detection ----------------------------------------------
@@ -344,7 +344,7 @@ class CrossRegionGuardedFS:
     # -- guard logic ---------------------------------------------------------
 
     def _guard_read(self, path: str) -> None:
-        if os.environ.get(MARIN_CROSS_REGION_OVERRIDE_ENV):
+        if os.environ.get(POORIN_CROSS_REGION_OVERRIDE_ENV):
             return
 
         # fsspec strips the protocol, so paths look like "bucket/key".

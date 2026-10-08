@@ -31,4 +31,4 @@ Removed, by subpackage (lines at `upstream-baseline`):
 | `rl` | 1,217 | The in-repo SkyRL integration | D6, D68 |
 | `markdown`, `mcp`, `publish`, `export`, `web`, `schemas`, `core`, `cluster`, `rollouts` | 2,769 | Smaller leftovers of the above | P3, P7 |
 
-The `MARIN_*` environment variables and helpers such as `marin_prefix()` keep their names for now.
+The `MARIN_*` environment variables and helpers such as `poorin_prefix()` keep their names for now.

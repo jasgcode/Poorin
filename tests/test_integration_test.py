@@ -19,7 +19,7 @@ from contextlib import contextmanager
 
 import pytest
 
-MARIN_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+POORIN_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 _CONTROLLER_URL_RE = re.compile(r"Controller started at (\S+)")
 
 
@@ -28,7 +28,7 @@ def test_integration_test_run(tmp_path):
     with _iris_controller_url(tmp_path) as url:
         result = subprocess.run(
             ["uv", "run", "python", "tests/integration_test.py", "--controller-url", url],
-            cwd=MARIN_ROOT,
+            cwd=POORIN_ROOT,
         )
         assert result.returncode == 0, f"Integration test returned {result.returncode}"
 
@@ -45,7 +45,7 @@ def _iris_controller_url(tmp_path) -> Iterator[str]:
     with log_file.open("w") as log:
         cluster = subprocess.Popen(
             ["uv", "run", "iris", "--config", "lib/iris/config/ci-test.yaml", "cluster", "start", "--local"],
-            cwd=MARIN_ROOT,
+            cwd=POORIN_ROOT,
             stdout=log,
             stderr=subprocess.STDOUT,
             start_new_session=True,

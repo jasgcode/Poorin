@@ -57,7 +57,7 @@ def test_sweep_gives_each_grid_point_a_distinct_identity():
 def test_selection_is_user_code_over_resolved_metrics(tmp_path, monkeypatch):
     """The replacement for the old ``select``: run the sweep, read each trial's metrics through
     its typed artifact, and reduce — no framework verb involved."""
-    monkeypatch.setenv("MARIN_PREFIX", str(tmp_path))
+    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
     # losses: 0.1, 0.3 (lr.1), 0.3, 0.5 (lr.3) -> min is lr=0.1, wd=0.0
     trials = sweep(_trial, learning_rate=[0.1, 0.3], weight_decay=[0.0, 0.2])
 

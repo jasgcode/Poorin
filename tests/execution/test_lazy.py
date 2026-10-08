@@ -99,10 +99,10 @@ def test_explicit_version_paths_and_cross_step_resolution():
 
 
 def test_trailing_slash_prefix_writer_and_reader_agree(monkeypatch):
-    """Regression for marin-community/marin#6904: with a trailing-slash ``MARIN_PREFIX``
+    """Regression for marin-community/marin#6904: with a trailing-slash ``POORIN_PREFIX``
     the lowered step wrote to ``…marin//name/version`` while consumers resolved
     ``…marin/name/version`` — a different object-store key, so the reader found no record."""
-    monkeypatch.setenv("MARIN_PREFIX", "s3://marin-na/marin/")
+    monkeypatch.setenv("POORIN_PREFIX", "s3://marin-na/marin/")
     handle = dclm_tokens()
     spec = lower(handle)
     assert spec.output_path == handle.path()
@@ -111,7 +111,7 @@ def test_trailing_slash_prefix_writer_and_reader_agree(monkeypatch):
 
 def test_trailing_slash_prefix_resolves_relative_pin(monkeypatch):
     """Same invariant for a relatively pinned handle (the ``override_path`` branch)."""
-    monkeypatch.setenv("MARIN_PREFIX", "s3://marin-na/marin/")
+    monkeypatch.setenv("POORIN_PREFIX", "s3://marin-na/marin/")
     pinned = apply("data/pinned", _stage, version="2026.06.28", pin="pinned/loc", output_path=OUT)
     assert lower(pinned).output_path == pinned.path()
     assert pinned.path() == "s3://marin-na/marin/pinned/loc"
@@ -292,7 +292,7 @@ def test_malformed_version_is_rejected(bad):
 
 
 def test_end_to_end_through_step_runner(tmp_path, monkeypatch):
-    monkeypatch.setenv("MARIN_PREFIX", str(tmp_path))
+    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
 
     run(dclm_1b())
 
@@ -311,7 +311,7 @@ def test_end_to_end_through_step_runner(tmp_path, monkeypatch):
 
 
 def test_resolve_round_trips_a_value_artifact(tmp_path, monkeypatch):
-    monkeypatch.setenv("MARIN_PREFIX", str(tmp_path))
+    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
 
     result = resolve(dclm_tokens())
     assert isinstance(result, Tokens)
@@ -321,7 +321,7 @@ def test_resolve_round_trips_a_value_artifact(tmp_path, monkeypatch):
 
 def test_run_returns_loaded_artifacts(tmp_path, monkeypatch):
     """run() builds and hands back each top-level handle's loaded, typed artifact, in order."""
-    monkeypatch.setenv("MARIN_PREFIX", str(tmp_path))
+    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
     results = run(dclm_tokens())
     assert len(results) == 1
     assert isinstance(results[0], Tokens)
@@ -334,7 +334,7 @@ class OtherValue(Artifact):
 
 def test_resolve_raises_on_result_type_drift(tmp_path, monkeypatch):
     """A value artifact whose type changed under a reused version is a hard error at load."""
-    monkeypatch.setenv("MARIN_PREFIX", str(tmp_path))
+    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
     resolve(dclm_tokens())  # records artifact type Tokens at this address
 
     drifted = ArtifactStep(
@@ -379,7 +379,7 @@ def echo_consumer() -> ArtifactStep[TokenizerEcho]:
 
 
 def test_consumer_reads_dependency_value_via_ctx_resolved(tmp_path, monkeypatch):
-    monkeypatch.setenv("MARIN_PREFIX", str(tmp_path))
+    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
     run(echo_consumer())
     saved = TokenizerEcho.raw_load(f"{tmp_path}/checkpoints/echo/2026.06.28")
     # The dep's tokenizer flowed from its record into the consumer's output.
@@ -387,18 +387,18 @@ def test_consumer_reads_dependency_value_via_ctx_resolved(tmp_path, monkeypatch)
 
 
 def test_consumer_resolves_dependency_under_relative_prefix(tmp_path, monkeypatch):
-    """A relative ``MARIN_PREFIX`` (the tutorials' ``local_store``) must resolve a dependency's
+    """A relative ``POORIN_PREFIX`` (the tutorials' ``local_store``) must resolve a dependency's
     record. The dep's path is joined onto the prefix and still looks relative, so an unanchored
     prefix was applied again on read and the record came back missing."""
     monkeypatch.chdir(tmp_path)
-    monkeypatch.setenv("MARIN_PREFIX", "local_store")
+    monkeypatch.setenv("POORIN_PREFIX", "local_store")
     run(echo_consumer())
     saved = TokenizerEcho.raw_load(f"{tmp_path}/local_store/checkpoints/echo/2026.06.28")
     assert saved.tokenizer == "llama3"
 
 
 def test_resolved_caches_the_loaded_artifact(tmp_path, monkeypatch):
-    monkeypatch.setenv("MARIN_PREFIX", str(tmp_path))
+    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
     tok = dclm_tokens()
     run(tok)  # materialize the dep so its record exists
     ctx = StepContext.for_run(output_path="o", prefix=str(tmp_path), deps=(tok,))
@@ -448,7 +448,7 @@ def _transform(input_path: str, output_path: str) -> None:
 
 
 def test_apply_chains_steps_by_direct_call(tmp_path, monkeypatch):
-    monkeypatch.setenv("MARIN_PREFIX", str(tmp_path))
+    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
 
     staged = apply("raw/massive", _stage, version="2026.06.28", output_path=OUT)
     parts = apply("data/massive", _transform, version="2026.06.28", input_path=staged, output_path=OUT)

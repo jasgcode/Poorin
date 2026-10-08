@@ -121,7 +121,7 @@ def test_a_restarted_process_loads_the_stored_object_instead_of_compiling(fake_c
 
 def test_non_primary_process_does_not_publish_compiled_kernel(fake_cutlass, tmp_path, monkeypatch):
     root = tmp_path / "cutlass-kernels"
-    monkeypatch.setattr(finestore_cache, "marin_temp_bucket", lambda _ttl, _prefix: str(root))
+    monkeypatch.setattr(finestore_cache, "poorin_temp_bucket", lambda _ttl, _prefix: str(root))
     monkeypatch.setattr(cutlass_kernel_cache.jax, "process_index", lambda: 1)
 
     install(cutlass_kernel_cache.cutlass_kernel_cache())

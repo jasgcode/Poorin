@@ -1195,6 +1195,25 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
 - **Cost if wrong:** None at runtime; reading code no longer shows which utility libraries Poorin
   forked, which their READMEs and the AGENTS.md map still record.
 
+### D87. Poorin's settings take Poorin names
+
+- **When:** 2026-10-08. **Status:** Adopted. Follows D85.
+- **Decision:** Every environment variable that configures Poorin drops its `MARIN_` prefix for
+  `POORIN_`: `POORIN_PREFIX`, `POORIN_TEMP_PREFIX`, `POORIN_CLUSTER`, `POORIN_CLUSTER_CONFIG_DIRS`,
+  `POORIN_FINGERPRINT_STRICT`, `POORIN_I_WILL_PAY_FOR_ALL_FEES`, `POORIN_MIRROR_BUDGET_GB`,
+  `POORIN_PROVENANCE`, and `POORIN_GIT_COMMIT`. The helpers follow (`poorin_prefix()`,
+  `poorin_temp_bucket()`, `poorin_region()`), with the constants, tests, and private names built
+  on them. The output prefix falls back to `/tmp/poorin` when unset, and the default W&B project
+  is `poorin`. `MARIN_CI_DISABLE_RUNTIME_ENVS`, a CI leftover, is deleted (D70).
+- **Kept:** names that point at something of Marin's: the "Copyright The Marin Authors" license
+  header (`MARIN_HEADER`), the Marin tokenizer and its chat template (`marin_tokenizer`,
+  `MARIN_CHAT_TEMPLATE`, `MARIN_CUSTOM_SPECIAL_TOKENS`), `gs://marin-*` bucket names, Marin's
+  cluster fixtures under `config/testing/`, and W&B test data naming upstream runs.
+- **Why:** The owner, 2026-10-08, after the library renames.
+- **Cost if wrong:** A shell or a script that still exports `MARIN_PREFIX` is ignored and outputs
+  go to `/tmp/poorin`. On 2026-10-08 nothing in the owner's shell set a `MARIN_*` variable, and the
+  owner's SkyRL fork references none.
+
 ---
 
 ## Deferred

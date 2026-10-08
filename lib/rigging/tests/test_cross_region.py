@@ -9,7 +9,7 @@ from unittest.mock import patch
 import pytest
 import rigging.filesystem.cross_region as rfs
 from rigging.filesystem.cross_region import (
-    MARIN_CROSS_REGION_OVERRIDE_ENV,
+    POORIN_CROSS_REGION_OVERRIDE_ENV,
     CrossRegionGuardedFS,
     TransferBudget,
     TransferBudgetExceeded,
@@ -36,7 +36,7 @@ def test_bucket_from_gcs_url(url, bucket):
 @pytest.fixture()
 def patched_regions(monkeypatch):
     """VM is in us-central1; bucket lookup is faked from the URL."""
-    monkeypatch.setattr(rfs, "cached_marin_region", lambda: "us-central1")
+    monkeypatch.setattr(rfs, "cached_poorin_region", lambda: "us-central1")
     monkeypatch.setattr(
         rfs,
         "_cached_bucket_location",
@@ -210,7 +210,7 @@ def test_guarded_fs_override_env_bypasses_budget(budget):
 
     guarded = CrossRegionGuardedFS(fs, cross_region_checker=lambda _: True, budget=budget)
 
-    with patch.dict(os.environ, {MARIN_CROSS_REGION_OVERRIDE_ENV: "testuser"}):
+    with patch.dict(os.environ, {POORIN_CROSS_REGION_OVERRIDE_ENV: "testuser"}):
         guarded.open("remote-bucket/big.bin", "rb")
 
     assert budget.bytes_used == 0

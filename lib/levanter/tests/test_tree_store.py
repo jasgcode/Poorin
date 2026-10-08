@@ -268,7 +268,7 @@ def _write_mirrored_store(path):
 def test_reading_from_mirror_path(tmp_path, monkeypatch):
     local_root = tmp_path / "local"
     exemplar = _write_mirrored_store(local_root / "cache")
-    monkeypatch.setenv("MARIN_PREFIX", local_root.as_uri())
+    monkeypatch.setenv("POORIN_PREFIX", local_root.as_uri())
 
     reader = TreeStore.open(exemplar, "mirror://cache", mode="r")
 
@@ -279,7 +279,7 @@ def test_reading_from_mirror_path(tmp_path, monkeypatch):
 async def test_reading_from_mirror_path_async(tmp_path, monkeypatch):
     local_root = tmp_path / "local"
     exemplar = _write_mirrored_store(local_root / "cache")
-    monkeypatch.setenv("MARIN_PREFIX", str(local_root))
+    monkeypatch.setenv("POORIN_PREFIX", str(local_root))
 
     reader = await TreeStore.open_async(exemplar, "mirror://cache", mode="r")
 

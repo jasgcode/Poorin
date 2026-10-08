@@ -54,7 +54,7 @@ from poorin.training.training import (
 # Compute in bf16, keep master params and optimizer state in f32. The universal marin
 # precision policy; it bears identity (it changes numerics), so overriding it is a
 # deliberate experiment, but it is the same across essentially every marin LM run.
-MARIN_PRECISION = "p=f32,c=bfloat16"
+POORIN_PRECISION = "p=f32,c=bfloat16"
 
 # The marin token axis maps onto the data-parallel mesh. This is hardware plumbing, not
 # an experiment choice: it says nothing about what is computed, only how the sequence
@@ -74,7 +74,7 @@ class EvalSuite:
     every: int
 
 
-def _marin_mesh(tensor_parallel_size: int) -> MeshConfig:
+def _poorin_mesh(tensor_parallel_size: int) -> MeshConfig:
     """The standard marin training mesh: data parallel, optional tensor sharding.
 
     ``model`` is the tensor-parallel width (1 = no sharding); ``data`` absorbs the rest
@@ -115,10 +115,10 @@ def train_lm(
     version: str | None = None,
     validation: Sequence[ArtifactStep[TokenizedCache]] = (),
     init_from: ArtifactStep[LevanterCheckpoint] | None = None,
-    mp: str = MARIN_PRECISION,
+    mp: str = POORIN_PRECISION,
     tensor_parallel_size: int = 1,
     steps_per_eval: int = 1000,
-    wandb_project: str = "marin",
+    wandb_project: str = "poorin",
     wandb_group: str | None = None,
     run_id: str | None = None,
     tags: Sequence[str] = (),
@@ -215,7 +215,7 @@ def train_lm(
                 num_train_steps=resolve_num_train_steps(ctx),
                 steps_per_eval=steps_per_eval,
                 checkpointer=CheckpointerConfig(save_interval=_RESUMPTION_INTERVAL, keep=[]),
-                mesh=_marin_mesh(tensor_parallel_size),
+                mesh=_poorin_mesh(tensor_parallel_size),
                 per_device_eval_parallelism=-1,
                 allow_nondivisible_batch_size=True,
             ),

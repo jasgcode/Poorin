@@ -22,7 +22,7 @@ def test_adopt_resolves_to_source_not_canonical():
 
 
 def test_adopt_records_pointer_at_canonical_address(tmp_path, monkeypatch):
-    monkeypatch.setenv("MARIN_PREFIX", str(tmp_path))
+    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
     (tmp_path / "pre_existing").mkdir()
     run(ArtifactStep.adopt("datasets/external", "2026.06.28", source="pre_existing"))
 
@@ -33,14 +33,14 @@ def test_adopt_records_pointer_at_canonical_address(tmp_path, monkeypatch):
 
 
 def test_readopt_same_source_is_idempotent(tmp_path, monkeypatch):
-    monkeypatch.setenv("MARIN_PREFIX", str(tmp_path))
+    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
     (tmp_path / "src").mkdir()
     run(ArtifactStep.adopt("datasets/x", "2026.06.28", source="src"))
     run(ArtifactStep.adopt("datasets/x", "2026.06.28", source="src"))
 
 
 def test_readopt_different_source_warns(tmp_path, monkeypatch, caplog):
-    monkeypatch.setenv("MARIN_PREFIX", str(tmp_path))
+    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
     (tmp_path / "a").mkdir()
     (tmp_path / "b").mkdir()
     run(ArtifactStep.adopt("datasets/x", "2026.06.28", source="a"))
@@ -52,7 +52,7 @@ def test_readopt_different_source_warns(tmp_path, monkeypatch, caplog):
 
 
 def test_adopting_missing_data_fails(tmp_path, monkeypatch):
-    monkeypatch.setenv("MARIN_PREFIX", str(tmp_path))
+    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
     # The adopt step runs in a runner worker thread, so the missing-data error surfaces as
     # the runner's wrapping RuntimeError with the FileNotFoundError as its cause.
     with pytest.raises(RuntimeError) as exc_info:
@@ -95,6 +95,6 @@ def test_adopt_and_pin_are_mutually_exclusive():
 
 def test_lower_adopted_handle_has_no_deps_guard(tmp_path, monkeypatch):
     """An adopted handle lowers cleanly (its recipe is the no-op adopt recipe)."""
-    monkeypatch.setenv("MARIN_PREFIX", str(tmp_path))
+    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
     spec = ArtifactStep.adopt("datasets/x", "2026.06.28", source="src").lower()
     assert spec.override_output_path == "datasets/x/2026.06.28"

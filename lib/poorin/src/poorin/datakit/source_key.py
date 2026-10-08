@@ -6,14 +6,14 @@
 from typing import Annotated
 
 from pydantic import BeforeValidator, PlainSerializer, ValidationInfo
-from rigging.filesystem.cluster_config import StoreType, data_buckets, marin_prefix
+from rigging.filesystem.cluster_config import StoreType, data_buckets, poorin_prefix
 from rigging.filesystem.storage_path import StoragePath, prefix_join
 
 from poorin.execution.artifact import ARTIFACT_LOAD_CONTEXT_KEY
 
 
-def _marin_data_prefixes() -> list[StoragePath]:
-    prefixes = {marin_prefix()}
+def _poorin_data_prefixes() -> list[StoragePath]:
+    prefixes = {poorin_prefix()}
     for bucket in data_buckets().values():
         if bucket.store == StoreType.GCS:
             prefixes.add(f"gs://{bucket.name}")
@@ -23,14 +23,14 @@ def _marin_data_prefixes() -> list[StoragePath]:
 
 
 def datakit_source_key(source_path: str) -> str:
-    """Remove ``MARIN_PREFIX`` from a materialized Datakit source path.
+    """Remove ``POORIN_PREFIX`` from a materialized Datakit source path.
 
     The function recognizes every configured Marin data bucket, not only the
-    active region. It also removes a local ``MARIN_PREFIX``. Other local paths
+    active region. It also removes a local ``POORIN_PREFIX``. Other local paths
     and non-object-store URLs stay unchanged.
     """
     path = StoragePath(source_path)
-    for prefix in _marin_data_prefixes():
+    for prefix in _poorin_data_prefixes():
         try:
             relative = path.relative_to(prefix)
         except ValueError:
@@ -44,29 +44,29 @@ def datakit_source_key(source_path: str) -> str:
 
 
 def datakit_source_path(source_path_or_key: str) -> str:
-    """Resolve a relative Datakit source key against the active ``MARIN_PREFIX``."""
+    """Resolve a relative Datakit source key against the active ``POORIN_PREFIX``."""
     if not source_path_or_key:
         return source_path_or_key
 
     path = StoragePath(source_path_or_key)
     if path.scheme or source_path_or_key.startswith("/"):
         return str(path)
-    return prefix_join(marin_prefix(), source_path_or_key)
+    return prefix_join(poorin_prefix(), source_path_or_key)
 
 
 def datakit_artifact_path(source_path: str) -> str:
-    """Remove the active ``MARIN_PREFIX`` from a serialized Datakit path."""
+    """Remove the active ``POORIN_PREFIX`` from a serialized Datakit path."""
     if not source_path:
         return source_path
 
     path = StoragePath(source_path)
-    prefix = StoragePath(marin_prefix())
+    prefix = StoragePath(poorin_prefix())
     try:
         relative = path.relative_to(prefix)
     except ValueError:
         return str(path)
     if not relative:
-        raise ValueError(f"Datakit artifact path must be below MARIN_PREFIX: {source_path!r}")
+        raise ValueError(f"Datakit artifact path must be below POORIN_PREFIX: {source_path!r}")
     return relative
 
 
@@ -81,4 +81,4 @@ DatakitArtifactPath = Annotated[
     BeforeValidator(_resolve_datakit_artifact_path),
     PlainSerializer(datakit_artifact_path, return_type=str, when_used="json"),
 ]
-"""A Datakit path that omits the active ``MARIN_PREFIX`` in artifact payloads."""
+"""A Datakit path that omits the active ``POORIN_PREFIX`` in artifact payloads."""

@@ -16,8 +16,8 @@ from rigging.filesystem.cluster_config import (
     data_buckets,
     data_config,
     load_cluster_config,
-    marin_prefix,
-    marin_temp_bucket,
+    poorin_prefix,
+    poorin_temp_bucket,
     reset_data_config_cache,
     s3_data_buckets,
     use_data_config,
@@ -27,9 +27,9 @@ from rigging.filesystem.cluster_config import (
 
 
 def test_default_cluster_is_the_local_config_with_no_buckets(monkeypatch):
-    """No override and no MARIN_CLUSTER -> config/local.yaml: one machine, no region buckets."""
-    monkeypatch.setattr(fs, "MARIN_CLUSTER_CONFIG_DIRS", ("config",))
-    monkeypatch.delenv("MARIN_CLUSTER", raising=False)
+    """No override and no POORIN_CLUSTER -> config/local.yaml: one machine, no region buckets."""
+    monkeypatch.setattr(fs, "POORIN_CLUSTER_CONFIG_DIRS", ("config",))
+    monkeypatch.delenv("POORIN_CLUSTER", raising=False)
     reset_data_config_cache()
 
     assert resolve_cluster_config("local", ("config",)).name == "local.yaml"
@@ -40,14 +40,14 @@ def test_default_cluster_is_the_local_config_with_no_buckets(monkeypatch):
 
 def test_marin_fixture_cluster_configs_load(monkeypatch):
     """Marin's fixture configs parse and are the expected kind."""
-    monkeypatch.delenv("MARIN_CLUSTER", raising=False)
+    monkeypatch.delenv("POORIN_CLUSTER", raising=False)
     assert load_cluster_config("marin").region_buckets  # region-local gs cluster
     assert load_cluster_config("coreweave").root is not None  # single-prefix s3 cluster
 
 
 def test_marin_cluster_env_selects_named_config(monkeypatch):
-    """MARIN_CLUSTER routes the active accessor to that cluster's config."""
-    monkeypatch.setenv("MARIN_CLUSTER", "coreweave")
+    """POORIN_CLUSTER routes the active accessor to that cluster's config."""
+    monkeypatch.setenv("POORIN_CLUSTER", "coreweave")
     assert data_config() is load_cluster_config("coreweave")
 
 
@@ -69,7 +69,7 @@ def test_cluster_yaml_sets_given_fields_and_defaults_the_rest(tmp_path, monkeypa
         "  root: s3://synth-na/data\n"
         "  temp: {ttl_days: [1, 5]}\n"
     )
-    monkeypatch.setattr(fs, "MARIN_CLUSTER_CONFIG_DIRS", (str(cluster_dir),))
+    monkeypatch.setattr(fs, "POORIN_CLUSTER_CONFIG_DIRS", (str(cluster_dir),))
     reset_data_config_cache()
 
     config = load_cluster_config("synth")
@@ -94,16 +94,16 @@ def test_use_data_config_overrides_then_restores():
 # --- prefix resolution (behavior, decoupled from any committed config) ------
 
 
-def test_marin_prefix_routes_through_active_config():
-    """marin_prefix() is exactly the active config's resolved_root()."""
+def test_poorin_prefix_routes_through_active_config():
+    """poorin_prefix() is exactly the active config's resolved_root()."""
     override = DataConfig(region_buckets={}, root="gs://pinned/root")
     with use_data_config(override):
-        assert marin_prefix() == "gs://pinned/root"
+        assert poorin_prefix() == "gs://pinned/root"
 
 
 def test_resolved_root_env_wins(monkeypatch):
-    """MARIN_PREFIX env wins over an explicit root."""
-    monkeypatch.setenv("MARIN_PREFIX", "gs://override-bucket/data")
+    """POORIN_PREFIX env wins over an explicit root."""
+    monkeypatch.setenv("POORIN_PREFIX", "gs://override-bucket/data")
     config = DataConfig(region_buckets={}, root="s3://marin-na/marin")
     assert config.resolved_root() == "gs://override-bucket/data"
 
@@ -111,10 +111,10 @@ def test_resolved_root_env_wins(monkeypatch):
 def test_resolved_root_strips_trailing_slash(monkeypatch):
     """A trailing slash on the configured prefix must not reach path joins, where it
     would fork the object-store key namespace (marin-community/marin#6904)."""
-    monkeypatch.setenv("MARIN_PREFIX", "s3://marin-na/marin/")
+    monkeypatch.setenv("POORIN_PREFIX", "s3://marin-na/marin/")
     assert DataConfig(region_buckets={}).resolved_root() == "s3://marin-na/marin"
 
-    monkeypatch.delenv("MARIN_PREFIX", raising=False)
+    monkeypatch.delenv("POORIN_PREFIX", raising=False)
     config = DataConfig(region_buckets={}, scheme="s3", root="s3://marin-na/marin/")
     assert config.resolved_root() == "s3://marin-na/marin"
 
@@ -123,24 +123,24 @@ def test_resolved_root_anchors_relative_local_prefix(monkeypatch, tmp_path):
     """A relative local prefix resolves against the working directory, so every path derived
     from the root is absolute and cannot be re-rooted a second time."""
     monkeypatch.chdir(tmp_path)
-    monkeypatch.setenv("MARIN_PREFIX", "local_store/")
+    monkeypatch.setenv("POORIN_PREFIX", "local_store/")
     assert DataConfig(region_buckets={}).resolved_root() == os.path.join(os.getcwd(), "local_store")
 
-    monkeypatch.delenv("MARIN_PREFIX", raising=False)
+    monkeypatch.delenv("POORIN_PREFIX", raising=False)
     config = DataConfig(region_buckets={}, root="local_store")
     assert config.resolved_root() == os.path.join(os.getcwd(), "local_store")
 
 
 def test_resolved_root_uses_explicit_root(monkeypatch):
-    """An explicit root is used when MARIN_PREFIX is unset."""
-    monkeypatch.delenv("MARIN_PREFIX", raising=False)
+    """An explicit root is used when POORIN_PREFIX is unset."""
+    monkeypatch.delenv("POORIN_PREFIX", raising=False)
     config = DataConfig(region_buckets={}, scheme="s3", root="s3://marin-na/marin")
     assert config.resolved_root() == "s3://marin-na/marin"
 
 
 def test_resolved_root_selects_region_local_bucket(monkeypatch):
     """A detected metadata region selects its region-local bucket."""
-    monkeypatch.delenv("MARIN_PREFIX", raising=False)
+    monkeypatch.delenv("POORIN_PREFIX", raising=False)
     monkeypatch.setattr(fs, "region_from_metadata", lambda: "us-east5")
     config = DataConfig(region_buckets={"us-east5": BucketSpec("marin-us-east5", StoreType.GCS)})
     assert config.resolved_root() == "gs://marin-us-east5"
@@ -148,23 +148,23 @@ def test_resolved_root_selects_region_local_bucket(monkeypatch):
 
 def test_resolved_root_constructs_default_for_unmapped_region(monkeypatch):
     """A detected-but-unmapped region constructs gs://marin-{region}."""
-    monkeypatch.delenv("MARIN_PREFIX", raising=False)
+    monkeypatch.delenv("POORIN_PREFIX", raising=False)
     monkeypatch.setattr(fs, "region_from_metadata", lambda: "antarctica-south1")
     config = DataConfig(region_buckets={"us-east5": BucketSpec("marin-us-east5", StoreType.GCS)})
     assert config.resolved_root() == "gs://marin-antarctica-south1"
 
 
 def test_resolved_root_local_fallback(monkeypatch):
-    """With no env and no detectable region, falls back to /tmp/marin."""
-    monkeypatch.delenv("MARIN_PREFIX", raising=False)
+    """With no env and no detectable region, falls back to /tmp/poorin."""
+    monkeypatch.delenv("POORIN_PREFIX", raising=False)
     monkeypatch.setattr(fs, "region_from_metadata", lambda: None)
-    assert DataConfig(region_buckets={}).resolved_root() == "/tmp/marin"
+    assert DataConfig(region_buckets={}).resolved_root() == "/tmp/poorin"
 
 
 # --- temp-bucket routing ----------------------------------------------------
 
 
-def test_marin_temp_bucket_routes_coreweave_to_bucket_root():
+def test_poorin_temp_bucket_routes_coreweave_to_bucket_root():
     """A CoreWeave source prefix yields a TTL temp path at the CW bucket root.
 
     The CW bucket is recognized via its config-declared ``store: coreweave`` (see
@@ -173,45 +173,45 @@ def test_marin_temp_bucket_routes_coreweave_to_bucket_root():
     """
     cfg = DataConfig(region_buckets={}, scheme="s3", ttl_days=(1, 3, 7))
     with use_data_config(cfg):
-        path = marin_temp_bucket(3, "store/x", source_prefix="s3://marin-us-east-02a/marin")
+        path = poorin_temp_bucket(3, "store/x", source_prefix="s3://marin-us-east-02a/marin")
     assert path == "s3://marin-us-east-02a/tmp/ttl=3d/store/x"
 
 
-def test_marin_temp_bucket_explicit_source_does_not_probe_ambient_prefix(monkeypatch):
-    monkeypatch.delenv("MARIN_TEMP_PREFIX", raising=False)
+def test_poorin_temp_bucket_explicit_source_does_not_probe_ambient_prefix(monkeypatch):
+    monkeypatch.delenv("POORIN_TEMP_PREFIX", raising=False)
     monkeypatch.setattr(
-        "rigging.filesystem.cluster_config.marin_prefix",
+        "rigging.filesystem.cluster_config.poorin_prefix",
         lambda: pytest.fail("explicit source must not probe the launcher environment"),
     )
     cfg = DataConfig(region_buckets={}, scheme="s3", ttl_days=(1, 14, 30))
     with use_data_config(cfg):
-        path = marin_temp_bucket(30, "curriculum-math", source_prefix="s3://marin-us-east-02a/marin")
+        path = poorin_temp_bucket(30, "curriculum-math", source_prefix="s3://marin-us-east-02a/marin")
     assert path == "s3://marin-us-east-02a/tmp/ttl=30d/curriculum-math"
 
 
-def test_marin_temp_bucket_routes_r2_to_bucket_root():
+def test_poorin_temp_bucket_routes_r2_to_bucket_root():
     """An R2 source prefix yields a TTL temp path at the R2 bucket root (unchanged)."""
     cfg = DataConfig(region_buckets={}, scheme="s3", ttl_days=(1, 3, 7))
     with use_data_config(cfg):
-        path = marin_temp_bucket(1, source_prefix="s3://marin-na/marin")
+        path = poorin_temp_bucket(1, source_prefix="s3://marin-na/marin")
     assert path == "s3://marin-na/tmp/ttl=1d"
 
 
-def test_marin_temp_bucket_unknown_s3_bucket_falls_back(monkeypatch):
+def test_poorin_temp_bucket_unknown_s3_bucket_falls_back(monkeypatch):
     """An unrecognized S3 bucket has no lifecycle rules, so it gets the flat non-TTL path."""
-    monkeypatch.setenv("MARIN_PREFIX", "s3://random-bucket/marin")
+    monkeypatch.setenv("POORIN_PREFIX", "s3://random-bucket/marin")
     cfg = DataConfig(region_buckets={}, scheme="s3", ttl_days=(1, 3, 7))
     with use_data_config(cfg):
-        path = marin_temp_bucket(3, source_prefix="s3://random-bucket/marin")
+        path = poorin_temp_bucket(3, source_prefix="s3://random-bucket/marin")
     assert path == "s3://random-bucket/marin/tmp"
 
 
-def test_marin_temp_bucket_prefers_cluster_override(monkeypatch):
-    monkeypatch.setenv("MARIN_PREFIX", "s3://marin-us-east-02a/marin")
-    monkeypatch.setenv("MARIN_TEMP_PREFIX", "s3://hero-checkpoints")
+def test_poorin_temp_bucket_prefers_cluster_override(monkeypatch):
+    monkeypatch.setenv("POORIN_PREFIX", "s3://marin-us-east-02a/marin")
+    monkeypatch.setenv("POORIN_TEMP_PREFIX", "s3://hero-checkpoints")
     cfg = DataConfig(region_buckets={}, scheme="s3", ttl_days=(1, 14, 30))
     with use_data_config(cfg):
-        path = marin_temp_bucket(
+        path = poorin_temp_bucket(
             14,
             "checkpoints/run",
             source_prefix="s3://marin-us-east-02a/marin",
@@ -219,12 +219,12 @@ def test_marin_temp_bucket_prefers_cluster_override(monkeypatch):
     assert path == "s3://hero-checkpoints/tmp/ttl=14d/checkpoints/run"
 
 
-def test_marin_temp_bucket_can_resolve_legacy_data_local_scratch(monkeypatch):
-    monkeypatch.setenv("MARIN_PREFIX", "s3://marin-us-east-02a/marin")
-    monkeypatch.setenv("MARIN_TEMP_PREFIX", "s3://hero-checkpoints")
+def test_poorin_temp_bucket_can_resolve_legacy_data_local_scratch(monkeypatch):
+    monkeypatch.setenv("POORIN_PREFIX", "s3://marin-us-east-02a/marin")
+    monkeypatch.setenv("POORIN_TEMP_PREFIX", "s3://hero-checkpoints")
     cfg = DataConfig(region_buckets={}, scheme="s3", ttl_days=(1, 14, 30))
     with use_data_config(cfg):
-        path = marin_temp_bucket(
+        path = poorin_temp_bucket(
             14,
             "checkpoints/run",
             source_prefix="s3://marin-us-east-02a/marin",
@@ -248,7 +248,7 @@ def test_s3_data_buckets_aggregates_across_configs(tmp_path, monkeypatch):
         "    na: {bucket: b-r2, store: r2}\n"
         "    e: {bucket: b-cw, store: coreweave, signing_region: US-EAST-02A}\n"
     )
-    monkeypatch.setattr(fs, "MARIN_CLUSTER_CONFIG_DIRS", (str(cluster_dir),))
+    monkeypatch.setattr(fs, "POORIN_CLUSTER_CONFIG_DIRS", (str(cluster_dir),))
     reset_data_config_cache()
 
     # Aggregated across both configs; the GCS bucket is excluded; CoreWeave keeps its signing_region.
@@ -263,7 +263,7 @@ def test_bucket_entry_requires_explicit_store(tmp_path, monkeypatch):
     cluster_dir = tmp_path / "clusters"
     cluster_dir.mkdir()
     (cluster_dir / "bare.yaml").write_text("data:\n  scheme: gs\n  region_buckets: {us-east5: marin-us-east5}\n")
-    monkeypatch.setattr(fs, "MARIN_CLUSTER_CONFIG_DIRS", (str(cluster_dir),))
+    monkeypatch.setattr(fs, "POORIN_CLUSTER_CONFIG_DIRS", (str(cluster_dir),))
     reset_data_config_cache()
     with pytest.raises(ValueError, match="must be a mapping"):
         load_cluster_config("bare")
@@ -276,7 +276,7 @@ def test_coreweave_bucket_requires_signing_region(tmp_path, monkeypatch):
     (cluster_dir / "cw.yaml").write_text(
         "data:\n  scheme: s3\n  region_buckets: {e: {bucket: marin-us-east-02a, store: coreweave}}\n"
     )
-    monkeypatch.setattr(fs, "MARIN_CLUSTER_CONFIG_DIRS", (str(cluster_dir),))
+    monkeypatch.setattr(fs, "POORIN_CLUSTER_CONFIG_DIRS", (str(cluster_dir),))
     reset_data_config_cache()
     with pytest.raises(ValueError, match="must specify a 'signing_region'"):
         load_cluster_config("cw")

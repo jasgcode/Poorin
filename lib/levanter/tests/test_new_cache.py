@@ -321,7 +321,7 @@ async def test_sharded_flat_field_offsets_share_in_flight_build(monkeypatch):
     [
         # gs:// shard strictly under output.
         ("gs://bucket/cache", "gs://bucket/cache/train/shard_0", "train/shard_0"),
-        # A trailing slash on output_path (a trailing-slash MARIN_PREFIX) must not fork
+        # A trailing slash on output_path (a trailing-slash POORIN_PREFIX) must not fork
         # the relative key from the no-trailing-slash writer.
         ("gs://bucket/cache/", "gs://bucket/cache/train/shard_0", "train/shard_0"),
         # A doubled interior separator on either side collapses structurally.

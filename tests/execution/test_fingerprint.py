@@ -108,7 +108,7 @@ def test_register_fingerprint_gives_an_exact_form():
 
 
 def test_strict_mode_rejects_callable_via_env(monkeypatch):
-    monkeypatch.setenv("MARIN_FINGERPRINT_STRICT", "1")
+    monkeypatch.setenv("POORIN_FINGERPRINT_STRICT", "1")
     with pytest.raises(TypeError, match="callable"):
         canonical_json({"fn": lambda x: x})
 

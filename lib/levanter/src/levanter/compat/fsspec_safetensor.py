@@ -12,7 +12,7 @@ from typing import Callable, Dict, Iterable, List, Optional, Tuple, cast
 
 import fsspec
 import humanfriendly
-from rigging.filesystem.factory import filesystem as marin_filesystem
+from rigging.filesystem.factory import filesystem as poorin_filesystem
 import jax
 import jax.numpy as jnp
 import numpy as np
@@ -223,7 +223,7 @@ async def read_safetensors_fsspec(
         protocol = "file"
 
     if fs is None:
-        fs = marin_filesystem(protocol, asynchronous=True, anon=False)
+        fs = poorin_filesystem(protocol, asynchronous=True, anon=False)
 
     if isinstance(fs, AsyncFileSystem):
         async_fs = fs

@@ -249,7 +249,7 @@ def test_step_spec_hash_id_stable_across_prefixes():
     """Identity hashes must not depend on the Marin bucket prefix.
 
     Regression for marin-community/marin#5216: the same logical pipeline
-    resolved under different ``MARIN_PREFIX`` values (e.g. region failover
+    resolved under different ``POORIN_PREFIX`` values (e.g. region failover
     from ``gs://marin-us-central1`` to ``gs://marin-us-east5``) was producing
     distinct hashes, changing output paths, checkpoint ids, and W&B run ids.
     """
@@ -267,9 +267,9 @@ def test_step_spec_hash_id_stable_across_prefixes():
         assert e.output_path.startswith("gs://marin-us-east5/")
 
 
-def test_step_spec_hash_id_via_marin_prefix_env(monkeypatch):
-    """Same as above, but driven by the ``MARIN_PREFIX`` env var path."""
-    monkeypatch.setenv("MARIN_PREFIX", "gs://marin-us-central1")
+def test_step_spec_hash_id_via_poorin_prefix_env(monkeypatch):
+    """Same as above, but driven by the ``POORIN_PREFIX`` env var path."""
+    monkeypatch.setenv("POORIN_PREFIX", "gs://marin-us-central1")
     central = [
         StepSpec(name="download", hash_attrs={"source": "fineweb-edu"}),
     ]
@@ -277,7 +277,7 @@ def test_step_spec_hash_id_via_marin_prefix_env(monkeypatch):
     central.append(StepSpec(name="tokenize", deps=[central[1]], hash_attrs={"tokenizer": "gpt2"}))
     central_paths = [s.output_path for s in central]  # force prefix resolution into cached_property
 
-    monkeypatch.setenv("MARIN_PREFIX", "gs://marin-us-east5")
+    monkeypatch.setenv("POORIN_PREFIX", "gs://marin-us-east5")
     east = [
         StepSpec(name="download", hash_attrs={"source": "fineweb-edu"}),
     ]

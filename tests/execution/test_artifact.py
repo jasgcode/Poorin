@@ -48,7 +48,7 @@ def _toy(version: str, payload: str) -> ArtifactStep[Toy]:
 
 
 def test_records_full_provenance_on_success(tmp_path, monkeypatch):
-    monkeypatch.setenv("MARIN_PREFIX", str(tmp_path))
+    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
     art = _toy(V, "a")
     run(art)
 
@@ -64,7 +64,7 @@ def test_records_full_provenance_on_success(tmp_path, monkeypatch):
 
 
 def test_record_carries_fingerprint_payload(tmp_path, monkeypatch):
-    monkeypatch.setenv("MARIN_PREFIX", str(tmp_path))
+    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
     art = _toy(V, "a")
     run(art)
 
@@ -73,7 +73,7 @@ def test_record_carries_fingerprint_payload(tmp_path, monkeypatch):
 
 
 def test_same_recipe_rerun_is_cache_hit(tmp_path, monkeypatch):
-    monkeypatch.setenv("MARIN_PREFIX", str(tmp_path))
+    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
     run(_toy(V, "a"))
     # Identical recipe + version: a cache hit, no error.
     run(_toy(V, "a"))
@@ -83,7 +83,7 @@ def test_same_recipe_rerun_is_cache_hit(tmp_path, monkeypatch):
 
 
 def test_changed_recipe_warns_and_serves_cached(tmp_path, monkeypatch, caplog):
-    monkeypatch.setenv("MARIN_PREFIX", str(tmp_path))
+    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
     run(_toy(V, "a"))
 
     # Same name@version, different recipe: a warning, not an error, and the cached output stands.
@@ -99,7 +99,7 @@ def test_changed_recipe_warns_and_serves_cached(tmp_path, monkeypatch, caplog):
 
 
 def test_expected_fingerprint_pin_raises_at_lower(tmp_path, monkeypatch):
-    monkeypatch.setenv("MARIN_PREFIX", str(tmp_path))
+    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
     art = _toy(V, "a")
 
     # A matching pin lowers cleanly; a stale pin fails even before the first build.
@@ -110,7 +110,7 @@ def test_expected_fingerprint_pin_raises_at_lower(tmp_path, monkeypatch):
 
 def test_expected_fingerprint_pin_hard_fails_drift(tmp_path, monkeypatch):
     """A pinned artifact rebuilt from a changed recipe is a hard error on the cache hit too."""
-    monkeypatch.setenv("MARIN_PREFIX", str(tmp_path))
+    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
     run(_toy(V, "a"))
 
     # Same address, different recipe, but now pinned to the *changed* recipe's fingerprint.
@@ -121,7 +121,7 @@ def test_expected_fingerprint_pin_hard_fails_drift(tmp_path, monkeypatch):
 
 
 def test_fixed_version_rejects_dev_dependency(tmp_path, monkeypatch):
-    monkeypatch.setenv("MARIN_PREFIX", str(tmp_path))
+    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
     dep = _toy("dev", "a")
     parent = ArtifactStep(
         name="checkpoints/p",
@@ -136,7 +136,7 @@ def test_fixed_version_rejects_dev_dependency(tmp_path, monkeypatch):
 
 
 def test_dev_version_is_mutable(tmp_path, monkeypatch):
-    monkeypatch.setenv("MARIN_PREFIX", str(tmp_path))
+    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
     run(_toy("dev", "a"))
     # A changed recipe under a dev version rebuilds in place instead of warning.
     run(_toy("dev", "b"))

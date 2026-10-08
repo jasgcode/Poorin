@@ -21,7 +21,7 @@ from typing import Any, cast
 import fsspec
 from fsspec.callbacks import DEFAULT_CALLBACK, Callback
 
-from rigging.filesystem.cluster_config import StoreType, data_config, marin_prefix
+from rigging.filesystem.cluster_config import StoreType, data_config, poorin_prefix
 from rigging.filesystem.cross_region import TransferBudget, _global_transfer_budget, _mirror_budget_ctx
 from rigging.filesystem.distributed_lock import create_lock, default_worker_id
 from rigging.filesystem.storage_path import StoragePath, prefix_join
@@ -66,7 +66,7 @@ class MirrorFileSystem(fsspec.AbstractFileSystem):
         **kwargs: Any,
     ):
         super().__init__(*args, **kwargs)
-        self._local_prefix = marin_prefix().rstrip("/")
+        self._local_prefix = poorin_prefix().rstrip("/")
         self._remote_prefixes = _mirror_remote_prefixes(self._local_prefix)
         self._budget = budget if budget is not None else _global_transfer_budget
         self._worker_id = default_worker_id()

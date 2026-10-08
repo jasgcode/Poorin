@@ -24,7 +24,7 @@ from fray.client import Client
 from fray.current_client import current_client
 from fray.local_backend import LocalClient
 from fray.types import ActorConfig, ResourceConfig
-from rigging.filesystem.cluster_config import marin_temp_bucket
+from rigging.filesystem.cluster_config import poorin_temp_bucket
 from rigging.filesystem.cross_region import TransferBudgetExceeded
 from rigging.filesystem.storage_path import StoragePath
 from rigging.timing import ExponentialBackoff
@@ -284,7 +284,7 @@ class ZephyrContext:
             self.no_workers_timeout = 6 * 60 * 60
 
         if self.chunk_storage_prefix is None:
-            self.chunk_storage_prefix = marin_temp_bucket(ttl_days=1, prefix="zephyr")
+            self.chunk_storage_prefix = poorin_temp_bucket(ttl_days=1, prefix="zephyr")
 
         if self.stage_runner_factory is None:
             assert self.client is not None

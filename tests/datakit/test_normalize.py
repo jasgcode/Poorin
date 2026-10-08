@@ -48,7 +48,7 @@ def _read_all_parquet(output_dir: Path) -> list[dict]:
 
 def test_normalized_data_artifact_stores_relative_output_dirs(tmp_path: Path, monkeypatch):
     marin_root = tmp_path / "marin"
-    monkeypatch.setenv("MARIN_PREFIX", str(marin_root))
+    monkeypatch.setenv("POORIN_PREFIX", str(marin_root))
     artifact_dir = tmp_path / "artifact"
     artifact_dir.mkdir()
 
@@ -75,7 +75,7 @@ def test_normalized_data_artifact_stores_relative_output_dirs(tmp_path: Path, mo
 
 
 def test_normalized_data_loads_v1_paths_from_another_region(tmp_path: Path, monkeypatch):
-    monkeypatch.setenv("MARIN_PREFIX", "gs://marin-us-central1")
+    monkeypatch.setenv("POORIN_PREFIX", "gs://marin-us-central1")
     artifact_dir = tmp_path / "artifact"
     artifact_dir.mkdir()
     write_record(
@@ -97,7 +97,7 @@ def test_normalized_data_loads_v1_paths_from_another_region(tmp_path: Path, monk
 
 
 def test_normalized_data_artifact_preserves_output_dirs_outside_active_prefix(tmp_path: Path, monkeypatch):
-    monkeypatch.setenv("MARIN_PREFIX", "gs://marin-us-central1")
+    monkeypatch.setenv("POORIN_PREFIX", "gs://marin-us-central1")
     artifact_dir = tmp_path / "artifact"
     artifact_dir.mkdir()
     write_artifact(

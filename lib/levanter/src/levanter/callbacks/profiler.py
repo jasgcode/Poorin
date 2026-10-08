@@ -15,7 +15,7 @@ from urllib.parse import urlencode
 
 import jax
 
-from rigging.filesystem.cluster_config import marin_temp_bucket
+from rigging.filesystem.cluster_config import poorin_temp_bucket
 from rigging.filesystem.storage_path import StoragePath
 
 from levanter.callbacks._core import StepInfo
@@ -75,7 +75,7 @@ class XprofUploadConfig:
 
     def destination_for_run(self, run_id: str) -> str:
         """Resolve the run's upload root."""
-        return marin_temp_bucket(self.ttl_days, prefix=f"{_XPROF_TTL_PREFIX}/{run_id}")
+        return poorin_temp_bucket(self.ttl_days, prefix=f"{_XPROF_TTL_PREFIX}/{run_id}")
 
 
 @dataclass(frozen=True)
@@ -87,7 +87,7 @@ class XlaDumpUploadConfig:
 
     def destination_for_run(self, run_id: str, process_index: int) -> str:
         """Resolve this process's XLA dump upload root."""
-        return marin_temp_bucket(self.ttl_days, prefix=f"{_XLA_DUMP_TTL_PREFIX}/{run_id}/process-{process_index}")
+        return poorin_temp_bucket(self.ttl_days, prefix=f"{_XLA_DUMP_TTL_PREFIX}/{run_id}/process-{process_index}")
 
     def build(self, run_id: str) -> Callable[[StepInfo], None] | None:
         """Upload the initial dump tree and return a callback for later changes."""
@@ -147,7 +147,7 @@ class ProfilerConfig:
             num_steps = self.num_steps
         upload_uri = self.upload.destination_for_run(run_id) if self.upload.enabled else None
         if upload_uri is not None and not _is_ttl_root(StoragePath(upload_uri), _XPROF_TTL_PREFIX):
-            logger.info("MARIN_PREFIX has no remote XProf TTL store; keeping the profile at %s", path)
+            logger.info("POORIN_PREFIX has no remote XProf TTL store; keeping the profile at %s", path)
             upload_uri = None
         service_url = None
         if upload_uri is not None and StoragePath(upload_uri).scheme in ("gs", "s3"):

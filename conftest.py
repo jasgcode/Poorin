@@ -12,16 +12,16 @@ experiment modules resolve temp-bucket paths when they are imported, before any 
 import pytest
 import rigging.filesystem.cluster_config as cluster_config
 
-MARIN_FIXTURE_CLUSTERS = "config/testing"
-_marin_layout = pytest.MonkeyPatch()
+POORIN_FIXTURE_CLUSTERS = "config/testing"
+_poorin_layout = pytest.MonkeyPatch()
 
 
 def pytest_configure(config: pytest.Config) -> None:
-    _marin_layout.setattr(cluster_config, "MARIN_CLUSTER_CONFIG_DIRS", (MARIN_FIXTURE_CLUSTERS,))
-    _marin_layout.setenv("MARIN_CLUSTER", "marin")
+    _poorin_layout.setattr(cluster_config, "POORIN_CLUSTER_CONFIG_DIRS", (POORIN_FIXTURE_CLUSTERS,))
+    _poorin_layout.setenv("POORIN_CLUSTER", "marin")
     cluster_config.reset_data_config_cache()
 
 
 def pytest_unconfigure(config: pytest.Config) -> None:
-    _marin_layout.undo()
+    _poorin_layout.undo()
     cluster_config.reset_data_config_cache()

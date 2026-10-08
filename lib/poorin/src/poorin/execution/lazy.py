@@ -35,7 +35,7 @@ from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass, field
 from typing import Any, Final, Generic, TypeVar, cast
 
-from rigging.filesystem.cluster_config import marin_prefix, marin_region
+from rigging.filesystem.cluster_config import poorin_prefix, poorin_region
 from rigging.filesystem.factory import url_to_fs
 from rigging.filesystem.storage_path import prefix_join
 from rigging.provenance import Provenance
@@ -225,7 +225,7 @@ class ArtifactStep(Generic[T]):
         return fingerprint_hash(self.fingerprint_payload())
 
     def path(self, prefix: str | None = None) -> str:
-        resolved_prefix = prefix or marin_prefix()
+        resolved_prefix = prefix or poorin_prefix()
         # An adopted artifact resolves to its source; a pin to its location; else the
         # canonical name@version address.
         location = self.adopt_source if self.adopt_source is not None else self.override_path
@@ -352,7 +352,7 @@ def _lower(handle: "ArtifactStep", provenance: Provenance, memo: dict[int, StepS
     def fn(output_path: str, _handle: "ArtifactStep" = handle) -> Any:
         if _handle.adopt_source is not None:
             # Adoption registers pre-existing data: no compute, the record points at it.
-            source = _handle.path(marin_prefix())
+            source = _handle.path(poorin_prefix())
             fs = url_to_fs(source, use_listings_cache=False)[0]
             if not fs.exists(source):
                 raise FileNotFoundError(f"cannot adopt {_handle.name}@{_handle.version}: no data at {source}")
@@ -362,8 +362,8 @@ def _lower(handle: "ArtifactStep", provenance: Provenance, memo: dict[int, StepS
         else:
             ctx = StepContext.for_run(
                 output_path=output_path,
-                prefix=marin_prefix(),
-                region=marin_region(),
+                prefix=poorin_prefix(),
+                region=poorin_region(),
                 runtime_args=_handle.runtime_args,
                 deps=_handle.deps,
             )

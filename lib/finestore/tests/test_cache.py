@@ -97,7 +97,7 @@ def test_cache_root_resolves_lazily():
 
 
 def test_prefix_cache_uses_region_local_fine_store(tmp_path, monkeypatch):
-    monkeypatch.setattr(cache_module, "marin_temp_bucket", lambda _ttl, prefix: str(tmp_path / prefix))
+    monkeypatch.setattr(cache_module, "poorin_temp_bucket", lambda _ttl, prefix: str(tmp_path / prefix))
     cache = PersistentKvCache.for_prefix("cutlass-kernels")
     cache.store("kernel", b"value")
     cache.close()
@@ -106,7 +106,7 @@ def test_prefix_cache_uses_region_local_fine_store(tmp_path, monkeypatch):
 
 def test_non_writer_cache_keeps_value_in_memory_without_persisting(tmp_path, monkeypatch):
     root = tmp_path / "cutlass-kernels"
-    monkeypatch.setattr(cache_module, "marin_temp_bucket", lambda _ttl, _prefix: str(root))
+    monkeypatch.setattr(cache_module, "poorin_temp_bucket", lambda _ttl, _prefix: str(root))
     cache = PersistentKvCache.for_prefix("cutlass-kernels", is_writer=lambda: False)
 
     cache.store("kernel", b"value")

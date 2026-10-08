@@ -52,7 +52,7 @@ def _launch_env_payload(built_by: str | None) -> str:
 
 
 def test_username_segment_prefers_launch_built_by_over_os_login(monkeypatch):
-    # On a remote worker the OS login is the machine's (`root`), while MARIN_PROVENANCE
+    # On a remote worker the OS login is the machine's (`root`), while POORIN_PROVENANCE
     # carries the submitting human; the namespace must follow the human.
     monkeypatch.setenv(LAUNCH_PROVENANCE_ENV, _launch_env_payload("Russell.Power@openathena.ai"))
     monkeypatch.setattr("rigging.provenance._getuser", lambda: "root")
@@ -167,7 +167,7 @@ def test_capture_tolerates_missing_git_binary(tmp_path, monkeypatch):
 
 
 def test_capture_prefers_launch_provenance_env(monkeypatch):
-    # A submitting client publishes its provenance in MARIN_PROVENANCE; a process running
+    # A submitting client publishes its provenance in POORIN_PROVENANCE; a process running
     # from a git-less bundle (or anywhere) inherits the launch's provenance verbatim,
     # including built_by and argv, instead of describing itself.
     submitted = Provenance(

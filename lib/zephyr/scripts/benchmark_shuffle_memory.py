@@ -41,7 +41,7 @@ import numpy as np
 import polars as pl
 import pyarrow as pa
 import pyarrow.parquet as pq
-from rigging.filesystem.cluster_config import marin_temp_bucket
+from rigging.filesystem.cluster_config import poorin_temp_bucket
 from rigging.filesystem.factory import open_url
 from rigging.filesystem.storage_path import StoragePath
 from zephyr import memory_budget
@@ -250,7 +250,7 @@ def _common_result(
         "iris_job_id": os.environ.get("IRIS_JOB_ID"),
         "iris_task_id": os.environ.get("IRIS_TASK_ID"),
         "calibration_tree_id": os.environ.get("CALIBRATION_TREE_ID"),
-        "git_commit": os.environ.get("MARIN_GIT_COMMIT") or os.environ.get("GIT_COMMIT"),
+        "git_commit": os.environ.get("POORIN_GIT_COMMIT") or os.environ.get("GIT_COMMIT"),
         "polars_version": pl.__version__,
         "polars_threads": pl.thread_pool_size(),
         "baseline_rss_bytes": baseline_rss_bytes,
@@ -667,7 +667,7 @@ def main(
     """Run one memory-calibration cell."""
     run_id = os.environ.get("CALIBRATION_RUN_ID", f"local-{int(time.time())}")
     if output_root is None:
-        output_root = marin_temp_bucket(ttl_days=1, prefix=f"zephyr-shuffle-calibration/{run_id}")
+        output_root = poorin_temp_bucket(ttl_days=1, prefix=f"zephyr-shuffle-calibration/{run_id}")
     _validate_calibration_path(output_root, "output")
 
     if operation == "prepare-read":

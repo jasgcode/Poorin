@@ -15,7 +15,7 @@ it understands (dataclasses, enums, paths, timedeltas, dtypes, sets by sorted me
 arrays by content) and, for a type it has no canonical form for, degrades to a *defined*
 stable fallback with a one-time warning instead of raising. :func:`register_fingerprint`
 teaches it a precise canonical form for an identity-bearing custom type, and
-:func:`set_strict` (or ``MARIN_FINGERPRINT_STRICT``) makes an unknown type raise instead,
+:func:`set_strict` (or ``POORIN_FINGERPRINT_STRICT``) makes an unknown type raise instead,
 for callers that want drift to be exact.
 """
 
@@ -61,7 +61,7 @@ def register_fingerprint(tp: type, encode: Callable[[Any], object]) -> None:
 
 def set_strict(enabled: bool) -> None:
     """Toggle strict fingerprinting: when on, an unknown type raises instead of using the
-    best-effort fallback. Overrides the ``MARIN_FINGERPRINT_STRICT`` env var."""
+    best-effort fallback. Overrides the ``POORIN_FINGERPRINT_STRICT`` env var."""
     global _STRICT_OVERRIDE
     _STRICT_OVERRIDE = enabled
 
@@ -69,7 +69,7 @@ def set_strict(enabled: bool) -> None:
 def _is_strict() -> bool:
     if _STRICT_OVERRIDE is not None:
         return _STRICT_OVERRIDE
-    return os.environ.get("MARIN_FINGERPRINT_STRICT", "").lower() in ("1", "true", "yes")
+    return os.environ.get("POORIN_FINGERPRINT_STRICT", "").lower() in ("1", "true", "yes")
 
 
 def _registered_encoder(tp: type) -> Callable[[Any], object] | None:

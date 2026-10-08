@@ -11,7 +11,7 @@ See also the [JAX Profiling Guide](https://jax.readthedocs.io/en/latest/profilin
 
 ### Enabling the Profiler
 
-Levanter captures JAX XPlane data, uploads it to `MARIN_PREFIX` TTL storage, and
+Levanter captures JAX XPlane data, uploads it to `POORIN_PREFIX` TTL storage, and
 logs an authenticated XProf URL:
 
 ```bash
@@ -24,7 +24,7 @@ uv run ... \
 Profiles default to a 30-day lifetime. Set
 `--trainer.profiler.upload.ttl_days 3` to request another lifetime or
 `--trainer.profiler.upload.enabled false` for local-only capture. A
-`MARIN_PREFIX` without lifecycle-backed `ttl=Nd` storage also disables upload.
+`POORIN_PREFIX` without lifecycle-backed `ttl=Nd` storage also disables upload.
 
 ### Capturing XLA compiler dumps
 

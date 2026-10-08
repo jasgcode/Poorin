@@ -211,7 +211,7 @@ def test_mirror_remote_prefixes_empty_for_s3():
     """Non-GCS local prefix must not list GCS buckets as mirror fallbacks.
 
     Regression test for marin-community/marin#4656: CoreWeave CI runs with
-    ``MARIN_PREFIX=s3://...`` but the mirror filesystem unconditionally fell
+    ``POORIN_PREFIX=s3://...`` but the mirror filesystem unconditionally fell
     back to ``gs://marin-*`` buckets, causing noisy gcsfs 401s.
     """
     assert _mirror_remote_prefixes("s3://marin-na/marin") == []
@@ -244,12 +244,12 @@ def test_mirror_remote_prefixes_populated_for_gcs():
 
 
 def test_mirror_filesystem_init_skips_gcs_on_s3_prefix(monkeypatch):
-    """Full __init__ path: no GCS remote prefixes when MARIN_PREFIX is s3://.
+    """Full __init__ path: no GCS remote prefixes when POORIN_PREFIX is s3://.
 
     Without the fix, this instance would attempt to contact GCS on every
     ``exists``/``ls`` call and spam anonymous-caller 401 errors.
     """
-    monkeypatch.setenv("MARIN_PREFIX", "s3://marin-na/marin")
+    monkeypatch.setenv("POORIN_PREFIX", "s3://marin-na/marin")
     fs = MirrorFileSystem()
     assert fs._local_prefix == "s3://marin-na/marin"
     assert fs._remote_prefixes == []

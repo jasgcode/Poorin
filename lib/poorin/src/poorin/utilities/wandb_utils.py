@@ -11,7 +11,7 @@ import wandb
 logger = logging.getLogger(__name__)
 
 WANDB_ENTITY = os.getenv("WANDB_ENTITY", "marin-community")
-WANDB_PROJECT = os.getenv("WANDB_PROJECT", "marin")
+WANDB_PROJECT = os.getenv("WANDB_PROJECT", "poorin")
 
 
 def init_wandb(

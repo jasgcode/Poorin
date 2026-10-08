@@ -164,7 +164,7 @@ def test_resolve_pinned_commit_skips_hf_lookup(tmp_path, monkeypatch):
     monkeypatch.setattr(model_cache, "model_info", lambda *args, **kwargs: pytest.fail("must not query HF"))
     monkeypatch.setattr(model_cache, "list_repo_files", fake_list_repo_files)
     monkeypatch.setattr(model_cache, "hf_hub_download", fake_hf_hub_download)
-    monkeypatch.setattr(model_cache, "marin_temp_bucket", lambda _ttl_days, prefix: str(tmp_path / prefix))
+    monkeypatch.setattr(model_cache, "poorin_temp_bucket", lambda _ttl_days, prefix: str(tmp_path / prefix))
 
     first = resolve_cached_model_path(f"org/model@{commit}", cache_ttl_days=7, cache_prefix="models")
     monkeypatch.setattr(model_cache, "list_repo_files", lambda *_args, **_kwargs: pytest.fail("cache miss"))
@@ -185,7 +185,7 @@ def test_resolve_keeps_distinct_refs_in_distinct_cache_dirs(monkeypatch):
         ("org/model", "a"): "b" * 40,
     }
 
-    monkeypatch.setattr(model_cache, "marin_temp_bucket", lambda ttl_days, prefix: f"gs://temp/{prefix}")
+    monkeypatch.setattr(model_cache, "poorin_temp_bucket", lambda ttl_days, prefix: f"gs://temp/{prefix}")
     monkeypatch.setattr(
         model_cache,
         "model_info",
@@ -232,7 +232,7 @@ def test_resolve_tracks_mutable_hf_revision(tmp_path, monkeypatch):
     monkeypatch.setattr(model_cache, "model_info", fake_model_info)
     monkeypatch.setattr(model_cache, "list_repo_files", fake_list_repo_files)
     monkeypatch.setattr(model_cache, "hf_hub_download", fake_hf_hub_download)
-    monkeypatch.setattr(model_cache, "marin_temp_bucket", lambda _ttl_days, prefix: str(tmp_path / prefix))
+    monkeypatch.setattr(model_cache, "poorin_temp_bucket", lambda _ttl_days, prefix: str(tmp_path / prefix))
 
     first_path = resolve_cached_model_path("org/model", cache_ttl_days=7, cache_prefix="models")
     current_commit = second_commit

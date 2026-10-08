@@ -71,7 +71,7 @@ weighted = {handle: 1.0 for handle in train.values()}
 `nemotron_datasets` returns a dict of `ArtifactStep[TokenizedCache]` handles, one per
 Nemotron-CC quality split. It defines no mixture weights; this example weights every split
 equally. The splits tokenize a raw Nemotron-CC download that must already exist under
-`MARIN_PREFIX`; `experiments/datasets/nemotron.py` names the path. To tokenize a custom
+`POORIN_PREFIX`; `experiments/datasets/nemotron.py` names the path. To tokenize a custom
 dataset instead, use `tokenized` from `poorin.experiment.data`:
 
 ```python
@@ -165,7 +165,7 @@ the training job. None of those are experiment decisions.
 Save the script (for example as `train_1b.py`) and run it on the machine that has the GPUs:
 
 ```bash
-MARIN_PREFIX=local_store uv run python train_1b.py
+POORIN_PREFIX=local_store uv run python train_1b.py
 ```
 
 Fray's local backend runs the training job on the current machine. `resources` describes

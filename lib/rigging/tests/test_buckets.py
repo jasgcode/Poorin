@@ -37,7 +37,7 @@ def config(tmp_path, monkeypatch):
     cluster_dir = tmp_path / "clusters"
     cluster_dir.mkdir()
     (cluster_dir / "test.yaml").write_text(CLUSTER_YAML)
-    monkeypatch.setattr(cluster_config, "MARIN_CLUSTER_CONFIG_DIRS", (str(cluster_dir),))
+    monkeypatch.setattr(cluster_config, "POORIN_CLUSTER_CONFIG_DIRS", (str(cluster_dir),))
     cluster_config.reset_data_config_cache()
     for name, value in [
         ("CW_KEY_ID", "cw-key"),

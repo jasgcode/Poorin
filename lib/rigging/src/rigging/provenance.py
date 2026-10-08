@@ -32,7 +32,7 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-LAUNCH_PROVENANCE_ENV = "MARIN_PROVENANCE"
+LAUNCH_PROVENANCE_ENV = "POORIN_PROVENANCE"
 """Env var carrying the launch's :class:`Provenance` as JSON.
 
 A submitting client can stamp it into a job's environment, so a process running from a
@@ -93,7 +93,7 @@ class Provenance:
         """Best-effort provenance of the current launch: git context plus the origin
         remote, capture time, and argv.
 
-        Prefers the provenance published in ``MARIN_PROVENANCE`` (stamped by the submitting
+        Prefers the provenance published in ``POORIN_PROVENANCE`` (stamped by the submitting
         client) — returned verbatim, so a remote process reports the launch that produced it,
         not itself. Otherwise tolerant git capture: every git field degrades to empty/``None``
         outside a checkout or when the ``git`` binary is absent, so it never raises. Use to
@@ -165,7 +165,7 @@ class Provenance:
 
 
 def _provenance_from_env() -> Provenance | None:
-    """The provenance published in ``MARIN_PROVENANCE``, or ``None`` when absent or malformed.
+    """The provenance published in ``POORIN_PROVENANCE``, or ``None`` when absent or malformed.
 
     A malformed value must not break stamping or namespacing; callers fall back.
     """
@@ -224,7 +224,7 @@ def username_segment() -> str:
     """The current user as a path-safe segment, for per-user artifact namespacing.
 
     Resolves the same user that stamps provenance ``built_by``: the launch identity carried
-    in ``MARIN_PROVENANCE`` when present — so a remote worker namespaces under the submitting
+    in ``POORIN_PROVENANCE`` when present — so a remote worker namespaces under the submitting
     human, not its own OS login — otherwise the local OS login. The raw name is reduced to a
     clean segment: an email-like login drops its domain but keeps the whole local name
     (``russell.power@host`` → ``russell-power``), and the result is lowercased with any

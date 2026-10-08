@@ -28,13 +28,13 @@ def gpt2_tokenizer(gpt2_tokenizer_path):
 
 
 @pytest.fixture(autouse=True)
-def fray_client(_configure_marin_prefix):
+def fray_client(_configure_poorin_prefix):
     """Set up a v2 LocalClient for all tests.
 
-    Depends on ``_configure_marin_prefix`` so it tears down first: shutting
+    Depends on ``_configure_poorin_prefix`` so it tears down first: shutting
     down the client joins every local-backend worker thread before that
-    fixture removes the MARIN_PREFIX temp directory. Without this ordering, a
-    straggler task can still be writing under MARIN_PREFIX when the temp
+    fixture removes the POORIN_PREFIX temp directory. Without this ordering, a
+    straggler task can still be writing under POORIN_PREFIX when the temp
     directory is removed, raising ``OSError: Directory not empty`` at
     teardown.
     """
@@ -51,13 +51,13 @@ def disable_wandb(monkeypatch):
 
 
 @pytest.fixture(autouse=True)
-def _configure_marin_prefix():
-    """Set MARIN_PREFIX to a temp directory for tests that rely on it."""
-    if "MARIN_PREFIX" in os.environ:
+def _configure_poorin_prefix():
+    """Set POORIN_PREFIX to a temp directory for tests that rely on it."""
+    if "POORIN_PREFIX" in os.environ:
         yield
         return
 
-    with tempfile.TemporaryDirectory(prefix="marin_prefix") as temp_dir:
-        os.environ["MARIN_PREFIX"] = temp_dir
+    with tempfile.TemporaryDirectory(prefix="poorin_prefix") as temp_dir:
+        os.environ["POORIN_PREFIX"] = temp_dir
         yield
-        del os.environ["MARIN_PREFIX"]
+        del os.environ["POORIN_PREFIX"]

@@ -19,7 +19,7 @@ from levanter.checkpoint import CheckpointerConfig
 from levanter.schedule import BatchSchedule
 from mergedeep import mergedeep
 from pydantic import BaseModel
-from rigging.filesystem.cluster_config import check_gcs_paths_same_region, marin_temp_bucket
+from rigging.filesystem.cluster_config import check_gcs_paths_same_region, poorin_temp_bucket
 from rigging.filesystem.factory import url_to_fs
 from rigging.filesystem.storage_path import StoragePath, prefix_join
 
@@ -163,7 +163,7 @@ def temporary_checkpoint_base_path(output_path: str, ttl_days: int = TEMPORARY_C
     checkpoint is at most one save interval old, so the TTL mainly bounds how long checkpoints left
     behind by finished or replaced runs occupy storage.
     """
-    temporary_root = marin_temp_bucket(
+    temporary_root = poorin_temp_bucket(
         ttl_days=ttl_days,
         source_prefix=output_path,
     )
@@ -404,7 +404,7 @@ def resolve_training_env(
     Combines the base env from the user (typically ``train_config.env_vars``)
     with hardware-specific defaults from ``levanter.infra.cli_helpers``, run
     metadata (GIT_COMMIT, FERRY_DATE, etc. via ``add_run_env_variables``), a
-    JAX compilation cache pointing at ``marin_temp_bucket``, a TensorStore
+    JAX compilation cache pointing at ``poorin_temp_bucket``, a TensorStore
     stalled-request watchdog, and a guard against XLA's autotune subcache when
     the cache lives on remote storage.
     """

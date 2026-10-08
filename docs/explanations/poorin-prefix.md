@@ -1,6 +1,6 @@
-# Understanding `MARIN_PREFIX`
+# Understanding `POORIN_PREFIX`
 
-Marin uses a designated storage location, referred to as a "prefix," to save all outputs from experiments. This includes tokenized data, model checkpoints, experiment logs, and other artifacts. You specify this location with the `MARIN_PREFIX` environment variable.
+Marin uses a designated storage location, referred to as a "prefix," to save all outputs from experiments. This includes tokenized data, model checkpoints, experiment logs, and other artifacts. You specify this location with the `POORIN_PREFIX` environment variable.
 
 ## What is the Prefix Used For?
 
@@ -15,18 +15,18 @@ artifact's address that depends on where you are running.
 
 ## Specifying the Prefix
 
-Set `MARIN_PREFIX` in the environment the experiment runs in. There is no command-line
+Set `POORIN_PREFIX` in the environment the experiment runs in. There is no command-line
 override; scripts read the variable at run time.
 
 ```bash
-export MARIN_PREFIX="/path/to/your/output_directory"
+export POORIN_PREFIX="/path/to/your/output_directory"
 python experiments/your_experiment.py --version dev --run
 ```
 
 For a one-off run, set it inline:
 
 ```bash
-MARIN_PREFIX=local_store python experiments/your_experiment.py --version dev --run
+POORIN_PREFIX=local_store python experiments/your_experiment.py --version dev --run
 ```
 
 ## Acceptable Storage Backends and Paths
@@ -34,15 +34,15 @@ MARIN_PREFIX=local_store python experiments/your_experiment.py --version dev --r
 Marin leverages the `fsspec` library, allowing you to use various storage backends. The path you provide should be a URI understandable by `fsspec`. Common examples include:
 
 *   **Local Filesystem:**
-    *   `export MARIN_PREFIX=/path/to/local/directory`
-    *   `export MARIN_PREFIX=./relative/path/to/output` (relative to where you run the script)
+    *   `export POORIN_PREFIX=/path/to/local/directory`
+    *   `export POORIN_PREFIX=./relative/path/to/output` (relative to where you run the script)
 
 *   **Amazon S3 / CoreWeave AI Object Storage:**
-    *   `export MARIN_PREFIX=s3://your-s3-bucket/path/to/output`
+    *   `export POORIN_PREFIX=s3://your-s3-bucket/path/to/output`
     (Requires appropriate credentials and the `s3fs` library installed: `uv pip install s3fs`)
 
 *   **Google Cloud Storage (GCS):**
-    *   `export MARIN_PREFIX=gs://your-gcs-bucket/path/to/output`
+    *   `export POORIN_PREFIX=gs://your-gcs-bucket/path/to/output`
     (Requires appropriate GCP credentials and `gcsfs` library installed: `uv pip install gcsfs`)
 
 ## Important Considerations for Distributed Environments

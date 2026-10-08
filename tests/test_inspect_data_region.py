@@ -78,7 +78,7 @@ def test_normalize_cluster_region_plain():
     assert _normalize_cluster_region("us-central2") == "us-central2"
 
 
-def test_normalize_cluster_region_with_marin_prefix():
+def test_normalize_cluster_region_with_poorin_prefix():
     assert _normalize_cluster_region("marin-us-central2") == "us-central2"
 
 

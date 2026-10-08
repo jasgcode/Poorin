@@ -9,7 +9,7 @@ from dataclasses import dataclass
 
 from levanter.eval_harness_config import TaskConfig
 
-WANDB_PROJECT = os.environ.get("WANDB_PROJECT", "marin")
+WANDB_PROJECT = os.environ.get("WANDB_PROJECT", "poorin")
 
 
 @dataclass(frozen=True)

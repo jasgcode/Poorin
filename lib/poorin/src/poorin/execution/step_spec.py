@@ -11,7 +11,7 @@ from typing import Any
 from urllib.parse import urlparse
 
 from fray.types import ResourceConfig
-from rigging.filesystem.cluster_config import marin_prefix
+from rigging.filesystem.cluster_config import poorin_prefix
 from rigging.filesystem.storage_path import prefix_join
 
 
@@ -31,7 +31,7 @@ class StepSpec:
     by the step runner.
 
     A StepSpec freezes nothing at construction: ``output_path`` resolves
-    ``marin_prefix()`` lazily and ``fn`` pulls the live environment (prefix,
+    ``poorin_prefix()`` lazily and ``fn`` pulls the live environment (prefix,
     region) from a ``RunContext`` at run time. So it is safe to build anywhere —
     it carries no separate build phase.
     """
@@ -40,7 +40,7 @@ class StepSpec:
     name: str
     """Name of the step, used for readability and in the output path."""
     output_path_prefix: str | None = None
-    """Output path prefix for the step. If not provided, it will be taken from the MARIN_PREFIX environment variable."""
+    """Output path prefix for the step. If not provided, it will be taken from the POORIN_PREFIX environment variable."""
     deps: "list[StepSpec]" = dataclasses.field(default_factory=list)
     """Steps that this step depends on. Their output paths are used for dependency tracking and cache invalidation."""
     hash_attrs: dict[str, Any] = dataclasses.field(default_factory=dict)
@@ -111,9 +111,9 @@ class StepSpec:
 
         If ``override_output_path`` is set and relative (no URL scheme, doesn't
         start with ``/``), it is automatically prefixed with ``output_path_prefix``
-        or ``marin_prefix()``.
+        or ``poorin_prefix()``.
         """
-        prefix = self.output_path_prefix or marin_prefix()
+        prefix = self.output_path_prefix or poorin_prefix()
         if self.override_output_path is not None:
             if _is_relative_path(self.override_output_path):
                 return prefix_join(prefix, self.override_output_path)

@@ -10,7 +10,7 @@ import logging
 import threading
 from collections.abc import Callable
 
-from rigging.filesystem.cluster_config import marin_temp_bucket
+from rigging.filesystem.cluster_config import poorin_temp_bucket
 from rigging.filesystem.storage_path import StoragePath
 
 from finestore.reader import ReadView
@@ -60,7 +60,7 @@ class PersistentKvCache:
 
     @classmethod
     def for_prefix(cls, prefix: str, *, is_writer: Callable[[], bool] | None = None) -> PersistentKvCache:
-        return cls(lambda: marin_temp_bucket(_CACHE_TTL_DAYS, prefix), is_writer=is_writer)
+        return cls(lambda: poorin_temp_bucket(_CACHE_TTL_DAYS, prefix), is_writer=is_writer)
 
     def location(self) -> str | None:
         return self._resolve_root() if self._resolve_root is not None else None

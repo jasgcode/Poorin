@@ -69,13 +69,13 @@ def local_gpt2_marin_tokenizer(tmp_path_factory) -> HfMarinTokenizer:
 
 
 @pytest.fixture(autouse=True)
-def _configure_marin_prefix():
-    """Set MARIN_PREFIX to a temp directory for tests that rely on it."""
-    if "MARIN_PREFIX" in os.environ:
+def _configure_poorin_prefix():
+    """Set POORIN_PREFIX to a temp directory for tests that rely on it."""
+    if "POORIN_PREFIX" in os.environ:
         yield
         return
 
-    with tempfile.TemporaryDirectory(prefix="marin_prefix") as temp_dir:
-        os.environ["MARIN_PREFIX"] = temp_dir
+    with tempfile.TemporaryDirectory(prefix="poorin_prefix") as temp_dir:
+        os.environ["POORIN_PREFIX"] = temp_dir
         yield
-        del os.environ["MARIN_PREFIX"]
+        del os.environ["POORIN_PREFIX"]

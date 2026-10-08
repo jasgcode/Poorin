@@ -134,14 +134,14 @@ missing.
 ## Running the experiment
 
 ```bash
-MARIN_PREFIX=local_store uv run python my_experiment.py
+POORIN_PREFIX=local_store uv run python my_experiment.py
 ```
 
-`MARIN_PREFIX` sets the root directory for all outputs. It can be a local path or anything
+`POORIN_PREFIX` sets the root directory for all outputs. It can be a local path or anything
 [fsspec](https://filesystem-spec.readthedocs.io/en/latest/) supports (e.g. `gs://`). A
 relative path such as `local_store` resolves against the directory you run from. If
-you already exported `MARIN_PREFIX` in your shell, just run `uv run python my_experiment.py`.
-See [Understanding `MARIN_PREFIX`](../explanations/marin-prefix.md).
+you already exported `POORIN_PREFIX` in your shell, just run `uv run python my_experiment.py`.
+See [Understanding `POORIN_PREFIX`](../explanations/poorin-prefix.md).
 
 Training reports metrics to Weights & Biases. Without an explicit `run_id`, `train_lm` names
 the W&B run ID after the last segment of the output path, which here is the version
@@ -151,7 +151,7 @@ keep the run local with `WANDB_MODE=offline`, or pass `run_id="<your-name>-nano-
 to `train_lm` so the run is yours:
 
 ```bash
-MARIN_PREFIX=local_store WANDB_MODE=offline uv run python my_experiment.py
+POORIN_PREFIX=local_store WANDB_MODE=offline uv run python my_experiment.py
 ```
 
 This takes a few minutes on a CPU. The output ends with something like:

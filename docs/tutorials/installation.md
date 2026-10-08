@@ -58,15 +58,15 @@ You can also set `WANDB_ENTITY` and `WANDB_PROJECT`.
 6. Define the path to where all artifacts generated during execution will be stored (e.g., `local_store`):
 
     ```bash
-    export MARIN_PREFIX=...
+    export POORIN_PREFIX=...
     ```
 For example, training checkpoints usually will be written to
-`${MARIN_PREFIX}/checkpoints/`. You can set this to an fsspec-recognizable path
+`${POORIN_PREFIX}/checkpoints/`. You can set this to an fsspec-recognizable path
 (e.g., a GCS bucket) or a directory on your machine. See [Understanding
-`MARIN_PREFIX`](../explanations/marin-prefix.md) for details.
+`POORIN_PREFIX`](../explanations/poorin-prefix.md) for details.
 
 You might find it convenient to store `WANDB_API_KEY` and `HF_TOKEN` and
-`MARIN_PREFIX` in an `.env` file, which you can load in one go with `source
+`POORIN_PREFIX` in an `.env` file, which you can load in one go with `source
 .env`. The file is gitignored.
 
 ## Hardware-specific Setup
@@ -132,9 +132,9 @@ plan and exits.
 
 This will:
 
-1. Download and tokenize the TinyStories dataset to `${MARIN_PREFIX}/`
+1. Download and tokenize the TinyStories dataset to `${POORIN_PREFIX}/`
 2. Train a tiny language model
-3. Save the model checkpoint to `${MARIN_PREFIX}/`
+3. Save the model checkpoint to `${POORIN_PREFIX}/`
 
 ## Next Steps
 

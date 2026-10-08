@@ -7,11 +7,11 @@ storage, and GCS-location utilities.
 A :class:`DataConfig` describes where a cluster's data lives: the
 region-to-bucket mirror set, the URL scheme, and the temp TTL policy.
 :func:`data_config` returns the active config — the one bound by
-:func:`use_data_config`, else the cluster named by ``MARIN_CLUSTER`` (default
+:func:`use_data_config`, else the cluster named by ``POORIN_CLUSTER`` (default
 ``local``), loaded from ``config/<cluster>.yaml``. Every "where does data live"
-answer flows through it: :func:`marin_prefix` is ``data_config().resolved_root()``,
-while :func:`marin_temp_bucket` resolves region-local scratch, honoring a
-cluster-wide ``MARIN_TEMP_PREFIX`` override when configured.
+answer flows through it: :func:`poorin_prefix` is ``data_config().resolved_root()``,
+while :func:`poorin_temp_bucket` resolves region-local scratch, honoring a
+cluster-wide ``POORIN_TEMP_PREFIX`` override when configured.
 """
 
 import contextlib
@@ -62,7 +62,7 @@ PER_USER_CLUSTER_CONFIG_DIR = "~/.config/marin/clusters"
 # repo-root ``config/`` directory (in-tree checkout), then the bundled copy for
 # installed wheels. Relative paths resolve against the marin workspace root via
 # :func:`rigging.config_discovery.resolve_cluster_config`.
-MARIN_CLUSTER_CONFIG_DIRS: tuple[str, ...] = tuple(
+POORIN_CLUSTER_CONFIG_DIRS: tuple[str, ...] = tuple(
     p
     for p in (
         PER_USER_CLUSTER_CONFIG_DIR,
@@ -72,11 +72,11 @@ MARIN_CLUSTER_CONFIG_DIRS: tuple[str, ...] = tuple(
     if p is not None
 )
 
-_MARIN_PREFIX_ENV = "MARIN_PREFIX"
-_MARIN_CLUSTER_ENV = "MARIN_CLUSTER"
-_MARIN_TEMP_PREFIX_ENV = "MARIN_TEMP_PREFIX"
+_POORIN_PREFIX_ENV = "POORIN_PREFIX"
+_MARIN_CLUSTER_ENV = "POORIN_CLUSTER"
+_MARIN_TEMP_PREFIX_ENV = "POORIN_TEMP_PREFIX"
 _GCP_METADATA_ZONE_URL = "http://metadata.google.internal/computeMetadata/v1/instance/zone"
-_DEFAULT_LOCAL_PREFIX = "/tmp/marin"
+_DEFAULT_LOCAL_PREFIX = "/tmp/poorin"
 
 
 class StoreType(StrEnum):
@@ -158,14 +158,14 @@ class DataConfig:
     def resolved_root(self) -> str:
         """Resolve the storage root for this config. Never returns ``None``.
 
-        Precedence: ``MARIN_PREFIX`` env > ``self.root`` > region-local bucket
+        Precedence: ``POORIN_PREFIX`` env > ``self.root`` > region-local bucket
         from ``region_buckets[<gcs metadata region>]`` > ``{scheme}://marin-{region}``
         for a detected-but-unmapped region > :data:`_DEFAULT_LOCAL_PREFIX`.
 
         The configured value is canonicalized so downstream joins do not duplicate
         separators. Relative local paths are anchored at the working directory.
         """
-        env_prefix = os.environ.get(_MARIN_PREFIX_ENV)
+        env_prefix = os.environ.get(_POORIN_PREFIX_ENV)
         if env_prefix:
             return _canonical_root(env_prefix)
         if self.root is not None:
@@ -188,13 +188,13 @@ def _canonical_root(prefix: str) -> str:
 
 
 # The default cluster is config/local.yaml: one machine and no buckets, so outputs go under
-# MARIN_PREFIX, or _DEFAULT_LOCAL_PREFIX when it is unset. This in-code config is the fallback
+# POORIN_PREFIX, or _DEFAULT_LOCAL_PREFIX when it is unset. This in-code config is the fallback
 # when no config file is discoverable, e.g. an installed package outside a checkout.
 _DEFAULT_CLUSTER = "local"
 _FALLBACK_DATA_CONFIG: DataConfig = DataConfig(region_buckets={})
 
 _active_data_config: contextvars.ContextVar[DataConfig | None] = contextvars.ContextVar(
-    "marin_data_config", default=None
+    "poorin_data_config", default=None
 )
 
 
@@ -202,7 +202,7 @@ def data_config() -> DataConfig:
     """Return the active :class:`DataConfig`.
 
     Resolution: the config bound by :func:`use_data_config` (a context-local
-    override), else the cluster named by ``MARIN_CLUSTER`` (default ``local``)
+    override), else the cluster named by ``POORIN_CLUSTER`` (default ``local``)
     loaded from its ``config/<cluster>.yaml``.
     """
     override = _active_data_config.get()
@@ -224,7 +224,7 @@ def use_data_config(config: DataConfig) -> Generator[DataConfig, None, None]:
 def load_cluster_config(cluster: str | None = None) -> DataConfig:
     """Load a cluster's :class:`DataConfig` from its ``config/<cluster>.yaml``.
 
-    The cluster name is ``cluster`` arg > ``MARIN_CLUSTER`` env > ``local``. A
+    The cluster name is ``cluster`` arg > ``POORIN_CLUSTER`` env > ``local``. A
     parsed ``data:`` block becomes the config; other keys are ignored. When
     the default ``local`` config cannot be found (e.g. an installed
     package outside a checkout), returns :data:`_FALLBACK_DATA_CONFIG`; a missing
@@ -252,7 +252,7 @@ def load_cluster_config_from_dirs(cluster: str, config_dirs: Sequence[pathlib.Pa
 @functools.cache
 def _load_cluster_config_cached(cluster: str) -> DataConfig:
     try:
-        config_path = resolve_cluster_config(cluster, MARIN_CLUSTER_CONFIG_DIRS)
+        config_path = resolve_cluster_config(cluster, POORIN_CLUSTER_CONFIG_DIRS)
     except FileNotFoundError:
         if cluster == _DEFAULT_CLUSTER:
             return _FALLBACK_DATA_CONFIG
@@ -380,12 +380,12 @@ def region_from_prefix(prefix: str) -> str | None:
     return None
 
 
-def marin_region() -> str | None:
-    """Return the current GCP region, from instance metadata or ``MARIN_PREFIX``."""
-    return region_from_metadata() or region_from_prefix(os.environ.get(_MARIN_PREFIX_ENV, ""))
+def poorin_region() -> str | None:
+    """Return the current GCP region, from instance metadata or ``POORIN_PREFIX``."""
+    return region_from_metadata() or region_from_prefix(os.environ.get(_POORIN_PREFIX_ENV, ""))
 
 
-def marin_prefix() -> str:
+def poorin_prefix() -> str:
     """Return the active cluster's storage prefix (``data_config().resolved_root()``)."""
     return data_config().resolved_root()
 
@@ -395,14 +395,14 @@ def data_buckets() -> Mapping[str, BucketSpec]:
     """Every declared data bucket (name -> :class:`BucketSpec`) across all cluster configs.
 
     Recognition must be cross-cluster — a launcher on a GCS cluster may target an
-    R2/CoreWeave output prefix (see :func:`marin_temp_bucket`'s ``source_prefix``),
+    R2/CoreWeave output prefix (see :func:`poorin_temp_bucket`'s ``source_prefix``),
     and a browser shows every backend at once — so this aggregates across all
     cluster configs rather than only the active one. The first config declaring a
     bucket name wins; a name declared twice with conflicting backends is a config
     error this does not police. Cached; :func:`reset_data_config_cache` clears it.
     """
     registry: dict[str, BucketSpec] = {}
-    for cluster in list_cluster_configs(MARIN_CLUSTER_CONFIG_DIRS):
+    for cluster in list_cluster_configs(POORIN_CLUSTER_CONFIG_DIRS):
         for spec in load_cluster_config(cluster).region_buckets.values():
             registry.setdefault(spec.name, spec)
     return MappingProxyType(registry)
@@ -418,7 +418,7 @@ def store_configs() -> Mapping[StoreType, StoreConfig]:
     Cached; :func:`reset_data_config_cache` clears it.
     """
     registry: dict[StoreType, StoreConfig] = {}
-    for cluster in list_cluster_configs(MARIN_CLUSTER_CONFIG_DIRS):
+    for cluster in list_cluster_configs(POORIN_CLUSTER_CONFIG_DIRS):
         for store, config in load_cluster_config(cluster).stores.items():
             registry.setdefault(store, config)
     return MappingProxyType(registry)
@@ -443,7 +443,7 @@ def s3_data_buckets() -> Mapping[str, BucketSpec]:
     """The R2/CoreWeave subset of :func:`data_buckets`.
 
     These S3-compatible buckets carry ``tmp/ttl=Nd/`` lifecycle rules and are
-    used to route temp paths (:func:`marin_temp_bucket`). The set is defined in
+    used to route temp paths (:func:`poorin_temp_bucket`). The set is defined in
     ``config/*.yaml`` via each bucket's ``store`` type (``r2``/``coreweave``).
     """
     return MappingProxyType(
@@ -499,7 +499,7 @@ def _resolve_ttl_days(ttl_days: int, allowed: tuple[int, ...]) -> int:
     return capped
 
 
-def marin_temp_bucket(
+def poorin_temp_bucket(
     ttl_days: int,
     prefix: str = "",
     *,
@@ -522,11 +522,11 @@ def marin_temp_bucket(
 
     Otherwise falls back to a flat path under the marin prefix::
 
-        {marin_prefix}/tmp/{prefix}
+        {poorin_prefix}/tmp/{prefix}
 
     Pulumi-managed lifecycle rules on every data bucket auto-delete objects
     under ``tmp/ttl=Nd/`` after *N* days.
-    When ``MARIN_TEMP_PREFIX`` is set, it overrides ambient and explicit source
+    When ``POORIN_TEMP_PREFIX`` is set, it overrides ambient and explicit source
     prefixes so every temporary write in that cluster uses the configured
     bucket.
 
@@ -539,14 +539,14 @@ def marin_temp_bucket(
         source_prefix: Optional path used to choose the temp bucket region.
             Useful when configuring a remote job from a launcher that may be in
             a different region than the job output path.
-        use_env_override: Honor ``MARIN_TEMP_PREFIX`` when set. Disable only
+        use_env_override: Honor ``POORIN_TEMP_PREFIX`` when set. Disable only
             when resolving a legacy data-local path for reads, never for writes.
     """
     cfg = data_config()
     ttl_days = _resolve_ttl_days(ttl_days, cfg.ttl_days)
 
     override_prefix = os.environ.get(_MARIN_TEMP_PREFIX_ENV) if use_env_override else None
-    mp = override_prefix or source_prefix or marin_prefix()
+    mp = override_prefix or source_prefix or poorin_prefix()
 
     # A cluster temp override takes precedence over explicit source routing so
     # all disposable writes from the cluster share one lifecycle-managed bucket.
@@ -559,7 +559,7 @@ def marin_temp_bucket(
         region = region_from_prefix(source_prefix)
         s3_bucket = _s3_bucket_from_prefix(source_prefix)
     else:
-        region = marin_region() if mp.startswith("gs://") else None
+        region = poorin_region() if mp.startswith("gs://") else None
         s3_bucket = _s3_bucket_from_prefix(mp)
 
     if region:
@@ -637,7 +637,7 @@ def check_gcs_paths_same_region(
 ) -> None:
     """Validate that ``gs://`` paths in ``obj`` live in the current VM region."""
     if region_getter is None:
-        region_getter = marin_region
+        region_getter = poorin_region
     if path_checker is None:
         path_checker = check_path_in_region
 

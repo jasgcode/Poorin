@@ -47,7 +47,7 @@ dataset (or dataset family), built with the lazy data builders in
 ## Mirror FS (Quick Reference)
 
 - `mirror://` is an fsspec filesystem for transparent cross-region reads.
-- Read behavior: check local `marin_prefix()` first; if missing, scan other Marin regional buckets, copy to local once, then serve locally.
+- Read behavior: check local `poorin_prefix()` first; if missing, scan other Marin regional buckets, copy to local once, then serve locally.
 - Copying uses a distributed lock so concurrent workers do not duplicate the same transfer.
 - Write behavior: writes go directly to the local prefix.
 - Both `mirror://` copies and direct cross-region GCS reads share a single process-global `TransferBudget` (default 10 GB) that raises `TransferBudgetExceeded` when exhausted.
