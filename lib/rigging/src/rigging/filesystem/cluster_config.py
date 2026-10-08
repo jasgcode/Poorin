@@ -73,8 +73,8 @@ POORIN_CLUSTER_CONFIG_DIRS: tuple[str, ...] = tuple(
 )
 
 _POORIN_PREFIX_ENV = "POORIN_PREFIX"
-_MARIN_CLUSTER_ENV = "POORIN_CLUSTER"
-_MARIN_TEMP_PREFIX_ENV = "POORIN_TEMP_PREFIX"
+_POORIN_CLUSTER_ENV = "POORIN_CLUSTER"
+_POORIN_TEMP_PREFIX_ENV = "POORIN_TEMP_PREFIX"
 _GCP_METADATA_ZONE_URL = "http://metadata.google.internal/computeMetadata/v1/instance/zone"
 _DEFAULT_LOCAL_PREFIX = "/tmp/poorin"
 
@@ -231,7 +231,7 @@ def load_cluster_config(cluster: str | None = None) -> DataConfig:
     *named* cluster raises ``FileNotFoundError``. Cached; call
     :func:`reset_data_config_cache` in tests after changing env or config files.
     """
-    name = cluster or os.environ.get(_MARIN_CLUSTER_ENV) or _DEFAULT_CLUSTER
+    name = cluster or os.environ.get(_POORIN_CLUSTER_ENV) or _DEFAULT_CLUSTER
     return _load_cluster_config_cached(name)
 
 
@@ -545,7 +545,7 @@ def poorin_temp_bucket(
     cfg = data_config()
     ttl_days = _resolve_ttl_days(ttl_days, cfg.ttl_days)
 
-    override_prefix = os.environ.get(_MARIN_TEMP_PREFIX_ENV) if use_env_override else None
+    override_prefix = os.environ.get(_POORIN_TEMP_PREFIX_ENV) if use_env_override else None
     mp = override_prefix or source_prefix or poorin_prefix()
 
     # A cluster temp override takes precedence over explicit source routing so

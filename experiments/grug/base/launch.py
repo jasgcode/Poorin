@@ -82,7 +82,8 @@ class GrugBaseLaunchConfig:
     The trainer and eval knobs are flat scalars rather than nested
     ``GrugTrainerConfig`` / ``GrugEvalConfig`` objects: those carry
     ``jax.sharding.PartitionSpec`` batch-sharding defaults, which the artifact
-    fingerprint cannot serialize. ``build_grug_run_config`` reconstitutes them (with
+    fingerprint encodes only through its best-effort fallback (a warning, or an error under
+    strict fingerprinting). ``build_grug_run_config`` reconstitutes them (with
     their default pspecs) at run time, keeping the sharding plumbing out of the
     artifact's identity.
 

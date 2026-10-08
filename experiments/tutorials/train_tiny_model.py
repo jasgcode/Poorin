@@ -11,6 +11,10 @@ Every training decision is stated inline: the model, the data, the optimizer, th
 budget. :func:`~poorin.experiment.train.train_lm` handles only the accelerator plumbing (the
 mesh, the resumption checkpointer, the Fray dispatch); the same script runs on every device.
 
+Fray's ``LocalClient`` is Poorin's only backend, and it ignores a job's resources, so every
+``--device`` runs on this machine; the H100, GB200, and TPU entries matter once a cloud backend
+exists (sub-project 2).
+
 The checkpoint's version is *deferred*: it is set once for the whole run by the shared
 ``--version`` (``--run`` builds, the default prints the plan). The datasets pin explicit calendar
 versions — they are shared caches that should not rebuild on a mutable version. See

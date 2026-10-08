@@ -66,8 +66,7 @@ logger = logging.getLogger(__name__)
 def _write_executor_info(step: StepSpec) -> None:
     """Write a ``.executor_info`` JSON file in the ExecutorStepInfo schema.
 
-    Skips writing if the file already exists (e.g. ``Executor.write_infos()``
-    wrote a richer version before this step launched).
+    Skips writing if the file already exists.
 
     This runs at schedule time, before the step produces its ``.artifact.json``, and its
     ``config`` is the identity ``hash_attrs`` — not the materialized config. It is tagged

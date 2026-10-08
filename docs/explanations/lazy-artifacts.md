@@ -131,15 +131,23 @@ guarantees is materialized first. `run`/`resolve` are the driver-level entry poi
 
 `StepRunner.run` applies two guards before executing each step:
 
-1. **Cache check** — if the output path already contains a completed artifact record, skip.
+1. **Cache check** — if the output path's `.executor_status` reads `SUCCESS`, skip. A `dev`
+   version is mutable and always rebuilds.
 2. **Lock** — prevents concurrent processes from building the same step twice.
 
-The standard `main` block in a Marin experiment:
+The standard `main` block in a Poorin experiment wraps `build` in the shared command-line
+options (`--version`, `--resume`, `--override`, `--max-concurrent`, `--run`); without `--run` it
+prints the plan:
 
 ```python
+from poorin.experiment.cli import experiment_main
+
 if __name__ == "__main__":
-    StepRunner().run([lower(build())])
+    experiment_main(build)()
 ```
+
+An experiment with options of its own stacks `@build_options` under its `@click.option`s, as
+`experiments/grug/base/launch.py` does.
 
 ## Advisory drift
 
@@ -180,8 +188,8 @@ dclm_tokenized = ArtifactStep.adopt(
 
 `kind` selects the handle's typed result, so a raw checkpoint path becomes a typed handle a
 consumer can read metrics from — e.g. `ArtifactStep.adopt(name, version, "gs://…", kind=LevanterCheckpoint)`.
-A consumer that depends on `dclm_tokenized` resolves to the source path. Lowering writes
-a provenance record at the canonical `{prefix}/{name}/{version}` path so the advisory drift
+A consumer that depends on `dclm_tokenized` resolves to the source path. Running the adopted
+step writes a provenance record at the canonical `{prefix}/{name}/{version}` path so the advisory drift
 check governs the alias — re-adopting the same `name@version` from a different source logs
 a warning.
 
@@ -198,7 +206,7 @@ handles:
   HuggingFace dataset or a raw path glob into a Levanter cache. Provide exactly one of
   `source`, `paths`, or `raw+glob`.
 - `hf_download(name, *, hf_id, revision, version, urls_glob=…)` — download a HuggingFace
-  repo to GCS as a raw-data `ArtifactStep[Artifact]` for `tokenized` to consume.
+  repo under the output prefix as a raw-data `ArtifactStep[Artifact]` for `tokenized` to consume.
 - `raw_download(name, *, fn, build_config, version)` — a raw-data download driven by a custom
   `fn`/`build_config`, for sources `hf_download` does not cover.
 - `pretokenized(name, *, repo_id, tokenizer, version)` — a pre-built Levanter cache hosted on

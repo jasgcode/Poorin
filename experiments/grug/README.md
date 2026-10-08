@@ -6,13 +6,13 @@
 
 - `base/model.py`: model config and model implementation (`init` + `__call__` + loss method).
 - `base/train.py`: train loop, optimizer step, callbacks, eval/checkpoint wiring.
-- `base/launch.py`: experiment config and execution entrypoint (builds a lazy `Checkpoint` + resources).
+- `base/launch.py`: experiment config and execution entrypoint (builds a lazy `LevanterCheckpoint` + resources).
 
 ## Entry-point guide
 
 - Start in `base/launch.py` for normal run edits.
 - `GrugBaseLaunchConfig` is the user-facing knob surface (model/data/optimizer/trainer/eval/run metadata).
-- `grug_base_trial(...)` returns a typed `Checkpoint` handle addressed by `name@version`; its recipe's
+- `grug_base_trial(...)` returns a typed `ArtifactStep[LevanterCheckpoint]` handle addressed by `name@version`; its recipe's
   `build_config` is what the fingerprint is computed from.
 - `ctx.output_path` (inside `build_config`) resolves to the current step's output root.
 - `run_grug(...)` in `base/train.py` is the runtime entry point the step's `run` function (`run_grug_base_trial`) calls.

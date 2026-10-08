@@ -7,7 +7,7 @@
 optimizer, the data, the token budget, the regularization, the evals — into a lazy
 ``ArtifactStep[LevanterCheckpoint]``. Every one of those is a required argument:
 the helper defaults none of them, so reading the call shows the whole experiment. What
-it *does* own is the mechanical marin-on-TPU plumbing that is identical across runs and
+it *does* own is the mechanical training plumbing that is identical across runs and
 carries no experiment meaning: the data-parallel mesh and token ``compute_mapping``,
 the rolling resumption checkpointer, the eval-harness wiring, the WandB replication
 path, and the Fray dispatch of the training job. That split is this design's
@@ -137,9 +137,10 @@ def train_lm(
     The remaining parameters are execution choices that do not define the experiment:
     ``mp`` (the standard marin precision, identity-bearing but universal),
     ``tensor_parallel_size`` (model sharding width), eval/checkpoint cadence, tracker
-    metadata, and ``resources`` (the TPU the job is dispatched onto — a runtime arg, so it
-    never enters the checkpoint's fingerprint). ``init_from`` chains this run onto another
-    checkpoint (it becomes a dep and seeds ``initialize_from_checkpoint_path``).
+    metadata, and ``resources`` (the device the job asks for — a runtime arg, so it never
+    enters the checkpoint's fingerprint; ``LocalClient`` runs every job on this machine).
+    ``init_from`` chains this run onto another checkpoint (it becomes a dep and seeds
+    ``initialize_from_checkpoint_path``).
 
     Training length is set by exactly one of ``num_train_steps`` or ``num_train_epochs`` (setting
     both, or neither, is an error). ``num_train_epochs`` is a thin convenience over

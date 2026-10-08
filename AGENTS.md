@@ -31,8 +31,9 @@ Upstream Marin code, and Poorin's specs, plans, and decisions before D85, use th
 | `finelog` / `marin-finelog` | `finelog` / `poorin-finelog` |
 | `rigging` / `marin-rigging` | `rigging` / `poorin-rigging` |
 
-Levanter, Haliax, Zephyr, Finestore, and Dupekit keep upstream's names. The `MARIN_*` environment
-variables and `marin_*` helpers keep theirs for now.
+Levanter, Haliax, Zephyr, Finestore, and Dupekit keep upstream's names. The settings took Poorin
+names too (D87): `MARIN_PREFIX` is `POORIN_PREFIX`, and so on. Names that point at something of
+Marin's keep theirs, such as the license header and the Marin tokenizer's chat template.
 
 ## Workflow Playbooks
 
