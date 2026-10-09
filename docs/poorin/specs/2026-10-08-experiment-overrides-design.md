@@ -1,7 +1,7 @@
 # Typed overrides, sweeps, and fail-closed drift for experiments
 
-Status: proposed design, 2026-10-08. Decision D92. Implementation plan: to follow in
-`docs/poorin/plans/`.
+Status: approved design, 2026-10-08; implemented 2026-10-09 (plan
+`plans/2026-10-08-experiment-overrides.md`). Decision D92.
 
 ## TL;DR
 
@@ -221,8 +221,9 @@ The W&B config (project, tags, group, `save_code`), the run ID, and grug's `log_
 runtime arguments, as `resources` already is: `build_config` reads them through
 `ctx.runtime_arg`, so they render as placeholders in the fingerprint, and changing a tag no longer
 changes it. The W&B `replicate_path`, which is the step's output path, is set at run time: in
-grug's `_trackers` from `launch.output_path`, and in `train_lm`'s run function from the pod
-config's `output_path`. Overriding these settings with `--set` is refused; they are edited in code.
+grug's `_trackers` from `launch.output_path`, and in `train_lm`'s `build_config` from
+`ctx.output_path` (D94 records why it is not set in the run function). Overriding these settings
+with `--set` is refused; they are edited in code.
 
 ## Identity and drift
 

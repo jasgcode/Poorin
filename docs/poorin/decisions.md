@@ -1285,7 +1285,7 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
 
 ### D92. Typed overrides, sweeps, and fail-closed drift, on draccus
 
-- **When:** 2026-10-08, design. **Status:** Planned. Spec:
+- **When:** 2026-10-08, design; landed 2026-10-09. **Status:** Adopted. Spec:
   `specs/2026-10-08-experiment-overrides-design.md`.
 - **Decision:** Experiments gain `--set PATH=VALUE`, `--sweep`, a readable plan with
   `--show-config`, and `--accept-drift`, built on draccus. A changed recipe under an existing
@@ -1304,6 +1304,8 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
   `draccus.parse` (needs the config before the step context exists).
 - **Cost if wrong:** Every fingerprint changes once, absorbed with `--accept-drift`; about 300
   lines of code and 200 of tests.
+- **Landed:** `6b92482ce`, `090f458bc`, `e71d9c065`, `c0228a683`; rulings made while building
+  them are in D94.
 
 ### D93. Track runs with W&B; no host-specific test exclusions
 
@@ -1409,3 +1411,10 @@ Known gaps left open on purpose. Each names where it gets resolved.
 | P1's timing columns in `prune-metrics.csv` are confounded by host load (load average about 250 from processes outside the checkout) and are not comparable with P0's | P1 | A rerun on a quiet machine |
 | Nothing serves Zephyr's dashboard: the coordinator builds its Starlette app, but no server has mounted it since Iris was deleted. The owner wants it reachable over Tailscale (2026-10-09) | D90 | Open |
 | Levanter's TensorBoard tracker is still in the tree, though D38 said P7 would delete it; its test needs `tensorboardX`, which the GPU environment does not install, so `tools.affected_tests` skips it | Backlog | D93: deleted |
+| A run writes its materialized config only when it succeeds, so a failed run leaves none; it should write it when the run starts | D92 | Open |
+| Grug's log file goes to `logs/` under the working directory, not into the run's output directory | D92 | Open |
+| Grug's training data passes no `revision` to `pretokenized`, so its Hugging Face download follows the repository's default branch instead of a pinned revision | D92 | Open |
+| `--set` has no named presets, so a bundle of overrides is retyped or kept in a shell alias | D92 | Open |
+| Adaptive search (Optuna) is not supported; a study would be a Python loop over `resolve`, written when one needs it | D92 | Open |
+| Fray has no SLURM backend | D92 | Open |
+| `--set` is not forwarded to SkyRL runs as Hydra overrides (D68) | D92 | Open |
