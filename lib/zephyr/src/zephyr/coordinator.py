@@ -34,6 +34,7 @@ from zephyr.dashboard.app import (
     create_dashboard_application,
 )
 from zephyr.dashboard.coordinator import CoordinatorDashboard
+from zephyr.dashboard.server import serve_dashboard
 from zephyr.memory_store import MemoryTableRegistration
 from zephyr.plan import (
     ROOT_PLAN_PREFIX,
@@ -354,6 +355,7 @@ class ZephyrCoordinator:
         max_concurrent_pipelines: int = MAX_CONCURRENT_PIPELINES,
         expected_workers: int = 0,
         stats_config: StatsConfig | None = None,
+        dashboard_port: int | None = None,
     ) -> None:
         # Pipeline executions keyed by execution_id, insertion-ordered. All
         # per-pipeline state lives in the _PipelineExecution values.
@@ -411,6 +413,7 @@ class ZephyrCoordinator:
         self._coordinator_task_id = ""
 
         self._web_application = create_dashboard_application(CoordinatorDashboard(self, WorkerState.ACTIVE))
+        self._dashboard = serve_dashboard(self._web_application, dashboard_port) if dashboard_port is not None else None
 
         logger.info("Coordinator initialized")
 
@@ -1525,6 +1528,8 @@ class ZephyrCoordinator:
 
         self._result_executor.shutdown(wait=True, cancel_futures=True)
         self._stats_writer.close()
+        if self._dashboard is not None:
+            self._dashboard.close()
 
         logger.info("Coordinator shutdown complete")
 

@@ -93,3 +93,4 @@ date,phase,step,first_party_lines,reachable_lines,reachable_modules,r1_imported_
 2026-10-09,Cleanup,Correct how the docs describe run() and lower(),133432,132454,424,6495,3.73,68.2,28.6,7929368792
 2026-10-09,Cleanup,One training at a time in a process,133452,132474,424,6495,4.01,67.9,29.5,7988490460
 2026-10-09,Cleanup,Move rigging's per-user cluster configs to a Poorin path,133420,132442,424,6495,3.97,75.0,32.2,8017593418
+2026-10-09,Cleanup,Serve Zephyr's dashboard on localhost,133536,132558,425,6520,3.79,71.0,29.8,8018461180

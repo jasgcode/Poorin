@@ -59,8 +59,9 @@ Taskcompendium (1,664). Levanter (85,297 to 62,330) keeps its name: its core is 
 These modules looked vestigial on a one-GPU stack. D89 and D90 reviewed them and kept each one
 for a stated user:
 
-- `zephyr.dashboard` (with its `app` and `coordinator`): the coordinator's status page, kept for
-  local data runs (D90). Nothing serves it yet (Deferred, in `decisions.md`).
+- `zephyr.dashboard` (with its `app`, `coordinator`, and `server`): the coordinator's status page,
+  kept for local data runs (D90) and served on localhost when a context sets a dashboard port
+  (D100).
 - `rigging.filesystem.mirror`: Levanter stages tokenizers through `mirror://`.
 - `levanter.model_cache`: it is on the Hugging Face loading path.
 - `finestore.migrations.m0001_manifest`: Finestore runs it on every write.
@@ -416,6 +417,7 @@ for a stated user:
 | `zephyr.dashboard` | Package marker for the pipeline dashboard | R1 |
 | `zephyr.dashboard.app` | JSON API and standalone HTML dashboard ASGI app for pipeline status | R1 |
 | `zephyr.dashboard.coordinator` | Builds dashboard responses from coordinator state | R1 |
+| `zephyr.dashboard.server` | Serves a coordinator's dashboard on localhost with uvicorn, for a reverse proxy | R1 |
 | `zephyr.dataset` | Lazy Dataset API and logical ops: map, filter, group-by, reduce, join, write | R1 |
 | `zephyr.expr` | Column expressions for filter and projection pushdown, convertible to pyarrow | R1 |
 | `zephyr.input_file` | InputFileSpec describing one input file for datasets, plans, and readers | R1 |

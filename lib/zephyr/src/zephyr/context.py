@@ -229,6 +229,10 @@ class ZephyrContext:
             for a driver that fans many pipelines onto one shared pool.
         stats_config: Finelog endpoint for stats reporting. When absent,
             stats are not reported.
+        dashboard_port: Port on 127.0.0.1 where the coordinator serves its
+            dashboard, for a reverse proxy such as ``tailscale serve``. Unset, it
+            comes from ``ZEPHYR_DASHBOARD_PORT``; with neither, nothing is served.
+            A taken port moves the dashboard to a free one, which the coordinator logs.
     """
 
     client: Client | None = None
@@ -247,6 +251,7 @@ class ZephyrContext:
     max_shard_infra_failures: int = MAX_SHARD_INFRA_FAILURES
     max_concurrent_pipelines: int = MAX_CONCURRENT_PIPELINES
     stats_config: StatsConfig | None = None
+    dashboard_port: int | None = None
 
     _shared_data: ContextVar[dict[str, Any] | None] = field(init=False, repr=False)
     _state: _ContextState = field(init=False, default=_ContextState.NEW, repr=False)
@@ -266,6 +271,12 @@ class ZephyrContext:
                     raise ValueError(f"Invalid ZEPHYR_MAX_WORKERS environment variable value: {env_val}") from e
             else:
                 logger.info("Ignoring ZEPHYR_MAX_WORKERS because max_workers is set.")
+
+        if self.dashboard_port is None and (env_val := os.environ.get("ZEPHYR_DASHBOARD_PORT")):
+            try:
+                self.dashboard_port = int(env_val)
+            except ValueError as e:
+                raise ValueError(f"Invalid ZEPHYR_DASHBOARD_PORT environment variable value: {env_val}") from e
 
         if self.resources is None:
             self.resources = ResourceConfig(cpu=1, ram="1g")
@@ -473,6 +484,7 @@ class ZephyrContext:
             max_concurrent_pipelines=self.max_concurrent_pipelines,
             expected_workers=worker_count,
             stats_config=self.stats_config,
+            dashboard_port=self.dashboard_port,
             name=coordinator_name,
             count=1,
             resources=self.coordinator_resources,

@@ -148,6 +148,30 @@ pipeline = Dataset.from_list(tasks).map(lambda t: download(*t))
 ctx.execute(pipeline)
 ```
 
+## Dashboard
+
+A coordinator can serve a status page for its pipelines: the stage graph, shard progress,
+counters, and workers, with a read-only JSON API under `/api/`. Give a port to one context with
+`ZephyrContext(dashboard_port=8765)`, or to every pipeline the shell starts:
+
+```bash
+export ZEPHYR_DASHBOARD_PORT=8765
+```
+
+The server binds `127.0.0.1` only and the coordinator logs its URL
+(`Zephyr dashboard: http://127.0.0.1:8765/`). When the port is taken, for example by a second
+pipeline running at the same time, the dashboard moves to a free port and the log line names it.
+The server stops with the coordinator.
+
+To open it from another device on your tailnet, proxy the port with Tailscale:
+
+```bash
+tailscale serve --bg 8765
+```
+
+The page is then at `https://<machine>.<tailnet>.ts.net/`; `tailscale serve status` prints the
+URL and `tailscale serve reset` stops serving.
+
 ## Installation
 
 ```bash

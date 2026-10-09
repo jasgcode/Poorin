@@ -1494,6 +1494,26 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
 - **Cost if wrong:** A cluster config under the Marin path is no longer found. Neither directory
   exists on this workstation.
 
+### D100. Serve Zephyr's dashboard on localhost, for Tailscale
+
+- **When:** 2026-10-09. **Status:** Adopted.
+- **Decision:** `ZephyrContext` gains `dashboard_port: int | None`; unset, it comes from
+  `ZEPHYR_DASHBOARD_PORT`, as `max_workers` comes from `ZEPHYR_MAX_WORKERS`. With a port, the
+  coordinator serves the dashboard app it already builds with uvicorn, on a daemon thread bound to
+  `127.0.0.1`, and stops it on shutdown. A taken port moves the dashboard to a free one the OS
+  picks, and the coordinator logs the URL. Remote access goes through `tailscale serve --bg
+  <port>`, which serves the page over HTTPS on the tailnet. Zephyr depends on uvicorn.
+- **Why:** The owner, 2026-10-09: the dashboard should be reachable over Tailscale. Nothing had
+  served it since Iris (D90). About fifteen call sites in `poorin` build a `ZephyrContext`, so a
+  field alone could not be set from the command line; the environment variable reaches all of
+  them, and an explicit field still wins. Binding localhost keeps the page off other interfaces.
+- **Alternatives:** Plumb the port through every pipeline; bind `0.0.0.0` (or the Tailscale
+  address) directly; fail when the port is taken, which would fail a data pipeline over its
+  dashboard; try the next ten ports, which a test suite with many contexts can exhaust.
+- **Cost if wrong:** A second concurrent pipeline's dashboard is on a random port that `tailscale
+  serve` does not proxy; its log line gives the local URL. One more dependency (uvicorn, pure
+  Python, with h11).
+
 ---
 
 ## Deferred
@@ -1532,7 +1552,7 @@ Known gaps left open on purpose. Each names where it gets resolved.
 | Code that only made sense under Iris survives the comment cleanup (D76): Zephyr's `MAX_IRIS_WORKER_REPLICAS` and the coordinator-owned worker group, Fray fields `LocalClient` ignores (`target_cluster`, `processes_per_task`, `setup_scripts`, `sync_packages`, actor retries), grug dispatch's forwarded environment, the profiler's `iris.oa.dev` xprof URL, `MARIN_PROVENANCE`, `LogClient.connect(resolver=...)`, and `EvalRecord`, which nothing writes | Cleanup | D89: the replica cap, the `iris.oa.dev` default, `POORIN_PROVENANCE` (renamed by D87), and the resolver are deleted; Fray's remote-only fields and grug's forwarded environment stay for sub-project 2, and `EvalRecord` with the kept evaluation workflow |
 | Haliax's docs fail `mkdocs build --strict` on 144 warnings, all present at `upstream-baseline`: unresolved cross-references to JAX, NumPy, and Equinox objects, and griffe docstring warnings | Cleanup | Open |
 | P1's timing columns in `prune-metrics.csv` are confounded by host load (load average about 250 from processes outside the checkout) and are not comparable with P0's | P1 | A rerun on a quiet machine |
-| Nothing serves Zephyr's dashboard: the coordinator builds its Starlette app, but no server has mounted it since Iris was deleted. The owner wants it reachable over Tailscale (2026-10-09) | D90 | Open |
+| Nothing serves Zephyr's dashboard: the coordinator builds its Starlette app, but no server has mounted it since Iris was deleted. The owner wants it reachable over Tailscale (2026-10-09) | D90 | D100: the coordinator serves it on localhost; `tailscale serve` exposes it |
 | Levanter's TensorBoard tracker is still in the tree, though D38 said P7 would delete it; its test needs `tensorboardX`, which the GPU environment does not install, so `tools.affected_tests` skips it | Backlog | D93: deleted |
 | A run writes its materialized config only when it succeeds, so a failed run leaves none; it should write it when the run starts | D92 | Open |
 | Grug's log file goes to `logs/` under the working directory, not into the run's output directory | D92 | Open |
