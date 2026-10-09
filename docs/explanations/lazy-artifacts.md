@@ -223,9 +223,16 @@ The experiment receives one trial's overrides as `overrides`
 
 These errors are raised before anything runs: an unknown path, with the closest field names
 suggested; a value that does not decode as the field's type; a path whose value comes from the
-step context (the output path, a runtime argument such as the tracker, or a dependency); one trial
-that sets a field twice, or a field and one beneath it; and an override the experiment never
-applied.
+step context (the output path or a path built from it, a runtime argument such as the tracker, or
+a dependency); one trial that sets a field twice, or a field and one beneath it; and an override
+the experiment never applied.
+
+`train_lm` sets some fields when the training job starts, after the overrides apply, so they are
+set at run time and not overridable. A `--set` on one is accepted and enters the trial's name and
+fingerprint, but the run never sees it: `hf_save_path`, `trainer.checkpointer.base_path`,
+`trainer.checkpointer.temporary_base_path`, and `trainer.checkpointer.append_run_id_to_base_path`
+(set from the output path), `data.auto_build_caches` (set from the pod config), and
+`trainer.require_accelerator` when the job runs on CPU.
 
 A `--run` of a sweep with more than one trial requires `--max-concurrent 1`, which runs the
 trials one after another. Fray's local client runs jobs as threads in one process, and Levanter's

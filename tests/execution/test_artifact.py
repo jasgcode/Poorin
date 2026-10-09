@@ -10,6 +10,7 @@ exercised exactly as it fires in production (before a run starts), plus the manu
 
 import dataclasses
 import json
+import shutil
 
 import pytest
 from poorin.execution.artifact import (
@@ -22,7 +23,8 @@ from poorin.execution.artifact import (
     write_artifact,
     write_step_record,
 )
-from poorin.execution.lazy import ArtifactStep, run
+from poorin.execution.lazy import ArtifactStep, lower, run
+from poorin.execution.step_runner import StepRunner
 from pydantic import BaseModel
 
 # A frozen calendar version for the toy artifacts these tests build.
@@ -157,6 +159,41 @@ def test_accepting_a_drifted_dependency_serves_its_built_consumer(tmp_path, monk
     run(_consumer(_toy(V, "a")))
     run(_consumer(_toy(V, "b")), accept_drift={"datasets/toy"})
     assert read_record(f"{tmp_path}/datasets/toy/{V}").fingerprint == _toy(V, "b").fingerprint()
+
+
+def test_accepting_drift_restamps_the_record_where_the_output_now_lives(tmp_path, monkeypatch):
+    # The record names the prefix it was built under. After a copy to another prefix, accepting the
+    # change must re-stamp the copy's record, or the runner refuses the copy again.
+    built, copied = tmp_path / "built", tmp_path / "copied"
+    monkeypatch.setenv("POORIN_PREFIX", str(built))
+    run(_toy(V, "a"))
+    shutil.copytree(built, copied)
+    before = {path: path.read_bytes() for path in built.rglob("*") if path.is_file()}
+    monkeypatch.setenv("POORIN_PREFIX", str(copied))
+    (served,) = run(_toy(V, "b"), accept_drift={"datasets/toy"})
+    assert served.payload == "a"
+    assert read_record(f"{copied}/datasets/toy/{V}").fingerprint == _toy(V, "b").fingerprint()
+    assert {path: path.read_bytes() for path in built.rglob("*") if path.is_file()} == before
+
+
+def test_a_graph_refused_before_it_runs_leaves_an_accepted_record_unchanged(tmp_path, monkeypatch):
+    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
+    run(_toy(V, "a"))
+    on_a_dev_dep = _consumer(dataclasses.replace(_toy("dev", "a"), name="datasets/scratch"))
+    with pytest.raises(ValueError, match="depends on mutable"):
+        run(_toy(V, "b"), on_a_dev_dep, accept_drift={"datasets/toy"})
+    record = read_record(f"{tmp_path}/datasets/toy/{V}")
+    assert (record.fingerprint, record.accepted_from) == (_toy(V, "a").fingerprint(), [])
+
+
+def test_a_runner_called_directly_refuses_a_changed_recipe(tmp_path, monkeypatch):
+    # Code that lowers handles and runs StepRunner itself skips run()'s whole-graph check, so the
+    # runner's own check must refuse the output.
+    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
+    run(_toy(V, "a"))
+    with pytest.raises(FingerprintMismatchError, match="payload: 'a' -> 'b'"):
+        StepRunner().run([lower(_toy(V, "b"))])
+    assert read_record(f"{tmp_path}/datasets/toy/{V}").result == {"payload": "a"}
 
 
 def test_accepting_an_artifact_that_did_not_drift_is_an_error(tmp_path, monkeypatch):

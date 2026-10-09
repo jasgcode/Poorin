@@ -1385,6 +1385,17 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
   writes it, and a string that Python reads as a number is spelled as that number, so `1e-3`,
   which YAML 1.1 reads as a string, still shares a name with `0.001`. Text YAML cannot read keeps
   its spelling, and `apply` reports the error.
+- **A string built from a placeholder is a context value.** `StepContext.is_context_value`
+  matched only a value equal to a placeholder, so `--set` could replace a path built from one,
+  such as `<output_path>/hf`. It now also matches any string that contains `<output_path>`,
+  `<prefix>`, `<region>`, or a runtime argument's placeholder; a dependency reference still has to
+  match whole. None of the paths that `train_lm` overwrites at run time is refused by this:
+  `build_config` leaves them at their defaults, and `_prepare_training_run` sets them when the job
+  starts, after the overrides apply. A `--set` on `hf_save_path`,
+  `trainer.checkpointer.base_path`, `trainer.checkpointer.temporary_base_path`,
+  `trainer.checkpointer.append_run_id_to_base_path`, `data.auto_build_caches`, or, for a job on
+  CPU, `trainer.require_accelerator` enters the trial's name and fingerprint and never reaches the
+  run. The overrides docs list them as set at run time and not overridable.
 
 ---
 

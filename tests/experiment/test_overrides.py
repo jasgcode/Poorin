@@ -24,6 +24,7 @@ class Config:
     trainer: Trainer
     optimizer: OptimizerConfig
     output_path: str
+    hf_save_path: str
     ema_beta: float | None = None
     eval_batch_size: int | None = 512
     mp: str = "p=f32,c=bfloat16"
@@ -40,7 +41,12 @@ FINGERPRINT = StepContext.for_fingerprint()
 
 
 def _config(ctx: StepContext = FINGERPRINT) -> Config:
-    return Config(trainer=Trainer(steps=50), optimizer=AdamConfig(learning_rate=3e-3), output_path=ctx.output_path)
+    return Config(
+        trainer=Trainer(steps=50),
+        optimizer=AdamConfig(learning_rate=3e-3),
+        output_path=ctx.output_path,
+        hf_save_path=f"{ctx.output_path}/hf",
+    )
 
 
 def _set(*items: str) -> Overrides:
@@ -73,6 +79,7 @@ def test_optional_fields_decode_through_their_union():
         ("trainer.stepz=1", "did you mean steps"),
         ("trainer.steps=2.5", "trainer.steps"),
         ("output_path=/tmp/x", "step context"),
+        ("hf_save_path=/tmp/x", "step context"),  # derived from the output path
         ("trainer.tags.first=x", "not a dataclass"),
         ("trainer.steps={", r"trainer\.steps=\{"),
         ("optimizer=3", "optimizer=3"),

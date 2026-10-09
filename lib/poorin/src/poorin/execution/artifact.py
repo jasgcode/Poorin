@@ -344,7 +344,9 @@ def recorded_recipe(output_path: str) -> RecordedRecipe | None:
 def accept_recipe(output_path: str, fingerprint: str, payload: str) -> None:
     """Record ``fingerprint`` as the recipe of the output at ``output_path``: the owner accepted a
     changed recipe. A finished build's record keeps the old fingerprint in ``accepted_from``; a
-    started build's stub is re-stamped, so the build resumes under the new recipe."""
+    started build's stub is re-stamped, so the build resumes under the new recipe. The record is
+    written back where it was read, with ``output_path`` updated, even when it names the prefix it
+    was built under before the output was copied."""
     output_path = _resolved(output_path)
     recorded = recorded_recipe(output_path)
     if recorded is None:
@@ -355,6 +357,7 @@ def accept_recipe(output_path: str, fingerprint: str, payload: str) -> None:
         write_record(
             record.model_copy(
                 update={
+                    "output_path": output_path,
                     "fingerprint": fingerprint,
                     "fingerprint_payload": payload,
                     "accepted_from": [*record.accepted_from, record.fingerprint],

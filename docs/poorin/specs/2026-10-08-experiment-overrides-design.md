@@ -107,7 +107,7 @@ Errors, all raised before any step runs:
 - an unknown path, with the closest field names suggested (`difflib`);
 - a value that does not decode as the field's type (`steps=2.5`);
 - a path whose current value comes from the step context: a placeholder such as `<output_path>`
-  or `<tracker>`, or a dependency reference. These are execution settings or graph structure, not
+  or `<tracker>`, a string built from one (D94), or a dependency reference. These are execution settings or graph structure, not
   recipe;
 - the same path set twice in one trial;
 - an override the experiment never applied (it ignores its `overrides` argument);

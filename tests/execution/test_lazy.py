@@ -415,6 +415,7 @@ def test_a_fingerprint_context_recognizes_the_values_it_stands_in_for():
     ctx = StepContext.for_fingerprint(["tpu"], deps=(tok,))
     pulled = [ctx.output_path, ctx.prefix, ctx.region, ctx.runtime_arg("tpu"), ctx.artifact_path(tok)]
     assert all(ctx.is_context_value(value) for value in pulled)
+    assert ctx.is_context_value(f"{ctx.output_path}/hf")  # a path derived from one
     assert not ctx.is_context_value("llama3")
     assert not StepContext.for_run("out", "prefix", deps=(tok,)).is_context_value("out")
 

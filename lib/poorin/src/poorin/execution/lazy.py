@@ -139,12 +139,15 @@ class StepContext:
 
     def is_context_value(self, value: object) -> bool:
         """Whether ``value`` is what this fingerprint context put in place of a pulled value or a
-        dependency reference: the parts of a config an override must not replace. Always ``False``
-        at run time, where the fingerprint pass has already refused them."""
+        dependency reference, or a string built from a pulled value (``<output_path>/hf``): the
+        parts of a config an override must not replace. Always ``False`` at run time, where the
+        fingerprint pass has already refused them."""
         if not self.is_fingerprint or not isinstance(value, str):
             return False
-        placeholders = {self.output_path, self.prefix, self.region, *self._runtime_args.values()}
-        return value in placeholders or value in {self._dep_ref(dep) for dep in self._deps}
+        placeholders = (self.output_path, self.prefix, self.region, *self._runtime_args.values())
+        if any(placeholder in value for placeholder in placeholders if placeholder):
+            return True
+        return value in {self._dep_ref(dep) for dep in self._deps}
 
     @staticmethod
     def for_run(
@@ -458,16 +461,14 @@ def run(
     ``force_run_failed`` reruns a previously-FAILED step instead of raising.
 
     Before anything runs, every artifact in the graph is checked against the recipe its output
-    records; ``accept_drift`` names artifacts whose changed recipe is accepted.
+    records; ``accept_drift`` names artifacts whose changed recipe is accepted. Lowering validates
+    the graph first, so a graph it rejects re-stamps no record.
     """
-    _refuse_drift(graph_handles(list(handles)), accept_drift)
     provenance = Provenance.capture()
     memo: dict[int, StepSpec] = {}
-    StepRunner().run(
-        [_lower(h, provenance, memo) for h in handles],
-        force_run_failed=force_run_failed,
-        max_concurrent=max_concurrent,
-    )
+    specs = [_lower(h, provenance, memo) for h in handles]
+    _refuse_drift(graph_handles(list(handles)), accept_drift)
+    StepRunner().run(specs, force_run_failed=force_run_failed, max_concurrent=max_concurrent)
     return [h.artifact_type.raw_load(h.path()) for h in handles]
 
 
