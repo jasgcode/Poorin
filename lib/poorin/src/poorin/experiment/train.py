@@ -39,7 +39,6 @@ from levanter.trainer import TrainerConfig
 from levanter.utils.mesh import MeshConfig
 
 from poorin.evaluation.evaluation_config import EvalTaskConfig, convert_to_levanter_task_config
-from poorin.execution.artifact import is_mutable_version
 from poorin.execution.build_context import resolve_version
 from poorin.execution.lazy import ArtifactStep, StepContext
 from poorin.execution.remote import remote
@@ -176,9 +175,9 @@ def train_lm(
     version = resolve_version(name, version)
     if overrides.items and run_id is None:
         raise ValueError("train_lm needs a run_id when overrides are set, so each trial logs to its own tracker run")
-    # A mutable run gets a fresh output path per invocation (poorin.experiment.cli.run_version);
-    # suffix its tracker ID the same way so reruns do not log into the previous W&B run.
-    base_id = f"{run_id}-{version}" if run_id is not None and is_mutable_version(version) else run_id
+    # Each version is its own output path (a mutable one is fresh per invocation, see
+    # poorin.experiment.cli.run_version), so it gets its own W&B run; a rerun of a version resumes it.
+    base_id = f"{run_id}-{version}" if run_id is not None else None
     tracker_id = overrides.run_id(base_id) if base_id is not None else None
     if (num_train_steps is None) == (num_train_epochs is None):
         raise ValueError("Exactly one of num_train_steps or num_train_epochs must be set.")

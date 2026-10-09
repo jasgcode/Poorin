@@ -277,8 +277,9 @@ def test_dev_checkpoints_are_per_user_while_datasets_stay_shared(tmp_path, monke
     assert tc.data.train_weights == {"corpus": 1.0}
 
 
-def test_mutable_versions_give_each_run_its_own_tracker_id(tmp_path):
-    # Regression: two dev runs with the same run_id logged into one W&B run.
+def test_each_version_of_a_run_gets_its_own_tracker_id(tmp_path):
+    # Regression: two dev runs with the same run_id logged into one W&B run, and so did two calendar
+    # versions; W&B resumed the first and Levanter dropped the second's steps as out of order.
     corpus = _corpus()
 
     def trainer_id(version: str) -> str:
@@ -299,7 +300,7 @@ def test_mutable_versions_give_each_run_its_own_tracker_id(tmp_path):
         return _assemble(step, str(tmp_path)).train_config.trainer.id
 
     assert trainer_id("20261005-091500-a1b2-dev") == "unit-20261005-091500-a1b2-dev"
-    assert trainer_id(_V) == "unit"
+    assert trainer_id(_V) == f"unit-{_V}"
 
 
 def test_tracker_settings_stay_out_of_the_fingerprint(tmp_path):
