@@ -410,6 +410,15 @@ def test_resolved_unavailable_at_fingerprint_time():
         ctx.resolved(tok)
 
 
+def test_a_fingerprint_context_recognizes_the_values_it_stands_in_for():
+    tok = dclm_tokens()
+    ctx = StepContext.for_fingerprint(["tpu"], deps=(tok,))
+    pulled = [ctx.output_path, ctx.prefix, ctx.region, ctx.runtime_arg("tpu"), ctx.artifact_path(tok)]
+    assert all(ctx.is_context_value(value) for value in pulled)
+    assert not ctx.is_context_value("llama3")
+    assert not StepContext.for_run("out", "prefix", deps=(tok,)).is_context_value("out")
+
+
 def test_undeclared_dependency_is_rejected():
     """Resolving a handle the step did not list in ``deps`` is a fail-fast bug, not a silent read."""
     orphan = dclm_tokens()

@@ -353,10 +353,11 @@ for a stated user:
 | `poorin.execution.step_spec` | `StepSpec` dataclass: step name, deps, hash attributes, output path, function | R1 |
 | `poorin.execution.step_status` | Per-step status files and heartbeat lock files under each output path | R1 |
 | `poorin.experiment` | Package marker; docstring points to the `data`, `sweep`, and `train` submodules | R1 |
-| `poorin.experiment.cli` | Click options (`--version`, `--override`, `--run`) that plan or build an experiment graph | R1 |
+| `poorin.experiment.cli` | Click options (`--version`, `--version-of`, `--set`, `--sweep`, `--run`) that plan or build an experiment graph | R1 |
 | `poorin.experiment.data` | Lazy dataset builders: HF and raw downloads, tokenized, pretokenized, and mixture handles | R1 |
 | `poorin.experiment.namespacing` | Prefixes mutable training artifact names with the user to avoid path collisions | R2 |
-| `poorin.experiment.sweep` | Grid enumeration and one trial handle per grid point for hyperparameter sweeps | `poorin.experiment.sweep` |
+| `poorin.experiment.overrides` | Typed dotted-path config overrides from --set and --sweep, decoded by draccus | R1 |
+| `poorin.experiment.sweep` | Grid enumeration and one trial handle per grid point for hyperparameter sweeps | R1 |
 | `poorin.experiment.train` | `train_lm`: assembles a Levanter LM training step with mesh, checkpointer, evals | R1 |
 | `poorin.processing` | Package marker | R1 |
 | `poorin.processing.classification` | Package marker | `poorin.processing.classification.deduplication.exact` |

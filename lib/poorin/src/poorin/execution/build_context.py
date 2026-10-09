@@ -10,7 +10,7 @@ to be spelled out per artifact. This module lets a builder **defer** its version
 policy that rides on an ambient context:
 
 - A :class:`VersionCodex` maps an artifact ``name`` to a version — one ``default`` plus per-name
-  ``overrides``.
+  versions in ``by_name``.
 - A :class:`BuildContext` carries the codex (and is the seam for future build-time properties).
   It is set as an ambient :class:`~contextvars.ContextVar` while an experiment's handles are
   *constructed*, via :func:`build_context`.
@@ -38,39 +38,39 @@ from poorin.execution.artifact import validate_version
 
 @dataclass(frozen=True)
 class VersionCodex:
-    """Resolves an artifact ``name`` to a version: a ``default`` plus per-name ``overrides``.
+    """Resolves an artifact ``name`` to a version: a ``default`` plus per-name versions in ``by_name``.
 
-    ``overrides`` are keyed by the ``name`` passed to the builder (before any per-user
-    namespacing), matched exactly. Both the default and every override value are validated as
-    versions at construction, so a malformed ``--override`` fails before anything is built.
-    ``unused_overrides`` reports override names that no builder ever asked for — typically a typo,
-    or an override aimed at an artifact that hardcodes its version.
+    ``by_name`` is keyed by the ``name`` passed to the builder (before any per-user namespacing),
+    matched exactly. The default and every per-name version are validated at construction, so a
+    malformed ``--version-of`` fails before anything is built. ``unused_names`` reports names that
+    no builder ever asked for — typically a typo, or a name aimed at an artifact that hardcodes its
+    version.
     """
 
     default: str
-    overrides: Mapping[str, str] = field(default_factory=dict)
-    # Names actually consulted via version_for, for the unused-override check. Instrumentation
+    by_name: Mapping[str, str] = field(default_factory=dict)
+    # Names actually consulted via version_for, for the unused-name check. Instrumentation
     # only (compare=False, init=False); mutating the set on a frozen instance is allowed.
     _used: set[str] = field(default_factory=set, compare=False, repr=False, init=False)
 
     def __post_init__(self) -> None:
         validate_version(self.default)
-        for name, version in self.overrides.items():
+        for name, version in self.by_name.items():
             try:
                 validate_version(version)
             except ValueError as e:
-                raise ValueError(f"override {name!r}: {e}") from e
+                raise ValueError(f"{name!r}: {e}") from e
 
     def version_for(self, name: str) -> str:
-        """The version for artifact ``name``: its override if one is set, else the default."""
-        if name in self.overrides:
+        """The version for artifact ``name``: its entry in ``by_name`` if there is one, else the default."""
+        if name in self.by_name:
             self._used.add(name)
-            return self.overrides[name]
+            return self.by_name[name]
         return self.default
 
-    def unused_overrides(self) -> frozenset[str]:
-        """Override names never consulted since construction — a likely typo or a no-op override."""
-        return frozenset(self.overrides) - frozenset(self._used)
+    def unused_names(self) -> frozenset[str]:
+        """Names in ``by_name`` never consulted since construction — a likely typo or a no-op."""
+        return frozenset(self.by_name) - frozenset(self._used)
 
 
 @dataclass(frozen=True)

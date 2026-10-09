@@ -137,8 +137,10 @@ guarantees is materialized first. `run`/`resolve` are the driver-level entry poi
 2. **Lock** — prevents concurrent processes from building the same step twice.
 
 The standard `main` block in a Poorin experiment wraps `build` in the shared command-line
-options (`--version`, `--resume`, `--override`, `--accept-drift`, `--max-concurrent`, `--run`);
-without `--run` it prints the plan:
+options (`--version`, `--resume`, `--version-of`, `--set`, `--sweep`, `--show-config`,
+`--accept-drift`, `--max-concurrent`, `--run`); without `--run` it prints the plan. `build` takes
+an `overrides` keyword, which it applies to its config (see [Overrides and
+sweeps](#overrides-and-sweeps)):
 
 ```python
 from poorin.experiment.cli import experiment_main
@@ -191,6 +193,50 @@ with a changed recipe is refused. The command line gives each `--version dev` in
 fresh suffixed version, so only `--resume` reuses one.
 
 Pinned artifacts (`override_path`) are not checked, because they point at existing data.
+
+## Overrides and sweeps
+
+`--set PATH=VALUE` overrides one field of the experiment's config by dotted path. The value is
+YAML, decoded by draccus against the field's annotated type: `--set steps=200` gives an `int`, and
+`--set optimizer='{type: muon, learning_rate: 0.02}'` replaces the optimizer with the class
+registered as `muon`. `--sweep PATH=[V1, ...]` runs one trial per value, as if each were passed to
+`--set`. Several `--sweep` options form their Cartesian product (`poorin.experiment.sweep.grid`),
+and each `--set` applies to every trial.
+
+```bash
+uv run --no-sync python experiments/grug/base/launch.py --version 2026.10.09 \
+    --sweep 'optimizer.learning_rate=[1e-3, 3e-3, 1e-2]' --max-concurrent 1 --run
+```
+
+The experiment receives one trial's overrides as `overrides`
+(`poorin.experiment.overrides.Overrides`) and uses them in three places, as `train_lm` and
+`grug_base_trial` do:
+
+- `overrides.apply(ctx, config)` inside `build_config`, so each override enters the fingerprint.
+- `overrides.named(name)` for the artifact's name. The overrides become a suffix such as
+  `grug/base-trial/optimizer.learning_rate=0.001,steps=200`, with numbers in one spelling, so
+  `1e-3` and `0.001` name one path. When a value has a character outside `[A-Za-z0-9_.+-]` (a
+  mapping, or a `,` or `=`), is longer than 40 characters, or the suffix would exceed 100
+  characters, the suffix is `set-<digest>`, a hash of the sorted overrides.
+- `overrides.run_id(base)` for the tracker run ID, which appends the same digest, so each trial
+  logs to its own run.
+
+These errors are raised before anything runs: an unknown path, with the closest field names
+suggested; a value that does not decode as the field's type; a path whose value comes from the
+step context (the output path, a runtime argument such as the tracker, or a dependency); one trial
+that sets a field twice, or a field and one beneath it; and an override the experiment never
+applied.
+
+A sweep with more than one trial requires `--max-concurrent`. Fray's local client runs jobs as
+threads in one process, so the default of 8 would start up to 8 trainings on one GPU;
+`--max-concurrent 1` runs them one after another. With a calendar version, a rerun builds only
+the trials that are missing, and a longer value list builds only the new values. With `dev`,
+every invocation runs every trial at a fresh version.
+
+`--set` edits the finished config, so a value the experiment derives from another field in Python
+does not follow it. The tutorial passes `seq_len=model.max_seq_len` to `train_lm`, so
+`--set model.max_seq_len=512` leaves `train_seq_len` unchanged. `--show-config` prints each
+trial's config without running anything.
 
 ## Adopting pre-existing data
 

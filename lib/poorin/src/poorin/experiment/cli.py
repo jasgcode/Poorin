@@ -8,13 +8,16 @@ This module makes that a one-liner while wiring up the deferred-version machiner
 (:mod:`poorin.execution.build_context`):
 
 - :func:`build_options` is a Click decorator that adds ``--version`` (the run-wide default),
-  ``--override NAME=VERSION`` (per-artifact, repeatable), ``--accept-drift NAME`` (keep an output
-  whose recipe changed, repeatable), ``--run`` (build vs. print the plan), ``--show-config`` (the
-  plan plus each returned artifact's identity config), and ``--max-concurrent``. It builds the
-  wrapped function's handle graph **inside** a
-  :class:`~poorin.execution.build_context.BuildContext` assembled from those options, so any builder
-  that deferred its version (omitted ``version=``) resolves against them.
-- :func:`experiment_main` wraps a nullary ``build()`` into a ready-to-run command.
+  ``--version-of NAME=VERSION`` (one artifact's version, repeatable), ``--set PATH=VALUE`` (one
+  config field, repeatable), ``--sweep PATH=[V1, ...]`` (one trial per value, repeatable; several
+  form a grid), ``--accept-drift NAME`` (keep an output whose recipe changed, repeatable),
+  ``--run`` (build vs. print the plan), ``--show-config`` (the plan plus each returned artifact's
+  identity config), and ``--max-concurrent``. It builds the wrapped function's handle graph
+  **inside** a :class:`~poorin.execution.build_context.BuildContext` assembled from those options,
+  so any builder that deferred its version (omitted ``version=``) resolves against them. It calls
+  the wrapped function once per trial with an ``overrides`` keyword
+  (:class:`~poorin.experiment.overrides.Overrides`), which the experiment applies to its config.
+- :func:`experiment_main` wraps a ``build(*, overrides)`` function into a ready-to-run command.
 
 ``--version`` is required — there is no silent ``dev`` default, because a deferred *dataset* at a
 mutable version rebuilds its (often multi-TB) cache on every run and, unlike a training checkpoint,
@@ -31,8 +34,8 @@ experiment's own ``@click.option``s and ``@click.command()`` on top::
     @click.command()
     @click.option("--device", ...)
     @build_options
-    def main(device):
-        return build(device=device)   # version now deferred to --version / --override
+    def main(device, overrides):
+        return build(device=device, overrides=overrides)   # version deferred to --version / --version-of
 
     if __name__ == "__main__":
         main()
@@ -52,6 +55,7 @@ from typing import Any
 
 import click
 import yaml
+from draccus.cfgparsing import parse_string
 from rigging.filesystem.cluster_config import poorin_prefix
 
 from poorin.execution.artifact import (
@@ -63,9 +67,15 @@ from poorin.execution.artifact import (
 from poorin.execution.build_context import BuildContext, VersionCodex, build_context
 from poorin.execution.cache_state import HandleState, handle_state
 from poorin.execution.lazy import ArtifactStep, graph_handles, lower, run
+from poorin.experiment.overrides import Override, OverrideError, Overrides
+from poorin.experiment.sweep import grid
 
 BuildResult = ArtifactStep | Mapping[str, ArtifactStep] | list[ArtifactStep] | tuple[ArtifactStep, ...]
 BuildRunner = Callable[[list[ArtifactStep], int, frozenset[str]], None]
+
+# Steps built at once when --max-concurrent is not given. A sweep with more than one trial must
+# pass it: Fray's LocalClient runs jobs as threads in one process, so 8 trials would share one GPU.
+DEFAULT_MAX_CONCURRENT = 8
 
 
 def _version_callback(ctx: click.Context, param: click.Parameter, value: str | None) -> str | None:
@@ -94,21 +104,60 @@ def _resume_callback(ctx: click.Context, param: click.Parameter, value: str | No
     return value
 
 
-def _override_callback(ctx: click.Context, param: click.Parameter, value: tuple[str, ...]) -> dict[str, str]:
+def _version_of_callback(ctx: click.Context, param: click.Parameter, value: tuple[str, ...]) -> dict[str, str]:
     """Parse repeated ``NAME=VERSION`` into a validated ``{name: version}`` map, as Click errors."""
-    overrides: dict[str, str] = {}
+    versions: dict[str, str] = {}
     for item in value:
         name, sep, version = item.partition("=")
         if not sep or not name:
             raise click.BadParameter(f"{item!r} is not NAME=VERSION", ctx=ctx, param=param)
-        if name in overrides:
-            raise click.BadParameter(f"duplicate override for {name!r}", ctx=ctx, param=param)
+        if name in versions:
+            raise click.BadParameter(f"duplicate --version-of for {name!r}", ctx=ctx, param=param)
         try:
             validate_version(version)
         except ValueError as e:
-            raise click.BadParameter(f"override {name!r}: {e}", ctx=ctx, param=param) from e
-        overrides[name] = version
-    return overrides
+            raise click.BadParameter(f"--version-of {name!r}: {e}", ctx=ctx, param=param) from e
+        versions[name] = version
+    return versions
+
+
+def _set_callback(ctx: click.Context, param: click.Parameter, value: tuple[str, ...]) -> list[Override]:
+    try:
+        return [Override.parse(item) for item in value]
+    except OverrideError as e:
+        raise click.BadParameter(str(e), ctx=ctx, param=param) from e
+
+
+def _reads_back_as_itself(text: str) -> bool:
+    """Whether YAML reads ``text`` as the string ``text`` (``1e-3`` does; ``yes`` and ``a: b: c`` do not)."""
+    try:
+        return parse_string(text) == text
+    except yaml.YAMLError:
+        return False
+
+
+def _sweep_callback(ctx: click.Context, param: click.Parameter, value: tuple[str, ...]) -> dict[str, list[str]]:
+    """Parse repeated ``PATH=[V1, V2, ...]`` into ``{path: [value text, ...]}``.
+
+    Each value text is decoded later like a ``--set`` value. A string element keeps its raw text
+    only when YAML reads that text back as the same string, so ``1e-3`` stays text and decodes to
+    0.001 for a float field. Every other element (a quoted string such as ``'yes'`` or ``'a: b'``,
+    whose text YAML reads as another value or cannot read, a number, a mapping) is written back as
+    JSON, which YAML reads back as the same value.
+    """
+    axes: dict[str, list[str]] = {}
+    for item in value:
+        path, sep, text = item.partition("=")
+        try:
+            values = parse_string(text) if sep else None
+        except yaml.YAMLError as e:
+            raise click.BadParameter(f"{item!r} is not YAML: {e}", ctx=ctx, param=param) from e
+        if not isinstance(values, list) or not values:
+            raise click.BadParameter(f"{item!r} is not PATH=[V1, V2, ...]", ctx=ctx, param=param)
+        if path in axes:
+            raise click.BadParameter(f"{path!r} is swept twice", ctx=ctx, param=param)
+        axes[path] = [v if isinstance(v, str) and _reads_back_as_itself(v) else json.dumps(v) for v in values]
+    return axes
 
 
 def run_version(version: str, *, now: datetime, token: str) -> str:
@@ -182,12 +231,28 @@ def build_options_with_runner(fn: Callable[..., BuildResult], runner: BuildRunne
         help="Continue an earlier dev run by reusing its exact version, as printed when it started.",
     )
     @click.option(
-        "--override",
-        "overrides",
+        "--version-of",
+        "versions_of",
         multiple=True,
         metavar="NAME=VERSION",
-        callback=_override_callback,
-        help="Per-artifact version override, keyed by the artifact's name. Repeatable.",
+        callback=_version_of_callback,
+        help="The version of one artifact, by the name its builder passes. Repeatable.",
+    )
+    @click.option(
+        "--set",
+        "sets",
+        multiple=True,
+        metavar="PATH=VALUE",
+        callback=_set_callback,
+        help="Override one field of the experiment's config by dotted path; VALUE is YAML. Repeatable.",
+    )
+    @click.option(
+        "--sweep",
+        "sweeps",
+        multiple=True,
+        metavar="PATH=[V1, ...]",
+        callback=_sweep_callback,
+        help="One trial per value, as if --set PATH=Vi; several form a grid. Repeatable.",
     )
     @click.option(
         "--accept-drift",
@@ -202,17 +267,25 @@ def build_options_with_runner(fn: Callable[..., BuildResult], runner: BuildRunne
         is_flag=True,
         help="Print the plan and each returned artifact's identity config as YAML; run nothing.",
     )
-    @click.option("--max-concurrent", type=int, default=8, show_default=True, help="Max steps built concurrently.")
+    @click.option(
+        "--max-concurrent",
+        type=int,
+        default=None,
+        help=f"Max steps built concurrently (default {DEFAULT_MAX_CONCURRENT}; "
+        "required when --sweep builds more than one trial).",
+    )
     @functools.wraps(fn)
     def wrapper(
         *args: Any,
         default_version: str | None,
         resume_version: str | None,
-        overrides: dict[str, str],
+        versions_of: dict[str, str],
+        sets: list[Override],
+        sweeps: dict[str, list[str]],
         accept_drift: tuple[str, ...],
         do_run: bool,
         show_config: bool,
-        max_concurrent: int,
+        max_concurrent: int | None,
         **kwargs: Any,
     ) -> None:
         if (default_version is None) == (resume_version is None):
@@ -224,19 +297,37 @@ def build_options_with_runner(fn: Callable[..., BuildResult], runner: BuildRunne
             version = run_version(default_version, now=datetime.now(), token=secrets.token_hex(2))
         if is_mutable_version(version):
             click.echo(f"Run version: {version} (continue this run with --resume {version})")
-        codex = VersionCodex(default=version, overrides=overrides)
-        with build_context(BuildContext(versions=codex)):
-            handles = _as_handles(fn(*args, **kwargs))
-        unused = codex.unused_overrides()
+        points = grid(**sweeps) if sweeps else [{}]
+        if len(points) > 1 and max_concurrent is None:
+            raise click.UsageError(
+                f"--sweep builds {len(points)} trials; pass --max-concurrent (1 runs them one after another on one GPU)"
+            )
+        codex = VersionCodex(default=version, by_name=versions_of)
+        try:
+            trials = [
+                Overrides((*sets, *(Override.parse(f"{path}={text}") for path, text in point.items())))
+                for point in points
+            ]
+            with build_context(BuildContext(versions=codex)):
+                handles = [h for trial in trials for h in _as_handles(fn(*args, overrides=trial, **kwargs))]
+            states = [handle_state(h) for h in graph_handles(handles)]  # applies every override
+        except OverrideError as e:
+            raise click.UsageError(str(e)) from e
+        unused = codex.unused_names()
         if unused:
             raise click.BadParameter(
                 f"never applied to any artifact: {sorted(unused)}. The name is a typo, or that "
-                "artifact hardcodes its version (an explicit version wins over an override).",
-                param_hint="--override",
+                "artifact hardcodes its version (an explicit version wins).",
+                param_hint="--version-of",
+            )
+        unapplied = sorted({path for trial in trials for path in trial.unapplied()})
+        if unapplied:
+            raise click.BadParameter(
+                f"never applied: {unapplied}. This experiment does not apply its overrides to its config.",
+                param_hint="--set/--sweep",
             )
         if show_config and do_run:
             raise click.UsageError("--show-config prints the plan; it cannot be combined with --run")
-        states = [handle_state(h) for h in graph_handles(handles)]
         if not do_run:
             for handle in handles:
                 lower(handle)  # run() lowers too; the plan lowers to reject a graph it could not run
@@ -251,8 +342,9 @@ def build_options_with_runner(fn: Callable[..., BuildResult], runner: BuildRunne
                     f"nothing to resume at {empty}: no run started there. "
                     "Check that the --set flags match the original run's."
                 )
+        concurrency = DEFAULT_MAX_CONCURRENT if max_concurrent is None else max_concurrent
         try:
-            runner(handles, max_concurrent, frozenset(accept_drift))
+            runner(handles, concurrency, frozenset(accept_drift))
         except (FingerprintMismatchError, DriftAcceptanceError) as e:
             raise click.ClickException(str(e)) from e
 
@@ -260,22 +352,25 @@ def build_options_with_runner(fn: Callable[..., BuildResult], runner: BuildRunne
 
 
 def build_options(fn: Callable[..., BuildResult]) -> Callable[..., None]:
-    """Add the shared version/run options to a command that returns the experiment's handle(s).
+    """Add the shared version, override, and run options to a command that returns the experiment's handle(s).
 
     ``fn`` returns one :class:`~poorin.execution.lazy.ArtifactStep`, a list/tuple of them, or a
     name→handle mapping; it is called inside a :class:`~poorin.execution.build_context.BuildContext`
-    built from ``--version`` and ``--override``. Without ``--run`` the plan is printed, one line per
-    artifact with its cache state; with it the handles are built. An ``--override`` naming an
-    artifact that never deferred (a typo, or one that hardcodes its version) is rejected, so a
-    silently-ignored override cannot slip a run under the wrong version.
+    built from ``--version`` and ``--version-of``, once per trial, with an ``overrides`` keyword
+    holding that trial's ``--set`` and ``--sweep`` values. Without ``--run`` the plan is printed, one
+    line per artifact with its cache state; with it the handles are built. A ``--version-of`` naming
+    an artifact that never deferred (a typo, or one that hardcodes its version) is rejected, and so
+    is a ``--set`` or ``--sweep`` path the experiment never applied, so neither can slip a run under
+    the wrong version or config.
     """
 
     return build_options_with_runner(fn, _run_locally)
 
 
-def experiment_main(build: Callable[[], BuildResult]) -> Callable[..., None]:
-    """Turn a nullary ``build()`` into a ready-to-run experiment command with the shared options.
+def experiment_main(build: Callable[..., BuildResult]) -> Callable[..., None]:
+    """Turn ``build`` into a ready-to-run experiment command with the shared options.
 
+    ``build`` takes an ``overrides`` keyword, which it applies to its config.
     ``experiment_main(build)()`` is the whole ``if __name__ == "__main__":`` body for an experiment
     that takes no options of its own. For one that does, use :func:`build_options` directly (see the
     module docstring for the stacking order).

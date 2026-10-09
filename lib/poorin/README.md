@@ -4,8 +4,9 @@ Poorin's experiment framework: the layer that makes runs reproducible.
 
 - `poorin.execution`: lazy, versioned artifacts (`name@version`), config fingerprints, the step
   runner that caches finished work, and step status records.
-- `poorin.experiment`: the launcher CLI (`--version`, `--resume`, `--override`, `--run`), data
-  mixtures, and training and sweep helpers.
+- `poorin.experiment`: the launcher CLI (`--version`, `--resume`, `--version-of`, `--set`,
+  `--sweep`, `--show-config`, `--accept-drift`, `--run`), data mixtures, and training and sweep
+  helpers.
 - `poorin.processing` and `poorin.datakit`: download, normalize, tokenize, deduplicate, and
   decontaminate datasets, run on Zephyr.
 - `poorin.training`: run IDs, output paths, and dispatch of Levanter's training mains.

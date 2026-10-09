@@ -45,6 +45,7 @@ from poorin.execution.lazy import ArtifactStep, StepContext
 from poorin.execution.remote import remote
 from poorin.experiment.data import mixture
 from poorin.experiment.namespacing import user_namespaced_name
+from poorin.experiment.overrides import Overrides
 from poorin.processing.tokenize.tokenize import TokenizedCache
 from poorin.training.training import (
     LevanterCheckpoint,
@@ -131,6 +132,7 @@ def train_lm(
     run_id: str | None = None,
     tags: Sequence[str] = (),
     env_vars: dict[str, str] | None = None,
+    overrides: Overrides = Overrides(),
 ) -> ArtifactStep[LevanterCheckpoint]:
     """Assemble a language-model training run as an ``ArtifactStep[LevanterCheckpoint]``.
 
@@ -151,6 +153,11 @@ def train_lm(
     ``init_from`` chains this run onto another checkpoint (it becomes a dep and seeds
     ``initialize_from_checkpoint_path``).
 
+    ``overrides`` (one trial's ``--set`` and ``--sweep`` values, see :mod:`poorin.experiment.cli`)
+    apply to the inner ``TrainLmConfig``, so their paths match Levanter's YAML
+    (``optimizer.learning_rate``, ``trainer.num_train_steps``). They enter the checkpoint's
+    fingerprint and name, and its tracker run ID, so ``run_id`` is required when they are set.
+
     Training length is set by exactly one of ``num_train_steps`` or ``num_train_epochs`` (setting
     both, or neither, is an error). ``num_train_epochs`` is a thin convenience over
     ``num_train_steps``: it resolves to ``ceil(num_train_epochs * num_train_tokens / (seq_len *
@@ -167,9 +174,12 @@ def train_lm(
     :mod:`poorin.experiment.cli`.
     """
     version = resolve_version(name, version)
+    if overrides.items and run_id is None:
+        raise ValueError("train_lm needs a run_id when overrides are set, so each trial logs to its own tracker run")
     # A mutable run gets a fresh output path per invocation (poorin.experiment.cli.run_version);
     # suffix its tracker ID the same way so reruns do not log into the previous W&B run.
-    tracker_id = f"{run_id}-{version}" if run_id is not None and is_mutable_version(version) else run_id
+    base_id = f"{run_id}-{version}" if run_id is not None and is_mutable_version(version) else run_id
+    tracker_id = overrides.run_id(base_id) if base_id is not None else None
     if (num_train_steps is None) == (num_train_epochs is None):
         raise ValueError("Exactly one of num_train_steps or num_train_epochs must be set.")
     if num_train_epochs is not None:
@@ -207,29 +217,32 @@ def train_lm(
         init_path = (
             LevanterCheckpoint(path=ctx.artifact_path(init_from)).checkpoint_dir if init_from is not None else None
         )
-        inner = TrainLmConfig(
-            data=mixture(ctx, datasets, validation=validation),
-            trainer=TrainerConfig(
-                id=ctx.runtime_arg("run_id"),
-                tracker=_run_tracker(ctx),
-                mp=jmp.get_policy(mp),
-                train_batch_size=batch_size,
-                per_device_parallelism=-1,
-                num_train_steps=resolve_num_train_steps(ctx),
-                steps_per_eval=steps_per_eval,
-                checkpointer=CheckpointerConfig(save_interval=_RESUMPTION_INTERVAL, keep=[]),
-                mesh=_poorin_mesh(tensor_parallel_size),
-                per_device_eval_parallelism=-1,
-                allow_nondivisible_batch_size=True,
+        inner = overrides.apply(
+            ctx,
+            TrainLmConfig(
+                data=mixture(ctx, datasets, validation=validation),
+                trainer=TrainerConfig(
+                    id=ctx.runtime_arg("run_id"),
+                    tracker=_run_tracker(ctx),
+                    mp=jmp.get_policy(mp),
+                    train_batch_size=batch_size,
+                    per_device_parallelism=-1,
+                    num_train_steps=resolve_num_train_steps(ctx),
+                    steps_per_eval=steps_per_eval,
+                    checkpointer=CheckpointerConfig(save_interval=_RESUMPTION_INTERVAL, keep=[]),
+                    mesh=_poorin_mesh(tensor_parallel_size),
+                    per_device_eval_parallelism=-1,
+                    allow_nondivisible_batch_size=True,
+                ),
+                model=model,
+                optimizer=optimizer,
+                z_loss_weight=z_loss_weight,
+                train_seq_len=seq_len,
+                initialize_from_checkpoint_path=init_path,
+                eval_harness=harness,
+                eval_harness_steps=evals.every if evals is not None else None,
+                adapter=NoAdaptorConfig(),
             ),
-            model=model,
-            optimizer=optimizer,
-            z_loss_weight=z_loss_weight,
-            train_seq_len=seq_len,
-            initialize_from_checkpoint_path=init_path,
-            eval_harness=harness,
-            eval_harness_steps=evals.every if evals is not None else None,
-            adapter=NoAdaptorConfig(),
         )
         return TrainLmOnPodConfig(
             train_config=inner,
@@ -239,7 +252,7 @@ def train_lm(
         )
 
     return ArtifactStep(
-        name=user_namespaced_name(name, version),
+        name=user_namespaced_name(overrides.named(name), version),
         version=version,
         artifact_type=LevanterCheckpoint,
         run=_train_job,

@@ -24,6 +24,7 @@ from levanter.optim.config import AdamConfig
 from poorin.execution.artifact import ArtifactRecord, write_record
 from poorin.execution.lazy import ArtifactStep, materialized_config
 from poorin.experiment.data import tokenized
+from poorin.experiment.overrides import Override, Overrides
 from poorin.experiment.train import EvalSuite, train_lm
 from poorin.processing.tokenize.tokenize import TokenizedCache
 
@@ -324,3 +325,23 @@ def test_tracker_settings_stay_out_of_the_fingerprint(tmp_path):
     assert tagged(["a"]).fingerprint() == tagged(["b"]).fingerprint()
     tracker = _assemble(tagged(["a"]), str(tmp_path)).train_config.trainer.tracker
     assert (tracker.tags, tracker.replicate_path) == (["a"], f"{tmp_path}/checkpoints/unit/{_V}")
+
+
+def test_overrides_reach_the_inner_config_and_name_the_trial(tmp_path):
+    step = train_lm(
+        name="checkpoints/unit",
+        model=_MODEL,
+        optimizer=_OPTIMIZER,
+        datasets={_corpus(): 1.0},
+        batch_size=8,
+        seq_len=128,
+        num_train_steps=50,
+        z_loss_weight=1e-4,
+        evals=None,
+        resources=_RESOURCES,
+        run_id="unit",
+        version=_V,
+        overrides=Overrides((Override.parse("trainer.num_train_steps=7"),)),
+    )
+    assert step.name == "checkpoints/unit/trainer.num_train_steps=7"
+    assert _assemble(step, str(tmp_path)).train_config.trainer.num_train_steps == 7

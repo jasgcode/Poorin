@@ -10,6 +10,7 @@ from levanter.tracker.telemetry import TelemetryConfig
 from levanter.tracker.wandb import WandbConfig
 from poorin.execution.artifact import ArtifactRecord, write_record
 from poorin.execution.lazy import materialized_config
+from poorin.experiment.overrides import Override, Overrides
 from poorin.processing.tokenize.tokenize import TokenizedCache
 
 from experiments.grug.base.launch import GRUG_130M_MODEL, GrugBaseLaunchConfig, build_grug_run_config, grug_base_trial
@@ -42,7 +43,7 @@ def test_the_trial_publishes_its_metrics_to_the_finelog_url_it_is_given(tmp_path
 
 
 def test_tracker_settings_do_not_change_the_trials_fingerprint():
-    trial = grug_base_trial(version="2026.10.09")
+    trial = grug_base_trial(version="2026.10.09", overrides=Overrides())
     retagged = dataclasses.replace(
         trial,
         runtime_args={**trial.runtime_args, "tracker": WandbConfig(project="other", tags=["x"]), "log_every": 10},
@@ -51,7 +52,7 @@ def test_tracker_settings_do_not_change_the_trials_fingerprint():
 
 
 def test_the_trials_tracker_mirrors_its_metrics_next_to_the_output(tmp_path):
-    trial = grug_base_trial(version="2026.10.09")
+    trial = grug_base_trial(version="2026.10.09", overrides=Overrides())
     # The minimal record a built dataset leaves, so mixture() can read its tokenizer offline.
     for dep in trial.deps:
         write_record(
@@ -66,3 +67,9 @@ def test_the_trials_tracker_mirrors_its_metrics_next_to_the_output(tmp_path):
     launch = materialized_config(trial, str(tmp_path))
     wandb, _ = build_grug_run_config(launch).trainer.trainer.tracker
     assert wandb.replicate_path == trial.path(str(tmp_path))
+
+
+def test_a_set_reaches_grugs_config_and_names_the_trial():
+    trial = grug_base_trial(version="2026.10.09", overrides=Overrides((Override.parse("steps=200"),)))
+    assert trial.name == "grug/base-trial/steps=200"
+    assert '"steps": 200' in trial.fingerprint_payload()

@@ -9,6 +9,8 @@ kept as fixtures in ``config/testing/``. The setting starts at configuration tim
 experiment modules resolve temp-bucket paths when they are imported, before any fixture runs.
 """
 
+from pathlib import Path
+
 import pytest
 import rigging.filesystem.cluster_config as cluster_config
 from jaxtyping import install_import_hook
@@ -18,7 +20,8 @@ from jaxtyping import install_import_hook
 # hook must be installed before any test imports the packages.
 install_import_hook(["experiments.grug", "levanter.grug"], "beartype.beartype")
 
-POORIN_FIXTURE_CLUSTERS = "config/testing"
+# Absolute, because a relative search dir resolves from the working directory, which a test may change.
+POORIN_FIXTURE_CLUSTERS = str(Path(__file__).parent / "config" / "testing")
 _poorin_layout = pytest.MonkeyPatch()
 
 

@@ -40,6 +40,7 @@ from poorin.execution.lazy import ArtifactStep, StepContext
 from poorin.experiment.cli import build_options
 from poorin.experiment.data import mixture, pretokenized
 from poorin.experiment.namespacing import user_namespaced_name
+from poorin.experiment.overrides import Overrides
 from poorin.training.training import LevanterCheckpoint, resolve_checkpointer_output_path
 
 from experiments.grug.base.model import GrugModelConfig
@@ -195,48 +196,54 @@ def run_grug_base_trial(config: GrugBaseLaunchConfig) -> None:
     run_grug(build_grug_run_config(config))
 
 
-def grug_base_trial(*, version: str | None = None, finelog_url: str | None = None) -> ArtifactStep[LevanterCheckpoint]:
+def grug_base_trial(
+    *, overrides: Overrides, version: str | None = None, finelog_url: str | None = None
+) -> ArtifactStep[LevanterCheckpoint]:
     """The base grug trial on 10M FineWeb-Edu tokens, on one local GPU, as a lazy checkpoint.
 
-    ``finelog_url`` names a Finelog server for the run's metrics. It is a runtime argument, so it
-    does not change the checkpoint's identity.
+    ``overrides`` (from ``--set`` and ``--sweep``) apply to the ``GrugBaseLaunchConfig``; they enter
+    the checkpoint's fingerprint and name, and its run ID. ``finelog_url`` names a Finelog server
+    for the run's metrics. It is a runtime argument, so it does not change the checkpoint's identity.
     """
-    name = "grug/base-trial"
-    version = resolve_version(name, version)
+    base_name = "grug/base-trial"
+    version = resolve_version(base_name, version)  # --version-of grug/base-trial=... reaches every trial
     train = {_TRAIN_DATA: 1.0}
-    run_id = f"grug-base-{version}"
+    run_id = overrides.run_id(f"grug-base-{version}")
 
     def build_config(ctx: StepContext) -> GrugBaseLaunchConfig:
-        return GrugBaseLaunchConfig(
-            model=_LOCAL_MODEL,
-            data=mixture(ctx, train),
-            output_path=ctx.output_path,
-            run_id=ctx.runtime_arg("run_id"),
-            resources=ctx.runtime_arg("train_resources"),
-            steps=50,
-            batch_size=16,
-            seed=0,
-            mp="params=float32,compute=bfloat16,output=bfloat16",
-            tracker=ctx.runtime_arg("tracker"),
-            finelog_url=ctx.runtime_arg("finelog_url"),
-            optimizer=AdamConfig(
-                learning_rate=3e-3,
-                weight_decay=0.1,
-                lr_schedule="cosine",
-                decay=0.2,
-                min_lr_ratio=0.1,
-                warmup=10,
+        return overrides.apply(
+            ctx,
+            GrugBaseLaunchConfig(
+                model=_LOCAL_MODEL,
+                data=mixture(ctx, train),
+                output_path=ctx.output_path,
+                run_id=ctx.runtime_arg("run_id"),
+                resources=ctx.runtime_arg("train_resources"),
+                steps=50,
+                batch_size=16,
+                seed=0,
+                mp="params=float32,compute=bfloat16,output=bfloat16",
+                tracker=ctx.runtime_arg("tracker"),
+                finelog_url=ctx.runtime_arg("finelog_url"),
+                optimizer=AdamConfig(
+                    learning_rate=3e-3,
+                    weight_decay=0.1,
+                    lr_schedule="cosine",
+                    decay=0.2,
+                    min_lr_ratio=0.1,
+                    warmup=10,
+                ),
+                watch_interval=0,
+                backward_flow_interval=0,
+                z_loss_weight=1e-4,
+                ema_beta=None,
+                log_every=ctx.runtime_arg("log_every"),
+                eval_batch_size=None,
             ),
-            watch_interval=0,
-            backward_flow_interval=0,
-            z_loss_weight=1e-4,
-            ema_beta=None,
-            log_every=ctx.runtime_arg("log_every"),
-            eval_batch_size=None,
         )
 
     return ArtifactStep(
-        name=user_namespaced_name(name, version),
+        name=user_namespaced_name(overrides.named(base_name), version),
         version=version,
         artifact_type=LevanterCheckpoint,
         run=run_grug_base_trial,
@@ -255,8 +262,8 @@ def grug_base_trial(*, version: str | None = None, finelog_url: str | None = Non
 @click.command()
 @click.option("--finelog-url", default=None, help="Finelog server that receives the run's metrics.")
 @build_options
-def main(finelog_url: str | None) -> ArtifactStep[LevanterCheckpoint]:
-    return grug_base_trial(finelog_url=finelog_url)
+def main(finelog_url: str | None, overrides: Overrides) -> ArtifactStep[LevanterCheckpoint]:
+    return grug_base_trial(finelog_url=finelog_url, overrides=overrides)
 
 
 if __name__ == "__main__":

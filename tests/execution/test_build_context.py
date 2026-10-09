@@ -4,7 +4,7 @@
 """Behaviour tests for deferred artifact versions (``poorin.execution.build_context``).
 
 Covers the resolution contract (explicit wins, codex fallback, no-context error), context nesting
-and restoration on exception, and the unused-override signal that guards against typos.
+and restoration on exception, and the unused-name signal that guards against typos.
 """
 
 import pytest
@@ -17,12 +17,12 @@ from poorin.execution.build_context import (
 )
 
 
-def _codex(default="2026.07.16", **overrides):
-    return VersionCodex(default=default, overrides=overrides)
+def _codex(default="2026.07.16", **by_name):
+    return VersionCodex(default=default, by_name=by_name)
 
 
-def test_version_for_prefers_override_then_default():
-    codex = VersionCodex(default="2026.07.16", overrides={"tokenizer": "2026.06.28"})
+def test_version_for_prefers_the_named_version_then_default():
+    codex = VersionCodex(default="2026.07.16", by_name={"tokenizer": "2026.06.28"})
     assert codex.version_for("tokenizer") == "2026.06.28"
     assert codex.version_for("anything-else") == "2026.07.16"
 
@@ -34,7 +34,7 @@ def test_resolve_version_explicit_wins_over_context():
 
 
 def test_resolve_version_defers_to_codex_inside_context():
-    with build_context(BuildContext(versions=VersionCodex(default="dev", overrides={"pin-me": "2026.06.28"}))):
+    with build_context(BuildContext(versions=VersionCodex(default="dev", by_name={"pin-me": "2026.06.28"}))):
         assert resolve_version("pin-me", None) == "2026.06.28"
         assert resolve_version("free", None) == "dev"
 
@@ -60,15 +60,15 @@ def test_build_context_nests_and_restores_on_exception():
     assert current_build_context() is None
 
 
-def test_unused_overrides_flags_names_never_consulted():
-    codex = VersionCodex(default="dev", overrides={"used": "2026.06.28", "typo": "2026.06.28"})
+def test_unused_names_flags_names_never_consulted():
+    codex = VersionCodex(default="dev", by_name={"used": "2026.06.28", "typo": "2026.06.28"})
     codex.version_for("used")
     codex.version_for("some-default-artifact")
-    assert codex.unused_overrides() == frozenset({"typo"})
+    assert codex.unused_names() == frozenset({"typo"})
 
 
-def test_codex_reports_which_override_is_malformed():
+def test_codex_reports_which_named_version_is_malformed():
     # The version grammar itself is covered by validate_version's tests; here we only pin that the
-    # codex validates overrides and names the offending one, so a bad --override is legible.
-    with pytest.raises(ValueError, match="override 'a'"):
-        VersionCodex(default="dev", overrides={"a": "not-a-version"})
+    # codex validates each named version and names the offending one, so a bad --version-of is legible.
+    with pytest.raises(ValueError, match=r"^'a': "):
+        VersionCodex(default="dev", by_name={"a": "not-a-version"})

@@ -6,6 +6,8 @@
     python -m experiments.tutorials.train_tiny_model --device cpu --dataset tinystories --version dev
     python -m experiments.tutorials.train_tiny_model --device h100x8 --dataset wikitext --version dev --run
     python -m experiments.tutorials.train_tiny_model --device v5litepod-16 --dataset fineweb-edu --version dev --run
+    python -m experiments.tutorials.train_tiny_model --dataset wikitext --version dev \\
+        --set optimizer.learning_rate=1e-3 --run
 
 Every training decision is stated inline: the model, the data, the optimizer, the token
 budget. :func:`~poorin.experiment.train.train_lm` handles only the accelerator plumbing (the
@@ -27,6 +29,7 @@ from levanter.optim.config import AdamConfig
 from poorin.execution.lazy import ArtifactStep
 from poorin.experiment.cli import build_options
 from poorin.experiment.data import pretokenized, tokenized
+from poorin.experiment.overrides import Overrides
 from poorin.experiment.train import train_lm
 from poorin.processing.tokenize.tokenize import TokenizedCache
 from poorin.training.training import LevanterCheckpoint
@@ -82,7 +85,7 @@ def dataset(name: str) -> ArtifactStep[TokenizedCache]:
     return tokenized(name, tokenizer=marin_tokenizer, source=RAW_SOURCES[name], sample_count=1000, version="2026.06.28")
 
 
-def build(*, device: str, data: str) -> ArtifactStep[LevanterCheckpoint]:
+def build(*, device: str, data: str, overrides: Overrides) -> ArtifactStep[LevanterCheckpoint]:
     """A tiny Llama trained on ``data`` using ``device``, every decision stated inline.
 
     The 150M model is used for the prebuilt FineWeb-Edu cache; the nano model keeps the
@@ -107,6 +110,7 @@ def build(*, device: str, data: str) -> ArtifactStep[LevanterCheckpoint]:
         evals=None,  # no point evaluating such a tiny model
         resources=resources,
         tags=["llama", "tutorial", data, device],
+        overrides=overrides,
     )
 
 
@@ -120,11 +124,12 @@ def build(*, device: str, data: str) -> ArtifactStep[LevanterCheckpoint]:
     show_default=True,
 )
 @build_options
-def main(device: str, data: str) -> ArtifactStep[LevanterCheckpoint]:
+def main(device: str, data: str, overrides: Overrides) -> ArtifactStep[LevanterCheckpoint]:
     # Return the checkpoint handle; build_options builds it inside a BuildContext, so --version /
-    # --override reach the deferred checkpoint version. The dataset tokenizes/downloads (cached),
-    # then one training job runs on the chosen device.
-    return build(device=device, data=data)
+    # --version-of reach the deferred checkpoint version, and passes each trial's --set / --sweep
+    # values as overrides. The dataset tokenizes/downloads (cached), then one training job runs on
+    # the chosen device.
+    return build(device=device, data=data, overrides=overrides)
 
 
 if __name__ == "__main__":

@@ -20,6 +20,9 @@
 
 ## How to use it
 
+To change a field of `GrugBaseLaunchConfig` (steps, the optimizer, a model size), pass `--set` to
+`base/launch.py` (see [Quickstart launch](#quickstart-launch)). A variant is for code changes:
+
 1. Copy `experiments/grug/base` to a new variant directory (for example `experiments/grug/moe`).
 2. Make model/training changes in that variant, not in shared trainer libraries.
 3. Set run knobs in `<variant>/launch.py` (run id, data mix, optimizer, resources).
@@ -52,6 +55,29 @@ Local run (lowers the trial and runs it through the `StepRunner`):
 uv run --no-sync python experiments/grug/base/launch.py --version dev --run
 ```
 
+`--set PATH=VALUE` overrides one field of `GrugBaseLaunchConfig` by dotted path, and `--sweep`
+runs one trial per value. Each override enters the trial's fingerprint, its name
+(`grug/base-trial/steps=200`), and its run ID. `--show-config` prints each trial's config without
+running anything.
+
+```bash
+# Override fields by dotted path; values are YAML, decoded against the field's type
+uv run --no-sync python experiments/grug/base/launch.py --version dev \
+    --set optimizer.learning_rate=1e-3 --set steps=200 --run
+
+# Swap a sub-config by its registered name
+uv run --no-sync python experiments/grug/base/launch.py --version dev \
+    --set optimizer='{type: muon, learning_rate: 0.02}' --run
+
+# Sweep: one trial per value; several --sweep options form a grid
+uv run --no-sync python experiments/grug/base/launch.py --version 2026.10.09 \
+    --sweep 'optimizer.learning_rate=[1e-3, 3e-3, 1e-2]' --max-concurrent 1 --run
+```
+
+A sweep with more than one trial needs `--max-concurrent`; `1` trains the trials one after another
+on one GPU. Under a calendar version, rerunning the sweep builds only the trials that are missing;
+under `dev`, each invocation runs every trial.
+
 ## Diffing a variant against base
 
 When template-copying `experiments/grug/base/` to a new variant, review the changes with git:
@@ -66,7 +92,8 @@ git diff --no-index experiments/grug/base experiments/grug/<variant>
 - Architecture changes: `experiments/grug/base/model.py`
 - Train-loop and callback behavior: `experiments/grug/base/train.py`
 - Run config, resources, and launch wiring: `experiments/grug/base/launch.py`
-- Copy-paste variant workflow: duplicate `experiments/grug/base/` into `experiments/grug/<variant>/` and edit there.
+- Field changes: `--set` and `--sweep` on `base/launch.py`, no copy needed.
+- Copy-paste variant workflow, for code changes: duplicate `experiments/grug/base/` into `experiments/grug/<variant>/` and edit there.
 
 ## Trainer knobs people ask about
 
@@ -87,7 +114,7 @@ git diff --no-index experiments/grug/base experiments/grug/<variant>
 ## Environment variables you will likely use
 
 - `WANDB_API_KEY`: required for W&B logging in the default launch config.
-- The run ID is `grug-base-<version>`. `--version dev` gives each invocation a fresh timestamped version; the launcher prints it, and `--resume <version>` continues that run.
+- The run ID is `grug-base-<version>`, followed by `-<digest>` when the trial has `--set` or `--sweep` overrides. `--version dev` gives each invocation a fresh timestamped version; the launcher prints it, and `--resume <version>` continues that run.
 
 ## Where outputs show up
 

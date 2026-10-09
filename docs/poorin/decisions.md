@@ -1345,6 +1345,29 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
   config to replace it. At fingerprint time `_run_tracker` leaves the tracker's placeholder alone,
   so the path never enters the fingerprint. Grug follows the spec: `_trackers` sets it from
   `launch.output_path`.
+- **Overlapping `--set` paths are refused.** One trial cannot set both a field and a field beneath it
+  (`optimizer` and `optimizer.learning_rate`): applied in command-line order, the result would
+  depend on that order while the trial's name and run ID would not. Set the node in one mapping
+  value instead (`optimizer={type: muon, learning_rate: 0.02}`).
+- **`train_lm` needs a `run_id` when overrides are set**, so each trial logs to its own tracker run;
+  without one, Levanter names the run after the version, which every trial shares.
+- **Overrides read field types from each class's annotations.** The spec decodes a value against
+  the field's type from `typing.get_type_hints`, which returns no hints for a class marked
+  `@no_type_check`. `GrugBaseLaunchConfig` is marked (see above), so `--set steps=200` on grug
+  failed with a `KeyError`. `overrides` reads the annotations of the class and each base with
+  `inspect.get_annotations`, which ignores the marker.
+- **A `--sweep` string element keeps its text only when YAML reads that text back as the same
+  string.** The plan kept every string element's text, which YAML parses again when the trial
+  applies it, so a quoted `'yes'` or `'a: b'` reached a `str` field as `'True'` or
+  `"{'a': 'b'}"`, while the trial's name came from the text as typed. Any other element, a quoted
+  string of that kind included, is written back as JSON. `1e-3` stays text, so it still decodes to
+  0.001 for a float field.
+- **The root test suite's fixture cluster directory is absolute.** Since the pre-run drift check,
+  `run` reads the prefix, and so loads the cluster config, before the runner starts.
+  `test_consumer_resolves_dependency_under_relative_prefix` changes the working directory first, so
+  the relative `config/testing` resolved under its temporary directory and the load failed. The
+  test passed only when an earlier test in the same process had cached the config; this commit's
+  tests changed that order. `conftest.py` now anchors the directory to the checkout.
 
 ---
 
