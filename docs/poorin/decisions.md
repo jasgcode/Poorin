@@ -1397,6 +1397,22 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
   CPU, `trainer.require_accelerator` enters the trial's name and fingerprint and never reaches the
   run. The overrides docs list them as set at run time and not overridable.
 
+### D95. The launch config holds environment variables only, under a Poorin path
+
+- **When:** 2026-10-09. **Status:** Adopted.
+- **Decision:** Levanter's `CliConfig` keeps `env` and `accel_env`, the only fields anything reads
+  (training's `resolve_training_env` calls `env_for_accel`). Its 26 cluster fields (TPU, zone,
+  Docker image and registry, GitHub token) and the unused `as_dict` go. The user file moves from
+  `~/.config/marin/config.yaml` to `~/.config/poorin/config.yaml`, as D87 moved the other settings,
+  and the deprecated `.config` fallback beside `.levanter.yaml` goes.
+- **Why:** The owner approved the cleanup on 2026-10-09. The fields configured Marin's TPU and
+  Docker launchers, which the prune deleted. The `.config` fallback would try to read a directory
+  if one were ever present.
+- **Alternatives:** Keep the fields as dead configuration; keep the Marin path.
+- **Cost if wrong:** A config file that still sets a removed field fails to load, because draccus
+  rejects unknown keys. No such file exists on this workstation. A file under the Marin path is
+  no longer read.
+
 ---
 
 ## Deferred

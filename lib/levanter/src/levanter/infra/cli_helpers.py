@@ -5,9 +5,7 @@ import base64
 import dataclasses
 import os
 import subprocess
-import warnings
 from dataclasses import dataclass
-from functools import cached_property
 from pathlib import Path
 from typing import Any
 
@@ -15,40 +13,13 @@ import draccus
 import yaml
 
 
-USER_CONFIG_PATH = Path(".config/marin/config.yaml")
+USER_CONFIG_PATH = Path(".config/poorin/config.yaml")
 LOCAL_CONFIG_PATH = Path(".levanter.yaml")
-# Legacy checkout-local file, distinct from the XDG user config directory.
-DEPRECATED_LOCAL_CONFIG_PATH = Path(".config")
 
 
 @dataclass(frozen=True)
 class CliConfig:
-    autodelete: bool | None = None
-    capacity_type: str | None = None
-    project: str | None = None
-    region: str | None = None
-    zone: str | None = None
-    tpu: str | None = None
-    tpu_name: str | None = None
-    tpu_type: str | None = None
-    node_count: int | None = None
-    version: str | None = None
-    retries: int | None = None
-    run_id: str | None = None
-    repository: str | None = None
-    image: str | None = None
-    image_name: str | None = None
-    tag: str | None = None
-    github_user: str | None = None
-    github_token: str | None = None
-    docker_base_image: str | None = None
-    docker_file: str | None = None
-    docker_registry: str | None = None
-    extra_context: str | None = None
-    foreground: bool | None = None
-    docker_target: str | None = None
-    docker_repository: str | None = None
-    subnetwork: str | None = None
+    """Extra environment variables for launched training jobs, read by :func:`load_config`."""
 
     env: dict[str, str] = dataclasses.field(default_factory=dict)
 
@@ -70,21 +41,16 @@ class CliConfig:
 
         return base_env
 
-    @cached_property
-    def as_dict(self):
-        dict = dataclasses.asdict(self)
-        # remove Nones
-        return {k: v for k, v in dict.items() if v is not None}
-
 
 def load_config() -> CliConfig:
+    """The user's ``~/.config/poorin/config.yaml``, overlaid by ``.levanter.yaml`` in the working directory.
+
+    Either file may be missing. A key :class:`CliConfig` does not define is an error.
+    """
     config_dict = _load_yaml_mapping(Path.home() / USER_CONFIG_PATH)
 
     if LOCAL_CONFIG_PATH.exists():
         config_dict = _merge_config_dicts(config_dict, _load_yaml_mapping(LOCAL_CONFIG_PATH))
-    elif DEPRECATED_LOCAL_CONFIG_PATH.exists():
-        warnings.warn("Using deprecated .config file. Please rename to .levanter.yaml")
-        config_dict = _merge_config_dicts(config_dict, _load_yaml_mapping(DEPRECATED_LOCAL_CONFIG_PATH))
 
     return draccus.decode(CliConfig, config_dict)
 
