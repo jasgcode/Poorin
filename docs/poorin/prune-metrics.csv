@@ -82,3 +82,4 @@ date,phase,step,first_party_lines,reachable_lines,reachable_modules,r1_imported_
 2026-10-08,Backlog,Fix docs that disagree with the code,133123,132145,423,6493,3.59,78.2,29.1,8017593240
 2026-10-09,Cleanup,Delete the TensorBoard tracker,132905,131927,422,6492,4.02,90.2,33.0,8017593240
 2026-10-09,Overrides,Print a plan with each artifact's cache state,133045,132067,423,6493,4.38,112.1,30.5,8017593240
+2026-10-09,Overrides,Refuse a changed recipe under an existing output,133099,132121,423,6493,3.77,72.1,31.5,8017593240

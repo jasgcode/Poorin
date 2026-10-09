@@ -7,10 +7,8 @@ An adopted artifact points at data already on disk — consumers resolve to that
 nothing is recomputed — while a provenance record at the canonical address records the alias.
 """
 
-import logging
-
 import pytest
-from poorin.execution.artifact import Artifact, read_record
+from poorin.execution.artifact import Artifact, FingerprintMismatchError, read_record
 from poorin.execution.lazy import ArtifactStep, materialized_config, run
 
 
@@ -39,16 +37,13 @@ def test_readopt_same_source_is_idempotent(tmp_path, monkeypatch):
     run(ArtifactStep.adopt("datasets/x", "2026.06.28", source="src"))
 
 
-def test_readopt_different_source_warns(tmp_path, monkeypatch, caplog):
+def test_readopting_a_different_source_is_refused(tmp_path, monkeypatch):
     monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
     (tmp_path / "a").mkdir()
     (tmp_path / "b").mkdir()
     run(ArtifactStep.adopt("datasets/x", "2026.06.28", source="a"))
-
-    # A different source re-fingerprints: advisory warning, not an error.
-    with caplog.at_level(logging.WARNING):
+    with pytest.raises(FingerprintMismatchError, match="adopt_source"):
         run(ArtifactStep.adopt("datasets/x", "2026.06.28", source="b"))
-    assert "drift" in "\n".join(r.getMessage() for r in caplog.records)
 
 
 def test_adopting_missing_data_fails(tmp_path, monkeypatch):

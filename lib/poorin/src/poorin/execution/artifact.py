@@ -16,13 +16,12 @@ their producers (``LevanterCheckpoint`` in ``poorin.training.training``, ``Token
   fingerprint, provenance, and (for a value artifact) its ``result``.
 - ``read_record``/``write_record`` (the full record) and ``read_artifact``/``write_artifact``
   (the manual typed-payload API), two entry points over one serialization scheme.
-- :func:`check_drift` — the advisory recipe-drift guard the runner applies before serving a
-  cached output.
+- :func:`check_drift` — the recipe-drift guard the runner applies before serving or resuming an
+  output.
 """
 
 import functools
 import json
-import logging
 import re
 from dataclasses import asdict, dataclass, is_dataclass
 from typing import Self, TypeVar
@@ -36,8 +35,6 @@ from rigging.provenance import Provenance, launch_provenance
 
 from poorin.execution.fingerprint import describe_drift
 from poorin.execution.step_spec import StepSpec, _is_relative_path
-
-logger = logging.getLogger(__name__)
 
 M = TypeVar("M", bound=BaseModel)
 
@@ -67,14 +64,18 @@ STEP_RUNNER_EXECUTOR_VERSION = "step_runner"
 FINGERPRINT_KEY = "fingerprint"
 VERSION_KEY = "version"
 RESULT_TYPE_KEY = "result_type"
-EXPECTED_FINGERPRINT_KEY = "expected_fingerprint"
+# Set only on a pinned (``override_path``) step, which points at existing data: the drift check skips it.
+PINNED_KEY = "pinned"
 ARTIFACT_LOAD_CONTEXT_KEY = "artifact_load"
 
 
 class FingerprintMismatchError(Exception):
-    """The opt-in hard identity gate: an ``expected_fingerprint`` pin differs from the
-    computed fingerprint (at ``lower``) or from a pinned artifact's recorded fingerprint
-    (in :func:`check_drift`)."""
+    """An output's recorded recipe differs from the recipe now being built, or two handles in one
+    graph build the same ``name@version`` from different recipes."""
+
+
+class DriftAcceptanceError(ValueError):
+    """``accept_drift`` named an artifact whose recipe did not change: a typo, or a stale flag."""
 
 
 class ArtifactTypeMismatchError(Exception):
@@ -174,6 +175,8 @@ class ArtifactRecord(BaseModel):
     """A value artifact's declared fields; ``None`` for a data artifact."""
     fingerprint_payload: str | None = None
     """The canonical config JSON the ``fingerprint`` hashes, kept for the drift diff."""
+    accepted_from: list[str] = Field(default_factory=list)
+    """Earlier fingerprints of this output whose changed recipe the owner accepted (``--accept-drift``)."""
     provenance: Provenance | None = None
     """Who/when/which-commit/which-argv produced this — ``None`` for a minimal manual write."""
 
@@ -338,6 +341,43 @@ def recorded_recipe(output_path: str) -> RecordedRecipe | None:
     return RecordedRecipe(fingerprint, stub.get("fingerprint_payload"), _LEGACY_EXECUTOR_INFO_FILENAME)
 
 
+def accept_recipe(output_path: str, fingerprint: str, payload: str) -> None:
+    """Record ``fingerprint`` as the recipe of the output at ``output_path``: the owner accepted a
+    changed recipe. A finished build's record keeps the old fingerprint in ``accepted_from``; a
+    started build's stub is re-stamped, so the build resumes under the new recipe."""
+    output_path = _resolved(output_path)
+    recorded = recorded_recipe(output_path)
+    if recorded is None:
+        raise ValueError(f"no recorded recipe at {output_path} to accept a change to")
+    if recorded.filename == RECORD_FILENAME:
+        record = read_record(output_path)
+        assert record is not None
+        write_record(
+            record.model_copy(
+                update={
+                    "fingerprint": fingerprint,
+                    "fingerprint_payload": payload,
+                    "accepted_from": [*record.accepted_from, record.fingerprint],
+                }
+            )
+        )
+        return
+    stub_path = StoragePath(prefix_join(output_path, _LEGACY_EXECUTOR_INFO_FILENAME))
+    stub = json.loads(stub_path.read_text())
+    stub["config"][FINGERPRINT_KEY] = fingerprint
+    stub["fingerprint_payload"] = payload
+    stub_path.write_text(json.dumps(stub, indent=2))
+
+
+def drift_message(label: str, recorded: str, now: str, change: str) -> str:
+    """Why ``label`` cannot reuse its output, and the two ways forward."""
+    name = label.split("@", 1)[0]
+    return (
+        f"{label}: the output records recipe {recorded}, but the recipe is now {now}.{change}\n"
+        f"Change the version to build the new recipe, or pass --accept-drift {name} to keep the output."
+    )
+
+
 def write_record(record: ArtifactRecord) -> None:
     """Write ``record`` to ``{record.output_path}/.artifact.json``."""
     StoragePath(prefix_join(record.output_path, RECORD_FILENAME)).write_text(record.model_dump_json(indent=2))
@@ -412,38 +452,25 @@ def write_step_record(identity: StepRecordIdentity, *, output_path: str, result:
 
 
 def check_drift(step: StepSpec) -> bool:
-    """Advisory recipe-drift guard, run before serving a cached SUCCESS.
+    """The drift guard the runner applies before serving or resuming an output.
 
-    Returns ``False`` for a non-lazy step (no fingerprint). Returns ``True`` for a mutable
-    (``dev``) version so the caller rebuilds. Otherwise, if a record exists whose fingerprint
-    differs from the step's: raises :class:`FingerprintMismatchError` if the step carries an
-    ``expected_fingerprint`` pin, else logs a field-level warning and returns ``False`` (the
-    cached output is served).
+    Returns ``False`` for a non-lazy step (no fingerprint). Raises :class:`FingerprintMismatchError`
+    when the output at the step's path records a different recipe, in a finished build's record or
+    a started build's stub; a pinned step points at existing data and is not compared. Otherwise
+    returns whether the version is mutable (``dev``), which always rebuilds.
+    :func:`poorin.execution.lazy.run` checks the whole graph before the runner starts; this covers
+    code that calls the runner directly.
     """
     fingerprint = step.hash_attrs.get(FINGERPRINT_KEY)
     if fingerprint is None:
         return False
     version = step.hash_attrs.get(VERSION_KEY, "")
-    if is_mutable_version(version):
-        return True
-    record = read_record(step.output_path)
-    if record is None or record.fingerprint == fingerprint:
-        return False
-
-    change = describe_drift(record.fingerprint_payload, step.fingerprint_payload)
-    if step.hash_attrs.get(EXPECTED_FINGERPRINT_KEY) is not None:
+    if step.hash_attrs.get(PINNED_KEY):
+        return is_mutable_version(version)
+    recorded = recorded_recipe(step.output_path)
+    if recorded is not None and recorded.fingerprint != fingerprint:
+        change = describe_drift(recorded.payload, step.fingerprint_payload)
         raise FingerprintMismatchError(
-            f"{step.name}@{version} is pinned to expected_fingerprint, but its recorded build has "
-            f"fingerprint {record.fingerprint} (now {fingerprint}).{change} "
-            f"Update the pin and bump the version if this is meant to be a different artifact."
+            drift_message(f"{step.name}@{version}", recorded.fingerprint, fingerprint, change)
         )
-    logger.warning(
-        "%s@%s: recipe drift — recorded fingerprint %s, now %s; serving the cached output. "
-        "Bump the version to build the new recipe.%s",
-        step.name,
-        version,
-        record.fingerprint,
-        fingerprint,
-        change,
-    )
-    return False
+    return is_mutable_version(version)

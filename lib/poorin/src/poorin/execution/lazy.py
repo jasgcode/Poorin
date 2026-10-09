@@ -20,7 +20,8 @@ The model:
   remote dispatch and knows nothing about resources.
 - Identity is the explicit ``{prefix}/{name}/{version}`` path — no content hash. The recipe
   *fingerprint* (the config built with dep versions in place of paths and placeholders for
-  everything pulled from ``ctx``) is recorded for an advisory drift check, never in the path.
+  everything pulled from ``ctx``) is recorded beside the output, never in the path, and a changed
+  recipe under an existing output is refused.
 
 Pre-existing data is brought in with :meth:`ArtifactStep.adopt`. :func:`run` runs handles for their side
 effects; :func:`resolve` runs one and loads its typed artifact. A custom step is
@@ -31,7 +32,7 @@ learn.
 
 import inspect
 import json
-from collections.abc import Callable, Iterable, Mapping
+from collections.abc import Callable, Collection, Iterable, Mapping
 from dataclasses import dataclass, field
 from typing import Any, Final, Generic, TypeVar, cast
 
@@ -41,13 +42,16 @@ from rigging.filesystem.storage_path import prefix_join
 from rigging.provenance import Provenance
 
 from poorin.execution.artifact import (
-    EXPECTED_FINGERPRINT_KEY,
     FINGERPRINT_KEY,
+    PINNED_KEY,
     RESULT_TYPE_KEY,
     VERSION_KEY,
     Artifact,
     ArtifactRecord,
+    DriftAcceptanceError,
     FingerprintMismatchError,
+    accept_recipe,
+    drift_message,
     is_mutable_version,
     result_type_name,
     validate_path_segment,
@@ -55,6 +59,7 @@ from poorin.execution.artifact import (
     write_record,
 )
 from poorin.execution.build_context import resolve_version
+from poorin.execution.cache_state import CacheState, HandleState, handle_state, record_path
 from poorin.execution.fingerprint import canonical_json, fingerprint_hash
 from poorin.execution.step_runner import StepRunner
 from poorin.execution.step_spec import StepSpec, _is_relative_path
@@ -199,10 +204,6 @@ class ArtifactStep(Generic[T]):
     adopt_config: dict | None = None
     """For an adopted artifact, the synthetic ``config`` to record (e.g. a tokenized cache's
     tokenizer/format), so consumers read metadata the same way as for a produced artifact."""
-    expected_fingerprint: str | None = None
-    """Opt-in hard pin: when set, :func:`lower` raises :class:`FingerprintMismatchError` if the
-    config now fingerprints to something else, and the drift check raises rather than warns. Leave
-    ``None`` to opt out."""
 
     def __post_init__(self) -> None:
         validate_path_segment("name", self.name)
@@ -308,18 +309,17 @@ def _lower(handle: "ArtifactStep", provenance: Provenance, memo: dict[int, StepS
     """Lower a handle graph into a ``StepSpec`` graph, recording ``provenance`` on every step.
 
     Each handle becomes a step addressed by its explicit ``{name}/{version}`` (or its pin); the
-    fingerprint, version, artifact type, and dep identities travel in ``hash_attrs`` so the runner
-    applies the drift check before serving a cached output, and the step fn writes a full
-    :class:`ArtifactRecord` on success (unless pinned). Pure transform of *structure* — it never
-    inspects ``handle.run``.
+    fingerprint, version, artifact type, dep identities, and a pin's mark travel in ``hash_attrs``
+    so the runner applies the drift check before serving a cached output (skipping a pin), and the
+    step fn writes a full :class:`ArtifactRecord` on success (unless pinned). Pure transform of
+    *structure* — it never inspects ``handle.run``.
 
     ``memo`` caches the spec of each handle by identity, so a handle several consumers share is
     lowered once. Without it a diamond re-walks the shared subgraph — and re-runs its
     ``build_config`` — once per path through it. Pass one ``memo`` across a whole ``run`` to share
     it between terminals.
 
-    Raises :class:`FingerprintMismatchError` if ``expected_fingerprint`` is set and differs;
-    :class:`ValueError` if a fixed (non-``dev``) handle has a ``dev`` dep.
+    Raises :class:`ValueError` if a fixed (non-``dev``) handle has a ``dev`` dep.
     """
     memo = {} if memo is None else memo
     cached = memo.get(id(handle))
@@ -328,12 +328,6 @@ def _lower(handle: "ArtifactStep", provenance: Provenance, memo: dict[int, StepS
     dep_specs = [_lower(dep, provenance, memo) for dep in handle.deps]
     payload = handle.fingerprint_payload()
     fingerprint = fingerprint_hash(payload)
-    if handle.expected_fingerprint is not None and fingerprint != handle.expected_fingerprint:
-        raise FingerprintMismatchError(
-            f"{handle.name}@{handle.version}: config fingerprint is {fingerprint}, but "
-            f"expected_fingerprint pins {handle.expected_fingerprint}. The recipe changed — update "
-            f"the pin, and bump the version if this is meant to be a different artifact."
-        )
 
     if not is_mutable_version(handle.version):
         for dep in handle.deps:
@@ -396,8 +390,8 @@ def _lower(handle: "ArtifactStep", provenance: Provenance, memo: dict[int, StepS
         RESULT_TYPE_KEY: rt_name,
         "deps": dep_refs,
     }
-    if handle.expected_fingerprint is not None:
-        hash_attrs[EXPECTED_FINGERPRINT_KEY] = handle.expected_fingerprint
+    if handle.override_path is not None:
+        hash_attrs[PINNED_KEY] = True
 
     spec = StepSpec(
         name=handle.name,
@@ -412,7 +406,43 @@ def _lower(handle: "ArtifactStep", provenance: Provenance, memo: dict[int, StepS
     return spec
 
 
-def run(*handles: "ArtifactStep[T]", max_concurrent: int = 8, force_run_failed: bool = True) -> list[T]:
+def _refuse_drift(handles: list["ArtifactStep"], accept_drift: Collection[str]) -> None:
+    """Refuse a run if any artifact in the graph records a different recipe, unless accepted.
+
+    Checks every handle, dependencies the runner would prune behind a built consumer included. An
+    accepted artifact's recorded recipe is re-stamped, so the runner serves or resumes it. Several
+    handles can build one output (a sweep's trials each construct the shared dataset): handles that
+    share a ``name@version`` and a fingerprint are one artifact, reported and re-stamped once, and
+    handles that share a ``name@version`` but not a fingerprint are two recipes claiming one output,
+    which is refused.
+    """
+    states: dict[str, HandleState] = {}
+    for state in map(handle_state, handles):
+        first = states.setdefault(state.label, state)
+        if first.fingerprint != state.fingerprint:
+            raise FingerprintMismatchError(
+                f"{state.label} is built from two recipes in this graph, {first.fingerprint} and "
+                f"{state.fingerprint}. Give each recipe its own name or version."
+            )
+    drifted = [s for s in states.values() if s.state is CacheState.DRIFTED]
+    unknown = sorted(set(accept_drift) - {s.handle.name for s in drifted})
+    if unknown:
+        raise DriftAcceptanceError(f"accept_drift names artifacts whose recipe did not change: {unknown}")
+    refused = [s for s in drifted if s.handle.name not in accept_drift]
+    if refused:
+        raise FingerprintMismatchError(
+            "\n\n".join(drift_message(s.label, s.recorded_fingerprint or "", s.fingerprint, s.change) for s in refused)
+        )
+    for state in drifted:
+        accept_recipe(record_path(state.handle), state.fingerprint, state.handle.fingerprint_payload())
+
+
+def run(
+    *handles: "ArtifactStep[T]",
+    max_concurrent: int = 8,
+    force_run_failed: bool = True,
+    accept_drift: Collection[str] = (),
+) -> list[T]:
     """Build ``handles`` and return their loaded, typed artifacts, in argument order.
 
     The entry point for one or several handles: lowers the graph, builds every step (independent
@@ -420,7 +450,11 @@ def run(*handles: "ArtifactStep[T]", max_concurrent: int = 8, force_run_failed: 
     from the record the runner just wrote — so the caller gets the resolved values directly, no
     separate read. Provenance is captured once, so every artifact built records the same launch.
     ``force_run_failed`` reruns a previously-FAILED step instead of raising.
+
+    Before anything runs, every artifact in the graph is checked against the recipe its output
+    records; ``accept_drift`` names artifacts whose changed recipe is accepted.
     """
+    _refuse_drift(graph_handles(list(handles)), accept_drift)
     provenance = Provenance.capture()
     memo: dict[int, StepSpec] = {}
     StepRunner().run(

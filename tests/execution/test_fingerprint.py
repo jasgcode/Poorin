@@ -5,9 +5,8 @@
 
 The fingerprint is only meaningful if the same config always serializes to the same
 bytes, so these tests pin the canonicalization (dtypes, timedeltas, paths, sets,
-arrays). The fingerprint is advisory, so an unknown type degrades to a defined stable
-fallback (not a raise) unless strict mode is on; ``register_fingerprint`` teaches an
-exact form.
+arrays) and the class each dataclass is recorded under. A type with no canonical form
+raises; ``register_fingerprint`` teaches it an exact one.
 """
 
 import dataclasses
@@ -17,17 +16,11 @@ from pathlib import Path
 
 import jax.numpy as jnp
 import numpy as np
-import poorin.execution.fingerprint as fingerprint_module
 import pytest
-from poorin.execution.fingerprint import canonical_json, fingerprint_hash, register_fingerprint, set_strict
-
-
-@pytest.fixture(autouse=True)
-def _reset_strict():
-    """Restore the module-level strict override so a strict test never leaks into others."""
-    saved = fingerprint_module._STRICT_OVERRIDE
-    yield
-    fingerprint_module._STRICT_OVERRIDE = saved
+from levanter.optim.config import AdamConfig
+from levanter.optim.grugmuon import GrugMuonConfig
+from levanter.optim.muon import MuonConfig
+from poorin.execution.fingerprint import canonical_json, fingerprint_hash, register_fingerprint
 
 
 @dataclasses.dataclass(frozen=True)
@@ -83,18 +76,6 @@ def test_enum_uses_value():
     assert canonical_json({"c": _Color.RED}) == canonical_json({"c": "red"})
 
 
-def test_unknown_type_falls_back_to_a_stable_form():
-    """An unknown type with a ``__dict__`` fingerprints by its vars — deterministically, no raise."""
-
-    class Widget:
-        def __init__(self, n: int) -> None:
-            self.n = n
-
-    same = canonical_json({"w": Widget(1)})
-    assert same == canonical_json({"w": Widget(1)})
-    assert same != canonical_json({"w": Widget(2)})
-
-
 def test_register_fingerprint_gives_an_exact_form():
     class Special:
         def __init__(self, token: str) -> None:
@@ -107,17 +88,50 @@ def test_register_fingerprint_gives_an_exact_form():
     assert canonical_json({"s": Special("a")}) != canonical_json({"s": Special("b")})
 
 
-def test_strict_mode_rejects_callable_via_env(monkeypatch):
-    monkeypatch.setenv("POORIN_FINGERPRINT_STRICT", "1")
+def test_a_callable_is_rejected():
     with pytest.raises(TypeError, match="callable"):
         canonical_json({"fn": lambda x: x})
 
 
-def test_strict_mode_rejects_default_repr_object():
-    set_strict(True)
-
+def test_a_default_repr_object_is_rejected():
     class Opaque:  # relies on object.__repr__ -> a memory address, not reproducible
         pass
 
     with pytest.raises(TypeError, match="default object repr"):
         canonical_json({"o": Opaque()})
+
+
+def test_an_object_with_no_canonical_form_is_rejected():
+    class Widget:
+        def __init__(self, n: int) -> None:
+            self.n = n
+
+    with pytest.raises(TypeError, match="cannot fingerprint"):
+        canonical_json({"w": Widget(1)})
+
+
+@dataclasses.dataclass(frozen=True)
+class _A:
+    x: int = 1
+
+
+@dataclasses.dataclass(frozen=True)
+class _B:
+    x: int = 1
+
+
+def test_two_dataclasses_with_equal_fields_fingerprint_differently():
+    assert canonical_json(_A()) != canonical_json(_B())
+
+
+def test_a_registered_config_is_keyed_by_its_choice_name():
+    assert '"__class__": "adam"' in canonical_json(AdamConfig())
+    assert canonical_json(MuonConfig()) != canonical_json(GrugMuonConfig())
+
+
+def test_nested_dataclasses_carry_their_class_at_every_level():
+    @dataclasses.dataclass(frozen=True)
+    class Outer:
+        inner: _A
+
+    assert canonical_json(Outer(_A())).count("__class__") == 2

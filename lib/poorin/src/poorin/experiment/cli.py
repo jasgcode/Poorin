@@ -8,9 +8,10 @@ This module makes that a one-liner while wiring up the deferred-version machiner
 (:mod:`poorin.execution.build_context`):
 
 - :func:`build_options` is a Click decorator that adds ``--version`` (the run-wide default),
-  ``--override NAME=VERSION`` (per-artifact, repeatable), ``--run`` (build vs. print the plan),
-  ``--show-config`` (the plan plus each returned artifact's identity config), and
-  ``--max-concurrent``. It builds the wrapped function's handle graph **inside** a
+  ``--override NAME=VERSION`` (per-artifact, repeatable), ``--accept-drift NAME`` (keep an output
+  whose recipe changed, repeatable), ``--run`` (build vs. print the plan), ``--show-config`` (the
+  plan plus each returned artifact's identity config), and ``--max-concurrent``. It builds the
+  wrapped function's handle graph **inside** a
   :class:`~poorin.execution.build_context.BuildContext` assembled from those options, so any builder
   that deferred its version (omitted ``version=``) resolves against them.
 - :func:`experiment_main` wraps a nullary ``build()`` into a ready-to-run command.
@@ -20,7 +21,9 @@ mutable version rebuilds its (often multi-TB) cache on every run and, unlike a t
 is not namespaced per user. To iterate, pass ``--version dev``: each invocation gets a fresh,
 suffixed version, and ``--resume <version>`` continues an earlier one. The printed plan gives
 each artifact's state at its output path (see :mod:`poorin.execution.cache_state`), so an artifact
-that resolved to a mutable version and will rebuild shows as ``mutable``.
+that resolved to a mutable version and will rebuild shows as ``mutable``. An artifact whose output
+records another recipe shows as ``built from another recipe`` with the changed fields, and
+``--run`` refuses it unless ``--accept-drift`` names it.
 
 An experiment with its own options composes with :func:`build_options` by stacking it *below* the
 experiment's own ``@click.option``s and ``@click.command()`` on top::
@@ -51,13 +54,18 @@ import click
 import yaml
 from rigging.filesystem.cluster_config import poorin_prefix
 
-from poorin.execution.artifact import is_mutable_version, validate_version
+from poorin.execution.artifact import (
+    DriftAcceptanceError,
+    FingerprintMismatchError,
+    is_mutable_version,
+    validate_version,
+)
 from poorin.execution.build_context import BuildContext, VersionCodex, build_context
 from poorin.execution.cache_state import HandleState, handle_state
 from poorin.execution.lazy import ArtifactStep, graph_handles, lower, run
 
 BuildResult = ArtifactStep | Mapping[str, ArtifactStep] | list[ArtifactStep] | tuple[ArtifactStep, ...]
-BuildRunner = Callable[[list[ArtifactStep], int], None]
+BuildRunner = Callable[[list[ArtifactStep], int, frozenset[str]], None]
 
 
 def _version_callback(ctx: click.Context, param: click.Parameter, value: str | None) -> str | None:
@@ -150,8 +158,8 @@ def _print_plan(states: list[HandleState], shown: list[HandleState]) -> None:
         click.echo(f"\n# {state.label}\n{yaml.safe_dump(config, sort_keys=True).rstrip()}")
 
 
-def _run_locally(handles: list[ArtifactStep], max_concurrent: int) -> None:
-    run(*handles, max_concurrent=max_concurrent)
+def _run_locally(handles: list[ArtifactStep], max_concurrent: int, accept_drift: frozenset[str]) -> None:
+    run(*handles, max_concurrent=max_concurrent, accept_drift=accept_drift)
 
 
 def build_options_with_runner(fn: Callable[..., BuildResult], runner: BuildRunner) -> Callable[..., None]:
@@ -181,6 +189,13 @@ def build_options_with_runner(fn: Callable[..., BuildResult], runner: BuildRunne
         callback=_override_callback,
         help="Per-artifact version override, keyed by the artifact's name. Repeatable.",
     )
+    @click.option(
+        "--accept-drift",
+        "accept_drift",
+        multiple=True,
+        metavar="NAME",
+        help="Keep the output of the artifact NAME although its recipe changed, and record the change. Repeatable.",
+    )
     @click.option("--run", "do_run", is_flag=True, help="Build the handles (default: print the plan).")
     @click.option(
         "--show-config",
@@ -194,6 +209,7 @@ def build_options_with_runner(fn: Callable[..., BuildResult], runner: BuildRunne
         default_version: str | None,
         resume_version: str | None,
         overrides: dict[str, str],
+        accept_drift: tuple[str, ...],
         do_run: bool,
         show_config: bool,
         max_concurrent: int,
@@ -227,7 +243,18 @@ def build_options_with_runner(fn: Callable[..., BuildResult], runner: BuildRunne
             returned = {id(h) for h in handles}
             _print_plan(states, [s for s in states if id(s.handle) in returned] if show_config else [])
             return
-        runner(handles, max_concurrent)
+        if resume_version is not None:
+            returned = {id(h) for h in handles}
+            empty = [s.label for s in states if id(s.handle) in returned and s.recorded_fingerprint is None]
+            if empty:
+                raise click.UsageError(
+                    f"nothing to resume at {empty}: no run started there. "
+                    "Check that the --set flags match the original run's."
+                )
+        try:
+            runner(handles, max_concurrent, frozenset(accept_drift))
+        except (FingerprintMismatchError, DriftAcceptanceError) as e:
+            raise click.ClickException(str(e)) from e
 
     return wrapper
 

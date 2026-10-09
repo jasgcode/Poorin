@@ -9,14 +9,11 @@ the same recipe (a cache hit) from a changed recipe (which wants a version bump)
 that to mean anything the serialization must be **identical across processes**: the
 same config must always produce the same bytes.
 
-The fingerprint is **advisory** — a mismatch is a warning, not a blocked build — so the
-encoder does not need to be perfectly total to be correct. It canonicalizes every value
-it understands (dataclasses, enums, paths, timedeltas, dtypes, sets by sorted members,
-arrays by content) and, for a type it has no canonical form for, degrades to a *defined*
-stable fallback with a one-time warning instead of raising. :func:`register_fingerprint`
-teaches it a precise canonical form for an identity-bearing custom type, and
-:func:`set_strict` (or ``POORIN_FINGERPRINT_STRICT``) makes an unknown type raise instead,
-for callers that want drift to be exact.
+The fingerprint decides whether an existing output may be reused, so the encoder is total over
+the types it knows and raises on any other: a value with no canonical form would make the same
+config fingerprint differently between processes. :func:`register_fingerprint` teaches it a
+canonical form for an identity-bearing custom type. A dataclass encodes as its fields plus a
+``__class__`` key, so two configs that differ only in class fingerprint differently.
 """
 
 import dataclasses
@@ -24,8 +21,6 @@ import functools
 import hashlib
 import inspect
 import json
-import logging
-import os
 from collections.abc import Callable
 from datetime import timedelta
 from enum import Enum
@@ -34,42 +29,36 @@ from typing import Any
 
 import jax
 import numpy as np
+from draccus.choice_types import ChoiceRegistryBase
 
 from poorin.utilities.json_encoder import scalar_dtype
 
-logger = logging.getLogger(__name__)
+# The key a dataclass's class is recorded under in its canonical form.
+CLASS_KEY = "__class__"
 
-# Custom canonical encoders, keyed by type, consulted before the best-effort fallback.
+# Custom canonical encoders, keyed by type, consulted before the encoder raises.
 _REGISTRY: dict[type, Callable[[Any], object]] = {}
-
-# Type names already warned about, so the fallback logs once per type, not per value.
-_SEEN_UNFINGERPRINTABLE: set[str] = set()
-
-# None defers to the env var; True/False is an explicit override set via set_strict.
-_STRICT_OVERRIDE: bool | None = None
 
 
 def register_fingerprint(tp: type, encode: Callable[[Any], object]) -> None:
     """Teach the encoder a canonical form for an identity-bearing custom type.
 
     ``encode(value)`` must return a JSON-canonicalizable object (it is itself encoded).
-    Registered converters are consulted before the best-effort fallback, including for
+    Registered converters are consulted before the encoder raises, including for
     subclasses of ``tp``.
     """
     _REGISTRY[tp] = encode
 
 
-def set_strict(enabled: bool) -> None:
-    """Toggle strict fingerprinting: when on, an unknown type raises instead of using the
-    best-effort fallback. Overrides the ``POORIN_FINGERPRINT_STRICT`` env var."""
-    global _STRICT_OVERRIDE
-    _STRICT_OVERRIDE = enabled
-
-
-def _is_strict() -> bool:
-    if _STRICT_OVERRIDE is not None:
-        return _STRICT_OVERRIDE
-    return os.environ.get("POORIN_FINGERPRINT_STRICT", "").lower() in ("1", "true", "yes")
+def _class_label(cls: type) -> str:
+    """A dataclass's class in a fingerprint: its draccus choice name when it is a registered choice
+    (``adam``, ``grug_muon``), else its class name. The module is left out, so moving a class does
+    not change fingerprints."""
+    if issubclass(cls, ChoiceRegistryBase):
+        for name, choice in cls.get_known_choices().items():
+            if choice is cls:
+                return name
+    return cls.__qualname__
 
 
 def _registered_encoder(tp: type) -> Callable[[Any], object] | None:
@@ -84,21 +73,20 @@ def _unfingerprintable(o: object, why: str) -> str:
     return (
         f"cannot fingerprint a config value of type {t.__module__}.{t.__qualname__}: {why}. "
         "A fingerprint must be identical across processes; make the value a dataclass, an Enum, or "
-        "another canonical type, register one via poorin.execution.fingerprint.register_fingerprint, "
-        "or disable strict mode."
+        "another canonical type, or register one via poorin.execution.fingerprint.register_fingerprint."
     )
 
 
 class _FingerprintEncoder(json.JSONEncoder):
     """Canonical JSON for config fingerprints.
 
-    Canonical handlers run first; then registered converters; then either a raise
-    (strict) or a defined best-effort fallback (advisory, the default).
+    Canonical handlers run first, then registered converters; any other type raises.
     """
 
     def default(self, o):
         if dataclasses.is_dataclass(o) and not isinstance(o, type):
-            return dataclasses.asdict(o)
+            # Shallow, so each nested dataclass reaches this method and records its own class.
+            return {CLASS_KEY: _class_label(type(o)), **{f.name: getattr(o, f.name) for f in dataclasses.fields(o)}}
         if isinstance(o, Enum):
             return o.value
         if isinstance(o, timedelta):
@@ -127,35 +115,11 @@ class _FingerprintEncoder(json.JSONEncoder):
         if encode is not None:
             return encode(o)
 
-        if _is_strict():
-            if inspect.isroutine(o) or isinstance(o, functools.partial):
-                raise TypeError(_unfingerprintable(o, "a callable has no stable identity"))
-            if type(o).__repr__ is object.__repr__:
-                raise TypeError(_unfingerprintable(o, "it uses the default object repr (a memory address)"))
-            raise TypeError(_unfingerprintable(o, "no deterministic serialization is known"))
-
-        return _fallback(o)
-
-
-def _fallback(o: object) -> dict[str, object]:
-    """A defined, stable representation for a type with no canonical form.
-
-    Identifies the type by qualified name and captures its ``vars()`` (canonicalized) when
-    it has a ``__dict__``, else its ``repr``. Warns once per type so a misfire is a noisy
-    advisory, not a blocked build. The object's own ``repr`` is avoided for the dict case
-    because a default ``repr`` embeds a memory address (non-deterministic)."""
-    t = type(o)
-    name = f"{t.__module__}.{t.__qualname__}"
-    if name not in _SEEN_UNFINGERPRINTABLE:
-        _SEEN_UNFINGERPRINTABLE.add(name)
-        logger.warning(
-            "fingerprint: no canonical form for %s; using a best-effort stable fallback. "
-            "Register one via poorin.execution.fingerprint.register_fingerprint for an exact fingerprint.",
-            name,
-        )
-    if hasattr(o, "__dict__"):
-        return {"__repr__": name, "vars": vars(o)}
-    return {"__repr__": name, "str": repr(o)}
+        if inspect.isroutine(o) or isinstance(o, functools.partial):
+            raise TypeError(_unfingerprintable(o, "a callable has no stable identity"))
+        if type(o).__repr__ is object.__repr__:
+            raise TypeError(_unfingerprintable(o, "it uses the default object repr (a memory address)"))
+        raise TypeError(_unfingerprintable(o, "no deterministic serialization is known"))
 
 
 def _canonical_key(o: object) -> str:
@@ -207,7 +171,7 @@ def describe_drift(old_payload: str | None, new_payload: str | None) -> str:
 
     Both arguments are canonical-JSON fingerprint payloads. Returns an empty string when either
     side is absent or the configs are identical; otherwise a capped, newline-prefixed listing of
-    the changed dotted paths for a drift warning.
+    the changed dotted paths for a drift message.
     """
     if old_payload is None or new_payload is None:
         return ""

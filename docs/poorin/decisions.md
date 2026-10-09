@@ -1318,6 +1318,24 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
 - **Cost if wrong:** A run that wants TensorBoard scalars logs to W&B or Trackio instead; the tracker
   returns from `upstream-baseline` if needed.
 
+### D94. Rulings while building D92
+
+- **When:** 2026-10-09, building D92. **Status:** Adopted.
+- **Adopted artifacts are drift-checked.** The spec exempted them with pins, but an adopted
+  artifact writes a record at its canonical address, and re-adopting the same `name@version` from
+  another source must be refused, as it was warned about before.
+- **Two recipes for one `name@version` in a graph are refused.** Several handles can build one
+  output: a sweep's trials each construct the shared dataset. The plan's check went handle by
+  handle, so it listed that output once per handle, and accepting it appended the new fingerprint
+  to `accepted_from` after the old one. Handles that share a `name@version` and a fingerprint now
+  count as one artifact. Handles that share a `name@version` but not a fingerprint are two recipes
+  claiming one output path, which the runner would build or serve once for both, so the run is
+  refused before anything runs, and the error names the label and both fingerprints.
+- **The runner's check skips pinned steps.** The spec exempts pins (`override_path`), which point
+  at existing data, but the plan's `check_drift` compared them, so a pin to an output with another
+  recipe raised an error whose `--accept-drift` advice the pre-run check then rejected. A pinned
+  step carries `pinned` in its `hash_attrs`, and `check_drift` does not compare it.
+
 ---
 
 ## Deferred

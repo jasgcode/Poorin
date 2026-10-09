@@ -71,7 +71,8 @@ def _write_executor_info(step: StepSpec) -> None:
     This runs at schedule time, before the step produces its ``.artifact.json``, and its
     ``config`` is the identity ``hash_attrs`` — not the materialized config. It is tagged
     ``STEP_RUNNER_EXECUTOR_VERSION`` so ``read_record`` ignores it as a record source and never
-    mistakes the stub for a completed cache (#6836).
+    mistakes the stub for a completed cache (#6836). Its fingerprint and ``fingerprint_payload``
+    are the recipe a started build records, which the drift check compares and diffs.
     """
     info_path = os.path.join(step.output_path, ".executor_info")
     fs = url_to_fs(info_path, use_listings_cache=False)[0]
@@ -82,6 +83,7 @@ def _write_executor_info(step: StepSpec) -> None:
         "name": step.name,
         "fn_name": str(step.fn) if step.fn is not None else "None",
         "config": step.hash_attrs,
+        "fingerprint_payload": step.fingerprint_payload,
         "description": None,
         "override_output_path": step.override_output_path,
         "version": {},
@@ -338,7 +340,7 @@ class StepRunner:
             logger.info(f"[DRY RUN] Would run {step_name}")
             return None
 
-        # Advisory recipe-drift check; mutable (dev) artifacts always rebuild.
+        # Raises if the output records another recipe; mutable (dev) artifacts always rebuild.
         mutable = check_drift(step)
 
         # Quick read-only status check to avoid submitting unnecessary jobs
@@ -410,7 +412,7 @@ def run_step(step: StepSpec) -> None:
     output_path = step.output_path
     step_label = step.name_with_hash
 
-    # Advisory recipe-drift check; mutable (dev) artifacts always rebuild.
+    # Raises if the output records another recipe; mutable (dev) artifacts always rebuild.
     mutable = check_drift(step)
 
     # 1. Cache check

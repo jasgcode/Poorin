@@ -31,8 +31,8 @@ from poorin.training.training import LevanterCheckpoint     # materialized resul
 A handle's storage address is its explicit `{prefix}/{name}/{version}` path. There is no
 content hash in the path. The `version` is a calendar version, `YYYY.MM.DD` (with an
 optional `.N` suffix), or a `dev` string during development. Changing the name or version
-creates a distinct artifact; changing how an existing `name@version` is built produces an
-advisory drift warning and serves the cached output (see [Advisory drift](#advisory-drift)).
+creates a distinct artifact; changing how an existing `name@version` is built is refused
+before anything runs (see [Recipe drift](#recipe-drift)).
 
 In practice, experiment scripts rarely construct `ArtifactStep(...)` directly. Helpers such
 as `tokenized`, `hf_download`, and `train_lm` return the appropriate `ArtifactStep[T]` handle
@@ -131,13 +131,14 @@ guarantees is materialized first. `run`/`resolve` are the driver-level entry poi
 
 `StepRunner.run` applies two guards before executing each step:
 
-1. **Cache check** — if the output path's `.executor_status` reads `SUCCESS`, skip. A `dev`
-   version is mutable and always rebuilds.
+1. **Cache check** — if the output records a different recipe, the run is refused (see
+   [Recipe drift](#recipe-drift)). If the output path's `.executor_status` reads `SUCCESS`,
+   skip. A `dev` version is mutable and always rebuilds.
 2. **Lock** — prevents concurrent processes from building the same step twice.
 
 The standard `main` block in a Poorin experiment wraps `build` in the shared command-line
-options (`--version`, `--resume`, `--override`, `--max-concurrent`, `--run`); without `--run` it
-prints the plan:
+options (`--version`, `--resume`, `--override`, `--accept-drift`, `--max-concurrent`, `--run`);
+without `--run` it prints the plan:
 
 ```python
 from poorin.experiment.cli import experiment_main
@@ -149,25 +150,47 @@ if __name__ == "__main__":
 An experiment with options of its own stacks `@build_options` under its `@click.option`s, as
 `experiments/grug/base/launch.py` does.
 
-## Advisory drift
+## Recipe drift
 
 Each computed artifact records a **fingerprint** — a hash of its config, built with
 dependency versions substituted in place of paths and placeholders for every value drawn
 from `ctx`. The fingerprint captures hyperparameters and dep identities but is independent
 of the storage prefix, region, or hardware.
 
-When the runner encounters an existing artifact record, it compares the current fingerprint
-against the recorded one. A mismatch is **advisory**: the runner logs a warning and serves
-the cached output rather than raising an error. To produce a new result from an updated
-build, bump the `version`:
+An output records the fingerprint it was built from: in `.artifact.json` when the build
+finished, or in the `.executor_info` stub the runner writes when a build starts. Before
+anything runs, `run` checks every artifact in the graph against the fingerprint its output
+records, including dependencies that the runner would skip behind an already-built consumer.
+If any differ, the run is refused, and the error lists each changed artifact and its changed
+config fields:
+
+```text
+datasets/toy@2026.06.28: the output records recipe 1d3f2a9c, but the recipe is now 8b04e6f1.
+Changed config values:
+  payload: 'a' -> 'b'
+Change the version to build the new recipe, or pass --accept-drift datasets/toy to keep the output.
+```
+
+Two handles in one graph that build the same `name@version` from different recipes are refused
+too, whether or not the output exists.
+
+To build the new recipe, change the version:
 
 ```python
-# bump version to force a rebuild when the build changes
 return train_lm(name="checkpoints/dclm_7b_1x", version="2026.07.01", ...)
 ```
 
-During development, use a `dev` version string (e.g. `"dev"` or `"mylabel-dev"`) to opt out
-of the cache entirely and always rebuild.
+To keep the existing output, pass `--accept-drift NAME` (or `run(..., accept_drift={"NAME"})`).
+The output's record then carries the new fingerprint and keeps the old one in `accepted_from`,
+so later runs are clean; a started build resumes under the new recipe. Naming an artifact
+whose recipe did not change is an error.
+
+A `dev` version string (e.g. `"dev"` or `"mylabel-dev"`) is never served from cache: it
+always rebuilds. Its output still records its recipe, so rerunning the same `dev` version
+with a changed recipe is refused. The command line gives each `--version dev` invocation a
+fresh suffixed version, so only `--resume` reuses one.
+
+Pinned artifacts (`override_path`) are not checked, because they point at existing data.
 
 ## Adopting pre-existing data
 
@@ -189,9 +212,9 @@ dclm_tokenized = ArtifactStep.adopt(
 `kind` selects the handle's typed result, so a raw checkpoint path becomes a typed handle a
 consumer can read metrics from — e.g. `ArtifactStep.adopt(name, version, "gs://…", kind=LevanterCheckpoint)`.
 A consumer that depends on `dclm_tokenized` resolves to the source path. Running the adopted
-step writes a provenance record at the canonical `{prefix}/{name}/{version}` path so the advisory drift
-check governs the alias — re-adopting the same `name@version` from a different source logs
-a warning.
+step writes a provenance record at the canonical `{prefix}/{name}/{version}` path, so the drift
+check covers the alias: re-adopting the same `name@version` from a different source is
+refused.
 
 Use `ArtifactStep.adopt` for datasets tokenized outside the current experiment graph, for
 checkpoints produced by a separate run, or for any pre-existing artifact that needs to appear
@@ -229,7 +252,8 @@ The previous executor assigned each step an output path containing a hash of the
 config and all its transitive dependencies. A hyperparameter change silently re-addressed
 every downstream step, and the path gave no clue about what version of the data it held.
 
-Lazy artifacts address data by an explicit `{name}/{version}`. The fingerprint still
-catches accidental config drift (the advisory warning) and can be enforced by bumping the
-version at review time, but the storage path is stable and human-readable. Bumping a version
-is an explicit author decision, not an automatic consequence of any config change.
+Lazy artifacts address data by an explicit `{name}/{version}`, so the storage path is
+stable and human-readable. The fingerprint catches a config change under an existing
+`name@version` and refuses the run until the author changes the version or accepts the
+change. Bumping a version is an explicit author decision, not an automatic consequence of
+any config change.

@@ -260,7 +260,7 @@ the plan and the checks:
 
 ```python
 class CacheState(StrEnum):
-    PINNED = "pinned"                      # override_path or adopt_source: existing data, not checked
+    PINNED = "pinned"                      # override_path: existing data, not checked
     MUTABLE = "mutable"                    # a dev version: always builds (a resumed one continues)
     NOT_BUILT = "not built"                # calendar version, nothing at the path
     STARTED = "started"                    # calendar version, a stub but no SUCCESS: the build restarts
@@ -279,6 +279,10 @@ class HandleState:
 
 def handle_state(handle: ArtifactStep) -> HandleState: ...
 ```
+
+Pinned artifacts (`override_path`) are not checked, because they point at existing data. An
+adopted artifact is checked: its record at the canonical address names its source, so re-adopting
+from another source is refused.
 
 `graph_handles` moves from `cli.py` to `lazy.py`, beside `run`.
 

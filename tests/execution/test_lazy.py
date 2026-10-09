@@ -9,7 +9,7 @@ output path — end-to-end through the real ``StepRunner``, plus the ``apply`` s
 """
 
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 import pytest
 from fray.types import ResourceConfig
@@ -337,13 +337,8 @@ def test_resolve_raises_on_result_type_drift(tmp_path, monkeypatch):
     monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
     resolve(dclm_tokens())  # records artifact type Tokens at this address
 
-    drifted = ArtifactStep(
-        name="datasets/dclm_tokens",
-        version="2026.06.25",
-        artifact_type=OtherValue,
-        run=lambda cfg: OtherValue(),
-        build_config=lambda ctx: {"out": ctx.output_path},
-    )
+    # The same recipe, so the drift check passes it: the type is not part of the fingerprint.
+    drifted = replace(dclm_tokens(), artifact_type=OtherValue, run=lambda cfg: OtherValue())
     with pytest.raises(ArtifactTypeMismatchError):
         resolve(drifted)
 

@@ -100,6 +100,13 @@ def test_resume_reuses_the_given_version_verbatim(runner):
     assert _resolved_model_version(result.output) == "20261005-091500-a1b2-dev"
 
 
+def test_resume_with_nothing_to_resume_is_rejected(runner, tmp_path, monkeypatch):
+    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
+    result = runner.invoke(experiment_main(_build_two), ["--resume", "20261005-091500-a1b2-dev", "--run"])
+    assert result.exit_code != 0
+    assert "nothing to resume" in result.output
+
+
 def test_resume_rejects_a_calendar_version(runner):
     result = runner.invoke(experiment_main(_build_two), ["--resume", "2026.07.16"])
     assert result.exit_code != 0
@@ -145,6 +152,15 @@ def test_plan_reports_each_artifact_state(runner, tmp_path, monkeypatch):
     assert "payload: 'a' -> 'b'" in changed.output
     dev = runner.invoke(experiment_main(build("a")), ["--version", "dev"])
     assert "mutable" in dev.output
+
+
+def test_accept_drift_naming_an_unchanged_artifact_is_rejected(runner, tmp_path, monkeypatch):
+    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
+    result = runner.invoke(
+        experiment_main(_build_two), ["--version", "2026.07.16", "--accept-drift", "data/typo", "--run"]
+    )
+    assert result.exit_code != 0
+    assert "data/typo" in result.output
 
 
 def test_plan_rejects_a_calendar_artifact_that_depends_on_a_mutable_one(runner):
