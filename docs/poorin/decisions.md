@@ -1335,6 +1335,16 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
   at existing data, but the plan's `check_drift` compared them, so a pin to an output with another
   recipe raised an error whose `--accept-drift` advice the pre-run check then rejected. A pinned
   step carries `pinned` in its `hash_attrs`, and `check_drift` does not compare it.
+- **`GrugBaseLaunchConfig` is exempt from the tests' beartype hook** (`@no_type_check`, as
+  `GrugTrainState` is): while the fingerprint is computed, its runtime fields hold placeholder
+  strings. Computing grug's fingerprint under the hook failed on `resources` before this change.
+- **`train_lm` sets the tracker's `replicate_path` in `build_config`, not in its run function.** The
+  spec sets it in the run function, from the pod config's `output_path`. `train_lm` builds the
+  tracker inside `TrainerConfig`, and `ctx.output_path` is the value the pod config carries, so
+  `build_config` can set it directly; the run function would have to rebuild the nested trainer
+  config to replace it. At fingerprint time `_run_tracker` leaves the tracker's placeholder alone,
+  so the path never enters the fingerprint. Grug follows the spec: `_trackers` sets it from
+  `launch.output_path`.
 
 ---
 

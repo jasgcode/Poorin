@@ -18,6 +18,7 @@ This is deliberately **not** a ``default_train``: it bakes in no optimizer, no m
 no default eval suite, no learning rate. It only removes boilerplate.
 """
 
+import dataclasses
 import math
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
@@ -32,6 +33,7 @@ from levanter.eval_harness_config import LmEvalHarnessConfig
 from levanter.main.train_lm import TrainLmConfig
 from levanter.models.lm_model import LmConfig
 from levanter.optim.config import OptimizerConfig
+from levanter.tracker import TrackerConfig
 from levanter.tracker.wandb import WandbConfig
 from levanter.trainer import TrainerConfig
 from levanter.utils.mesh import MeshConfig
@@ -99,6 +101,12 @@ def _train_job(pod_config: TrainLmOnPodConfig) -> None:
     remote(run_levanter_train_lm, resources=pod_config.resources, env_vars=env_vars)(pod_config)
 
 
+def _run_tracker(ctx: StepContext) -> TrackerConfig:
+    """The W&B tracker from the runtime args, mirroring its metrics next to the run's output."""
+    tracker = ctx.runtime_arg("tracker")
+    return tracker if ctx.is_fingerprint else dataclasses.replace(tracker, replicate_path=ctx.output_path)
+
+
 def train_lm(
     *,
     name: str,
@@ -136,9 +144,10 @@ def train_lm(
 
     The remaining parameters are execution choices that do not define the experiment:
     ``mp`` (the standard marin precision, identity-bearing but universal),
-    ``tensor_parallel_size`` (model sharding width), eval/checkpoint cadence, tracker
-    metadata, and ``resources`` (the device the job asks for — a runtime arg, so it never
-    enters the checkpoint's fingerprint; ``LocalClient`` runs every job on this machine).
+    ``tensor_parallel_size`` (model sharding width), and eval/checkpoint cadence. Tracker
+    metadata (project, tags, group, run ID) and ``resources`` (the device the job asks for) are
+    runtime args, so they never enter the checkpoint's fingerprint; ``LocalClient`` runs every
+    job on this machine.
     ``init_from`` chains this run onto another checkpoint (it becomes a dep and seeds
     ``initialize_from_checkpoint_path``).
 
@@ -201,15 +210,8 @@ def train_lm(
         inner = TrainLmConfig(
             data=mixture(ctx, datasets, validation=validation),
             trainer=TrainerConfig(
-                id=tracker_id,
-                tracker=WandbConfig(
-                    project=wandb_project,
-                    name=tracker_id,
-                    tags=[*tags],
-                    group=wandb_group,
-                    # Mirror metrics next to the run's output so they outlive the job.
-                    replicate_path=ctx.output_path,
-                ),
+                id=ctx.runtime_arg("run_id"),
+                tracker=_run_tracker(ctx),
                 mp=jmp.get_policy(mp),
                 train_batch_size=batch_size,
                 per_device_parallelism=-1,
@@ -243,5 +245,9 @@ def train_lm(
         run=_train_job,
         build_config=build_config,
         deps=all_deps,
-        runtime_args={"train_resources": resources},
+        runtime_args={
+            "train_resources": resources,
+            "run_id": tracker_id,
+            "tracker": WandbConfig(project=wandb_project, name=tracker_id, tags=[*tags], group=wandb_group),
+        },
     )

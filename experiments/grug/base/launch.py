@@ -20,6 +20,7 @@ This launcher is Poorin's R2 prune root: it must train locally on one RTX 5090. 
 import dataclasses
 from dataclasses import dataclass
 from datetime import timedelta
+from typing import no_type_check
 
 import click
 import jmp
@@ -73,6 +74,9 @@ GRUG_130M_MODEL = GrugModelConfig(
 _LOCAL_MODEL = dataclasses.replace(GRUG_130M_MODEL, max_seq_len=1024)
 
 
+# Fields pulled from the step context hold placeholder strings such as "<train_resources>" while the
+# fingerprint is computed, which the tests' beartype hook would reject.
+@no_type_check
 @dataclass(frozen=True)
 class GrugBaseLaunchConfig:
     """Last-mile run config for the base grug template.
@@ -119,7 +123,8 @@ class GrugBaseLaunchConfig:
 def _trackers(launch: GrugBaseLaunchConfig) -> tuple[TrackerConfig, ...]:
     tracker = launch.tracker
     if isinstance(tracker, WandbConfig):
-        tracker = dataclasses.replace(tracker, name=launch.run_id)
+        # replicate_path mirrors the run's metrics next to its output so they outlive the job.
+        tracker = dataclasses.replace(tracker, name=launch.run_id, replicate_path=launch.output_path)
     return tracker, TelemetryConfig(finelog_url=launch.finelog_url)
 
 
@@ -206,19 +211,13 @@ def grug_base_trial(*, version: str | None = None, finelog_url: str | None = Non
             model=_LOCAL_MODEL,
             data=mixture(ctx, train),
             output_path=ctx.output_path,
-            run_id=run_id,
+            run_id=ctx.runtime_arg("run_id"),
             resources=ctx.runtime_arg("train_resources"),
             steps=50,
             batch_size=16,
             seed=0,
             mp="params=float32,compute=bfloat16,output=bfloat16",
-            tracker=WandbConfig(
-                project="poorin",
-                tags=["grug", "template"],
-                group="grug-base-trial",
-                name=None,  # filled from run_id in _trackers
-                replicate_path=ctx.output_path,
-            ),
+            tracker=ctx.runtime_arg("tracker"),
             finelog_url=ctx.runtime_arg("finelog_url"),
             optimizer=AdamConfig(
                 learning_rate=3e-3,
@@ -232,7 +231,7 @@ def grug_base_trial(*, version: str | None = None, finelog_url: str | None = Non
             backward_flow_interval=0,
             z_loss_weight=1e-4,
             ema_beta=None,
-            log_every=1,
+            log_every=ctx.runtime_arg("log_every"),
             eval_batch_size=None,
         )
 
@@ -243,7 +242,13 @@ def grug_base_trial(*, version: str | None = None, finelog_url: str | None = Non
         run=run_grug_base_trial,
         build_config=build_config,
         deps=tuple(train),
-        runtime_args={"train_resources": _TRAIN_RESOURCES, "finelog_url": finelog_url},
+        runtime_args={
+            "train_resources": _TRAIN_RESOURCES,
+            "finelog_url": finelog_url,
+            "run_id": run_id,
+            "tracker": WandbConfig(project="poorin", tags=["grug", "template"], group="grug-base-trial", name=None),
+            "log_every": 1,
+        },
     )
 
 
