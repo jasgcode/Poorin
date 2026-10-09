@@ -40,12 +40,25 @@ class OverrideError(ValueError):
 
 
 def _normalized(text: str) -> str:
-    """``text`` in one spelling when it is a number, so ``1e-3`` and ``0.001`` name the same artifact."""
-    for parse in (int, float):
-        try:
-            return repr(parse(text))
-        except ValueError:
-            continue
+    """``text`` in one spelling when it reads as a number or a boolean, so ``1e-3`` and ``0.001`` name
+    the same artifact and ``010`` is named for the 8 it decodes to.
+
+    YAML reads the value first, as the field will. YAML 1.1 reads ``1e-3`` (no dot) as a string,
+    which Python's ``float`` then reads, as draccus does for a float field. Any other value, or text
+    YAML cannot read, keeps its text.
+    """
+    try:
+        value = parse_string(text)
+    except yaml.YAMLError:
+        return text.strip()
+    if isinstance(value, bool | int | float):
+        return repr(value)
+    if isinstance(value, str):
+        for parse in (int, float):
+            try:
+                return repr(parse(value))
+            except ValueError:
+                continue
     return text.strip()
 
 
@@ -126,7 +139,9 @@ def _field_types(cls: type) -> dict[str, Any]:
 
     ``typing.get_type_hints`` returns nothing for a class marked ``@no_type_check``, as grug's launch
     config is (so the tests' beartype hook accepts the placeholders a fingerprint puts in its fields).
-    Decoding still needs the annotations, so this reads each class's own.
+    Decoding still needs the annotations, so this reads each class's own. Only an annotation written
+    whole as a string is evaluated: ``Annotated`` is not unwrapped, and a string forward reference
+    nested inside a generic (``list["Foo"]``) is not resolved.
     """
     types: dict[str, Any] = {}
     for base in reversed(cls.__mro__):

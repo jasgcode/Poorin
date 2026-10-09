@@ -74,9 +74,10 @@ uv run --no-sync python experiments/grug/base/launch.py --version 2026.10.09 \
     --sweep 'optimizer.learning_rate=[1e-3, 3e-3, 1e-2]' --max-concurrent 1 --run
 ```
 
-A sweep with more than one trial needs `--max-concurrent`; `1` trains the trials one after another
-on one GPU. Under a calendar version, rerunning the sweep builds only the trials that are missing;
-under `dev`, each invocation runs every trial.
+A `--run` of a sweep with more than one trial needs `--max-concurrent 1`, which trains the trials
+one after another. The trials run in one process, whose Levanter tracker and W&B run they would
+otherwise share. Under a calendar version, rerunning the sweep builds only the trials that are
+missing; under `dev`, each invocation runs every trial.
 
 ## Diffing a variant against base
 

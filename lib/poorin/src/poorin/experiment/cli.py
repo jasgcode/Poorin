@@ -65,7 +65,7 @@ from poorin.execution.artifact import (
     validate_version,
 )
 from poorin.execution.build_context import BuildContext, VersionCodex, build_context
-from poorin.execution.cache_state import HandleState, handle_state
+from poorin.execution.cache_state import HandleState, check_accept_drift, handle_state
 from poorin.execution.lazy import ArtifactStep, graph_handles, lower, run
 from poorin.experiment.overrides import Override, OverrideError, Overrides
 from poorin.experiment.sweep import grid
@@ -73,8 +73,9 @@ from poorin.experiment.sweep import grid
 BuildResult = ArtifactStep | Mapping[str, ArtifactStep] | list[ArtifactStep] | tuple[ArtifactStep, ...]
 BuildRunner = Callable[[list[ArtifactStep], int, frozenset[str]], None]
 
-# Steps built at once when --max-concurrent is not given. A sweep with more than one trial must
-# pass it: Fray's LocalClient runs jobs as threads in one process, so 8 trials would share one GPU.
+# Steps built at once when --max-concurrent is not given. A run of a sweep with more than one trial
+# must pass 1: Fray's LocalClient runs jobs as threads in one process, and Levanter's tracker and
+# the W&B run are process-global, so concurrent trials would log into one run.
 DEFAULT_MAX_CONCURRENT = 8
 
 
@@ -269,10 +270,10 @@ def build_options_with_runner(fn: Callable[..., BuildResult], runner: BuildRunne
     )
     @click.option(
         "--max-concurrent",
-        type=int,
+        type=click.IntRange(min=1),
         default=None,
-        help=f"Max steps built concurrently (default {DEFAULT_MAX_CONCURRENT}; "
-        "required when --sweep builds more than one trial).",
+        help=f"Max steps built concurrently (default {DEFAULT_MAX_CONCURRENT}). A --run of a sweep "
+        "with more than one trial must pass 1.",
     )
     @functools.wraps(fn)
     def wrapper(
@@ -298,9 +299,10 @@ def build_options_with_runner(fn: Callable[..., BuildResult], runner: BuildRunne
         if is_mutable_version(version):
             click.echo(f"Run version: {version} (continue this run with --resume {version})")
         points = grid(**sweeps) if sweeps else [{}]
-        if len(points) > 1 and max_concurrent is None:
+        if do_run and len(points) > 1 and max_concurrent != 1:
             raise click.UsageError(
-                f"--sweep builds {len(points)} trials; pass --max-concurrent (1 runs them one after another on one GPU)"
+                f"--sweep builds {len(points)} trials, which must run one at a time: trials in one process "
+                "share Levanter's and W&B's process-global tracker run. Pass --max-concurrent 1."
             )
         codex = VersionCodex(default=version, by_name=versions_of)
         try:
@@ -328,22 +330,22 @@ def build_options_with_runner(fn: Callable[..., BuildResult], runner: BuildRunne
             )
         if show_config and do_run:
             raise click.UsageError("--show-config prints the plan; it cannot be combined with --run")
-        if not do_run:
-            for handle in handles:
-                lower(handle)  # run() lowers too; the plan lowers to reject a graph it could not run
-            returned = {id(h) for h in handles}
-            _print_plan(states, [s for s in states if id(s.handle) in returned] if show_config else [])
-            return
+        returned = {id(h) for h in handles}
         if resume_version is not None:
-            returned = {id(h) for h in handles}
             empty = [s.label for s in states if id(s.handle) in returned and s.recorded_fingerprint is None]
             if empty:
                 raise click.UsageError(
                     f"nothing to resume at {empty}: no run started there. "
                     "Check that the --set flags match the original run's."
                 )
-        concurrency = DEFAULT_MAX_CONCURRENT if max_concurrent is None else max_concurrent
         try:
+            if not do_run:
+                for handle in handles:
+                    lower(handle)  # run() lowers too; the plan lowers to reject a graph it could not run
+                check_accept_drift(states, accept_drift)  # as --run would, so a typo shows in the plan
+                _print_plan(states, [s for s in states if id(s.handle) in returned] if show_config else [])
+                return
+            concurrency = DEFAULT_MAX_CONCURRENT if max_concurrent is None else max_concurrent
             runner(handles, concurrency, frozenset(accept_drift))
         except (FingerprintMismatchError, DriftAcceptanceError) as e:
             raise click.ClickException(str(e)) from e

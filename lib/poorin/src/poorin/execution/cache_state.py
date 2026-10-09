@@ -9,6 +9,7 @@ The plan that ``poorin.experiment.cli`` prints and the drift check in
 will do. Handles are typed by a protocol so that ``lazy`` can import this module.
 """
 
+from collections.abc import Collection, Iterable
 from dataclasses import dataclass
 from enum import StrEnum
 from typing import Protocol
@@ -16,7 +17,7 @@ from typing import Protocol
 from rigging.filesystem.cluster_config import poorin_prefix
 from rigging.filesystem.storage_path import prefix_join
 
-from poorin.execution.artifact import is_mutable_version, recorded_recipe
+from poorin.execution.artifact import DriftAcceptanceError, is_mutable_version, recorded_recipe
 from poorin.execution.fingerprint import describe_drift, fingerprint_hash
 from poorin.execution.step_status import STATUS_SUCCESS, StatusFile
 
@@ -82,3 +83,12 @@ def handle_state(handle: Handle) -> HandleState:
     if recorded is not None:
         return HandleState(handle, fingerprint, CacheState.STARTED, recorded_fingerprint, "")
     return HandleState(handle, fingerprint, CacheState.NOT_BUILT, None, "")
+
+
+def check_accept_drift(states: Iterable[HandleState], accept_drift: Collection[str]) -> None:
+    """Raise :class:`DriftAcceptanceError` if ``accept_drift`` names an artifact none of ``states``
+    shows as drifted: a typo, or a stale flag."""
+    drifted = {state.handle.name for state in states if state.state is CacheState.DRIFTED}
+    unknown = sorted(set(accept_drift) - drifted)
+    if unknown:
+        raise DriftAcceptanceError(f"accept_drift names artifacts whose recipe did not change: {unknown}")

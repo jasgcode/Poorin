@@ -1370,6 +1370,21 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
   the relative `config/testing` resolved under its temporary directory and the load failed. The
   test passed only when an earlier test in the same process had cached the config; this commit's
   tests changed that order. `conftest.py` now anchors the directory to the checkout.
+- **A run of a sweep with more than one trial needs `--max-concurrent 1`.** The spec required an
+  explicit `--max-concurrent` so the default of 8 would not start 8 trainings on one GPU.
+  Correctness requires 1: Fray's `LocalClient` runs each trial's job as a thread of one process,
+  Levanter's tracker is process-global, and outside a notebook a second `wandb.init` returns the
+  W&B run the process already has open. Trials running at once log into one W&B run and can write
+  `tracker_metrics.jsonl` into another trial's output, which sweep selection reads. Under `--run`,
+  any other value, and no flag, is a usage error; the plan and `--show-config` need no flag.
+  `--max-concurrent` accepts only positive integers, because the runner read 0 as its default.
+  The rule holds until each trial gets its own tracker.
+- **An override's name spells the value YAML reads.** The plan normalized a value's text with
+  Python's `int` and `float`, so `steps=010`, which YAML 1.1 decodes to 8, named its trial
+  `steps=10`. The name now starts from YAML's reading: a number or a boolean is spelled as Python
+  writes it, and a string that Python reads as a number is spelled as that number, so `1e-3`,
+  which YAML 1.1 reads as a string, still shares a name with `0.001`. Text YAML cannot read keeps
+  its spelling, and `apply` reports the error.
 
 ---
 

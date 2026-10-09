@@ -48,7 +48,6 @@ from poorin.execution.artifact import (
     VERSION_KEY,
     Artifact,
     ArtifactRecord,
-    DriftAcceptanceError,
     FingerprintMismatchError,
     accept_recipe,
     drift_message,
@@ -59,7 +58,7 @@ from poorin.execution.artifact import (
     write_record,
 )
 from poorin.execution.build_context import resolve_version
-from poorin.execution.cache_state import CacheState, HandleState, handle_state, record_path
+from poorin.execution.cache_state import CacheState, HandleState, check_accept_drift, handle_state, record_path
 from poorin.execution.fingerprint import canonical_json, fingerprint_hash
 from poorin.execution.step_runner import StepRunner
 from poorin.execution.step_spec import StepSpec, _is_relative_path
@@ -433,10 +432,8 @@ def _refuse_drift(handles: list["ArtifactStep"], accept_drift: Collection[str]) 
                 f"{state.label} is built from two recipes in this graph, {first.fingerprint} and "
                 f"{state.fingerprint}. Give each recipe its own name or version."
             )
+    check_accept_drift(states.values(), accept_drift)
     drifted = [s for s in states.values() if s.state is CacheState.DRIFTED]
-    unknown = sorted(set(accept_drift) - {s.handle.name for s in drifted})
-    if unknown:
-        raise DriftAcceptanceError(f"accept_drift names artifacts whose recipe did not change: {unknown}")
     refused = [s for s in drifted if s.handle.name not in accept_drift]
     if refused:
         raise FingerprintMismatchError(

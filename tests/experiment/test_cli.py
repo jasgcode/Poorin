@@ -100,15 +100,20 @@ def test_each_dev_invocation_resolves_to_a_different_mutable_version(runner):
     assert v1.endswith("-dev") and v2.endswith("-dev")
 
 
-def test_resume_reuses_the_given_version_verbatim(runner):
-    result = runner.invoke(experiment_main(_build_two), ["--resume", "20261005-091500-a1b2-dev"])
-    assert result.exit_code == 0, result.output
-    assert _resolved_model_version(result.output) == "20261005-091500-a1b2-dev"
-
-
-def test_resume_with_nothing_to_resume_is_rejected(runner, tmp_path, monkeypatch):
+def test_resume_continues_the_version_an_earlier_run_printed(runner, tmp_path, monkeypatch):
     monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
-    result = runner.invoke(experiment_main(_build_two), ["--resume", "20261005-091500-a1b2-dev", "--run"])
+    started = runner.invoke(experiment_main(_build_two), ["--version", "dev", "--run"])
+    assert started.exit_code == 0, started.output
+    (version,) = re.findall(r"--resume (\S+)\)", started.output)
+    resumed = runner.invoke(experiment_main(_build_two), ["--resume", version])
+    assert resumed.exit_code == 0, resumed.output
+    assert _resolved_model_version(resumed.output) == version
+
+
+@pytest.mark.parametrize("mode", [[], ["--run"]])
+def test_resume_with_nothing_to_resume_is_rejected(runner, tmp_path, monkeypatch, mode):
+    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
+    result = runner.invoke(experiment_main(_build_two), ["--resume", "20261005-091500-a1b2-dev", *mode])
     assert result.exit_code != 0
     assert "nothing to resume" in result.output
 
@@ -160,10 +165,12 @@ def test_plan_reports_each_artifact_state(runner, tmp_path, monkeypatch):
     assert "mutable" in dev.output
 
 
-def test_accept_drift_naming_an_unchanged_artifact_is_rejected(runner, tmp_path, monkeypatch):
+@pytest.mark.parametrize("mode", [[], ["--run"]])
+def test_accept_drift_naming_an_unchanged_artifact_is_rejected(runner, tmp_path, monkeypatch, mode):
+    # The plan rejects the name as --run does, so a typo shows before the run it would fail.
     monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
     result = runner.invoke(
-        experiment_main(_build_two), ["--version", "2026.07.16", "--accept-drift", "data/typo", "--run"]
+        experiment_main(_build_two), ["--version", "2026.07.16", "--accept-drift", "data/typo", *mode]
     )
     assert result.exit_code != 0
     assert "data/typo" in result.output
@@ -241,7 +248,7 @@ def test_a_rerun_sweep_runs_only_its_missing_trials(runner, tmp_path, monkeypatc
 def test_a_sweep_over_sub_configs_names_each_trial_by_digest(runner, tmp_path, monkeypatch):
     monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
     sweep = ["--sweep", "optimizer=[{type: adam}, {type: muon}]", "--show-config"]
-    result = runner.invoke(experiment_main(_knob_trial), ["--version", "2026.07.16", "--max-concurrent", "1", *sweep])
+    result = runner.invoke(experiment_main(_knob_trial), ["--version", "2026.07.16", *sweep])
     assert result.exit_code == 0, result.output
     names = {line.split()[-1] for line in result.output.splitlines() if "models/knobs/set-" in line}
     assert len(names) == 2
@@ -261,10 +268,16 @@ def test_a_sweep_over_quoted_strings_records_the_strings_typed(runner, tmp_path,
     assert len({out.parent.name for out in outputs}) == 3
 
 
-def test_a_sweep_needs_an_explicit_max_concurrent(runner):
-    result = runner.invoke(experiment_main(_knob_trial), ["--version", "dev", "--sweep", "lr=[1e-3, 3e-3]"])
+@pytest.mark.parametrize("concurrency", [[], ["--max-concurrent", "2"], ["--max-concurrent", "0"]])
+def test_a_sweep_runs_only_with_one_trial_at_a_time(runner, tmp_path, monkeypatch, concurrency):
+    # Trials run as threads of one process, which share Levanter's and W&B's process-global
+    # tracker run, so concurrent trials would log into one run. 0 used to slip past the rule.
+    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
+    args = ["--version", "2026.07.16", "--sweep", "lr=[1e-3, 3e-3]", *concurrency, "--run"]
+    result = runner.invoke(experiment_main(_knob_trial), args)
     assert result.exit_code != 0
     assert "--max-concurrent" in result.output
+    assert not list(tmp_path.rglob("done"))
 
 
 def test_an_override_the_experiment_ignores_is_rejected(runner):

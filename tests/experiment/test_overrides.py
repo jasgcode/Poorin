@@ -116,6 +116,14 @@ def test_a_trial_is_named_by_its_overrides_with_numbers_in_one_spelling():
     assert Overrides().named("grug/base") == "grug/base"
 
 
+def test_a_trial_is_named_for_the_value_its_override_decodes_to():
+    # YAML 1.1 reads 010 as octal 8, so the field gets 8 and the name must say so.
+    assert _set("trainer.steps=010").apply(FINGERPRINT, _config()).trainer.steps == 8
+    assert _set("trainer.steps=010").named("x") == _set("trainer.steps=8").named("x")
+    # A value YAML cannot read still names its trial; apply() reports it.
+    assert _set("trainer.steps={").named("x").startswith("x/set-")
+
+
 def test_a_value_with_a_comma_or_equals_takes_the_digest_name():
     # "mp=a=b,c=d" could otherwise read like two overrides another set might spell the same way.
     name = _set("mp=params=float32,compute=bfloat16").named("grug/base")

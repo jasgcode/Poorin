@@ -100,7 +100,7 @@ python experiments/grug/base/launch.py --version dev --set steps=200 --show-conf
 | `--show-config` | Print the plan and each returned handle's identity config as YAML. An error with `--run`. |
 | `--accept-drift NAME` | Accept a changed recipe for the artifact named `NAME` (the part before `@` in the plan) and re-stamp its record. Repeatable. |
 | `--version-of NAME=VERSION` | The old `--override`, renamed so it is not confused with `--set`. Same behavior; no alias. |
-| `--max-concurrent N` | Unchanged default of 8, except that a sweep with more than one trial requires it explicitly. Fray's `LocalClient` runs jobs as threads in one process, so the default would start up to 8 trainings on one GPU. |
+| `--max-concurrent N` | Unchanged default of 8, except that a `--run` of a sweep with more than one trial requires `--max-concurrent 1` (D94). Fray's `LocalClient` runs jobs as threads in one process, whose Levanter tracker and W&B run the trials would share. |
 
 Errors, all raised before any step runs:
 
@@ -112,7 +112,7 @@ Errors, all raised before any step runs:
 - the same path set twice in one trial;
 - an override the experiment never applied (it ignores its `overrides` argument);
 - an `--accept-drift` name that matches no drifted artifact;
-- `--sweep` with more than one trial and no `--max-concurrent`.
+- `--run` of a `--sweep` with more than one trial, without `--max-concurrent 1`.
 
 ### The plan
 

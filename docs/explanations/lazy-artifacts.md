@@ -227,11 +227,13 @@ step context (the output path, a runtime argument such as the tracker, or a depe
 that sets a field twice, or a field and one beneath it; and an override the experiment never
 applied.
 
-A sweep with more than one trial requires `--max-concurrent`. Fray's local client runs jobs as
-threads in one process, so the default of 8 would start up to 8 trainings on one GPU;
-`--max-concurrent 1` runs them one after another. With a calendar version, a rerun builds only
-the trials that are missing, and a longer value list builds only the new values. With `dev`,
-every invocation runs every trial at a fresh version.
+A `--run` of a sweep with more than one trial requires `--max-concurrent 1`, which runs the
+trials one after another. Fray's local client runs jobs as threads in one process, and Levanter's
+tracker and the W&B run belong to the process, so trials running at once would log into one W&B
+run and could write their metrics into each other's output. The plan and `--show-config` of a
+sweep need no flag. With a calendar version, a rerun builds only the trials that are missing, and
+a longer value list builds only the new values. With `dev`, every invocation runs every trial at a
+fresh version.
 
 `--set` edits the finished config, so a value the experiment derives from another field in Python
 does not follow it. The tutorial passes `seq_len=model.max_seq_len` to `train_lm`, so
