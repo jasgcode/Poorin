@@ -98,7 +98,7 @@ def build(*, device: str, data: str, overrides: Overrides) -> ArtifactStep[Levan
     return train_lm(
         name=f"checkpoints/tiny-{data}-{device}",
         # A run without an explicit id takes the last segment of its output path, which is the
-        # version: every tutorial run would report into one W&B run named "dev".
+        # version: every tutorial run at one version would report into one W&B run named after it.
         run_id=f"tiny-{data}-{device}",
         model=model,
         optimizer=AdamConfig(learning_rate=6e-4, weight_decay=0.1),

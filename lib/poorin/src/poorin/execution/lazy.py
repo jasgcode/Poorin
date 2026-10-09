@@ -475,8 +475,11 @@ def run(
 def lower(handle: "ArtifactStep") -> StepSpec:
     """Lower ``handle``'s graph into a ``StepSpec`` the ``StepRunner`` can run.
 
-    Captures provenance once and threads it through the graph; for the
-    ``StepRunner().run([lower(step) for step in steps])`` idiom.
+    Captures provenance once and threads it through the graph. Lowering validates the graph:
+    :mod:`poorin.experiment.cli` lowers the plan it prints, to reject a graph it could not run. To
+    build handles, call :func:`run`. ``StepRunner().run`` on lowered specs skips ``run``'s
+    whole-graph drift check, which covers dependencies the runner prunes behind a built consumer
+    and two recipes for one ``name@version``.
     """
     return _lower(handle, Provenance.capture())
 

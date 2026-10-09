@@ -96,19 +96,20 @@ tinystories_tokenized = tokenized(
     name="tokenized/tinystories",
     source="roneneldan/TinyStories",
     tokenizer=marin_tokenizer,
+    version="2026.06.28",
     sample_count=1000,  # cap at 1 000 samples per shard to keep the tutorial fast
 )
 
 # 2. Train the model — depends on the tokenized dataset above.
 nano_tinystories_model = train_lm(
     name="checkpoints/marin-nano-tinystories",
-    version="v1",
+    version="2026.06.28",
     model=llama_nano,
     optimizer=AdamConfig(learning_rate=6e-4, weight_decay=0.1),
     # Steps can depend on other steps: nano_tinystories_model depends on tinystories_tokenized
     datasets={tinystories_tokenized: 1.0},
     batch_size=4,
-    seq_len=2048,
+    seq_len=llama_nano.max_seq_len,
     num_train_steps=100,
     z_loss_weight=None,
     evals=None,  # no point evaluating such a tiny model

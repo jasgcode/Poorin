@@ -88,3 +88,6 @@ date,phase,step,first_party_lines,reachable_lines,reachable_modules,r1_imported_
 2026-10-09,Overrides,Run sweep trials one at a time and check more in the plan,133425,132447,424,6495,4.01,70.0,33.4,8017593418
 2026-10-09,Overrides,Fix drift acceptance and refuse overrides of derived paths,133429,132451,424,6495,3.68,69.3,30.6,8017593418
 2026-10-09,Cleanup,Keep only the launch config's environment variables,133394,132416,424,6495,3.85,69.4,32.8,8017593418
+2026-10-09,Cleanup,Name a quoted override value by its text,133430,132452,424,6495,3.87,67.6,29.4,7929368792
+2026-10-09,Cleanup,Give each calendar version of a run its own tracker ID,133429,132451,424,6495,3.76,68.2,28.5,7929368792
+2026-10-09,Cleanup,Correct how the docs describe run() and lower(),133432,132454,424,6495,3.73,68.2,28.6,7929368792

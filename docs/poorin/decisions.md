@@ -334,7 +334,8 @@ from the final review of the branch.
 
 ### D31. Each `dev` run gets a fresh output path
 
-- **When:** 2026-10-05, P0. **Status:** Adopted.
+- **When:** 2026-10-05, P0. **Status:** Adopted; superseded in part by D97 (a calendar version's
+  tracker run ID carries the version too).
 - **Decision:** `--version dev` resolves to `{YYYYmmdd-HHMMSS}-{4 hex}-dev` and `<label>-dev` to
   `<label>-{YYYYmmdd-HHMMSS}-{4 hex}-dev`. The launcher prints the version, `--resume <version>`
   continues that run, and `train_lm` suffixes the tracker run ID the same way. Calendar versions
@@ -1322,7 +1323,8 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
 
 ### D94. Rulings while building D92
 
-- **When:** 2026-10-09, building D92. **Status:** Adopted.
+- **When:** 2026-10-09, building D92. **Status:** Adopted; superseded in part by D96 (a quoted
+  override value keeps its quotes in the trial's name).
 - **Adopted artifacts are drift-checked.** The spec exempted them with pins, but an adopted
   artifact writes a record at its canonical address, and re-adopting the same `name@version` from
   another source must be refused, as it was warned about before.
@@ -1412,6 +1414,42 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
 - **Cost if wrong:** A config file that still sets a removed field fails to load, because draccus
   rejects unknown keys. No such file exists on this workstation. A file under the Marin path is
   no longer read.
+
+### D96. A quoted override value keeps its quotes in the trial's name
+
+- **When:** 2026-10-09, after the D92 review. **Status:** Adopted.
+- **Decision:** An override's name spells a YAML string as the number Python reads from it only
+  when the value was unquoted, that is, when YAML's reading equals the text. A quoted value keeps
+  its text, quotes included, so its trial takes the digest name. This narrows D94's ruling that a
+  string Python reads as a number is spelled as that number.
+- **Why:** YAML strips the quotes, so on a `str` field `--set label='010'` decodes to the text
+  `010` but was named `label=10`, the name `--set label=10` gets for the text `10`. The drift check
+  refused whichever ran second, so no stale output was served, but the name misstated the value.
+  `1e-3` is unquoted, so it still shares a name with `0.001`.
+- **Alternatives:** Name a quoted value by the text inside the quotes. On a `str` field,
+  `'0.001'` would then share the name `0.001` with an unquoted `1e-3`, which decodes to the text
+  `1e-3`.
+- **Cost if wrong:** A quoted number on a numeric field, such as `steps='10'`, decodes to the
+  value `steps=10` gives but names a separate trial, which builds again. One misleading name
+  remains: the name is computed without the field's type, so on a `str` field `1e-3` and `0.001`
+  share a name while decoding to different text; the drift check refuses the second, as before.
+
+### D97. Each calendar version of a training run gets its own tracker ID
+
+- **When:** 2026-10-09, after the D92 review. **Status:** Adopted.
+- **Decision:** `train_lm` gives its tracker run the ID `{run_id}-{version}` for every version, and
+  a trial appends its overrides' digest. D31 suffixed only a `dev` version; a calendar version got
+  `{run_id}`. Grug's ID already carries the version (`grug-base-{version}`).
+- **Why:** Two calendar versions of one run are two outputs, but they shared a W&B run. Levanter's
+  W&B tracker resumes a run by ID (`resume="allow"`) and refuses to log a step below the resumed
+  run's current step, so the later version's metrics up to the earlier version's last step never
+  reached W&B, and the `tracker_metrics.jsonl` it writes from the W&B run's summary could carry
+  the earlier version's values. A rerun of one version keeps its ID, so a run resumed after a crash
+  continues its W&B run.
+- **Alternatives:** Keep `{run_id}` and leave the author to change `run_id` with each version.
+- **Cost if wrong:** A calendar-versioned run started before this change and resumed after it
+  opens a new W&B run, so its history splits across two. W&B run IDs and names grow by the
+  version, 11 characters for `-2026.10.09`.
 
 ---
 
