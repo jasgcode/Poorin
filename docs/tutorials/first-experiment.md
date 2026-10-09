@@ -124,10 +124,11 @@ if __name__ == "__main__":
     run(build())
 ```
 
-`run(build())` first checks every artifact in the dependency graph from `build()` against
-the recipe its output records, and refuses one whose recipe changed under the same version
-(see [Recipe drift](../explanations/lazy-artifacts.md#recipe-drift)). It then lowers each
-handle into a `StepSpec`, checks the cache for each step, and runs any that are missing. An
+`run(build())` first lowers each handle in the dependency graph from `build()` into a
+`StepSpec`, the form of a step that the runner executes. Before anything runs, it checks every
+artifact in the graph against the recipe its output records, and refuses one whose recipe
+changed under the same version (see [Recipe drift](../explanations/lazy-artifacts.md#recipe-drift)).
+It then checks the cache for each step and runs any that are missing. An
 experiment run from the command line wraps `build` in `experiment_main` instead, which adds
 `--version`, `--set`, and the other shared options (see
 [Lazy artifacts](../explanations/lazy-artifacts.md)).
