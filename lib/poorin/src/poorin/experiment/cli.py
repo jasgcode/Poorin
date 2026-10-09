@@ -272,8 +272,7 @@ def build_options_with_runner(fn: Callable[..., BuildResult], runner: BuildRunne
         "--max-concurrent",
         type=click.IntRange(min=1),
         default=None,
-        help=f"Max steps built concurrently (default {DEFAULT_MAX_CONCURRENT}). A --run of a sweep "
-        "with more than one trial must pass 1.",
+        help=f"Max steps built concurrently (default {DEFAULT_MAX_CONCURRENT}). Trainings run one at a time.",
     )
     @functools.wraps(fn)
     def wrapper(
@@ -299,11 +298,6 @@ def build_options_with_runner(fn: Callable[..., BuildResult], runner: BuildRunne
         if is_mutable_version(version):
             click.echo(f"Run version: {version} (continue this run with --resume {version})")
         points = grid(**sweeps) if sweeps else [{}]
-        if do_run and len(points) > 1 and max_concurrent != 1:
-            raise click.UsageError(
-                f"--sweep builds {len(points)} trials, which must run one at a time: trials in one process "
-                "share Levanter's and W&B's process-global tracker run. Pass --max-concurrent 1."
-            )
         codex = VersionCodex(default=version, by_name=versions_of)
         try:
             trials = [

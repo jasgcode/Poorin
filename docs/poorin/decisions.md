@@ -1324,7 +1324,8 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
 ### D94. Rulings while building D92
 
 - **When:** 2026-10-09, building D92. **Status:** Adopted; superseded in part by D96 (a quoted
-  override value keeps its quotes in the trial's name).
+  override value keeps its quotes in the trial's name) and D98 (trainings run one at a time, so a
+  multi-trial `--sweep` no longer needs `--max-concurrent 1`).
 - **Adopted artifacts are drift-checked.** The spec exempted them with pins, but an adopted
   artifact writes a record at its canonical address, and re-adopting the same `name@version` from
   another source must be refused, as it was warned about before.
@@ -1380,7 +1381,8 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
   `tracker_metrics.jsonl` into another trial's output, which sweep selection reads. Under `--run`,
   any other value, and no flag, is a usage error; the plan and `--show-config` need no flag.
   `--max-concurrent` accepts only positive integers, because the runner read 0 as its default.
-  The rule holds until each trial gets its own tracker.
+  The rule holds until each trial gets its own tracker. **Superseded by D98**, which runs a
+  process's trainings one at a time; `--max-concurrent` still accepts only positive integers.
 - **An override's name spells the value YAML reads.** The plan normalized a value's text with
   Python's `int` and `float`, so `steps=010`, which YAML 1.1 decodes to 8, named its trial
   `steps=10`. The name now starts from YAML's reading: a number or a boolean is spelled as Python
@@ -1450,6 +1452,37 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
 - **Cost if wrong:** A calendar-versioned run started before this change and resumed after it
   opens a new W&B run, so its history splits across two. W&B run IDs and names grow by the
   version, 11 characters for `-2026.10.09`.
+
+### D98. One training at a time in a process
+
+- **When:** 2026-10-09. **Status:** Adopted.
+- **Decision:** A training holds a process-wide lock, `poorin.training.training.exclusive_training`,
+  for its whole run. `run_levanter_train_lm`, `run_levanter_train_dpo`, and grug's Fray job
+  (`dispatch_grug_training_run`) take it. A training that would start while another runs in the
+  same process waits for it to finish. Other steps still run up to `max_concurrent` at once. The
+  command line no longer requires `--max-concurrent 1` for a `--run` of a sweep with more than one
+  trial (D94).
+- **Why:** Fray's `LocalClient` runs each job as a thread of the process. Levanter's tracker is a
+  process global: `TrainerConfig.initialize` replaces it, and grug ends by finishing
+  `current_tracker()`. Outside a notebook, a second `wandb.init` returns the W&B run the process
+  already has open. D94's rule, `--max-concurrent 1` for a `--run` of a `--sweep`, covered only that
+  flag; a sweep built in Python and run with `run` at its default `max_concurrent=8`, or any graph
+  with several training steps, still started trainings at once. Two one-step grug runs on CPU,
+  started together, both logged into the tracker of the run that started second. That tracker was
+  finished twice, once by each run, and the first run's tracker never finished.
+  `test_grug_runs_started_together_each_log_to_their_own_tracker` reproduces it.
+- **Alternatives:** A tracker per job: a `ContextVar` in place of Levanter's global, W&B runs
+  created with `reinit="create_new"`, and `WandbConfig.init` writing through its own run in place of
+  the module globals `wandb.summary` and `wandb.run`. Two trainings would still share the rest of
+  the process: each run adds a file handler to the root logger, so each run's log file would get
+  both runs' lines, and they would share `os.environ` and GPU memory. Refusing a second
+  training with an error: a sweep would fail at whichever trial started second, and whether it
+  failed would depend on timing. Taking the lock in `TrainerConfig.initialize` and releasing it in
+  `finish`: a training that raised in between would keep it, and the next training would hang.
+- **Cost if wrong:** Trainings that could share the process, such as two small CPU runs, run one
+  after another. Another Levanter main run in-process, such as an evaluation that calls
+  `levanter.trainer.initialize`, does not take the lock and still shares the tracker; no step runs
+  such a main today.
 
 ---
 

@@ -10,7 +10,7 @@ from typing import TypeVar
 from fray.current_client import current_client
 from fray.types import Entrypoint, JobRequest, ResourceConfig, create_environment
 from poorin.training.run_environment import extras_for_resources
-from poorin.training.training import resolve_training_env
+from poorin.training.training import exclusive_training, resolve_training_env
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +32,11 @@ def _forwarded_env_vars() -> dict[str, str]:
         for k, v in os.environ.items()
         if (k in _FORWARDED_ENV_NAMES or k.startswith(_FORWARDED_ENV_PREFIXES)) and k not in _FORWARDED_ENV_EXCLUDE
     }
+
+
+def _train_exclusively(local_entrypoint: Callable[[ConfigT], None], run_id: str, config: ConfigT) -> None:
+    with exclusive_training(run_id):
+        local_entrypoint(config)
 
 
 def _safe_job_suffix(run_id: str) -> str:
@@ -65,7 +70,7 @@ def dispatch_grug_training_run(
     env_vars = resolve_training_env(base_env=_forwarded_env_vars(), resources=resources)
     request = JobRequest(
         name=f"grug-train-{safe_run_id}",
-        entrypoint=Entrypoint.from_callable(local_entrypoint, args=[config]),
+        entrypoint=Entrypoint.from_callable(_train_exclusively, args=[local_entrypoint, run_id, config]),
         resources=resources,
         environment=create_environment(
             env_vars=env_vars,

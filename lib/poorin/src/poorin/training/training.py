@@ -1,13 +1,15 @@
 # Copyright The Marin Authors
 # SPDX-License-Identifier: Apache-2.0
 
+import contextlib
 import dataclasses
 import importlib
 import json
 import logging
 import math
 import os
-from collections.abc import Mapping
+import threading
+from collections.abc import Iterator, Mapping
 from copy import deepcopy
 from dataclasses import dataclass, replace
 from typing import Any, Protocol, TypeVar, cast, runtime_checkable
@@ -33,6 +35,8 @@ logger = logging.getLogger(__name__)
 _CHECKPOINTS_SUBDIR = "checkpoints"
 # The final-metrics file a run mirrors next to its output via the WandB ``replicate_path``.
 _TRACKER_METRICS_FILE = "tracker_metrics.jsonl"
+# Held by the one training running in this process; see ``exclusive_training``.
+_TRAINING_LOCK = threading.Lock()
 
 
 class TrainMetrics(BaseModel):
@@ -482,6 +486,25 @@ def _apply_env_to_process(env: dict[str, str]) -> None:
         os.environ.setdefault(key, value)
 
 
+@contextlib.contextmanager
+def exclusive_training(run_id: str) -> Iterator[None]:
+    """Run a training only while no other training runs in this process; wait for one that does.
+
+    Fray's ``LocalClient`` runs each job as a thread of this process, so a sweep's trials, or any
+    graph with several training steps, can start training at once. Levanter's tracker belongs to the
+    process, and a second ``wandb.init`` returns the W&B run the process already has open. Two
+    trainings running at once would log into one W&B run, the first to finish would finish the
+    other's tracker, and ``tracker_metrics.jsonl`` could be written into the wrong output.
+    """
+    if not _TRAINING_LOCK.acquire(blocking=False):
+        logger.info("Training %s waits for the training running in this process to finish", run_id)
+        _TRAINING_LOCK.acquire()
+    try:
+        yield
+    finally:
+        _TRAINING_LOCK.release()
+
+
 def run_levanter_train_lm(config: TrainLmOnPodConfig):
     """Run the Levanter LM training main function in the current process.
 
@@ -508,15 +531,17 @@ def run_levanter_train_lm(config: TrainLmOnPodConfig):
         config.resources.device,
     )
 
-    _apply_env_to_process(env)
-    importlib.import_module("levanter.main.train_lm").main(train_config)
+    with exclusive_training(train_config.trainer.id):
+        _apply_env_to_process(env)
+        importlib.import_module("levanter.main.train_lm").main(train_config)
 
 
 def run_levanter_train_dpo(config: TrainDpoOnPodConfig):
     """Run the Levanter DPO training main function in the current process."""
     config, train_config, env = _prepare_training_run(config)
-    _apply_env_to_process(env)
-    importlib.import_module("levanter.main.train_dpo").main(train_config)
+    with exclusive_training(train_config.trainer.id):
+        _apply_env_to_process(env)
+        importlib.import_module("levanter.main.train_dpo").main(train_config)
 
 
 def check_train_config_paths(train_config: object, resources: ResourceConfig) -> None:
