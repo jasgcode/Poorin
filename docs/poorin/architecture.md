@@ -24,7 +24,7 @@ through that module):
 
 | Dominated lines | Module | Verdict | Why |
 |---|---|---|---|
-| 4,797 | `haliax` | Keep | Named tensors under every Levanter model; sub-project 1b decides whether Haliax stays |
+| 4,797 | `haliax` | Published package | Named tensors under every Levanter model; since D102 the pinned `marin-haliax` build, identical to the fork point's copy |
 | 4,510 | `levanter.kernels.pallas.fused_cross_entropy_loss` | Keep | Grug's loss; `batched_xla` on GPU, `pallas_tpu` on TPU (D81) |
 | 4,164 | `levanter.grug.attention` | Keep | Grug's attention implementations |
 | 3,581 | `levanter.kernels.pallas.fused_cross_entropy_loss.api` | Keep | Implementation selection and block-size autotuning for the fused loss |
@@ -73,60 +73,6 @@ for a stated user:
   cross-entropy, and `poorin.scaling_laws.tpu_utils`, which also feeds the AdamH heuristic.
 
 ## Modules
-
-### haliax
-
-| Module | Purpose | Reached from |
-|---|---|---|
-| `haliax` | Top-level NamedArray API: re-exports core ops and named wrappers of jax.numpy functions | R1 |
-| `haliax.__about__` | Package version string | `haliax.__about__` |
-| `haliax._src` | Package marker for internal implementations | R1 |
-| `haliax._src.compile_utils` | Compile cache for jitted functions, copied from Equinox internals | R1 |
-| `haliax._src.dot` | Named-axis dot product with contraction and output-sharding inference | R1 |
-| `haliax._src.einsum` | Named-axis einsum over axis-name expressions | R1 |
-| `haliax._src.fp8` | FP8 quantize/dequantize with delayed scaling and custom-VJP scaled dot_general | R2 |
-| `haliax._src.parsing` | Parser for rearrange and einsum axis-expression strings | R1 |
-| `haliax._src.rearrange` | Einops-style rearrange of NamedArray axes by name or expression | R1 |
-| `haliax._src.scan` | NamedArray-aware scan, fold, and map with gradient-checkpoint policies | R1 |
-| `haliax._src.state_dict` | Torch-style state-dict conversion, flattening, and save/load for module trees | R1 |
-| `haliax._src.util` | Internal helpers: index_where and an identity-keyed map | R1 |
-| `haliax.axis` | Axis type and axis-spec helpers: concat, union, eliminate, resize, select | R1 |
-| `haliax.core` | NamedArray class and core indexing, slicing, broadcasting, and reshaping ops | R1 |
-| `haliax.debug` | Module diagnostics for reused or static arrays, and sharding visualization | R1 |
-| `haliax.fft` | Named-axis wrappers around jax.numpy.fft | R1 |
-| `haliax.field` | equinox.field wrapper that adds axis_names metadata | R1 |
-| `haliax.haxtyping` | jaxtyping-style dtype and shape annotations for NamedArray | R1 |
-| `haliax.hof` | NamedArray-aware vmap | R1 |
-| `haliax.jax_utils` | JAX helpers: multi-host sync, RNG splitting, checkpointing, nested scan | R2 |
-| `haliax.nn` | Neural-net package; re-exports layers, activations, losses, and defines one_hot | R1 |
-| `haliax.nn.activations` | Named wrappers for activation functions such as relu, gelu, silu, glu | R1 |
-| `haliax.nn.array_stacked` | ArrayStacked: layer stack with a leading layer dimension in plain array leaves | R1 |
-| `haliax.nn.attention` | Dot-product attention, attention masks, and ALiBi bias over named axes | R1 |
-| `haliax.nn.conv` | Named-axis Conv and ConvTranspose layers | R1 |
-| `haliax.nn.dropout` | Dropout function and module | R1 |
-| `haliax.nn.embedding` | Embedding lookup layer | R1 |
-| `haliax.nn.linear` | Linear and MoELinear layers with pluggable dot_general | R1 |
-| `haliax.nn.loss` | Cross-entropy and binary cross-entropy losses with reduction helpers | R1 |
-| `haliax.nn.mlp` | Multi-layer perceptron module | R1 |
-| `haliax.nn.mup` | muP and standard parameterization rules for linear and embedding layers | R1 |
-| `haliax.nn.normalization` | LayerNorm, RmsNorm, and named softmax, logsumexp, standardize | R1 |
-| `haliax.nn.pool` | Max, min, and mean pooling over named axes | R1 |
-| `haliax.nn.ragged_dot` | Grouped ragged matmul for MoE, dispatching to Megablox, Triton, or XLA kernels | R1 |
-| `haliax.nn.scan` | Stacked and BlockSeq layer containers that scan or loop over blocks | R1 |
-| `haliax.ops` | Named array ops: where, clip, tril/triu, pad, unique, searchsorted, bincount | R1 |
-| `haliax.partitioning` | Axis-to-mesh mapping, sharding, named_jit, FSDP, and shard_map | R1 |
-| `haliax.poly` | NamedArray wrappers around jax.numpy polynomial functions | R1 |
-| `haliax.quantization` | FP8/INT8 dot_general ops, Linear-layer quantization, custom gradient accumulation | R2 |
-| `haliax.random` | Named-axis wrappers around jax.random samplers | R1 |
-| `haliax.ref` | NamedRef: jax.Ref wrapper that keeps axis metadata | R1 |
-| `haliax.specialized_fns` | Named top_k selection | R1 |
-| `haliax.state_dict` | Public torch-compatible state-dict export | R1 |
-| `haliax.testing` | Pytest skip markers for device count and torch availability | test support |
-| `haliax.tree` | jax.tree-style wrappers over haliax.tree_util | R1 |
-| `haliax.tree_util` | NamedArray-aware tree map and flatten, scan-aware map, axis resize | R2 |
-| `haliax.types` | Type aliases: DType, Scalar, PrecisionLike, FilterSpec, FilterTree | R2 |
-| `haliax.util` | Small helpers: is_named_array, tuple coercion, safe functools.wraps | R1 |
-| `haliax.wrap` | Decorators that lift unary, binary, and reduction functions to NamedArrays | R1 |
 
 ### levanter
 

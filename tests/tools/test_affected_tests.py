@@ -158,11 +158,9 @@ def test_test_data_selects_its_suite_but_experiment_files_and_docs_select_nothin
 
 
 def test_each_suite_runs_on_cpu_in_utc_with_the_complete_local_marker_expression():
-    haliax = Suite("lib/haliax", ("lib/haliax/tests",))
-    root_run, haliax_run = pytest_runs([Selection(ROOT, ("tests/test_root.py",)), Selection(haliax, haliax.test_dirs)])
-    assert root_run.env == {"JAX_PLATFORMS": "cpu", "TZ": "UTC"}
-    assert haliax_run.env == {"JAX_PLATFORMS": "cpu", "TZ": "UTC", "JAX_NUM_CPU_DEVICES": "8"}
-    for run, paths in ((root_run, ("tests/test_root.py",)), (haliax_run, ("lib/haliax/tests",))):
+    root_run, alpha_run = pytest_runs([Selection(ROOT, ("tests/test_root.py",)), Selection(ALPHA, ALPHA.test_dirs)])
+    for run, paths in ((root_run, ("tests/test_root.py",)), (alpha_run, ALPHA.test_dirs)):
+        assert run.env == {"JAX_PLATFORMS": "cpu", "TZ": "UTC"}
         assert run.args[run.args.index("-m") + 1] == LOCAL_SAFE_MARKERS
         assert run.args[-len(paths) :] == paths
 

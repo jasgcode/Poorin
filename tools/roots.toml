@@ -58,11 +58,10 @@ modules = [
     "poorin.datakit.chat_template",
     "levanter.main.export_hf_to_lm",
     # Loaded by name or needed by kept tooling, so static imports do not reach them: pytest's
-    # -p plugin, Zephyr's `python -m` shard runner, Haliax's build-time version, the fsutil CLI
-    # behind the use-fsutil skill, and Finelog's in-process server for prune_check (D74).
+    # -p plugin, Zephyr's `python -m` shard runner, the fsutil CLI behind the use-fsutil skill,
+    # and Finelog's in-process server for prune_check (D74).
     "poorin.pytest_timeout_guard",
     "zephyr.shard_subprocess",
-    "haliax.__about__",
     "rigging.fsutil.*",
     "finelog.embedded",
     # Loaded with importlib.import_module and a literal name: Marin's training launch helpers,

@@ -53,8 +53,6 @@ LOCAL_SAFE_MARKERS = (
     "and not requires_cluster and not docker and not manual and not torch"
 )
 TEST_ENV = {"JAX_PLATFORMS": "cpu", "TZ": "UTC"}
-# Haliax's sharding tests expect eight CPU devices, as in Marin's CI.
-SUITE_ENV = {"lib/haliax": {"JAX_NUM_CPU_DEVICES": "8"}}
 
 
 @dataclass(frozen=True)
@@ -120,7 +118,7 @@ def pytest_runs(selections: Iterable[Selection]) -> list[PytestRun]:
     return [
         PytestRun(
             args=("uv", "run", "--no-sync", "pytest", "-m", LOCAL_SAFE_MARKERS, *selection.paths),
-            env={**TEST_ENV, **SUITE_ENV.get(selection.suite.config_dir, {})},
+            env=dict(TEST_ENV),
         )
         for selection in selections
     ]

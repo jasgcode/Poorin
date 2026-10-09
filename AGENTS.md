@@ -16,7 +16,6 @@ Library manuals:
 - `lib/zephyr/AGENTS.md` — Zephyr (dataset processing)
 - `lib/fray/AGENTS.md` — fray (job dispatch)
 - `lib/finelog/AGENTS.md` — finelog (Finelog's Python client)
-- `lib/haliax/AGENTS.md` — Haliax (named tensors)
 
 ### Renamed libraries
 
@@ -31,7 +30,8 @@ Upstream Marin code, and Poorin's specs, plans, and decisions before D85, use th
 | `finelog` / `marin-finelog` | `finelog` / `poorin-finelog` |
 | `rigging` / `marin-rigging` | `rigging` / `poorin-rigging` |
 
-Levanter, Haliax, Zephyr, Finestore, and Dupekit keep upstream's names. The settings took Poorin
+Levanter, Zephyr, Finestore, and Dupekit keep upstream's names. Haliax is not in the tree: it is
+the published `marin-haliax`, pinned at the fork point (D102). The settings took Poorin
 names too (D87): `MARIN_PREFIX` is `POORIN_PREFIX`, and so on. Names that point at something of
 Marin's keep theirs, such as the license header and the Marin tokenizer's chat template.
 

@@ -24,13 +24,15 @@ with approved designs in [`docs/poorin/specs/`](docs/poorin/specs/), implementat
 |---|---|
 | [`lib/poorin`](lib/poorin) | Experiment framework: lazy artifacts, the experiment command line, data pipelines, evaluation |
 | [`lib/levanter`](lib/levanter) | Training library on JAX |
-| [`lib/haliax`](lib/haliax) | Named tensors for JAX |
 | [`lib/zephyr`](lib/zephyr) | Dataset processing, with a status dashboard per pipeline |
 | [`lib/fray`](lib/fray) | Job dispatch; `LocalClient` runs jobs on the local machine |
 | [`lib/rigging`](lib/rigging) | Filesystems, storage paths, logging, and config shared by the others |
 | [`lib/finelog`](lib/finelog) | Client for the Finelog log and metrics store |
 | [`lib/finestore`](lib/finestore) | Transactional Parquet tables and named objects on object storage |
 | [`lib/dupekit`](lib/dupekit) | Text de-duplication kernels in Rust |
+
+[Haliax](https://github.com/stanford-crfm/haliax), the named-tensor library under Levanter, comes
+from PyPI as `marin-haliax`, pinned at the fork point.
 
 ## Setup
 
@@ -141,5 +143,5 @@ Poorin is built on [Marin](https://github.com/marin-community/marin), developed 
 [Stanford CRFM](https://crfm.stanford.edu/) and [Open Athena](https://openathena.ai/), and on
 [Levanter](https://github.com/stanford-crfm/levanter) and
 [Haliax](https://github.com/stanford-crfm/haliax). Their authors are listed in
-[`AUTHORS.md`](AUTHORS.md) and in Levanter's and Haliax's `AUTHORS.md` and `CONTRIBUTORS.md`.
+[`AUTHORS.md`](AUTHORS.md) and in Levanter's `AUTHORS.md` and `CONTRIBUTORS.md`.
 The code is licensed under the [Apache License 2.0](LICENSE).

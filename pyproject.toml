@@ -149,8 +149,8 @@ select = [
     # Local-import hygiene (issue #6219):
     #   TID252 -> "relative-imports" (prefer absolute over parent-relative imports)
     #   ICN001 -> "unconventional-import-alias" (e.g. `import numpy as np`)
-    # lib/haliax and lib/levanter carry their own [tool.ruff.lint] configs; these
-    # two rules are mirrored there via extend-select so they apply repo-wide.
+    # lib/levanter carries its own [tool.ruff.lint] config; these two rules are
+    # mirrored there via extend-select so they apply repo-wide.
     "TID252", "ICN001",
 ]
 # Keep UP046/UP047 ignored for now: migrating generics to PEP 695 syntax is

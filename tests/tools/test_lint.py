@@ -11,7 +11,7 @@ import pytest
 from tools.lint import file_problems, is_excluded, lint, main
 
 MARIN = "# Copyright The Marin Authors\n# SPDX-License-Identifier: Apache-2.0\n"
-HALIAX = "# Copyright The Levanter Authors\n#\n# SPDX-License-Identifier: Apache-2.0\n"
+LEVANTER = "# Copyright The Levanter Authors\n# SPDX-License-Identifier: Apache-2.0\n"
 
 
 def write(root: Path, rel: str, content: str | bytes) -> str:
@@ -32,10 +32,10 @@ def test_a_missing_license_header_is_reported_and_inserted_after_the_shebang(tmp
 
 
 def test_each_library_requires_its_own_license_header(tmp_path):
-    haliax = write(tmp_path, "lib/haliax/src/haliax/core.py", HALIAX + "X = 1\n")
-    marin_header_in_haliax = write(tmp_path, "lib/haliax/src/haliax/other.py", MARIN + "X = 1\n")
-    assert file_problems(tmp_path, haliax, fix=False) == []
-    assert file_problems(tmp_path, marin_header_in_haliax, fix=False) == ["missing license header"]
+    levanter = write(tmp_path, "lib/levanter/src/levanter/core.py", LEVANTER + "X = 1\n")
+    marin_header_in_levanter = write(tmp_path, "lib/levanter/src/levanter/other.py", MARIN + "X = 1\n")
+    assert file_problems(tmp_path, levanter, fix=False) == []
+    assert file_problems(tmp_path, marin_header_in_levanter, fix=False) == ["missing license header"]
 
 
 def test_trailing_whitespace_and_a_missing_final_newline_are_fixed(tmp_path):

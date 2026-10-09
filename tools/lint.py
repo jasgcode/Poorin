@@ -69,13 +69,11 @@ EXCLUDED = (
 )
 MARIN_HEADER = ("Copyright The Marin Authors", "SPDX-License-Identifier: Apache-2.0")
 LEVANTER_HEADER = ("Copyright The Levanter Authors", "SPDX-License-Identifier: Apache-2.0")
-HALIAX_HEADER = ("Copyright The Levanter Authors", "", "SPDX-License-Identifier: Apache-2.0")
 
 
-# Levanter and Haliax keep the license headers they had as separate projects.
+# Levanter keeps the license header it had as a separate project.
 LICENSE_HEADERS = (
     ("lib/levanter/", LEVANTER_HEADER),
-    ("lib/haliax/", HALIAX_HEADER),
     ("", MARIN_HEADER),
 )
 # Marin's code is linted with its own ruff configuration passed explicitly, as Marin did: ruff's
