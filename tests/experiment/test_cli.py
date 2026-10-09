@@ -236,7 +236,7 @@ def test_a_rerun_sweep_runs_only_its_missing_trials(runner, tmp_path, monkeypatc
     def built():
         return sorted(p.parent.parent.name for p in tmp_path.glob("models/knobs/*/2026.07.16/done"))
 
-    base = ["--version", "2026.07.16", "--max-concurrent", "1", "--run"]
+    base = ["--version", "2026.07.16", "--run"]
     runner.invoke(experiment_main(_knob_trial), [*base, "--sweep", "lr=[1e-3, 3e-3]"])
     assert built() == ["lr=0.001", "lr=0.003"]
     stamps = {p: p.stat().st_mtime_ns for p in tmp_path.glob("models/knobs/*/2026.07.16/done")}
@@ -260,24 +260,12 @@ def test_a_sweep_over_quoted_strings_records_the_strings_typed(runner, tmp_path,
     # Unquoted, `yes` reads as a boolean, `a: b` as a mapping, and `a: b: c` not at all; the quotes
     # must survive the sweep.
     monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
-    args = ["--version", "2026.07.16", "--max-concurrent", "1", "--sweep", "label=['yes', 'a: b', 'a: b: c']", "--run"]
+    args = ["--version", "2026.07.16", "--sweep", "label=['yes', 'a: b', 'a: b: c']", "--run"]
     result = runner.invoke(experiment_main(_knob_trial), args)
     assert result.exit_code == 0, result.output
     outputs = [p.parent for p in tmp_path.glob("models/knobs/*/2026.07.16/done")]
     assert sorted(read_record(str(out)).config["label"] for out in outputs) == ["a: b", "a: b: c", "yes"]
     assert len({out.parent.name for out in outputs}) == 3
-
-
-@pytest.mark.parametrize("concurrency", [[], ["--max-concurrent", "2"], ["--max-concurrent", "0"]])
-def test_a_sweep_runs_only_with_one_trial_at_a_time(runner, tmp_path, monkeypatch, concurrency):
-    # Trials run as threads of one process, which share Levanter's and W&B's process-global
-    # tracker run, so concurrent trials would log into one run. 0 used to slip past the rule.
-    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
-    args = ["--version", "2026.07.16", "--sweep", "lr=[1e-3, 3e-3]", *concurrency, "--run"]
-    result = runner.invoke(experiment_main(_knob_trial), args)
-    assert result.exit_code != 0
-    assert "--max-concurrent" in result.output
-    assert not list(tmp_path.rglob("done"))
 
 
 def test_an_override_the_experiment_ignores_is_rejected(runner):

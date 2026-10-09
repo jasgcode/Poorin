@@ -206,7 +206,7 @@ value, as if each were passed to `--set`. Several `--sweep` options form their C
 
 ```bash
 uv run --no-sync python experiments/grug/base/launch.py --version 2026.10.09 \
-    --sweep 'optimizer.learning_rate=[1e-3, 3e-3, 1e-2]' --max-concurrent 1 --run
+    --sweep 'optimizer.learning_rate=[1e-3, 3e-3, 1e-2]' --run
 ```
 
 The experiment receives one trial's overrides as `overrides`
@@ -235,13 +235,16 @@ fingerprint, but the run never sees it: `hf_save_path`, `trainer.checkpointer.ba
 (set from the output path), `data.auto_build_caches` (set from the pod config), and
 `trainer.require_accelerator` when the job runs on CPU.
 
-A `--run` of a sweep with more than one trial requires `--max-concurrent 1`, which runs the
-trials one after another. Fray's local client runs jobs as threads in one process, and Levanter's
-tracker and the W&B run belong to the process, so trials running at once would log into one W&B
-run and could write their metrics into each other's output. The plan and `--show-config` of a
-sweep need no flag. With a calendar version, a rerun builds only the trials that are missing, and
-a longer value list builds only the new values. With `dev`, every invocation runs every trial at a
-fresh version.
+Trainings in one process run one at a time, at any `--max-concurrent`. Fray's local client runs
+each job as a thread of the process, and Levanter's tracker and the W&B run belong to the process,
+so a training that would start while another runs waits for it to finish
+(`poorin.training.training.exclusive_training`). Other steps, such as tokenization, still run up
+to `--max-concurrent` at once. Trainings also run one at a time in a sweep built in Python with
+`poorin.experiment.sweep.sweep` and `run`, and in any graph with several training steps.
+
+With a calendar version, a rerun of a sweep builds only the trials that are missing, and a longer
+value list builds only the new values. With `dev`, every invocation runs every trial at a fresh
+version.
 
 `--set` edits the finished config, so a value the experiment derives from another field in Python
 does not follow it. The tutorial passes `seq_len=model.max_seq_len` to `train_lm`, so

@@ -8,11 +8,15 @@ These checks are intentionally variant-discovered: if a subdirectory contains
 lowering and training contracts.
 """
 
+import contextlib
+import contextvars
 import dataclasses
 import importlib
 import json
 import logging
 import uuid
+from collections.abc import Iterator
+from concurrent.futures import ThreadPoolExecutor
 from io import StringIO
 from pathlib import Path
 
@@ -319,7 +323,28 @@ def test_grug_variant_initial_state_only_stores_ema_when_enabled(variant: str):
     assert with_ema_state_shape.ema_params is not None
 
 
-def test_grug_base_run_emits_expected_metrics_with_json_tracker(tmp_path: Path):
+@contextlib.contextmanager
+def _json_tracker_logger() -> Iterator[tuple[str, StringIO]]:
+    """A fresh logger for ``JsonLoggerConfig``, and the stream its records land in."""
+    logger_name = f"test_grug_json_tracker_{uuid.uuid4().hex}"
+    stream = StringIO()
+    handler = logging.StreamHandler(stream)
+    logger = logging.getLogger(logger_name)
+    logger.propagate = False
+    logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
+    try:
+        yield logger_name, stream
+    finally:
+        logger.removeHandler(handler)
+
+
+def _json_tracker_records(stream: StringIO) -> list[dict]:
+    return [json.loads(line) for line in stream.getvalue().splitlines() if line.strip()]
+
+
+def _tiny_grug_base_run_config(run_dir: Path, *, run_id: str, logger_name: str):
+    """A one-step grug base run on CPU over in-memory data, tracked by a JSON logger."""
     train_module = importlib.import_module("experiments.grug.base.train")
     model_module = importlib.import_module("experiments.grug.base.model")
 
@@ -339,53 +364,46 @@ def test_grug_base_run_emits_expected_metrics_with_json_tracker(tmp_path: Path):
         tokenizer="passthrough",
     )
 
-    logger_name = f"test_grug_json_tracker_base_{uuid.uuid4().hex}"
-    stream = StringIO()
-    handler = logging.StreamHandler(stream)
-    logger = logging.getLogger(logger_name)
-    logger.handlers.clear()
-    logger.propagate = False
-    logger.addHandler(handler)
-    logger.setLevel(logging.INFO)
+    run_dir.mkdir(parents=True, exist_ok=True)
+    trainer_config = TrainerConfig(
+        id=run_id,
+        num_train_steps=1,
+        train_batch_size=max(1, len(jax.devices())),
+        tracker=JsonLoggerConfig(logger_name=logger_name),
+        require_accelerator=False,
+        use_explicit_mesh_axes=True,
+        distributed=DistributedConfig(initialize_jax_distributed=False),
+        log_dir=run_dir / "logs",
+        checkpointer=CheckpointerConfig(base_path=str(run_dir / "checkpoints")),
+    )
 
-    try:
-        variant_tmp = tmp_path / "base"
-        variant_tmp.mkdir(parents=True, exist_ok=True)
-        trainer_config = TrainerConfig(
-            id="test-grug-base-metrics",
-            num_train_steps=1,
-            train_batch_size=max(1, len(jax.devices())),
-            tracker=JsonLoggerConfig(logger_name=logger_name),
-            require_accelerator=False,
-            use_explicit_mesh_axes=True,
-            distributed=DistributedConfig(initialize_jax_distributed=False),
-            log_dir=variant_tmp / "logs",
-            checkpointer=CheckpointerConfig(base_path=str(variant_tmp / "checkpoints")),
-        )
+    return train_module.GrugRunConfig(
+        model=_small_model_config(model_module.GrugModelConfig, vocab_size=vocab_size, seq_len=seq_len),
+        data=data_config,
+        resources=ResourceConfig.with_cpu(),
+        trainer=train_module.GrugTrainerConfig(
+            trainer=trainer_config,
+            log_every=1,
+            backward_flow=train_module.BackwardFlowConfig(interval=0),
+        ),
+        eval=train_module.GrugEvalConfig(
+            eval_batch_size=1,
+            steps_per_eval=1,
+            max_eval_batches=1,
+            eval_current=True,
+            eval_ema=False,
+            compute_bpb=False,
+        ),
+    )
 
-        run_cfg = train_module.GrugRunConfig(
-            model=_small_model_config(model_module.GrugModelConfig, vocab_size=vocab_size, seq_len=seq_len),
-            data=data_config,
-            resources=ResourceConfig.with_cpu(),
-            trainer=train_module.GrugTrainerConfig(
-                trainer=trainer_config,
-                log_every=1,
-                backward_flow=train_module.BackwardFlowConfig(interval=0),
-            ),
-            eval=train_module.GrugEvalConfig(
-                eval_batch_size=1,
-                steps_per_eval=1,
-                max_eval_batches=1,
-                eval_current=True,
-                eval_ema=False,
-                compute_bpb=False,
-            ),
-        )
+
+def test_grug_base_run_emits_expected_metrics_with_json_tracker(tmp_path: Path):
+    train_module = importlib.import_module("experiments.grug.base.train")
+    with _json_tracker_logger() as (logger_name, stream):
+        run_cfg = _tiny_grug_base_run_config(tmp_path / "base", run_id="test-grug-base-metrics", logger_name=logger_name)
         train_module.run_grug(run_cfg)
-    finally:
-        logger.removeHandler(handler)
 
-    records = [json.loads(line) for line in stream.getvalue().splitlines() if line.strip()]
+    records = _json_tracker_records(stream)
     finish_records = [record for record in records if record.get("event") == "finish"]
     assert len(finish_records) == 1
     summary = finish_records[0]["summary"]
@@ -406,3 +424,27 @@ def test_grug_base_run_emits_expected_metrics_with_json_tracker(tmp_path: Path):
     ]
     for key in required_keys:
         assert key in summary
+
+
+def test_grug_runs_started_together_each_log_to_their_own_tracker(tmp_path: Path):
+    # A sweep's trials run as threads of one process, and Levanter's tracker belongs to the process.
+    # Two runs that overlapped both logged into the tracker of the run that started last, and the
+    # first to finish finished it, so the other run's tracker never finished.
+    train_module = importlib.import_module("experiments.grug.base.train")
+    run_ids = ["test-grug-together-a", "test-grug-together-b"]
+    with contextlib.ExitStack() as stack:
+        loggers = [stack.enter_context(_json_tracker_logger()) for _ in run_ids]
+        configs = [
+            _tiny_grug_base_run_config(tmp_path / run_id, run_id=run_id, logger_name=logger_name)
+            for run_id, (logger_name, _) in zip(run_ids, loggers, strict=True)
+        ]
+        with ThreadPoolExecutor(max_workers=len(configs)) as pool:
+            futures = [pool.submit(contextvars.copy_context().run, train_module.run_grug, cfg) for cfg in configs]
+            for future in futures:
+                future.result()
+
+    for run_id, (_, stream) in zip(run_ids, loggers, strict=True):
+        records = _json_tracker_records(stream)
+        logged_configs = [r["hparams"] for r in records if r["event"] == "hparams" and "trainer" in r["hparams"]]
+        assert [config["trainer"]["trainer"]["id"] for config in logged_configs] == [run_id]
+        assert [r["event"] for r in records if r["event"] == "finish"] == ["finish"]
