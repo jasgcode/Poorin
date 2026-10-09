@@ -1,4 +1,4 @@
-# Marin
+# Poorin
 
 {%
 include-markdown "../README.md"
@@ -17,14 +17,14 @@ end="<!--marin-intro-end-->"
 
 Our documentation is organized into the following main sections:
 
-- **Tutorials**: Step-by-step guides to help you get started with Marin, including installation, basic usage, and local GPU setup
+- **Tutorials**: Step-by-step guides to installation, a first experiment, and the local GPU setup
 - **Explanation**: Background information and context about the project
-- **Developer Guide**: Information for developers who want to contribute to Marin
-- **Technical Reference**: Detailed technical information about Marin's architecture and components
+- **Developer Guide**: The development workflow and how to build these docs
+- **Technical Reference**: Detailed technical information about Poorin's architecture and components
 
 These sections are available on the left side bar (or hamburger menu).
 
-## Get Involved
+## Getting Started
 
 {%
 include-markdown "../README.md"
@@ -32,8 +32,4 @@ start="<!--marin-first-steps-start-->"
 end="<!--marin-first-steps-end-->"
 %}
 
-
-## Get Help
-
-If you have any questions or need help, please feel free to reach out to us on [Discord](https://discord.gg/J9CTk7pqcM)
-or open an issue on [GitHub](https://github.com/marin-community/marin).
+Poorin is a personal research codebase and does not take outside contributions for now.

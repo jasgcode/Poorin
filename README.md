@@ -1,85 +1,82 @@
-# <img alt="Marin" src="docs/design/marin-logo.svg" height="36" align="top"> Marin
-
-<a href="https://marin.readthedocs.io/en/latest/?badge=latest">
-    <img alt="Documentation" src="https://readthedocs.org/projects/marin/badge/?version=latest">
-</a>
-<a href="">
-    <img alt="License" src="https://img.shields.io/github/license/marin-community/marin?color=blue" />
-</a>
+# Poorin
 
 <!--marin-intro-start-->
 
-> "*I am not afraid of storms, for I am learning how to sail my ship.*"<br/>
-> – Louisa May Alcott
+Poorin is a hard fork of [Marin](https://github.com/marin-community/marin) for one researcher
+training language models, video world models, and robot policies (VLAs and WAMs) on a local RTX
+5090, with occasional cloud runs. Upstream Marin is a reference only: nothing is merged from it,
+and the tag `upstream-baseline` marks the tree the fork started from.
 
-[Marin](https://marin.community) is a research program, software platform, and community for the research and development of [foundation models](https://en.wikipedia.org/wiki/Foundation_model).
+The fork removed what a single workstation does not use: the Iris cluster scheduler, the TPU and
+Docker launchers, fleet operations, the RL and serving stacks, and Marin's experiment configs.
+Marin's core package is now `poorin`. Measured by `tools.prune_check` on this machine:
 
-Marin's concern is training large language models. This includes data curation, transformation, filtering, tokenization, pretraining, posttraining, and evaluation. Beyond the artifacts, software, and infrastructure, behind these models, Marin is committed to openly sharing *all* of the process knowledge required to build these models.
-
-Marin's core value is **[open development](https://openathena.ai/blog/open-development-of-frontier-ai/)**. We document our processes, experiments, and decisions as they happen. Every step, from raw data to the final model, is recorded. Failed experiments are part of that record.
-
-Marin has also been used for building [audio-text models](https://github.com/marin-community/marin/issues/1699), [DNA](https://github.com/Open-Athena/marin-dna), and [protein models](https://github.com/Open-Athena/MarinFold). We encourage this work through the use of Marin as a library, in [marin/experiments](https://github.com/marin-community/marin-experiments).
-
-## Current work
-
-### Frontier mixture-of-experts
-
-Our current focus is pretraining, from scratch, and posttraining a large (5e24 model-FLOPs, 500 billion+ total parameters) mixture-of-experts model to succeed on tasks of importance to scientists and researchers.
-
-### Scaling suite
-
-<a href="https://openathena.ai/blog/delphi/">Delphi</a> is Marin's open scaling suite scaling a LLM recipe from 3e18 to 1e23 FLOPs, inspired by <a href="https://github.com/eleutherai/pythia">Pythia</a>. It has three parts: a scaling recipe that maps compute budgets to model configurations, a scaling suite trained from that recipe on the Google TPU Research Cloud, and a scaling law that uses the smaller Delphi models to predict the larger ones.
-
-We released:
-
-- **Checkpoints** for every run, available on Hugging Face at [marin-community/delphi](https://huggingface.co/collections/marin-community/delphi-69f93cbd09845c03b070bae9)
-- **Training mixture pipelines** that deterministically reproduce the mix from the public Nemotron-CC, StarCoderData, and ProofPile 2 in the [Marin repo](https://github.com/marin-community/marin/blob/67099b9aa5aa468155f0ce430276be72b39a3bd2/experiments/pretraining_datasets/nemotron.py)
-- **Recipe code** as a forkable [`CompletedAdamHParams` class](https://github.com/marin-community/marin/blob/78ae89a5324e09ddd9d0bc39af8565da40cfb3e9/experiments/scaling_law_sweeps/completed_adamh.py#L96) in the Marin repo
-- **Development methodology** as the [`add_scaling_heuristic` agent skill](https://github.com/marin-community/marin/blob/main/docs/recipes/add_scaling_heuristic.md) in the Marin repo
-- **Plot-ready data** for the Delphi figures, with one config per figure and a `wandb_url` on every row, at [marin-community/delphi-blog-data](https://huggingface.co/datasets/marin-community/delphi-blog-data)
-
-Progress was tracked in [GitHub issue #1337](https://github.com/marin-community/marin/issues/1337).
-
-### Other learnings
-
-Some additional consolidated learnings can be found on the [Open Athena blog](https://openathena.ai/blog/). A selection, below:
-
-- [Improving our LLM Pretraining Efficiency](https://openathena.ai/blog/pretraining-speedup/) · squeezing more throughput from pretraining
-- [Scaling Laws That Extrapolate 300× Past the Fit (Delphi)](https://openathena.ai/blog/delphi/) · predicting big models from small
-- [Mixture of Experts Quantile Balancing: Validated at 32B-A5B (1e22 FLOPs) Scale](https://openathena.ai/blog/quantile-balancing/) · keeping MoE experts load balanced
-
-### Other models
-
-Previously, we used Marin to train an 8B parameter model that outperformed Llama 3.1 8B on our [base-model benchmark suite](https://github.com/marin-community/marin/blob/ab0da00df254ca0d52648df9169ca284cb5789af/docs/reports/marin-8b-retro.md#base-model-results).
-You can see the [training script](https://github.com/marin-community/marin/blob/ee163702c5bc71c9bbba3238db84b6ee86e826a7/experiments/tootsie/exp600_tootsie.py) or read the [retrospective](https://github.com/marin-community/marin/blob/ab0da00df254ca0d52648df9169ca284cb5789af/docs/reports/marin-8b-retro.md). We also trained [Marin 32B](https://github.com/marin-community/marin/blob/ab0da00df254ca0d52648df9169ca284cb5789af/docs/reports/marin-32b-retro.md).
+| | `upstream-baseline` | Now |
+|---|---:|---:|
+| First-party lines of code | 385,058 | 133,536 |
+| Python environment | 12.2 GB | 8.0 GB |
+| Import time of the tiny-model training script | 7.3 s | 3.8 s |
 
 <!--marin-intro-end-->
 
-## Learning more & using Marin
+Each change and the reason for it is in [`docs/poorin/decisions.md`](docs/poorin/decisions.md),
+with approved designs in [`docs/poorin/specs/`](docs/poorin/specs/), implementation plans in
+[`docs/poorin/plans/`](docs/poorin/plans/), and one row of measurements per change in
+[`docs/poorin/prune-metrics.csv`](docs/poorin/prune-metrics.csv).
 
-The documentation for Marin is available on [ReadTheDocs](https://marin.readthedocs.io/en/latest/) or in the [`docs/`](docs/) folder.
+## Libraries
+
+| Library | Role |
+|---|---|
+| [`lib/poorin`](lib/poorin) | Experiment framework: lazy artifacts, the experiment command line, data pipelines, evaluation |
+| [`lib/levanter`](lib/levanter) | Training library on JAX |
+| [`lib/haliax`](lib/haliax) | Named tensors for JAX |
+| [`lib/zephyr`](lib/zephyr) | Dataset processing, with a status dashboard per pipeline |
+| [`lib/fray`](lib/fray) | Job dispatch; `LocalClient` runs jobs on this machine |
+| [`lib/rigging`](lib/rigging) | Filesystems, storage paths, logging, and config shared by the others |
+| [`lib/finelog`](lib/finelog) | Client for the Finelog log and metrics store |
+| [`lib/finestore`](lib/finestore) | Transactional Parquet tables and named objects on object storage |
+| [`lib/dupekit`](lib/dupekit) | Text de-duplication kernels in Rust |
+
+## Setup
 
 <!--marin-first-steps-start-->
 
-To get started with Marin:
+```bash
+git clone https://github.com/jasgcode/Poorin.git
+cd Poorin
+uv sync --locked --all-packages --extra=gpu --extra=lm_eval
+```
 
-- [Install](docs/tutorials/installation.md) Marin.
-- Train a [tiny language model](docs/tutorials/first-experiment.md) using Marin.
-- See how to run a much larger [1.4B-parameter](docs/tutorials/train-an-lm.md) experiment using Marin.
-- See a [summary of the experiments](https://github.com/marin-community/marin/blob/ab0da00df254ca0d52648df9169ca284cb5789af/docs/reports/index.md) Marin has run.
-- Join the [Marin Discord](https://discord.gg/J9CTk7pqcM) to chat with the community.
+Run every project command with `uv run --no-sync`. A syncing `uv run` installs no extras, so it
+removes the CUDA build of JAX. [Local GPU Setup](docs/tutorials/local-gpu.md) covers the RTX
+5090 environment, and [First Experiment](docs/tutorials/first-experiment.md) walks through a
+tiny training run.
 
 <!--marin-first-steps-end-->
 
-### Example
+## Running experiments
 
-Marin experiments are defined as a set of steps that can depend on each other and are executed in a topological order,
-like a Makefile.
+An experiment is a Python function that returns lazy artifact handles: tokenized datasets,
+checkpoints, evaluation results. Run without `--run`, its script prints the plan, one line per
+artifact with its cache state; with `--run` it builds what is missing. `--set` overrides any
+field of the experiment's config, and `--sweep` runs one trial per value:
 
-As a brief example of how you can use Marin, here is a complete script for training a tiny model on [TinyStories](https://huggingface.co/datasets/roneneldan/TinyStories).
-You can check out the [full script](https://github.com/marin-community/marin/blob/main/experiments/tutorials/train_tiny_model.py) for more details.
+```bash
+uv run --no-sync python experiments/grug/base/launch.py --version dev --set steps=200
+uv run --no-sync python experiments/grug/base/launch.py --version dev --set steps=200 --run
+uv run --no-sync python experiments/grug/base/launch.py --version dev \
+    --sweep 'optimizer.learning_rate=[1e-3, 3e-3]' --run
+```
+
+An existing output whose recipe changed is refused before anything runs; `--accept-drift NAME`
+keeps it. [Lazy artifacts](docs/explanations/lazy-artifacts.md) explains versions, caching,
+overrides, and drift.
 
 <!--marin-example-start-->
+
+A complete script that tokenizes [TinyStories](https://huggingface.co/datasets/roneneldan/TinyStories)
+and trains a tiny model on the CPU:
 
 ```python
 from fray.types import ResourceConfig
@@ -120,49 +117,35 @@ if __name__ == "__main__":
     run(nano_tinystories_model)
 ```
 
-Here, we create two steps, one for tokenizing the dataset and one for training the model.
-The training step depends on the tokenized dataset step, so it will be executed after the tokenization step is completed.
+The training step depends on the tokenized dataset, so `run` builds the dataset first.
+[`experiments/tutorials/train_tiny_model.py`](experiments/tutorials/train_tiny_model.py) is a
+fuller version, with options for the device (CPU or GPU) and the dataset (TinyStories,
+WikiText, or FineWeb-Edu).
 
 <!--marin-example-end-->
 
-With slight modifications, you can extend this to train a [larger model on a larger dataset](docs/tutorials/train-an-lm.md),
-or a [mixture of datasets](docs/tutorials/train-an-lm.md#building-the-data-mixture).
+## Development
 
-### For Contributors
+```bash
+uv run --no-sync python -m tools.lint --fix        # lint and format the uncommitted change
+uv run --no-sync python -m tools.affected_tests    # tests the uncommitted change affects
+uv run --no-sync python -m tools.prune_check --phase <phase> --step "<label>"  # full check
+```
 
-- See [`CONTRIBUTING.md`](CONTRIBUTING.md) for project workflow.
-- See `.agents/skills/` (also `.claude/skills/`) for loadable agent skills. For example, `.agents/skills/add-dataset/` has a step-by-step guide to adding new datasets.
+[Development](docs/dev-guide/development.md) describes the workflow and the checks each commit
+passes. [`AGENTS.md`](AGENTS.md) is the guide for coding agents, with task playbooks in
+[`.agents/skills/`](.agents/skills/).
 
+## Contributions
 
-## Core Contributors
+Poorin is a personal research codebase and does not take outside contributions for now. It is
+licensed under Apache 2.0, so forks are welcome.
 
-Marin's core collaborators come from [Stanford CRFM](https://crfm.stanford.edu/) and [Open Athena](https://openathena.ai/).
+## Acknowledgments
 
-<p>
-  <a href="https://crfm.stanford.edu/"><img alt="Stanford CRFM" src="docs/design/crfm-rgb.png" height="48"></a>
-  &nbsp;&nbsp;&nbsp;
-  <a href="https://openathena.ai/"><img alt="Open Athena" src="docs/design/open-athena.svg" height="48"></a>
-</p>
-
-## Supporters
-
-Marin's research is made possible by the generous support of our partners.
-
-<table>
-  <tr>
-    <td align="center" width="240"><a href="https://sites.research.google/trc/about/"><img alt="Google TPU Research Cloud" src="docs/design/google-trc.png" height="44"></a></td>
-    <td align="center" width="240">The Jen-Hsun and Lori Huang Foundation</td>
-  </tr>
-  <tr>
-    <td align="center"><sub>for TRC accelerators</sub></td>
-    <td align="center"><sub>for GPU clusters</sub></td>
-  </tr>
-  <tr>
-    <td align="center"><a href="https://www.siegelendowment.org/"><img alt="Siegel Family Endowment" src="docs/design/supporter-sfe.png" height="44"></a></td>
-    <td align="center"><a href="https://www.schmidtsciences.org/"><img alt="Schmidt Sciences" src="docs/design/supporter-schmidt-sciences.svg" height="44"></a></td>
-  </tr>
-  <tr>
-    <td align="center"><sub>for supporting development</sub></td>
-    <td align="center"><sub>for supporting development</sub></td>
-  </tr>
-</table>
+Poorin is built on [Marin](https://github.com/marin-community/marin), developed by
+[Stanford CRFM](https://crfm.stanford.edu/) and [Open Athena](https://openathena.ai/), and on
+[Levanter](https://github.com/stanford-crfm/levanter) and
+[Haliax](https://github.com/stanford-crfm/haliax). Their authors are listed in
+[`AUTHORS.md`](AUTHORS.md) and in Levanter's and Haliax's `AUTHORS.md` and `CONTRIBUTORS.md`.
+The code is licensed under the [Apache License 2.0](LICENSE).

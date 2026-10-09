@@ -1,6 +1,5 @@
-site_name: Marin Documentation
-site_description: Documentation for the Marin project
-site_url: https://marin.community
+site_name: Poorin Documentation
+site_description: Documentation for Poorin, a fork of Marin for local research training
 
 theme:
   name: material
@@ -33,8 +32,8 @@ theme:
   logo: static/logo.png
   favicon: static/favicon.ico
 
-repo_url: https://github.com/marin-community/marin
-repo_name: marin-community/marin
+repo_url: https://github.com/jasgcode/Poorin
+repo_name: jasgcode/Poorin
 edit_uri: edit/main/docs/
 
 # Include extra JS to setup Read the Docs addons integrations
@@ -49,9 +48,7 @@ extra_css:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/marin-community/marin
-    - icon: fontawesome/brands/discord
-      link: https://discord.gg/DhbGDq3jv4
+      link: https://github.com/jasgcode/Poorin
 
 watch:
   - docs/
@@ -75,7 +72,7 @@ nav:
       - Lazy artifacts: explanations/lazy-artifacts.md
       - Guidelines: explanations/guidelines.md
   - Developer Guide:
-      - Contributing: dev-guide/contributing.md
+      - Development: dev-guide/development.md
       - Tutorial Guidelines: dev-guide/tutorial-guidelines.md
       - Building Docs: dev-guide/building-docs.md
   - Technical Reference:

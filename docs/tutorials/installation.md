@@ -1,6 +1,6 @@
-# Getting Started with Marin
+# Installation
 
-In this tutorial, you will install Marin on your local machine.
+In this tutorial, you will install Poorin on your local machine.
 
 ## Prerequisites
 
@@ -15,7 +15,6 @@ Before you begin, ensure you have the following installed:
 - On macOS, install additional build tools for SentencePiece: ```brew install cmake pkg-config coreutils```
 
 In addition, you might find it useful to have the following accounts:
-- [GitHub](https://github.com) for submitting pull requests
 - [Weights & Biases](https://wandb.ai) for experiment tracking
 - [Hugging Face](https://huggingface.co) for accessing gated models/tokenizers (such as [Meta's Llama 3.1 8B model](https://huggingface.co/meta-llama/Llama-3.1-8B))
 
@@ -26,8 +25,8 @@ If you're on a GPU, see [Local GPU Setup](local-gpu.md) for a GPU-specific walkt
 
 1. Clone the repository (~10s):
    ```bash
-   git clone https://github.com/marin-community/marin.git
-   cd marin
+   git clone https://github.com/jasgcode/Poorin.git
+   cd Poorin
    ```
 
 2. Create and activate a virtual environment (~0s):

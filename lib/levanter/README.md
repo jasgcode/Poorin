@@ -192,9 +192,9 @@ Please see the [CUDA Getting Started](docs/Getting-Started-GPU.md) guide for mor
 
 ## Contributing
 
-We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for
-more information. Issues and pull requests are tracked at
-[marin-community/marin](https://github.com/marin-community/marin/issues).
+This copy of Levanter is part of Poorin, a personal fork of Marin, and does not take outside
+contributions. Upstream Levanter is developed in
+[marin-community/marin](https://github.com/marin-community/marin).
 
 ## License
 

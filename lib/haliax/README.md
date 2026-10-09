@@ -126,9 +126,9 @@ Haliax's API documentation is available at [haliax.readthedocs.io](https://halia
 
 ## Contributing
 
-We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for more information.
-We also have a list of [good first issues](https://github.com/stanford-crfm/haliax/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
-to help you get started. (If those don't appeal, don't hesitate to reach out to us on Discord!)
+This copy of Haliax is part of Poorin, a personal fork of Marin, and does not take outside
+contributions. Upstream Haliax is developed in
+[marin-community/marin](https://github.com/marin-community/marin).
 
 ## License
 

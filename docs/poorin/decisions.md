@@ -1514,6 +1514,25 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
   serve` does not proxy; its log line gives the local URL. One more dependency (uvicorn, pure
   Python, with h11).
 
+### D101. No outside contributions; Marin's community files go
+
+- **When:** 2026-10-09. **Status:** Adopted.
+- **Decision:** Poorin does not take outside contributions for now. The README describes Poorin
+  instead of Marin: what the fork is and removed, its measured size since `upstream-baseline`, its
+  libraries, setup, experiments, development, and credit to Marin, Levanter, and Haliax.
+  `CONTRIBUTING.md` says contributions are not taken. `CODE_OF_CONDUCT.md` and Levanter's and
+  Haliax's `CONTRIBUTING.md` are deleted, and their README sections say the same. The docs site's
+  contributing page becomes a Development page with the maintainer's workflow, without the issue,
+  pull-request, and Discord process, and the site drops Marin's Discord and repository links.
+  `AUTHORS.md` and the libraries' `AUTHORS.md` and `CONTRIBUTORS.md` stay, because the license
+  headers name the Marin Authors.
+- **Why:** The owner, 2026-10-09: "dont have contributors for now". The files described Marin's
+  community, its Discord, and its pull-request process.
+- **Alternatives:** Keep the Contributor Covenant for when contributors arrive; keep the community
+  files unchanged.
+- **Cost if wrong:** Inviting contributors later means writing a contribution guide and code of
+  conduct; Marin's are in `upstream-baseline`.
+
 ---
 
 ## Deferred

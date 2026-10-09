@@ -129,23 +129,16 @@ def process_data(data: List[str]) -> Dict[str, int]:
 
 ## Deployment
 
-The documentation is automatically deployed when changes are pushed to the main branch. The deployment process:
+Poorin does not publish its documentation; build or serve it locally as above.
 
-1. Builds the documentation
-2. Validates the build
-3. Deploys to the configured hosting service
-
-## Contributing
+## Changing the docs
 
 1. Create a new branch for your changes
 2. Make your changes
 3. Preview the docs locally with `uv run --no-sync mkdocs serve`
 4. Run `uv run --no-sync python -m tools.lint --all-files --fix`
 5. Run `uv run --no-sync mkdocs build --strict`
-6. Submit a pull request whose body references an issue with `Fixes #NNNN` or `Part of #NNNN`
-
-For the full contributor workflow, including targeted test guidance, see
-[Contributing to Marin](contributing.md).
+6. Commit following the [development workflow](development.md), which also covers targeted tests
 
 ## Common Issues
 
