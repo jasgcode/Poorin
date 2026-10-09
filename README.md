@@ -3,19 +3,13 @@
 <!--marin-intro-start-->
 
 Poorin is a hard fork of [Marin](https://github.com/marin-community/marin) for one researcher
-training language models, video world models, and robot policies (VLAs and WAMs) on a local RTX
-5090, with occasional cloud runs. Upstream Marin is a reference only: nothing is merged from it,
+training language models, video world models, and robot policies (VLAs and WAMs) on a local
+GPU, with occasional cloud runs. Upstream Marin is a reference only: nothing is merged from it,
 and the tag `upstream-baseline` marks the tree the fork started from.
 
 The fork removed what a single workstation does not use: the Iris cluster scheduler, the TPU and
 Docker launchers, fleet operations, the RL and serving stacks, and Marin's experiment configs.
-Marin's core package is now `poorin`. Measured by `tools.prune_check` on this machine:
-
-| | `upstream-baseline` | Now |
-|---|---:|---:|
-| First-party lines of code | 385,058 | 133,536 |
-| Python environment | 12.2 GB | 8.0 GB |
-| Import time of the tiny-model training script | 7.3 s | 3.8 s |
+Marin's core package is now `poorin`, and first-party code went from 385,058 lines to 133,536.
 
 <!--marin-intro-end-->
 
@@ -32,7 +26,7 @@ with approved designs in [`docs/poorin/specs/`](docs/poorin/specs/), implementat
 | [`lib/levanter`](lib/levanter) | Training library on JAX |
 | [`lib/haliax`](lib/haliax) | Named tensors for JAX |
 | [`lib/zephyr`](lib/zephyr) | Dataset processing, with a status dashboard per pipeline |
-| [`lib/fray`](lib/fray) | Job dispatch; `LocalClient` runs jobs on this machine |
+| [`lib/fray`](lib/fray) | Job dispatch; `LocalClient` runs jobs on the local machine |
 | [`lib/rigging`](lib/rigging) | Filesystems, storage paths, logging, and config shared by the others |
 | [`lib/finelog`](lib/finelog) | Client for the Finelog log and metrics store |
 | [`lib/finestore`](lib/finestore) | Transactional Parquet tables and named objects on object storage |
@@ -49,8 +43,8 @@ uv sync --locked --all-packages --extra=gpu --extra=lm_eval
 ```
 
 Run every project command with `uv run --no-sync`. A syncing `uv run` installs no extras, so it
-removes the CUDA build of JAX. [Local GPU Setup](docs/tutorials/local-gpu.md) covers the RTX
-5090 environment, and [First Experiment](docs/tutorials/first-experiment.md) walks through a
+removes the CUDA build of JAX. [Local GPU Setup](docs/tutorials/local-gpu.md) covers the GPU
+environment, and [First Experiment](docs/tutorials/first-experiment.md) walks through a
 tiny training run.
 
 <!--marin-first-steps-end-->
