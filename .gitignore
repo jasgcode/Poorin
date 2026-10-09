@@ -3,6 +3,10 @@
 
 logs/
 
+# Local agent state: session memory (remember plugin) and plan workspaces (superpowers)
+.remember/
+.superpowers/
+
 # CPU profiles
 prof/
 
