@@ -1484,6 +1484,16 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
   `levanter.trainer.initialize`, does not take the lock and still shares the tracker; no step runs
   such a main today.
 
+### D99. Rigging's per-user cluster configs live under a Poorin path
+
+- **When:** 2026-10-09. **Status:** Adopted.
+- **Decision:** The per-user cluster config directory moves from `~/.config/marin/clusters` to
+  `~/.config/poorin/clusters`, as D95 moved the launch config.
+- **Why:** The owner, 2026-10-09: the rigging cluster directory gets the rename too.
+- **Alternatives:** Keep the Marin path.
+- **Cost if wrong:** A cluster config under the Marin path is no longer found. Neither directory
+  exists on this workstation.
+
 ---
 
 ## Deferred

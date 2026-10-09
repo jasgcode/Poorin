@@ -56,7 +56,7 @@ def _bundled_cluster_config_dir() -> str | None:
 # A per-user override dir for connecting to a live cluster (e.g. on a dev VM). It takes
 # priority over the repository's config/ directory, so tests replace the search dirs to stay
 # independent of the host.
-PER_USER_CLUSTER_CONFIG_DIR = "~/.config/marin/clusters"
+PER_USER_CLUSTER_CONFIG_DIR = "~/.config/poorin/clusters"
 
 # Cluster config search dirs, highest priority first: a per-user override, the
 # repo-root ``config/`` directory (in-tree checkout), then the bundled copy for

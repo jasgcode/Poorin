@@ -92,3 +92,4 @@ date,phase,step,first_party_lines,reachable_lines,reachable_modules,r1_imported_
 2026-10-09,Cleanup,Give each calendar version of a run its own tracker ID,133429,132451,424,6495,3.76,68.2,28.5,7929368792
 2026-10-09,Cleanup,Correct how the docs describe run() and lower(),133432,132454,424,6495,3.73,68.2,28.6,7929368792
 2026-10-09,Cleanup,One training at a time in a process,133452,132474,424,6495,4.01,67.9,29.5,7988490460
+2026-10-09,Cleanup,Move rigging's per-user cluster configs to a Poorin path,133420,132442,424,6495,3.97,75.0,32.2,8017593418

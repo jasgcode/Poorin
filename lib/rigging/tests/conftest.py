@@ -12,7 +12,7 @@ def _hermetic_cluster_config(monkeypatch):
 
     Rigging's tests exercise region routing, temp buckets, and cross-region guards, which need
     Marin's buckets; Poorin's default ``config/local.yaml`` declares none. Replacing the search
-    dirs also keeps a per-user ``~/.config/marin/clusters`` override from changing results.
+    dirs also keeps a per-user ``~/.config/poorin/clusters`` override from changing results.
     """
     monkeypatch.setattr(cluster_config, "POORIN_CLUSTER_CONFIG_DIRS", ("config/testing",))
     monkeypatch.setenv("POORIN_CLUSTER", "marin")
