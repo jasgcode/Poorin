@@ -86,7 +86,6 @@ members = [
     "lib/fray",
     "lib/finelog",
     "lib/dupekit",
-    "lib/haliax",
     "lib/levanter",
     "lib/poorin",
     "lib/rigging",
@@ -104,7 +103,6 @@ exclude = ["lib/dupekit/rust"]
 poorin-fray = { workspace = true }
 poorin-finelog = { workspace = true }
 marin-dupekit = { workspace = true }
-marin-haliax = { workspace = true }
 marin-levanter = { workspace = true }
 poorin = { workspace = true }
 poorin-rigging = { workspace = true }
@@ -187,7 +185,6 @@ python-version = "3.12"
 include = [
     "lib/poorin/src",
     "lib/levanter/src",
-    "lib/haliax/src",
     "lib/fray/src",
     "lib/rigging/src",
     "lib/zephyr/src",

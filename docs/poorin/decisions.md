@@ -1533,6 +1533,29 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
 - **Cost if wrong:** Inviting contributors later means writing a contribution guide and code of
   conduct; Marin's are in `upstream-baseline`.
 
+### D102. Haliax comes from PyPI, pinned at the fork point
+
+- **When:** 2026-10-09. **Status:** Adopted.
+- **Decision:** Poorin depends on the published `marin-haliax==0.2.139.dev37117265303` instead of
+  carrying `lib/haliax`. That build is Marin's first nightly after the fork point, and its
+  source is identical to `upstream-baseline`'s `lib/haliax/src` apart from the version string
+  (checked file by file; 0.2.138 and 0.2.140 are identical too). Poorin's own Haliax commits
+  changed formatting, type-checker comments and casts, and dropped `jmp`; none changed behavior.
+  `jmp` returns as a Haliax requirement; Levanter already locks it. `lib/haliax` is deleted, with
+  its lint header rule, its test-suite device setting, its architecture rows, and Levanter's TPU
+  Dockerfiles, which bind-mounted its `pyproject.toml` and which nothing builds.
+- **Why:** The owner, 2026-10-09, asked whether Levanter and Haliax could come from
+  `pyproject.toml` instead of the tree. Haliax carried no Poorin change worth keeping, and its
+  package depends on no Marin library. Levanter stays in the tree: its 47 commits since the fork
+  remove 41,400 lines and add fork-only code (`nvrtc`, `compile_cache`), and upstream
+  `marin-levanter` requires `marin-iris`, `marin-fray`, `marin-rigging`, and `marin-finelog`,
+  which install the same import packages as Poorin's renamed libraries.
+- **Alternatives:** Keep `lib/haliax`; depend on the standalone `haliax==1.3` (September 2026,
+  older than the fork point); track Marin's latest nightly.
+- **Cost if wrong:** A Haliax fix means raising the pin or vendoring it again; the nightly line
+  follows Marin's main branch, so a newer pin can change behavior. `upstream-baseline` holds the
+  old copy.
+
 ---
 
 ## Deferred

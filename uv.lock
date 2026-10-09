@@ -36,7 +36,6 @@ fork-strategy = "fewest"
 members = [
     "marin-dupekit",
     "marin-finestore",
-    "marin-haliax",
     "marin-levanter",
     "marin-zephyr",
     "poorin",
@@ -1925,64 +1924,19 @@ test = [
 
 [[package]]
 name = "marin-haliax"
-source = { editable = "lib/haliax" }
+version = "0.2.139.dev37117265303"
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aqtp", marker = "sys_platform == 'linux' or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-14-marin-levanter-tpu') or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-6-poorin-cpu') or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-6-poorin-tpu') or (extra == 'extra-14-marin-levanter-tpu' and extra == 'extra-6-poorin-gpu') or (extra == 'extra-6-poorin-cpu' and extra == 'extra-6-poorin-gpu') or (extra == 'extra-6-poorin-gpu' and extra == 'extra-6-poorin-tpu')" },
     { name = "equinox", marker = "sys_platform == 'linux' or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-14-marin-levanter-tpu') or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-6-poorin-cpu') or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-6-poorin-tpu') or (extra == 'extra-14-marin-levanter-tpu' and extra == 'extra-6-poorin-gpu') or (extra == 'extra-6-poorin-cpu' and extra == 'extra-6-poorin-gpu') or (extra == 'extra-6-poorin-gpu' and extra == 'extra-6-poorin-tpu')" },
     { name = "jax", marker = "sys_platform == 'linux' or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-14-marin-levanter-tpu') or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-6-poorin-cpu') or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-6-poorin-tpu') or (extra == 'extra-14-marin-levanter-tpu' and extra == 'extra-6-poorin-gpu') or (extra == 'extra-6-poorin-cpu' and extra == 'extra-6-poorin-gpu') or (extra == 'extra-6-poorin-gpu' and extra == 'extra-6-poorin-tpu')" },
     { name = "jaxtyping", marker = "sys_platform == 'linux' or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-14-marin-levanter-tpu') or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-6-poorin-cpu') or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-6-poorin-tpu') or (extra == 'extra-14-marin-levanter-tpu' and extra == 'extra-6-poorin-gpu') or (extra == 'extra-6-poorin-cpu' and extra == 'extra-6-poorin-gpu') or (extra == 'extra-6-poorin-gpu' and extra == 'extra-6-poorin-tpu')" },
+    { name = "jmp", marker = "sys_platform == 'linux' or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-14-marin-levanter-tpu') or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-6-poorin-cpu') or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-6-poorin-tpu') or (extra == 'extra-14-marin-levanter-tpu' and extra == 'extra-6-poorin-gpu') or (extra == 'extra-6-poorin-cpu' and extra == 'extra-6-poorin-gpu') or (extra == 'extra-6-poorin-gpu' and extra == 'extra-6-poorin-tpu')" },
     { name = "safetensors", marker = "sys_platform == 'linux' or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-14-marin-levanter-tpu') or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-6-poorin-cpu') or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-6-poorin-tpu') or (extra == 'extra-14-marin-levanter-tpu' and extra == 'extra-6-poorin-gpu') or (extra == 'extra-6-poorin-cpu' and extra == 'extra-6-poorin-gpu') or (extra == 'extra-6-poorin-gpu' and extra == 'extra-6-poorin-tpu')" },
 ]
-
-[package.dev-dependencies]
-dev = [
-    { name = "chex", marker = "sys_platform == 'linux' or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-14-marin-levanter-tpu') or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-6-poorin-cpu') or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-6-poorin-tpu') or (extra == 'extra-14-marin-levanter-tpu' and extra == 'extra-6-poorin-gpu') or (extra == 'extra-6-poorin-cpu' and extra == 'extra-6-poorin-gpu') or (extra == 'extra-6-poorin-gpu' and extra == 'extra-6-poorin-tpu')" },
-    { name = "mkdocs", marker = "sys_platform == 'linux' or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-14-marin-levanter-tpu') or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-6-poorin-cpu') or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-6-poorin-tpu') or (extra == 'extra-14-marin-levanter-tpu' and extra == 'extra-6-poorin-gpu') or (extra == 'extra-6-poorin-cpu' and extra == 'extra-6-poorin-gpu') or (extra == 'extra-6-poorin-gpu' and extra == 'extra-6-poorin-tpu')" },
-    { name = "mkdocs-include-markdown-plugin", marker = "sys_platform == 'linux' or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-14-marin-levanter-tpu') or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-6-poorin-cpu') or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-6-poorin-tpu') or (extra == 'extra-14-marin-levanter-tpu' and extra == 'extra-6-poorin-gpu') or (extra == 'extra-6-poorin-cpu' and extra == 'extra-6-poorin-gpu') or (extra == 'extra-6-poorin-gpu' and extra == 'extra-6-poorin-tpu')" },
-    { name = "mkdocs-material", marker = "sys_platform == 'linux' or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-14-marin-levanter-tpu') or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-6-poorin-cpu') or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-6-poorin-tpu') or (extra == 'extra-14-marin-levanter-tpu' and extra == 'extra-6-poorin-gpu') or (extra == 'extra-6-poorin-cpu' and extra == 'extra-6-poorin-gpu') or (extra == 'extra-6-poorin-gpu' and extra == 'extra-6-poorin-tpu')" },
-    { name = "mkdocstrings", marker = "sys_platform == 'linux' or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-14-marin-levanter-tpu') or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-6-poorin-cpu') or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-6-poorin-tpu') or (extra == 'extra-14-marin-levanter-tpu' and extra == 'extra-6-poorin-gpu') or (extra == 'extra-6-poorin-cpu' and extra == 'extra-6-poorin-gpu') or (extra == 'extra-6-poorin-gpu' and extra == 'extra-6-poorin-tpu')" },
-    { name = "mkdocstrings-python", marker = "sys_platform == 'linux' or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-14-marin-levanter-tpu') or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-6-poorin-cpu') or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-6-poorin-tpu') or (extra == 'extra-14-marin-levanter-tpu' and extra == 'extra-6-poorin-gpu') or (extra == 'extra-6-poorin-cpu' and extra == 'extra-6-poorin-gpu') or (extra == 'extra-6-poorin-gpu' and extra == 'extra-6-poorin-tpu')" },
-    { name = "pygments", marker = "sys_platform == 'linux' or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-14-marin-levanter-tpu') or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-6-poorin-cpu') or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-6-poorin-tpu') or (extra == 'extra-14-marin-levanter-tpu' and extra == 'extra-6-poorin-gpu') or (extra == 'extra-6-poorin-cpu' and extra == 'extra-6-poorin-gpu') or (extra == 'extra-6-poorin-gpu' and extra == 'extra-6-poorin-tpu')" },
-    { name = "pymdown-extensions", marker = "sys_platform == 'linux' or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-14-marin-levanter-tpu') or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-6-poorin-cpu') or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-6-poorin-tpu') or (extra == 'extra-14-marin-levanter-tpu' and extra == 'extra-6-poorin-gpu') or (extra == 'extra-6-poorin-cpu' and extra == 'extra-6-poorin-gpu') or (extra == 'extra-6-poorin-gpu' and extra == 'extra-6-poorin-tpu')" },
-    { name = "pytest", marker = "sys_platform == 'linux' or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-14-marin-levanter-tpu') or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-6-poorin-cpu') or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-6-poorin-tpu') or (extra == 'extra-14-marin-levanter-tpu' and extra == 'extra-6-poorin-gpu') or (extra == 'extra-6-poorin-cpu' and extra == 'extra-6-poorin-gpu') or (extra == 'extra-6-poorin-gpu' and extra == 'extra-6-poorin-tpu')" },
-    { name = "pytest-xdist", marker = "sys_platform == 'linux' or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-14-marin-levanter-tpu') or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-6-poorin-cpu') or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-6-poorin-tpu') or (extra == 'extra-14-marin-levanter-tpu' and extra == 'extra-6-poorin-gpu') or (extra == 'extra-6-poorin-cpu' and extra == 'extra-6-poorin-gpu') or (extra == 'extra-6-poorin-gpu' and extra == 'extra-6-poorin-tpu')" },
-    { name = "safetensors", marker = "sys_platform == 'linux' or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-14-marin-levanter-tpu') or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-6-poorin-cpu') or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-6-poorin-tpu') or (extra == 'extra-14-marin-levanter-tpu' and extra == 'extra-6-poorin-gpu') or (extra == 'extra-6-poorin-cpu' and extra == 'extra-6-poorin-gpu') or (extra == 'extra-6-poorin-gpu' and extra == 'extra-6-poorin-tpu')" },
-]
-test = [
-    { name = "chex", marker = "sys_platform == 'linux' or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-14-marin-levanter-tpu') or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-6-poorin-cpu') or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-6-poorin-tpu') or (extra == 'extra-14-marin-levanter-tpu' and extra == 'extra-6-poorin-gpu') or (extra == 'extra-6-poorin-cpu' and extra == 'extra-6-poorin-gpu') or (extra == 'extra-6-poorin-gpu' and extra == 'extra-6-poorin-tpu')" },
-    { name = "pytest", marker = "sys_platform == 'linux' or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-14-marin-levanter-tpu') or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-6-poorin-cpu') or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-6-poorin-tpu') or (extra == 'extra-14-marin-levanter-tpu' and extra == 'extra-6-poorin-gpu') or (extra == 'extra-6-poorin-cpu' and extra == 'extra-6-poorin-gpu') or (extra == 'extra-6-poorin-gpu' and extra == 'extra-6-poorin-tpu')" },
-    { name = "pytest-xdist", marker = "sys_platform == 'linux' or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-14-marin-levanter-tpu') or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-6-poorin-cpu') or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-6-poorin-tpu') or (extra == 'extra-14-marin-levanter-tpu' and extra == 'extra-6-poorin-gpu') or (extra == 'extra-6-poorin-cpu' and extra == 'extra-6-poorin-gpu') or (extra == 'extra-6-poorin-gpu' and extra == 'extra-6-poorin-tpu')" },
-    { name = "safetensors", marker = "sys_platform == 'linux' or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-14-marin-levanter-tpu') or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-6-poorin-cpu') or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-6-poorin-tpu') or (extra == 'extra-14-marin-levanter-tpu' and extra == 'extra-6-poorin-gpu') or (extra == 'extra-6-poorin-cpu' and extra == 'extra-6-poorin-gpu') or (extra == 'extra-6-poorin-gpu' and extra == 'extra-6-poorin-tpu')" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "aqtp", specifier = ">=0.8.2" },
-    { name = "equinox", specifier = ">=0.10.6" },
-    { name = "jax", specifier = ">=0.9.2" },
-    { name = "jaxtyping", specifier = ">=0.2.20" },
-    { name = "safetensors", specifier = ">=0.4.3" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "chex", specifier = ">=0.1.86" },
-    { name = "mkdocs", specifier = ">=1.4.3" },
-    { name = "mkdocs-include-markdown-plugin" },
-    { name = "mkdocs-material", specifier = ">=7.3.3" },
-    { name = "mkdocstrings", specifier = ">=0.22.0" },
-    { name = "mkdocstrings-python", specifier = ">=1.1.2" },
-    { name = "pygments" },
-    { name = "pymdown-extensions" },
-    { name = "pytest", specifier = ">=7.4.0" },
-    { name = "pytest-xdist" },
-    { name = "safetensors", specifier = ">=0.4.3" },
-]
-test = [
-    { name = "chex", specifier = ">=0.1.86" },
-    { name = "pytest", specifier = ">=7.4.0" },
-    { name = "pytest-xdist" },
-    { name = "safetensors", specifier = ">=0.4.3" },
+sdist = { url = "https://files.pythonhosted.org/packages/f5/00/78744503420447e9b3a93c768abeb162952d9403de5613dcaa6e4a052f98/marin_haliax-0.2.139.dev37117265303.tar.gz", hash = "sha256:04048e585c4609cb2a19912d31de711bbf5d720e3aa4a1f26f3127b303a8ba37", size = 780857, upload-time = "2026-10-03T10:44:00.229Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/28/ca/513d3f47f418a61a78004cc6cbee055068016b60adad5ac158bd07655ab4/marin_haliax-0.2.139.dev37117265303-py3-none-any.whl", hash = "sha256:db1c5658935f39730a0e2e730b248fec77040a0efda1c2445b308f62e6aa640b", size = 159180, upload-time = "2026-10-03T10:43:47.159Z" },
 ]
 
 [[package]]
@@ -2103,7 +2057,7 @@ requires-dist = [
     { name = "libtpu", marker = "extra == 'tpu'", specifier = "==0.0.46.*" },
     { name = "lm-eval", marker = "extra == 'lm-eval'", git = "https://github.com/stanford-crfm/lm-evaluation-harness.git?rev=d5e3391f22cde186c827674d5c3ec7c5f4fe0cab" },
     { name = "marin-finestore", editable = "lib/finestore" },
-    { name = "marin-haliax", editable = "lib/haliax" },
+    { name = "marin-haliax", specifier = "==0.2.139.dev37117265303" },
     { name = "marin-zephyr", editable = "lib/zephyr" },
     { name = "nvidia-cublas", marker = "sys_platform == 'linux' and extra == 'gpu'", specifier = ">=13.2.0.9" },
     { name = "nvidia-cutlass-dsl", extras = ["cu13"], marker = "sys_platform == 'linux' and extra == 'gpu'", specifier = "==4.6.2", index = "https://pypi.nvidia.com/" },
@@ -3530,7 +3484,7 @@ requires-dist = [
     { name = "libtpu", marker = "extra == 'tpu'", specifier = "==0.0.46.*" },
     { name = "marin-dupekit", marker = "extra == 'dedup'", editable = "lib/dupekit" },
     { name = "marin-finestore", editable = "lib/finestore" },
-    { name = "marin-haliax", editable = "lib/haliax" },
+    { name = "marin-haliax" },
     { name = "marin-levanter", editable = "lib/levanter" },
     { name = "marin-zephyr", editable = "lib/zephyr" },
     { name = "msgspec", specifier = ">=0.18.0" },
@@ -3778,7 +3732,7 @@ dependencies = [
 requires-dist = [
     { name = "marin-dupekit", editable = "lib/dupekit" },
     { name = "marin-finelog-server", specifier = "==0.2.46.dev33324331711" },
-    { name = "marin-haliax", editable = "lib/haliax" },
+    { name = "marin-haliax" },
     { name = "marin-levanter", editable = "lib/levanter" },
     { name = "marin-zephyr", editable = "lib/zephyr" },
     { name = "poorin", editable = "lib/poorin" },
