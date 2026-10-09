@@ -73,9 +73,7 @@ from poorin.experiment.sweep import grid
 BuildResult = ArtifactStep | Mapping[str, ArtifactStep] | list[ArtifactStep] | tuple[ArtifactStep, ...]
 BuildRunner = Callable[[list[ArtifactStep], int, frozenset[str]], None]
 
-# Steps built at once when --max-concurrent is not given. A run of a sweep with more than one trial
-# must pass 1: Fray's LocalClient runs jobs as threads in one process, and Levanter's tracker and
-# the W&B run are process-global, so concurrent trials would log into one run.
+# Steps built at once when --max-concurrent is not given. Trainings still run one at a time (D98).
 DEFAULT_MAX_CONCURRENT = 8
 
 

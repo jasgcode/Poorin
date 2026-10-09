@@ -100,7 +100,7 @@ python experiments/grug/base/launch.py --version dev --set steps=200 --show-conf
 | `--show-config` | Print the plan and each returned handle's identity config as YAML. An error with `--run`. |
 | `--accept-drift NAME` | Accept a changed recipe for the artifact named `NAME` (the part before `@` in the plan) and re-stamp its record. Repeatable. |
 | `--version-of NAME=VERSION` | The old `--override`, renamed so it is not confused with `--set`. Same behavior; no alias. |
-| `--max-concurrent N` | Unchanged default of 8, except that a `--run` of a sweep with more than one trial requires `--max-concurrent 1` (D94). Fray's `LocalClient` runs jobs as threads in one process, whose Levanter tracker and W&B run the trials would share. |
+| `--max-concurrent N` | Unchanged default of 8. Trainings in one process run one at a time (D98), so a sweep's trials never share a Levanter tracker or W&B run; D94 had required `--max-concurrent 1` for a multi-trial `--run` instead. |
 
 Errors, all raised before any step runs:
 
@@ -111,8 +111,7 @@ Errors, all raised before any step runs:
   recipe;
 - the same path set twice in one trial;
 - an override the experiment never applied (it ignores its `overrides` argument);
-- an `--accept-drift` name that matches no drifted artifact;
-- `--run` of a `--sweep` with more than one trial, without `--max-concurrent 1`.
+- an `--accept-drift` name that matches no drifted artifact.
 
 ### The plan
 
@@ -317,7 +316,8 @@ per point with that point's `Overrides`, all inside one `BuildContext`. A depend
 trials is built at most once: the runner deduplicates steps by output path. With a calendar
 version, a rerun after a crash runs only the trials that are missing, and widening the list runs
 only the new values. With a `dev` version every invocation runs every trial at a fresh version, and
-`--resume` resumes each. Trials run one after another with `--max-concurrent 1`.
+`--resume` resumes each. Trials train one after another, since a process runs one training at a
+time (D98).
 
 `sweep.sweep(trial, **axes)` stays for sweeps written in Python; its docstring points at
 `--sweep` for the command-line case.
