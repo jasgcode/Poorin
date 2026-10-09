@@ -9,6 +9,7 @@ re-test Click's option parsing.
 """
 
 import os
+import re
 from datetime import datetime
 
 import pytest
@@ -21,7 +22,7 @@ def _noop(**_kwargs):
     return None
 
 
-def _build_two():
+def _build_two(**_):
     """A dataset handle and a model handle depending on it, both deferring their version."""
     data = apply("data/toy", _noop, x=1)
     model = apply("models/toy", _noop, data=data)
@@ -43,17 +44,6 @@ def test_version_and_overrides_reach_deferred_builders(runner):
     assert result.exit_code == 0, result.output
     assert "data/toy@2026.06.28" in result.output  # overridden by name
     assert "models/toy@2026.07.16" in result.output  # took the default
-
-
-def test_plan_flags_artifacts_that_resolved_to_a_mutable_version(runner):
-    # A mutable resolution rebuilds on every run; the plan must mark it, and a calendar version must
-    # not be marked.
-    dev = runner.invoke(experiment_main(_build_two), ["--version", "dev"])
-    assert dev.exit_code == 0, dev.output
-    assert "mutable" in dev.output
-
-    calver = runner.invoke(experiment_main(_build_two), ["--version", "2026.07.16"])
-    assert "mutable" not in calver.output
 
 
 def test_unused_override_is_rejected(runner):
@@ -90,9 +80,8 @@ def test_run_version_gives_mutable_versions_a_unique_suffix_and_keeps_calendar_v
 
 
 def _resolved_model_version(output: str) -> str:
-    resolved = output.split("Resolved versions:", 1)[1]
-    (line,) = [line for line in resolved.splitlines() if line.strip().startswith("models/toy@")]
-    return line.strip().split("@", 1)[1].split()[0]
+    (line,) = [line for line in output.splitlines() if "models/toy@" in line]
+    return line.split("models/toy@", 1)[1].split()[0]
 
 
 def test_each_dev_invocation_resolves_to_a_different_mutable_version(runner):
@@ -125,7 +114,7 @@ def test_version_and_resume_are_mutually_exclusive(runner):
 def test_run_executes_the_build_and_plan_does_not(runner, tmp_path, monkeypatch):
     monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
 
-    def build():
+    def build(**_):
         return apply("scratch/marker", _write_marker, out=OUT)
 
     def markers():
@@ -138,3 +127,44 @@ def test_run_executes_the_build_and_plan_does_not(runner, tmp_path, monkeypatch)
     built = runner.invoke(experiment_main(build), ["--version", "dev", "--run"])
     assert built.exit_code == 0, built.output
     assert len(markers()) == 1
+
+
+def test_plan_reports_each_artifact_state(runner, tmp_path, monkeypatch):
+    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
+
+    def build(payload):
+        return lambda **_: apply("scratch/marker", _write_marker_with, out=OUT, payload=payload)
+
+    first = runner.invoke(experiment_main(build("a")), ["--version", "2026.07.16"])
+    assert "not built" in first.output
+    runner.invoke(experiment_main(build("a")), ["--version", "2026.07.16", "--run"])
+    built = runner.invoke(experiment_main(build("a")), ["--version", "2026.07.16"])
+    assert re.search(r"^\s+built\s", built.output, re.MULTILINE)  # "not built" must not match
+    changed = runner.invoke(experiment_main(build("b")), ["--version", "2026.07.16"])
+    assert "built from another recipe" in changed.output
+    assert "payload: 'a' -> 'b'" in changed.output
+    dev = runner.invoke(experiment_main(build("a")), ["--version", "dev"])
+    assert "mutable" in dev.output
+
+
+def test_plan_rejects_a_calendar_artifact_that_depends_on_a_mutable_one(runner):
+    result = runner.invoke(
+        experiment_main(_build_two),
+        ["--version", "2026.07.16", "--override", "data/toy=dev"],
+    )
+    assert result.exit_code != 0
+    assert "depends on mutable" in str(result.exception)
+
+
+def test_show_config_prints_the_identity_config_and_refuses_run(runner):
+    shown = runner.invoke(experiment_main(_build_two), ["--version", "2026.07.16", "--show-config"])
+    assert shown.exit_code == 0, shown.output
+    assert "# models/toy@2026.07.16" in shown.output
+    assert "data: data/toy@2026.07.16" in shown.output  # a dependency renders as name@version
+
+    refused = runner.invoke(experiment_main(_build_two), ["--version", "dev", "--show-config", "--run"])
+    assert refused.exit_code != 0
+
+
+def _write_marker_with(out, payload):
+    _write_marker(out)

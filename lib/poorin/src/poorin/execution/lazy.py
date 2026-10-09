@@ -450,6 +450,24 @@ def resolve(handle: "ArtifactStep[T]", *, max_concurrent: int = 8) -> T:
     return run(handle, max_concurrent=max_concurrent)[0]
 
 
+def graph_handles(handles: list[ArtifactStep]) -> list[ArtifactStep]:
+    """Every handle reachable from ``handles`` (deps included), deduped by identity, deps first."""
+    seen: set[int] = set()
+    order: list[ArtifactStep] = []
+
+    def walk(handle: ArtifactStep) -> None:
+        if id(handle) in seen:
+            return
+        seen.add(id(handle))
+        for dep in handle.deps:
+            walk(dep)
+        order.append(handle)
+
+    for handle in handles:
+        walk(handle)
+    return order
+
+
 class _OutSentinel:
     """The :data:`OUT` sentinel for :func:`apply`: resolves to ``ctx.output_path`` at run time."""
 

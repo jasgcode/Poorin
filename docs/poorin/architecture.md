@@ -345,8 +345,9 @@ for a stated user:
 | `poorin.execution` | Package marker | R1 |
 | `poorin.execution.artifact` | `Artifact` base type, its on-disk record, and the fingerprint drift check | R1 |
 | `poorin.execution.build_context` | Ambient build context resolving deferred artifact versions through a `VersionCodex` | R2 |
+| `poorin.execution.cache_state` | An artifact's state at its output path (built, started, drifted) for the plan and the drift check | R1 |
 | `poorin.execution.fingerprint` | Canonical JSON encoding and hashing of step configs for drift detection | R1 |
-| `poorin.execution.lazy` | Lazy artifact steps: `name@version` handles, step context, lowering to the step runner | R1 |
+| `poorin.execution.lazy` | Lazy artifact steps: `name@version` handles, step context, lowering to the step runner, graph walk | R1 |
 | `poorin.execution.remote` | `@remote` decorator that submits a step function as a Fray job | R1 |
 | `poorin.execution.step_runner` | DAG scheduler running `StepSpec`s with caching, locking, status writes, Fray dispatch | R1 |
 | `poorin.execution.step_spec` | `StepSpec` dataclass: step name, deps, hash attributes, output path, function | R1 |

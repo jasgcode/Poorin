@@ -304,6 +304,40 @@ def read_record(output_path: str) -> ArtifactRecord | None:
     return None
 
 
+@dataclass(frozen=True)
+class RecordedRecipe:
+    """The recipe an existing output was built, or started, from."""
+
+    fingerprint: str
+    payload: str | None
+    """The canonical config JSON the fingerprint hashes, for the drift diff; ``None`` when not recorded."""
+    filename: str
+    """The file that records it: the finished build's record or the runner's start stub."""
+
+
+def recorded_recipe(output_path: str) -> RecordedRecipe | None:
+    """The recipe recorded at ``output_path``: the record's when the build finished, else the stub's
+    the runner writes when a build starts. ``None`` when neither records a fingerprint (nothing
+    built, a manual :func:`write_artifact`, or a legacy Ray sidecar)."""
+    output_path = _resolved(output_path)
+    text = _read_text(output_path, RECORD_FILENAME)
+    if text is not None:
+        record = _parse_record(text)
+        if not record.fingerprint:
+            return None
+        return RecordedRecipe(record.fingerprint, record.fingerprint_payload, RECORD_FILENAME)
+    stub_text = _read_text(output_path, _LEGACY_EXECUTOR_INFO_FILENAME)
+    if stub_text is None:
+        return None
+    stub = json.loads(stub_text)
+    if stub.get("executor_version") != STEP_RUNNER_EXECUTOR_VERSION:
+        return None
+    fingerprint = (stub.get("config") or {}).get(FINGERPRINT_KEY)
+    if not fingerprint:
+        return None
+    return RecordedRecipe(fingerprint, stub.get("fingerprint_payload"), _LEGACY_EXECUTOR_INFO_FILENAME)
+
+
 def write_record(record: ArtifactRecord) -> None:
     """Write ``record`` to ``{record.output_path}/.artifact.json``."""
     StoragePath(prefix_join(record.output_path, RECORD_FILENAME)).write_text(record.model_dump_json(indent=2))

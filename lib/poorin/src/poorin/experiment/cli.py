@@ -8,7 +8,8 @@ This module makes that a one-liner while wiring up the deferred-version machiner
 (:mod:`poorin.execution.build_context`):
 
 - :func:`build_options` is a Click decorator that adds ``--version`` (the run-wide default),
-  ``--override NAME=VERSION`` (per-artifact, repeatable), ``--run`` (build vs. print the plan), and
+  ``--override NAME=VERSION`` (per-artifact, repeatable), ``--run`` (build vs. print the plan),
+  ``--show-config`` (the plan plus each returned artifact's identity config), and
   ``--max-concurrent``. It builds the wrapped function's handle graph **inside** a
   :class:`~poorin.execution.build_context.BuildContext` assembled from those options, so any builder
   that deferred its version (omitted ``version=``) resolves against them.
@@ -17,8 +18,9 @@ This module makes that a one-liner while wiring up the deferred-version machiner
 ``--version`` is required — there is no silent ``dev`` default, because a deferred *dataset* at a
 mutable version rebuilds its (often multi-TB) cache on every run and, unlike a training checkpoint,
 is not namespaced per user. To iterate, pass ``--version dev``: each invocation gets a fresh,
-suffixed version, and ``--resume <version>`` continues an earlier one. The printed plan flags
-every artifact that resolved to a mutable version and will rebuild.
+suffixed version, and ``--resume <version>`` continues an earlier one. The printed plan gives
+each artifact's state at its output path (see :mod:`poorin.execution.cache_state`), so an artifact
+that resolved to a mutable version and will rebuild shows as ``mutable``.
 
 An experiment with its own options composes with :func:`build_options` by stacking it *below* the
 experiment's own ``@click.option``s and ``@click.command()`` on top::
@@ -38,16 +40,21 @@ invocations keeps its first resolved version.
 """
 
 import functools
+import json
 import secrets
+import textwrap
 from collections.abc import Callable, Mapping
 from datetime import datetime
 from typing import Any
 
 import click
+import yaml
+from rigging.filesystem.cluster_config import poorin_prefix
 
 from poorin.execution.artifact import is_mutable_version, validate_version
 from poorin.execution.build_context import BuildContext, VersionCodex, build_context
-from poorin.execution.lazy import ArtifactStep, lower, run
+from poorin.execution.cache_state import HandleState, handle_state
+from poorin.execution.lazy import ArtifactStep, graph_handles, lower, run
 
 BuildResult = ArtifactStep | Mapping[str, ArtifactStep] | list[ArtifactStep] | tuple[ArtifactStep, ...]
 BuildRunner = Callable[[list[ArtifactStep], int], None]
@@ -126,36 +133,21 @@ def _as_handles(result: BuildResult) -> list[ArtifactStep]:
     )
 
 
-def graph_handles(handles: list[ArtifactStep]) -> list[ArtifactStep]:
-    """Every handle reachable from ``handles`` (deps included), deduped by identity, deps first."""
-    seen: set[int] = set()
-    order: list[ArtifactStep] = []
-
-    def walk(handle: ArtifactStep) -> None:
-        if id(handle) in seen:
-            return
-        seen.add(id(handle))
-        for dep in handle.deps:
-            walk(dep)
-        order.append(handle)
-
-    for handle in handles:
-        walk(handle)
-    return order
-
-
-def _print_plan(handles: list[ArtifactStep]) -> None:
-    """Print the lowered plan, then a summary of every artifact's resolved ``name@version``.
-
-    The summary flags each artifact that resolved to a mutable version inline, since a mutable
-    version rebuilds on every run — the thing a driver most wants to catch before ``--run``.
-    """
-    for handle in handles:
-        click.echo(lower(handle))
-    click.echo("\nResolved versions:")
-    for handle in graph_handles(handles):
-        flag = "  (mutable — rebuilds every run)" if is_mutable_version(handle.version) else ""
-        click.echo(f"  {handle.name}@{handle.version}{flag}")
+def _print_plan(states: list[HandleState], shown: list[HandleState]) -> None:
+    """One line per artifact (state, fingerprint, ``name@version``) with the diff under a drifted
+    one, then the identity config of each artifact in ``shown`` as YAML."""
+    click.echo(f"Prefix: {poorin_prefix()}")
+    seen: set[str] = set()
+    for state in states:
+        if state.label in seen:
+            continue
+        seen.add(state.label)
+        click.echo(f"  {state.state.value:<26} {state.fingerprint}  {state.label}")
+        if state.change:
+            click.echo(textwrap.indent(state.change.strip(), "      "))
+    for state in shown:
+        config = json.loads(state.handle.fingerprint_payload())
+        click.echo(f"\n# {state.label}\n{yaml.safe_dump(config, sort_keys=True).rstrip()}")
 
 
 def _run_locally(handles: list[ArtifactStep], max_concurrent: int) -> None:
@@ -190,6 +182,11 @@ def build_options_with_runner(fn: Callable[..., BuildResult], runner: BuildRunne
         help="Per-artifact version override, keyed by the artifact's name. Repeatable.",
     )
     @click.option("--run", "do_run", is_flag=True, help="Build the handles (default: print the plan).")
+    @click.option(
+        "--show-config",
+        is_flag=True,
+        help="Print the plan and each returned artifact's identity config as YAML; run nothing.",
+    )
     @click.option("--max-concurrent", type=int, default=8, show_default=True, help="Max steps built concurrently.")
     @functools.wraps(fn)
     def wrapper(
@@ -198,6 +195,7 @@ def build_options_with_runner(fn: Callable[..., BuildResult], runner: BuildRunne
         resume_version: str | None,
         overrides: dict[str, str],
         do_run: bool,
+        show_config: bool,
         max_concurrent: int,
         **kwargs: Any,
     ) -> None:
@@ -220,8 +218,14 @@ def build_options_with_runner(fn: Callable[..., BuildResult], runner: BuildRunne
                 "artifact hardcodes its version (an explicit version wins over an override).",
                 param_hint="--override",
             )
+        if show_config and do_run:
+            raise click.UsageError("--show-config prints the plan; it cannot be combined with --run")
+        states = [handle_state(h) for h in graph_handles(handles)]
         if not do_run:
-            _print_plan(handles)
+            for handle in handles:
+                lower(handle)  # run() lowers too; the plan lowers to reject a graph it could not run
+            returned = {id(h) for h in handles}
+            _print_plan(states, [s for s in states if id(s.handle) in returned] if show_config else [])
             return
         runner(handles, max_concurrent)
 
@@ -233,10 +237,10 @@ def build_options(fn: Callable[..., BuildResult]) -> Callable[..., None]:
 
     ``fn`` returns one :class:`~poorin.execution.lazy.ArtifactStep`, a list/tuple of them, or a
     name→handle mapping; it is called inside a :class:`~poorin.execution.build_context.BuildContext`
-    built from ``--version`` and ``--override``. Without ``--run`` the lowered plan is printed;
-    with it the handles are built. An ``--override`` naming an artifact that never deferred (a typo,
-    or one that hardcodes its version) is rejected, so a silently-ignored override cannot slip a run
-    under the wrong version.
+    built from ``--version`` and ``--override``. Without ``--run`` the plan is printed, one line per
+    artifact with its cache state; with it the handles are built. An ``--override`` naming an
+    artifact that never deferred (a typo, or one that hardcodes its version) is rejected, so a
+    silently-ignored override cannot slip a run under the wrong version.
     """
 
     return build_options_with_runner(fn, _run_locally)
