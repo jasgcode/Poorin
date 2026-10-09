@@ -84,8 +84,7 @@ You can check out the [full script](https://github.com/marin-community/marin/blo
 ```python
 from fray.types import ResourceConfig
 from levanter.optim.config import AdamConfig
-from poorin.execution.lazy import lower
-from poorin.execution.step_runner import StepRunner
+from poorin.execution.lazy import run
 from poorin.experiment.data import tokenized
 from poorin.experiment.train import train_lm
 
@@ -117,7 +116,7 @@ nano_tinystories_model = train_lm(
 )
 
 if __name__ == "__main__":
-    StepRunner().run([lower(nano_tinystories_model)])
+    run(nano_tinystories_model)
 ```
 
 Here, we create two steps, one for tokenizing the dataset and one for training the model.

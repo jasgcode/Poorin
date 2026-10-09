@@ -199,9 +199,10 @@ Pinned artifacts (`override_path`) are not checked, because they point at existi
 `--set PATH=VALUE` overrides one field of the experiment's config by dotted path. The value is
 YAML, decoded by draccus against the field's annotated type: `--set steps=200` gives an `int`, and
 `--set optimizer='{type: muon, learning_rate: 0.02}'` replaces the optimizer with the class
-registered as `muon`. `--sweep PATH=[V1, ...]` runs one trial per value, as if each were passed to
-`--set`. Several `--sweep` options form their Cartesian product (`poorin.experiment.sweep.grid`),
-and each `--set` applies to every trial.
+registered as `muon`. Values are YAML 1.1, so a string such as `yes`, `on`, or `null` meant
+literally must be quoted: `--set label="'yes'"`. `--sweep PATH=[V1, ...]` runs one trial per
+value, as if each were passed to `--set`. Several `--sweep` options form their Cartesian product
+(`poorin.experiment.sweep.grid`), and each `--set` applies to every trial.
 
 ```bash
 uv run --no-sync python experiments/grug/base/launch.py --version 2026.10.09 \

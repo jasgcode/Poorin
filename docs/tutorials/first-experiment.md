@@ -14,19 +14,17 @@ We assume you have already gone through the [installation](installation.md) tuto
 
 ## The structure of a Marin experiment
 
-A Marin experiment script constructs lazy artifact handles, lowers them to a step graph,
-and hands the graph to `StepRunner`. Nothing runs at import time; all I/O happens in
-`StepRunner.run`.
+A Marin experiment script constructs lazy artifact handles and passes them to `run`.
+Nothing runs at import time; all I/O happens in `run`.
 
 ```python
-from poorin.execution.lazy import lower
-from poorin.execution.step_runner import StepRunner
+from poorin.execution.lazy import run
 
 def build():
     ...  # return a lazy artifact handle
 
 if __name__ == "__main__":
-    StepRunner().run([lower(build())])
+    run(build())
 ```
 
 ## Step 1: Tokenize the dataset
@@ -49,8 +47,8 @@ tinystories_tokenized = tokenized(
 ```
 
 `tinystories_tokenized` is an `ArtifactStep[TokenizedCache]` handle. Constructing it does not download or
-tokenize anything. The actual work happens when `StepRunner` encounters this step in the
-dependency graph.
+tokenize anything. The actual work happens when `run` reaches this step in the dependency
+graph.
 
 ## Step 2: Choose a model configuration
 
@@ -120,16 +118,19 @@ Key arguments:
 ## Step 4: Wire the main block
 
 ```python
-from poorin.execution.lazy import lower
-from poorin.execution.step_runner import StepRunner
+from poorin.execution.lazy import run
 
 if __name__ == "__main__":
-    StepRunner().run([lower(build())])
+    run(build())
 ```
 
-`lower(build())` traverses the dependency graph from `build()` and converts each handle
-into a `StepSpec`. `StepRunner.run` checks the cache for each step and runs any that are
-missing.
+`run(build())` first checks every artifact in the dependency graph from `build()` against
+the recipe its output records, and refuses one whose recipe changed under the same version
+(see [Recipe drift](../explanations/lazy-artifacts.md#recipe-drift)). It then lowers each
+handle into a `StepSpec`, checks the cache for each step, and runs any that are missing. An
+experiment run from the command line wraps `build` in `experiment_main` instead, which adds
+`--version`, `--set`, and the other shared options (see
+[Lazy artifacts](../explanations/lazy-artifacts.md)).
 
 ## Running the experiment
 
@@ -175,12 +176,12 @@ Rerunning the same script skips steps whose outputs already exist.
 
 ### Rerunning a failed step
 
-`StepRunner` skips steps that succeeded and reruns steps that failed, so a failed step
-retries on the next invocation. To make a previous failure raise instead of retrying,
-pass `force_run_failed=False`:
+`run` skips steps that succeeded and reruns steps that failed, so a failed step retries on
+the next invocation. To make a previous failure raise instead of retrying, pass
+`force_run_failed=False`:
 
 ```python
-StepRunner().run([lower(build())], force_run_failed=False)
+run(build(), force_run_failed=False)
 ```
 
 ### Rerunning a succeeded step

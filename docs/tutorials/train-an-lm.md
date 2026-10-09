@@ -10,12 +10,11 @@ using a 1.4B-parameter Llama trained on a sample of FineWeb-Edu as a concrete ex
 
 ## How a training script is structured
 
-A Marin training script builds a lazy `ArtifactStep[LevanterCheckpoint]` handle, lowers it to
-a runnable step graph, and passes it to `StepRunner`. Nothing executes at import time.
+A Marin training script builds a lazy `ArtifactStep[LevanterCheckpoint]` handle and passes it
+to `run`. Nothing executes at import time.
 
 ```python
-from poorin.execution.lazy import ArtifactStep, lower
-from poorin.execution.step_runner import StepRunner
+from poorin.execution.lazy import ArtifactStep, run
 from poorin.experiment.train import train_lm
 from poorin.training.training import LevanterCheckpoint
 
@@ -23,12 +22,13 @@ def build() -> ArtifactStep[LevanterCheckpoint]:
     ...  # assemble the checkpoint handle
 
 if __name__ == "__main__":
-    StepRunner().run([lower(build())])
+    run(build())
 ```
 
-`StepRunner.run` walks the dependency graph, checks the cache for each step, and runs any
-that are missing or explicitly forced. Dataset tokenization runs before training; a step
-that already succeeded is skipped.
+`run` first checks every artifact in the dependency graph against the recipe its output
+records, and refuses one whose recipe changed under the same version. It then walks the
+graph, checks the cache for each step, and runs any that are missing or failed. Dataset
+tokenization runs before training; a step that already succeeded is skipped.
 
 ## Defining the model
 
@@ -88,8 +88,7 @@ of them. The complete `build()` function:
 ```python
 from fray.types import ResourceConfig
 from levanter.optim.config import AdamConfig
-from poorin.execution.lazy import ArtifactStep, lower
-from poorin.execution.step_runner import StepRunner
+from poorin.execution.lazy import ArtifactStep, run
 from poorin.experiment.train import EvalSuite, train_lm
 from poorin.training.training import LevanterCheckpoint
 from poorin.experiment.data import tokenized
@@ -139,7 +138,7 @@ def build(*, version: str = "2026.06.28") -> ArtifactStep[LevanterCheckpoint]:
     )
 
 if __name__ == "__main__":
-    StepRunner().run([lower(build())])
+    run(build())
 ```
 
 ### Required arguments
