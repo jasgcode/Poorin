@@ -131,6 +131,13 @@ def test_a_trial_is_named_for_the_value_its_override_decodes_to():
     assert _set("trainer.steps={").named("x").startswith("x/set-")
 
 
+def test_a_quoted_number_is_not_named_for_the_number():
+    # YAML strips the quotes, so '010' reaches a str field as the text '010', not as 10.
+    quoted, number = _set("mp='010'"), _set("mp=10")
+    assert quoted.apply(FINGERPRINT, _config()).mp != number.apply(FINGERPRINT, _config()).mp
+    assert quoted.named("x") != number.named("x")
+
+
 def test_a_value_with_a_comma_or_equals_takes_the_digest_name():
     # "mp=a=b,c=d" could otherwise read like two overrides another set might spell the same way.
     name = _set("mp=params=float32,compute=bfloat16").named("grug/base")

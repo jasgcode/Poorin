@@ -44,8 +44,9 @@ def _normalized(text: str) -> str:
     the same artifact and ``010`` is named for the 8 it decodes to.
 
     YAML reads the value first, as the field will. YAML 1.1 reads ``1e-3`` (no dot) as a string,
-    which Python's ``float`` then reads, as draccus does for a float field. Any other value, or text
-    YAML cannot read, keeps its text.
+    which Python's ``float`` then reads, as draccus does for a float field. A quoted string keeps
+    its quotes: YAML strips them, so ``'010'`` reaches a ``str`` field as ``010``, not as 10. Any
+    other value, or text YAML cannot read, keeps its text.
     """
     try:
         value = parse_string(text)
@@ -53,7 +54,8 @@ def _normalized(text: str) -> str:
         return text.strip()
     if isinstance(value, bool | int | float):
         return repr(value)
-    if isinstance(value, str):
+    # A string equal to its text was unquoted.
+    if value == text.strip():
         for parse in (int, float):
             try:
                 return repr(parse(value))

@@ -217,8 +217,8 @@ The experiment receives one trial's overrides as `overrides`
 - `overrides.named(name)` for the artifact's name. The overrides become a suffix such as
   `grug/base-trial/optimizer.learning_rate=0.001,steps=200`, with numbers in one spelling, so
   `1e-3` and `0.001` name one path. When a value has a character outside `[A-Za-z0-9_.+-]` (a
-  mapping, or a `,` or `=`), is longer than 40 characters, or the suffix would exceed 100
-  characters, the suffix is `set-<digest>`, a hash of the sorted overrides.
+  mapping, a quoted string, or a `,` or `=`), is longer than 40 characters, or the suffix would
+  exceed 100 characters, the suffix is `set-<digest>`, a hash of the sorted overrides.
 - `overrides.run_id(base)` for the tracker run ID, which appends the same digest, so each trial
   logs to its own run.
 
