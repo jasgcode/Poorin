@@ -55,13 +55,6 @@ LOCAL_SAFE_MARKERS = (
 TEST_ENV = {"JAX_PLATFORMS": "cpu", "TZ": "UTC"}
 # Haliax's sharding tests expect eight CPU devices, as in Marin's CI.
 SUITE_ENV = {"lib/haliax": {"JAX_NUM_CPU_DEVICES": "8"}}
-# Tests that fail on this workstation because of the host, not the code. Each entry goes away with
-# the code it tests.
-HOST_EXCLUSIONS = (
-    # tensorboardX is in Levanter's test dependency group, which the GPU environment does not
-    # install. The TensorBoard tracker it tests is still in the tree (Deferred, decisions.md).
-    "--ignore=lib/levanter/tests/test_tensorboard.py",
-)
 
 
 @dataclass(frozen=True)
@@ -122,48 +115,15 @@ def select(changed: Sequence[str], repo_root: Path) -> list[Selection]:
     return selections
 
 
-def pytest_runs(selections: Iterable[Selection], exclusions: Sequence[str]) -> list[PytestRun]:
-    """One CPU pytest invocation per selected suite, skipping the tests ``exclusions`` name.
-
-    ``exclusions`` are ``--ignore`` and ``--deselect`` options with repository-relative paths, such
-    as ``HOST_EXCLUSIONS``; each suite gets the ones under its test directories. pytest collects a
-    file passed by name even when ``--ignore`` names it, so ignored paths also leave the selection,
-    and a suite left with nothing selected does not run.
-    """
-    runs = []
-    for selection in selections:
-        suite = selection.suite
-        own_prefixes = tuple(f"{test_dir}/" for test_dir in suite.test_dirs)
-        own = [option for option in exclusions if option.split("=", 1)[1].startswith(own_prefixes)]
-        ignored = tuple(option.removeprefix("--ignore=") for option in own if option.startswith("--ignore="))
-        paths = tuple(path for path in selection.paths if not _under_any(path, ignored))
-        if not paths:
-            continue
-        options = [_suite_relative(option, suite) for option in own]
-        runs.append(
-            PytestRun(
-                args=("uv", "run", "--no-sync", "pytest", "-m", LOCAL_SAFE_MARKERS, *options, *paths),
-                env={**TEST_ENV, **SUITE_ENV.get(suite.config_dir, {})},
-            )
+def pytest_runs(selections: Iterable[Selection]) -> list[PytestRun]:
+    """One CPU pytest invocation per selected suite."""
+    return [
+        PytestRun(
+            args=("uv", "run", "--no-sync", "pytest", "-m", LOCAL_SAFE_MARKERS, *selection.paths),
+            env={**TEST_ENV, **SUITE_ENV.get(selection.suite.config_dir, {})},
         )
-    return runs
-
-
-def _under_any(path: str, roots: Sequence[str]) -> bool:
-    """Whether ``path`` is one of ``roots`` or lies under one."""
-    return any(path == root or path.startswith(f"{root}/") for root in roots)
-
-
-def _suite_relative(option: str, suite: Suite) -> str:
-    """``option`` as pytest reads it in ``suite``'s run from the repository root.
-
-    ``--deselect`` takes a node ID, which pytest makes relative to the suite's configuration
-    directory; ``--ignore`` takes a path relative to the working directory.
-    """
-    flag, path = option.split("=", 1)
-    if flag != "--deselect" or not suite.config_dir:
-        return option
-    return f"{flag}={path.removeprefix(f'{suite.config_dir}/')}"
+        for selection in selections
+    ]
 
 
 def run(runs: Sequence[PytestRun], repo_root: Path) -> None:
@@ -334,7 +294,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
     selections = all_suites(REPO_ROOT) if args.all else select(changed_files(REPO_ROOT, args.base), REPO_ROOT)
-    run(pytest_runs(selections, HOST_EXCLUSIONS), REPO_ROOT)
+    run(pytest_runs(selections), REPO_ROOT)
     return 0
 
 

@@ -18,7 +18,6 @@ from jaxtyping import Scalar
 
 from levanter.tracker.helpers import hparams_to_dict
 from levanter.tracker.histogram import SummaryStats
-from levanter.tracker.tensorboard import TensorboardTracker
 from levanter.tracker.trackio import TrackioTracker
 from levanter.tracker.tracker import CompositeTracker, DictTracker, Tracker
 from levanter.tracker.wandb import WandbTracker
@@ -271,10 +270,6 @@ def current_tracker(
 
 @typing.overload
 def get_tracker(name: Literal["wandb"]) -> WandbTracker: ...
-
-
-@typing.overload
-def get_tracker(name: Literal["tensorboard"]) -> TensorboardTracker: ...
 
 
 @typing.overload

@@ -22,7 +22,7 @@ experiment inside `build_config`, so overrides enter the fingerprint and the art
 - Do not pass a partial marker expression such as `-m "not slow"`.
 - Each commit runs `uv run --no-sync python -m tools.prune_check --phase Overrides --step "<label>"` in full and stages its new `docs/poorin/prune-metrics.csv` row.
 - Commit titles: imperative, at most 72 characters, `[poorin]` prefix; bodies follow `.agents/skills/writing-style/pull-requests.md`. No `Co-Authored-By` or tool attribution. Each commit step gives the body's content in `<angle brackets>`; write it as plain prose before committing.
-- Record each ruling that departs from the spec in `docs/poorin/decisions.md` (D93, "Rulings while building D92") in the commit that makes it.
+- Record each ruling that departs from the spec in `docs/poorin/decisions.md` (D94, "Rulings while building D92") in the commit that makes it.
 - No backward compatibility: `--override` is renamed `--version-of` with no alias; `expected_fingerprint`, `set_strict`, and `POORIN_FINGERPRINT_STRICT` are deleted with every caller updated.
 - All imports at the top of the file. No `TYPE_CHECKING` guards; break the `lazy` ↔ `cache_state` cycle with a `Protocol`.
 - Every new module gets a row in `docs/poorin/architecture.md` (`tests/tools/test_architecture.py` enforces it).
@@ -553,7 +553,7 @@ Expected: each prints a plan and exits 0. No commit yet; Task 3 completes commit
 - Modify: `lib/poorin/src/poorin/execution/lazy.py` (`run(accept_drift=...)`, `_refuse_drift`; module docstring)
 - Modify: `lib/poorin/src/poorin/experiment/cli.py` (`--accept-drift`, the `--resume` check, `BuildRunner`)
 - Test: `tests/execution/test_artifact.py`, `tests/execution/test_adopt.py:42-51`, `tests/experiment/test_cli.py`
-- Docs: `docs/explanations/lazy-artifacts.md` ("Advisory drift" and the lines that say "advisory"), `.agents/skills/write-pipeline/references/artifact-binding.md` (the "warns and serves cached output" sentence), the spec's "Pinned and adopted" sentence, `docs/poorin/decisions.md` (D93)
+- Docs: `docs/explanations/lazy-artifacts.md` ("Advisory drift" and the lines that say "advisory"), `.agents/skills/write-pipeline/references/artifact-binding.md` (the "warns and serves cached output" sentence), the spec's "Pinned and adopted" sentence, `docs/poorin/decisions.md` (D94)
 
 **Interfaces:**
 - Consumes: `recorded_recipe`, `RecordedRecipe.filename`, `handle_state`, `record_path`, `CacheState.DRIFTED`, `graph_handles` (Task 1).
@@ -851,7 +851,7 @@ Expected: pass.
 - `docs/poorin/decisions.md`: add after D92:
 
 ```markdown
-### D93. Rulings while building D92
+### D94. Rulings while building D92
 
 - **When:** 2026-10-08, building D92. **Status:** Adopted.
 - **Adopted artifacts are drift-checked.** The spec exempted them with pins, but an adopted
@@ -875,7 +875,7 @@ Run `uv run --no-sync python -m tools.lint --fix`, then `uv run --no-sync python
 
 ```bash
 git add -A lib/poorin/src/poorin/execution tests/execution tests/experiment/test_cli.py lib/poorin/src/poorin/experiment/cli.py docs/explanations/lazy-artifacts.md .agents/skills/write-pipeline/references/artifact-binding.md docs/poorin/specs/2026-10-08-experiment-overrides-design.md docs/poorin/decisions.md docs/poorin/prune-metrics.csv
-git commit -m "[poorin] Refuse a changed recipe under an existing output" -m "<body: the four stale cases (config change, dependency bump, dependency recipe changed under its version, class swap), checked over the whole graph before a run; the class enters the fingerprint, fingerprinting is strict, expected_fingerprint is gone; --accept-drift re-stamps a record; prune_check's two cached datasets were accepted once. Decisions D92 and D93.>"
+git commit -m "[poorin] Refuse a changed recipe under an existing output" -m "<body: the four stale cases (config change, dependency bump, dependency recipe changed under its version, class swap), checked over the whole graph before a run; the class enters the fingerprint, fingerprinting is strict, expected_fingerprint is gone; --accept-drift re-stamps a record; prune_check's two cached datasets were accepted once. Decisions D92 and D94.>"
 ```
 
 ---
@@ -886,7 +886,7 @@ git commit -m "[poorin] Refuse a changed recipe under an existing output" -m "<b
 - Modify: `experiments/grug/base/launch.py:76-123` (`@no_type_check`, `_trackers`), `:193-246` (`grug_base_trial`)
 - Modify: `lib/poorin/src/poorin/experiment/train.py:160-247`
 - Test: `tests/test_grug_base_launch.py`, `tests/experiment/test_train_lm.py`
-- Docs: `docs/poorin/decisions.md` (D93 bullet)
+- Docs: `docs/poorin/decisions.md` (D94 bullet)
 
 **Interfaces:**
 - Produces: grug's runtime args gain `"run_id"`, `"tracker"`, `"log_every"`; `train_lm`'s gain `"run_id"`, `"tracker"`. A tracker's `replicate_path` is set from `ctx.output_path` at run time.
@@ -1007,7 +1007,7 @@ Expected: pass, including the existing `test_mutable_versions_give_each_run_its_
 
 - [ ] **Step 6: Record the ruling, check, commit**
 
-Append to D93:
+Append to D94:
 
 ```markdown
 - **`GrugBaseLaunchConfig` is exempt from the tests' beartype hook** (`@no_type_check`, as
@@ -1019,7 +1019,7 @@ Run `uv run --no-sync python -m tools.lint --fix` and `uv run --no-sync python -
 
 ```bash
 git add experiments/grug/base/launch.py lib/poorin/src/poorin/experiment/train.py tests/test_grug_base_launch.py tests/experiment/test_train_lm.py docs/poorin/decisions.md docs/poorin/prune-metrics.csv
-git commit -m "[poorin] Keep tracker settings out of a run's identity" -m "<body: W&B project, tags, group, run ID, and grug's log cadence become runtime args, so editing a tag no longer changes the fingerprint or trips the drift check; replicate_path is set at run time. GrugBaseLaunchConfig is exempt from the tests' beartype hook. Decisions D92 and D93.>"
+git commit -m "[poorin] Keep tracker settings out of a run's identity" -m "<body: W&B project, tags, group, run ID, and grug's log cadence become runtime args, so editing a tag no longer changes the fingerprint or trips the drift check; replicate_path is set at run time. GrugBaseLaunchConfig is exempt from the tests' beartype hook. Decisions D92 and D94.>"
 ```
 
 ---
@@ -1576,7 +1576,7 @@ Expected: pass.
 - `docs/explanations/lazy-artifacts.md`: the main-block options list (`--override` → `--version-of`, add `--set`, `--sweep`, `--show-config`, `--accept-drift`), and a short "Overrides and sweeps" section: what `--set`/`--sweep` do, that overrides enter the fingerprint and the name, the digest rule, and the derived-value caveat.
 - `lib/poorin/src/poorin/experiment/sweep.py` module docstring: add "For a grid over config fields from the command line, use ``--sweep`` (:mod:`poorin.experiment.cli`)."
 - `docs/poorin/architecture.md`: add `| \`poorin.experiment.overrides\` | Typed dotted-path config overrides from --set and --sweep, decoded by draccus | R1 |` after `poorin.experiment.namespacing`; change the `poorin.experiment.cli` row's purpose to "Click options (`--version`, `--version-of`, `--set`, `--sweep`, `--run`) that plan or build an experiment graph"; change the `poorin.experiment.sweep` row's "Reached from" to `R1` (the CLI imports it now).
-- D93: append "- **`train_lm` needs a `run_id` when overrides are set**, so each trial logs to its own tracker run; without one, Levanter names the run after the version, which every trial shares."
+- D94: append "- **`train_lm` needs a `run_id` when overrides are set**, so each trial logs to its own tracker run; without one, Levanter names the run after the version, which every trial shares."
 
 - [ ] **Step 8: Lint, full check, commit**
 
@@ -1584,7 +1584,7 @@ Run `uv run --no-sync python -m tools.lint --fix` and `uv run --no-sync python -
 
 ```bash
 git add -A lib/poorin experiments/grug experiments/tutorials tests docs .agents
-git commit -m "[poorin] Add --set and --sweep to experiments" -m "<body: --set PATH=VALUE overrides any config field, decoded by draccus against its type; --sweep runs one trial per value; each override enters the trial's fingerprint and name, and its tracker run ID; --override is renamed --version-of; grug, the tutorial, and train_lm apply their overrides. Decisions D92 and D93.>"
+git commit -m "[poorin] Add --set and --sweep to experiments" -m "<body: --set PATH=VALUE overrides any config field, decoded by draccus against its type; --sweep runs one trial per value; each override enters the trial's fingerprint and name, and its tracker run ID; --override is renamed --version-of; grug, the tutorial, and train_lm apply their overrides. Decisions D92 and D94.>"
 ```
 
 ---

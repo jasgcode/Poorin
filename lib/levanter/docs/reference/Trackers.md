@@ -2,13 +2,13 @@
 
 Logging values and other metadata about a run is a core requirement for any ML framework.
 Until recently, Levanter had a hard dependency on [W&B](https://wandb.ai/site) for tracking such values.
-We now provide a pluggable tracker interface with built‑in support for W&B, Tensorboard, and [Trackio](https://github.com/gradio-app/trackio).
+We now provide a pluggable tracker interface with built‑in support for W&B and [Trackio](https://github.com/gradio-app/trackio).
 
 In the latest version, we introduce the [levanter.tracker.Tracker][] interface, which allows you to use any tracking backend you want.
 The interface name is taken from the [HuggingFace Accelerate](https://github.com/huggingface/accelerate/blob/0f2686c8d3e6d949c4b7efa15d7f2dee44f7ce91/src/accelerate/tracking.py#L395)
 framework.
 
-Levanter ships with trackers for W&B, TensorBoard, and a lightweight JSON logger that emits structured log lines. The interface is designed to look similar to W&B's API.
+Levanter ships with trackers for W&B, Trackio, and a lightweight JSON logger that emits structured log lines. The interface is designed to look similar to W&B's API.
 The methods currently exposed are:
 
 * [levanter.tracker.current_tracker][]: returns the current tracker instance or sets it.
@@ -44,7 +44,7 @@ trainer:
 ### Multiple Trackers
 
 In some cases, you may want to use multiple trackers at once.
-For example, you may want to use both W&B and Tensorboard.
+For example, you may want to log to W&B and also emit JSON log lines.
 
 To do this, you can use the [levanter.tracker.tracker.CompositeTracker][] class, or, if using a config file, you
 can specify multiple trackers:
@@ -55,18 +55,14 @@ trainer:
     - type: wandb
       project: my-project
       entity: my-entity
-    - type: tensorboard
-      logdir: logs
+    - type: json_logger
 ```
-
-Installation note: the TensorBoard tracker depends on `tensorboardX`. Install the profiling extra to get
-both TensorBoard and TensorBoardX: `pip install "levanter[profiling]"` (or `uv sync --extra profiling`).
 
 ## Adding your own tracker
 
 To add your own tracker, you need to implement the [levanter.tracker.Tracker][] interface.
 You will also want to register your config with TrackerConfig as a "choice" in the choice type.
-Follow the pattern for Tensorboard and W&B.
+Follow the pattern for W&B.
 
 TODO: expand this section.
 
@@ -93,8 +89,6 @@ TODO: expand this section.
 
 ::: levanter.tracker.tracker.NoopTracker
 
-::: levanter.tracker.tensorboard.TensorboardTracker
-
 ::: levanter.tracker.wandb.WandbTracker
 
 
@@ -107,8 +101,6 @@ TODO: expand this section.
 ::: levanter.tracker.TrackerConfig
 
 ::: levanter.tracker.tracker.NoopConfig
-
-::: levanter.tracker.tensorboard.TensorboardConfig
 
 ::: levanter.tracker.wandb.WandbConfig
 

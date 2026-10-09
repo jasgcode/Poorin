@@ -267,7 +267,7 @@ Alternatively, JAX's compilation cache directory can be set using the `JAX_COMPI
 
 
 We mostly use [W&B](https://wandb.ai/site) for tracking values and other metadata about a run. However, we also support
-Tensorboard and a few other trackers. You can also use multiple trackers at once, or even write your own.
+Trackio and a JSON logger. You can also use multiple trackers at once, or even write your own.
 See  [Trackers](../reference/Trackers.md) for more information.
 
 ### W&B
@@ -312,30 +312,10 @@ of your main script.
 * `fork_from` creates a new W&B child run with inherited history through the named step. It is mutually exclusive with
   W&B resume: use it only for the initial cutover, then omit it and use the child run ID with `resume: allow` for recovery.
 
-### Tensorboard
-
-Tensorboard is also supported. To use it, you can configure it in your config file:
-
-```yaml
-trainer:
-    tracker:
-        type: tensorboard
-        logdir: logs
-```
-
-Install the optional dependencies for TensorBoard support with one of:
-
-- `pip install "levanter[profiling]"`
-- `uv sync --extra profiling`
-
-Viewing profiles: when profiling is enabled, JAX writes traces under `<logdir>/plugins/profile/<timestamp>`.
-Launch the UI with `tensorboard --logdir <logdir>` and open http://localhost:6006/#profile.
-If running remotely, forward the port: `ssh -L 6006:localhost:6006 <host>`.
-
 ### Multiple Trackers
 
 In some cases, you may want to use multiple trackers at once.
-For example, you may want to use both W&B and Tensorboard.
+For example, you may want to log to W&B and also emit JSON log lines.
 
 To do this, you can use the [levanter.tracker.tracker.CompositeTracker][] class, or, if using a config file, you
 can specify multiple trackers:
@@ -346,8 +326,7 @@ trainer:
     - type: wandb
       project: my-project
       entity: my-entity
-    - type: tensorboard
-      logdir: logs
+    - type: json_logger
 ```
 
 ## Distributed Config

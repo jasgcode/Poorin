@@ -12,8 +12,7 @@ JAX-based language model training library using Haliax named tensors and Equinox
 
 ```bash
 # Full safe Levanter suite
-# (test_tensorboard.py needs tensorboardX, which the GPU environment does not install)
-JAX_PLATFORMS=cpu uv run --no-sync pytest lib/levanter/tests --ignore=lib/levanter/tests/test_tensorboard.py
+JAX_PLATFORMS=cpu uv run --no-sync pytest lib/levanter/tests
 ```
 
 - Mark long-running tests with `@pytest.mark.slow`.

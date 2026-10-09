@@ -3,16 +3,12 @@
 
 """Behavior tests for tools.affected_tests on a small synthetic workspace."""
 
-import subprocess
-import sys
 from pathlib import Path
 
 import pytest
 
 from tools.affected_tests import (
-    HOST_EXCLUSIONS,
     LOCAL_SAFE_MARKERS,
-    PytestRun,
     Selection,
     Suite,
     all_suites,
@@ -163,9 +159,7 @@ def test_test_data_selects_its_suite_but_experiment_files_and_docs_select_nothin
 
 def test_each_suite_runs_on_cpu_in_utc_with_the_complete_local_marker_expression():
     haliax = Suite("lib/haliax", ("lib/haliax/tests",))
-    root_run, haliax_run = pytest_runs(
-        [Selection(ROOT, ("tests/test_root.py",)), Selection(haliax, haliax.test_dirs)], HOST_EXCLUSIONS
-    )
+    root_run, haliax_run = pytest_runs([Selection(ROOT, ("tests/test_root.py",)), Selection(haliax, haliax.test_dirs)])
     assert root_run.env == {"JAX_PLATFORMS": "cpu", "TZ": "UTC"}
     assert haliax_run.env == {"JAX_PLATFORMS": "cpu", "TZ": "UTC", "JAX_NUM_CPU_DEVICES": "8"}
     for run, paths in ((root_run, ("tests/test_root.py",)), (haliax_run, ("lib/haliax/tests",))):
@@ -173,72 +167,7 @@ def test_each_suite_runs_on_cpu_in_utc_with_the_complete_local_marker_expression
         assert run.args[-len(paths) :] == paths
 
 
-def test_host_exclusions_apply_only_to_their_own_suite():
-    levanter = Suite("lib/levanter", ("lib/levanter/tests",))
-    root_run, levanter_run = pytest_runs(
-        [Selection(ROOT, ROOT.test_dirs), Selection(levanter, levanter.test_dirs)], HOST_EXCLUSIONS
-    )
-    assert "--ignore=lib/levanter/tests/test_tensorboard.py" in levanter_run.args
-    assert not any(arg.startswith(("--ignore", "--deselect")) for arg in root_run.args)
-
-
-def test_host_exclusions_skip_their_tests_when_a_library_with_its_own_pytest_configuration_runs(tmp_path):
-    # pytest makes node IDs relative to the library's configuration directory, and --ignore paths
-    # relative to the working directory, the repository root.
-    files = {
-        "lib/alpha/pyproject.toml": "[tool.pytest.ini_options]\n",
-        "lib/alpha/tests/test_host.py": (
-            "def test_needs_another_host():\n    assert False\n\n\ndef test_runs():\n    pass\n"
-        ),
-        "lib/alpha/tests/test_broken.py": "import missing_module\n",
-    }
-    write_files(tmp_path, files)
-    exclusions = (
-        "--deselect=lib/alpha/tests/test_host.py::test_needs_another_host",
-        "--ignore=lib/alpha/tests/test_broken.py",
-    )
-    [run] = pytest_runs([Selection(ALPHA, ALPHA.test_dirs)], exclusions)
-    result = run_pytest(run, tmp_path)
-    assert result.returncode == 0, result.stdout
-    assert "1 passed, 1 deselected" in result.stdout
-
-
-def test_an_ignored_test_file_is_skipped_when_the_change_selects_it_by_name(tmp_path):
-    # pytest collects a file passed on the command line even when --ignore names it.
-    write_files(
-        tmp_path,
-        {
-            "lib/alpha/pyproject.toml": "[tool.pytest.ini_options]\n",
-            "lib/alpha/tests/test_runs.py": "def test_runs():\n    pass\n",
-            "lib/alpha/tests/test_broken.py": "import missing_module\n",
-        },
-    )
-    exclusions = ("--ignore=lib/alpha/tests/test_broken.py",)
-    selected = ("lib/alpha/tests/test_broken.py", "lib/alpha/tests/test_runs.py")
-    [run] = pytest_runs([Selection(ALPHA, selected)], exclusions)
-    result = run_pytest(run, tmp_path)
-    assert result.returncode == 0, result.stdout
-    assert "1 passed" in result.stdout
-
-
-def test_a_suite_whose_only_selected_tests_are_ignored_does_not_run():
-    # With no paths, pytest would collect everything under the repository root.
-    selected = ("lib/alpha/tests/test_broken.py",)
-    assert pytest_runs([Selection(ALPHA, selected)], ("--ignore=lib/alpha/tests/test_broken.py",)) == []
-
-
 def write_files(root: Path, files: dict[str, str]) -> None:
     for rel, text in files.items():
         (root / rel).parent.mkdir(parents=True, exist_ok=True)
         (root / rel).write_text(text)
-
-
-def run_pytest(run: PytestRun, cwd: Path) -> subprocess.CompletedProcess[str]:
-    """Run ``run``'s pytest arguments with this interpreter's pytest, from ``cwd``."""
-    pytest_args = run.args[run.args.index("pytest") + 1 :]
-    return subprocess.run(
-        [sys.executable, "-m", "pytest", "-p", "no:cacheprovider", *pytest_args],
-        cwd=cwd,
-        capture_output=True,
-        text=True,
-    )

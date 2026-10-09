@@ -288,7 +288,6 @@ for a stated user:
 | `levanter.tracker.json_file` | Tracker accumulating metrics and writing a JSON file at finish | `levanter.tracker.json_file` |
 | `levanter.tracker.json_logger` | Tracker logging metrics as JSON lines to a Python logger | R2 |
 | `levanter.tracker.telemetry` | Tracker exporting training phases and snapshots to Finelog, with stall diagnostics | R2 |
-| `levanter.tracker.tensorboard` | TensorBoard tracker and config | R2 |
 | `levanter.tracker.tracker` | Tracker interface; composite, no-op, and dict trackers; TrackerConfig registry | R2 |
 | `levanter.tracker.tracker_fns` | Global tracker state and log, jit_log, summary, and hyperparameter functions | R2 |
 | `levanter.tracker.trackio` | Trackio tracker and config | R2 |

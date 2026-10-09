@@ -215,7 +215,6 @@ allowed-unresolved-imports = [
     "librosa", "librosa.**",
     "lm_eval", "lm_eval.**",
     "soundfile", "soundfile.**",
-    "tensorboardX", "tensorboardX.**",
     "trackio", "trackio.**",
     "transformer_engine", "transformer_engine.**",
     "xprof", "xprof.**",

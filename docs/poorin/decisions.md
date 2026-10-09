@@ -423,8 +423,8 @@ Plan: `plans/2026-10-05-p1-fleet-operations.md`. Executed on branch `prune/p1-fl
 
 ### D38. Five host-specific test exclusions; tests run in UTC
 
-- **When:** 2026-10-05, P1. **Status:** Adopted. The Iris and Verifyit deselects took effect only
-  with D56.
+- **When:** 2026-10-05, P1. **Status:** Adopted; the exclusions are superseded by D93. The Iris and
+  Verifyit deselects took effect only with D56.
 - **Decision:** Skip `test_tensorboard.py` (P7 deletes the tracker), two Iris hardware-probe tests
   that expect no GPU (P5 deletes Iris), and two Verifyit Go-grader tests that fail with this
   workstation's Go toolchain (P2 deletes Verifyit). Run every test with `TZ=UTC`.
@@ -1305,6 +1305,19 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
 - **Cost if wrong:** Every fingerprint changes once, absorbed with `--accept-drift`; about 300
   lines of code and 200 of tests.
 
+### D93. Track runs with W&B; no host-specific test exclusions
+
+- **When:** 2026-10-09. **Status:** Adopted.
+- **Decision:** Delete Levanter's TensorBoard tracker, its test, its example config, and its
+  `tensorboardX` dependency; runs track with W&B (and Finelog telemetry). With that test gone, no
+  host-specific exclusion remains, so `tools.affected_tests` loses the exclusion mechanism D38
+  added. The `tensorboard` package stays in Levanter's `profiling` extra, as a viewer for profiles.
+- **Why:** The owner, 2026-10-09: "we'll just use wandb". D38 had assumed P7 would delete the
+  tracker; it did not, and its test was skipped on this workstation ever since.
+- **Alternatives:** Install Levanter's test group so the test runs (28 more packages, D38).
+- **Cost if wrong:** A run that wants TensorBoard scalars logs to W&B or Trackio instead; the tracker
+  returns from `upstream-baseline` if needed.
+
 ---
 
 ## Deferred
@@ -1343,5 +1356,5 @@ Known gaps left open on purpose. Each names where it gets resolved.
 | Code that only made sense under Iris survives the comment cleanup (D76): Zephyr's `MAX_IRIS_WORKER_REPLICAS` and the coordinator-owned worker group, Fray fields `LocalClient` ignores (`target_cluster`, `processes_per_task`, `setup_scripts`, `sync_packages`, actor retries), grug dispatch's forwarded environment, the profiler's `iris.oa.dev` xprof URL, `MARIN_PROVENANCE`, `LogClient.connect(resolver=...)`, and `EvalRecord`, which nothing writes | Cleanup | D89: the replica cap, the `iris.oa.dev` default, `POORIN_PROVENANCE` (renamed by D87), and the resolver are deleted; Fray's remote-only fields and grug's forwarded environment stay for sub-project 2, and `EvalRecord` with the kept evaluation workflow |
 | Haliax's docs fail `mkdocs build --strict` on 144 warnings, all present at `upstream-baseline`: unresolved cross-references to JAX, NumPy, and Equinox objects, and griffe docstring warnings | Cleanup | Open |
 | P1's timing columns in `prune-metrics.csv` are confounded by host load (load average about 250 from processes outside the checkout) and are not comparable with P0's | P1 | A rerun on a quiet machine |
-| Nothing serves Zephyr's dashboard: the coordinator builds its Starlette app, but no server has mounted it since Iris was deleted | D90 | Open |
-| Levanter's TensorBoard tracker is still in the tree, though D38 said P7 would delete it; its test needs `tensorboardX`, which the GPU environment does not install, so `tools.affected_tests` skips it | Backlog | Open |
+| Nothing serves Zephyr's dashboard: the coordinator builds its Starlette app, but no server has mounted it since Iris was deleted. The owner wants it reachable over Tailscale (2026-10-09) | D90 | Open |
+| Levanter's TensorBoard tracker is still in the tree, though D38 said P7 would delete it; its test needs `tensorboardX`, which the GPU environment does not install, so `tools.affected_tests` skips it | Backlog | D93: deleted |
