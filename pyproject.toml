@@ -108,8 +108,9 @@ poorin = { workspace = true }
 poorin-rigging = { workspace = true }
 marin-zephyr = { workspace = true }
 marin-finestore = { workspace = true }
-# Every torch requirement resolves to the CPU wheel: Poorin uses torch only to convert
-# Hugging Face checkpoints, and the CUDA wheel would install CUDA 12 libraries beside JAX's CUDA 13.
+# Every torch requirement resolves to the CPU wheel. Torch converts Hugging Face checkpoints, and
+# FlashAttention 4 and QuACK (the gpu extra) import it at run time; the CPU wheel satisfies them.
+# The CUDA wheel would install CUDA 12 libraries beside JAX's CUDA 13 (D79).
 torch = { index = "pytorch-cpu" }
 nvidia-cutlass-dsl = { index = "nvidia" }
 nvidia-cutlass-dsl-libs-base = { index = "nvidia" }

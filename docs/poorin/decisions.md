@@ -1046,7 +1046,7 @@ Plan: `plans/2026-10-07-p8-workspace.md`.
 
 ### D79. PyTorch installs from its CPU wheel
 
-- **When:** 2026-10-07, P8. **Status:** Adopted.
+- **When:** 2026-10-07, P8. **Status:** Adopted; corrected 2026-10-11.
 - **Decision:** One root `[tool.uv.sources]` entry sends every `torch` requirement in the
   workspace to the PyTorch CPU index. Marin's per-extra CUDA 12.8 and CPU sources, its
   `pytorch-cu128` index, the root's flat CPU fallback index, and `torchvision` (no importer) go.
@@ -1058,6 +1058,13 @@ Plan: `plans/2026-10-07-p8-workspace.md`.
   JAX's CUDA 13 libraries (spec, "Risks").
 - **Cost if wrong:** Code that needs PyTorch on the GPU in this environment has to bring the CUDA
   wheel back, with its CUDA 12 libraries.
+- **Correction (2026-10-11):** PyTorch is not used only for checkpoint conversion and tests.
+  `flash-attn-4`, `quack-kernels`, and `torch-c-dlpack-ext` in the `gpu` extra require it, and
+  Levanter's FA4 backward (`levanter.grug.attention._fa4_cute_segmented_bwd`) and QuACK MoE kernel
+  (`levanter.grug._moe.quack_symmetric_cute`) fail to import without it: `flash_attn.cute` and
+  `quack` import it at module load. The CPU wheel satisfies them. So PyTorch cannot become an
+  optional extra while the GPU environment keeps those kernels; an attempt on 2026-10-11 removed
+  nothing from the synced environment.
 
 ### D80. The fresh lock resolves Linux only and takes current releases
 
