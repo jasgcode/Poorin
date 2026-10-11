@@ -3,10 +3,19 @@
 
 import logging
 import subprocess
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import pytest
-from rigging.provenance import Provenance, current_launch, launch_provenance, launched_as, username_segment
+from rigging.provenance import (
+    SNAPSHOT_REF_PREFIX,
+    Provenance,
+    current_launch,
+    launch_provenance,
+    launched_as,
+    save_snapshot,
+    username_segment,
+)
 
 
 def _clean(**fields) -> Provenance:
@@ -96,6 +105,7 @@ def _run(args: list[str], cwd: Path) -> None:
 
 
 def _init_repo(tmp_path: Path) -> Path:
+    tmp_path.mkdir(parents=True, exist_ok=True)
     _run(["git", "init", "-b", "main"], tmp_path)
     _run(["git", "config", "user.email", "t@example.com"], tmp_path)
     _run(["git", "config", "user.name", "tester"], tmp_path)
@@ -215,3 +225,85 @@ def test_launched_as_installs_a_launch_until_the_block_exits():
         assert current_launch() is launch
         assert launch_provenance() is launch
     assert current_launch() is None
+
+
+def _out(args: list[str], cwd: Path) -> str:
+    return subprocess.run(args, cwd=cwd, check=True, capture_output=True, text=True).stdout
+
+
+def _dirty_repo(tmp_path: Path) -> Path:
+    repo = _init_repo(tmp_path)
+    (repo / ".gitignore").write_text("ignored/\n")
+    (repo / "gone.txt").write_text("bye\n")
+    _run(["git", "add", ".gitignore", "gone.txt"], repo)
+    _run(["git", "commit", "-m", "more"], repo)
+    (repo / "f.txt").write_text("edited\n")  # tracked edit
+    (repo / "staged.txt").write_text("staged\n")
+    _run(["git", "add", "staged.txt"], repo)  # staged new file
+    (repo / "gone.txt").unlink()  # deletion
+    (repo / "sub").mkdir()
+    (repo / "sub" / "new.txt").write_text("untracked\n")  # untracked file
+    (repo / "ignored").mkdir()
+    (repo / "ignored" / "big.bin").write_text("data\n")  # ignored
+    return repo
+
+
+def test_a_snapshot_holds_every_change_but_ignored_files(tmp_path):
+    repo = _dirty_repo(tmp_path)
+    commit = save_snapshot("try it", repo)
+    files = set(_out(["git", "ls-tree", "-r", "--name-only", commit], repo).split())
+    assert files == {".gitignore", "f.txt", "staged.txt", "sub/new.txt"}
+    assert _out(["git", "show", f"{commit}:f.txt"], repo) == "edited\n"
+    assert _out(["git", "log", "-1", "--format=%s", commit], repo).strip() == "try it"
+    assert _out(["git", "rev-parse", f"{commit}^"], repo) == _out(["git", "rev-parse", "HEAD"], repo)
+
+
+def test_a_snapshot_leaves_the_branch_index_and_files_alone(tmp_path):
+    repo = _dirty_repo(tmp_path)
+    state = (["git", "rev-parse", "HEAD"], ["git", "status", "--porcelain"], ["git", "diff", "--cached"])
+    before = [_out(args, repo) for args in (*state, ["git", "stash", "list"])]
+    save_snapshot("try it", repo)
+    after = [_out(args, repo) for args in (*state, ["git", "stash", "list"])]
+    assert after == before
+    assert (repo / "f.txt").read_text() == "edited\n"
+
+
+def test_a_snapshot_is_kept_by_a_ref(tmp_path):
+    repo = _dirty_repo(tmp_path)
+    commit = save_snapshot("try it", repo)
+    assert _out(["git", "rev-parse", f"{SNAPSHOT_REF_PREFIX}{commit}"], repo).strip() == commit
+
+
+def test_one_state_and_message_give_one_snapshot(tmp_path):
+    repo = _dirty_repo(tmp_path)
+    assert save_snapshot("try it", repo) == save_snapshot("try it", repo)
+    assert save_snapshot("try it", repo) != save_snapshot("another note", repo)
+
+
+def test_a_snapshot_from_a_subdirectory_holds_the_whole_tree(tmp_path):
+    repo = _dirty_repo(tmp_path)
+    commit = save_snapshot("try it", repo / "sub")
+    assert _out(["git", "show", f"{commit}:f.txt"], repo) == "edited\n"
+
+
+def test_a_snapshot_from_a_linked_worktree_is_visible_from_the_main_checkout(tmp_path):
+    repo = _init_repo(tmp_path / "main")
+    linked = tmp_path / "linked"
+    _run(["git", "worktree", "add", "-b", "exp", str(linked)], repo)
+    (linked / "f.txt").write_text("in the worktree\n")
+    commit = save_snapshot("worktree run", linked)
+    assert _out(["git", "show", f"{SNAPSHOT_REF_PREFIX}{commit}:f.txt"], repo) == "in the worktree\n"
+
+
+def test_concurrent_snapshots_of_one_state_agree(tmp_path):
+    repo = _dirty_repo(tmp_path)
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        commits = set(pool.map(lambda _: save_snapshot("try it", repo), range(4)))
+    assert len(commits) == 1
+
+
+def test_a_repository_without_commits_cannot_be_snapshotted(tmp_path):
+    _run(["git", "init", "-b", "main"], tmp_path)
+    (tmp_path / "f.txt").write_text("x\n")
+    with pytest.raises(RuntimeError):
+        save_snapshot("try it", tmp_path)

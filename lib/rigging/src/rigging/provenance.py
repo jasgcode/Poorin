@@ -14,6 +14,9 @@ Two constructors capture it. :meth:`Provenance.from_git` is strict — it raises
 is unavailable — for an image build, where the content-addressed ``tree_hash`` must
 exist. :meth:`Provenance.capture` is best-effort — every field degrades to empty
 outside a checkout — for stamping an artifact built by an arbitrary launch.
+
+A dirty tree's changes can be saved with :func:`save_snapshot`, a commit kept under
+``refs/poorin/snapshots/`` that leaves the branch and index alone.
 """
 
 import contextlib
@@ -22,14 +25,18 @@ import functools
 import getpass
 import json
 import logging
+import os
 import re
 import subprocess
 import sys
+import tempfile
 import threading
-from collections.abc import Iterator, Sequence
+from collections.abc import Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path, PurePosixPath
+
+from rigging.timing import Duration, ExponentialBackoff
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +44,10 @@ logger = logging.getLogger(__name__)
 LABEL_TEXT_WIDTH = 60
 # The most uncommitted files a label names; more end in ", …".
 LABEL_FILES = 3
+# Snapshot commits are kept under this ref namespace, one ref per commit, so `git gc` keeps them.
+SNAPSHOT_REF_PREFIX = "refs/poorin/snapshots/"
+# How long a snapshot waits for a concurrent launch of the same state to finish writing its ref.
+SNAPSHOT_REF_WAIT = 5.0
 
 
 @dataclass(frozen=True)
@@ -266,8 +277,48 @@ def launch_provenance() -> Provenance:
         return _launches[-1] if _launches else _capture_once()
 
 
-def _git(args: list[str], cwd: str | None, check: bool = True) -> str:
-    result = subprocess.run(["git", *args], capture_output=True, text=True, cwd=cwd)
+def save_snapshot(message: str, repo_dir: Path | None = None) -> str:
+    """Commit the working tree, untracked files included, without touching the branch, index, or
+    files, and return the commit's full hash.
+
+    The tree is built in a temporary index, so ``.gitignore`` applies and the real index is left
+    alone. The commit's parent is ``HEAD`` and its dates are ``HEAD``'s committer date, so one tree,
+    parent, and message always give one commit, and repeated runs of one dirty state share it. A
+    ref under :data:`SNAPSHOT_REF_PREFIX` keeps it from ``git gc``.
+
+    Raises:
+        RuntimeError: Outside a checkout, or in a repository with no commits.
+    """
+    cwd = str(repo_dir) if repo_dir is not None else None
+    head = _git(["rev-parse", "HEAD"], cwd)
+    head_date = _git(["log", "-1", "--format=%cI", "HEAD"], cwd)
+    with tempfile.TemporaryDirectory(prefix="poorin-snapshot-") as tmp:
+        env = {
+            **os.environ,
+            "GIT_INDEX_FILE": os.path.join(tmp, "index"),
+            "GIT_AUTHOR_DATE": head_date,
+            "GIT_COMMITTER_DATE": head_date,
+        }
+        _git(["read-tree", "HEAD"], cwd, env=env)
+        _git(["add", "--all"], cwd, env=env)
+        tree = _git(["write-tree"], cwd, env=env)
+        commit = _git(["commit-tree", tree, "-p", head, "-m", message], cwd, env=env)
+    ref = f"{SNAPSHOT_REF_PREFIX}{commit}"
+    try:
+        _git(["update-ref", ref, commit], cwd)
+    except RuntimeError:
+        # Another launch of the same state holds the ref's lock and is writing this same commit.
+        written = ExponentialBackoff(initial=0.01, maximum=0.1).wait_until(
+            lambda: read_git(["rev-parse", "--verify", "--quiet", ref], cwd).strip() == commit,
+            timeout=Duration.from_seconds(SNAPSHOT_REF_WAIT),
+        )
+        if not written:
+            raise
+    return commit
+
+
+def _git(args: list[str], cwd: str | None, check: bool = True, env: Mapping[str, str] | None = None) -> str:
+    result = subprocess.run(["git", *args], capture_output=True, text=True, cwd=cwd, env=env)
     if check and result.returncode != 0:
         raise RuntimeError(f"git {' '.join(args)} failed: {result.stderr.strip()}")
     return result.stdout.strip()
