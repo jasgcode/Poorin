@@ -22,7 +22,7 @@ import numpy as np
 import wandb
 from draccus import field
 from git import InvalidGitRepositoryError, NoSuchPathError, Repo
-from rigging.provenance import Provenance
+from rigging.provenance import Provenance, current_launch
 
 from levanter.tracker.background import maybe_wrap_background
 from levanter.tracker.helpers import generate_pip_freeze, infer_experiment_git_root
@@ -659,8 +659,10 @@ class WandbConfig(TrackerConfig):
 def _git_run_config(commit: Optional[str], source_dir: str) -> dict[str, Any]:
     """Run-config entries for the commit and working-tree state of the launch.
 
-    Only the commit, the dirty flag, and the tree hash are recorded: the full provenance also
-    holds the username, command line, and remote URL, which do not belong in a W&B config.
+    Only the commit, the dirty flag, the tree hash, and the code's one-line label (with the
+    launch's snapshot and note, when the experiment command line installed one for this
+    checkout) are recorded: the full provenance also holds the username, command line, and
+    remote URL, which do not belong in a W&B config.
 
     Args:
         commit: The commit from ``GIT_COMMIT`` or a local checkout, if one was found.
@@ -673,11 +675,21 @@ def _git_run_config(commit: Optional[str], source_dir: str) -> dict[str, Any]:
     if commit is not None and not commit.startswith(provenance.base_commit):
         # The provenance describes a different checkout, so its dirty flag does not apply.
         return {"git_commit": commit}
-    return {
+    launch = current_launch()
+    if launch is not None and launch.base_commit == provenance.base_commit:
+        # The experiment command line's launch adds its snapshot and note to the same checkout.
+        provenance = launch
+    config: dict[str, Any] = {
         "git_commit": commit or provenance.base_commit,
         "git_dirty": provenance.dirty,
         "git_tree_hash": provenance.tree_hash,
+        "code": provenance.label,
     }
+    if provenance.snapshot_commit is not None:
+        config["code_snapshot"] = provenance.snapshot_commit
+    if provenance.note is not None:
+        config["code_note"] = provenance.note
+    return config
 
 
 def _truncate_wandb_artifact_name(name: Optional[str]) -> Optional[str]:

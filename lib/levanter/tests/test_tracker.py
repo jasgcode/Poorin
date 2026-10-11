@@ -12,6 +12,7 @@ from typing import Tuple
 import draccus
 import pytest
 import yaml
+from rigging.provenance import Provenance, launched_as
 
 import levanter.tracker
 import levanter.tracker.tracker_fns as tracker_fns
@@ -233,6 +234,45 @@ def test_wandb_run_ignores_the_checkout_state_when_git_commit_names_another_comm
 
     # The dirty flag describes the checkout, not the commit GIT_COMMIT names.
     assert initialized["config"] == {"git_commit": COMMIT}
+
+
+def test_wandb_run_config_labels_the_launch_code(tmp_path, monkeypatch):
+    source = tmp_path / "source"
+    _dirty_checkout(source)
+    monkeypatch.chdir(source)
+    monkeypatch.delenv("GIT_COMMIT", raising=False)
+    launch = dataclasses.replace(Provenance.capture(source), snapshot_commit="5c1d2e9aa0", note="try it")
+
+    with launched_as(launch):
+        initialized = _init_with_fake_wandb(monkeypatch, WandbConfig(save_code=str(source), background=False))
+
+    config = initialized["config"]
+    assert (config["code"], config["code_snapshot"], config["code_note"]) == (launch.label, "5c1d2e9aa0", "try it")
+
+
+def test_wandb_run_config_labels_the_checkout_without_a_launch(tmp_path, monkeypatch):
+    source = tmp_path / "source"
+    _dirty_checkout(source)
+    monkeypatch.chdir(source)
+    monkeypatch.delenv("GIT_COMMIT", raising=False)
+
+    initialized = _init_with_fake_wandb(monkeypatch, WandbConfig(save_code=str(source), background=False))
+
+    assert initialized["config"]["code"] == Provenance.capture(source).label
+    assert "code_snapshot" not in initialized["config"]
+
+
+def test_wandb_run_config_ignores_a_launch_from_another_commit(tmp_path, monkeypatch):
+    source = tmp_path / "source"
+    _dirty_checkout(source)
+    monkeypatch.chdir(source)
+    monkeypatch.delenv("GIT_COMMIT", raising=False)
+    other = dataclasses.replace(Provenance.capture(source), base_commit="deadbee00", note="elsewhere")
+
+    with launched_as(other):
+        initialized = _init_with_fake_wandb(monkeypatch, WandbConfig(save_code=str(source), background=False))
+
+    assert "code_note" not in initialized["config"]
 
 
 def test_wandb_config_fork_initializes_child_without_resume(monkeypatch):
