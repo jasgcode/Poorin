@@ -24,12 +24,10 @@ from poorin.processing.tokenize.attributes import (
     TokenizeAttributesConfig,
     TokenizedAttrData,
     tokenize_attributes,
-    tokenize_attributes_step,
 )
 from poorin.processing.tokenize.store_builder import (
     BuildLevanterStoreConfig,
     build_levanter_store,
-    build_levanter_store_step,
 )
 from poorin.processing.tokenize.tokenize import TokenizeConfig, tokenize
 
@@ -284,13 +282,3 @@ def test_split_pipeline_matches_legacy_tokenize(tmp_path, monkeypatch):
     # Both stats files written.
     assert os.path.exists(tmp_path / "store" / "train" / ".stats.json")
     assert os.path.exists(tmp_path / "legacy_store" / "train" / ".stats.json")
-
-
-def test_tokenize_attributes_step_requires_at_least_one_source():
-    with pytest.raises(ValueError, match="at least one"):
-        tokenize_attributes_step(name="x", tokenizer="gpt2")
-
-
-def test_build_levanter_store_step_requires_at_least_one_source():
-    with pytest.raises(ValueError, match="at least one"):
-        build_levanter_store_step(name="store", tokenize_steps=[])

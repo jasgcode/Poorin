@@ -32,8 +32,6 @@ from poorin.datakit.copartitioned import (
 )
 from poorin.datakit.normalize import NormalizedData
 from poorin.datakit.source_key import DatakitArtifactPath, datakit_source_key
-from poorin.execution.artifact import read_artifact
-from poorin.execution.step_spec import StepSpec
 from poorin.processing.classification.deduplication.fuzzy_dups import FuzzyDupsAttrData
 from poorin.processing.classification.deduplication.fuzzy_minhash import MinHashAttrData
 from poorin.processing.classification.deduplication.fuzzy_verification import (
@@ -914,57 +912,4 @@ def verify_fuzzy_dups(
             for source_key, attr_dir in layout.attr_dirs.items()
         },
         counters=output_counters,
-    )
-
-
-def verify_fuzzy_dups_step(
-    *,
-    name: str,
-    normalized_steps: dict[str, StepSpec],
-    minhash_steps: dict[str, StepSpec],
-    candidates_step: StepSpec,
-    verification_params: FuzzyVerificationParams,
-    local_representative_params: LocalRepresentativeParams,
-    store_config: FuzzyVerificationStoreConfig,
-    max_workers: int | None = None,
-    worker_resources: ResourceConfig | None = None,
-    coordinator_resources: ResourceConfig | None = None,
-    map_task_resources: ResourceConfig | None = None,
-    reduce_task_resources: ResourceConfig | None = None,
-    override_output_path: str | None = None,
-) -> StepSpec:
-    """Create a step that verifies one existing fuzzy-candidate artifact."""
-    ordered_normalized_steps = {name: normalized_steps[name] for name in sorted(normalized_steps)}
-    ordered_minhash_steps = {name: minhash_steps[name] for name in sorted(minhash_steps)}
-    if ordered_normalized_steps.keys() != ordered_minhash_steps.keys():
-        raise ValueError("normalized_steps and minhash_steps must have the same source names")
-    return StepSpec(
-        name=name,
-        deps=[*ordered_normalized_steps.values(), *ordered_minhash_steps.values(), candidates_step],
-        fn=lambda output_path: verify_fuzzy_dups(
-            normalized_sources={
-                source_name: read_artifact(step.output_path, NormalizedData)
-                for source_name, step in ordered_normalized_steps.items()
-            },
-            minhash_sources={
-                source_name: read_artifact(step.output_path, MinHashAttrData)
-                for source_name, step in ordered_minhash_steps.items()
-            },
-            candidates=read_artifact(candidates_step.output_path, FuzzyDupsAttrData),
-            output_path=output_path,
-            verification_params=verification_params,
-            local_representative_params=local_representative_params,
-            store_config=store_config,
-            max_workers=max_workers,
-            worker_resources=worker_resources,
-            coordinator_resources=coordinator_resources,
-            map_task_resources=map_task_resources,
-            reduce_task_resources=reduce_task_resources,
-        ),
-        hash_attrs={
-            "artifact_version": VERIFIED_FUZZY_DUPS_ATTR_DATA_VERSION,
-            "verification": verification_params.model_dump(mode="json"),
-            "local_representatives": local_representative_params.model_dump(mode="json"),
-        },
-        override_output_path=override_output_path,
     )

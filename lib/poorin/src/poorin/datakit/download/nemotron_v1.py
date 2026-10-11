@@ -15,8 +15,6 @@ from zephyr.dataset import Dataset
 
 from poorin.datakit.download.http_session import build_retrying_session
 from poorin.datakit.download.zstd_jsonl import iter_jsonl_from_zstd_stream
-from poorin.datakit.normalize import normalize_step
-from poorin.execution.step_spec import StepSpec
 
 logger = logging.getLogger(__name__)
 
@@ -87,22 +85,11 @@ def download_nemotron_cc(output_path: str, base_url: str = NCC_BASE_URL) -> None
     logger.info(f"Downloaded Nemotron CC files to {output_path}")
 
 
-def download_nemotron_v1_step() -> StepSpec:
-    """Create a StepSpec that downloads the Nemotron-CC dataset from Common Crawl."""
-
-    return StepSpec(
-        name="raw/nemotron_v1",
-        fn=lambda output_path: download_nemotron_cc(output_path=output_path),
-        # NOTE: use the existing output to avoid re-downloading. Yes this is missing the `n`.
-        override_output_path="raw/nemotro-cc-eeb783",
-    )
-
-
 _NEMOTRON_V1_DATA_ROOT = "contrib/Nemotron/Nemotron-CC/data-jsonl"
 
-# Maps split name → relative path under data-jsonl/ that the normalize
-# step should point at. Each split gets its own normalize StepSpec because
-# normalize now processes a single directory (no subdirectory grouping).
+# Maps split name → directory under data-jsonl/ that holds that split's
+# ``.jsonl.zst`` files. Normalize one split at a time: normalize reads a
+# single directory and does not group subdirectories.
 NEMOTRON_V1_SPLITS: dict[str, str] = {
     "hq_actual": "quality=high/kind=actual",
     "hq_synth": "quality=high/kind=synthetic",
@@ -112,24 +99,3 @@ NEMOTRON_V1_SPLITS: dict[str, str] = {
     "low_actual": "quality=low/kind=actual",
     "low_synth": "quality=low/kind=synthetic",
 }
-
-
-def normalize_nemotron_v1_step(download: StepSpec, *, split: str) -> StepSpec:
-    """Normalize one Nemotron-CC v1 split.
-
-    The download writes dolma-format records ``{id, text, source, format,
-    metadata}`` as ``.jsonl.zst`` under nested ``quality=<x>/kind=<y>/``
-    directories. Each split gets its own normalize step pointing at the
-    corresponding subdirectory.
-    """
-    if split not in NEMOTRON_V1_SPLITS:
-        raise ValueError(f"Unknown split {split!r}. Choose from: {sorted(NEMOTRON_V1_SPLITS)}")
-    rel_path = NEMOTRON_V1_SPLITS[split]
-    return normalize_step(
-        name=f"normalized/nemotron_v1/{split}",
-        download=download,
-        text_field="text",
-        id_field="id",
-        file_extensions=(".jsonl.zst",),
-        relative_input_path=f"{_NEMOTRON_V1_DATA_ROOT}/{rel_path}",
-    )

@@ -21,9 +21,9 @@ uv run --no-sync python -m tools.lint --all-files --fix
 
 - Put reusable concrete work here. New pipeline composition, `ArtifactStep` or
   `StepSpec` construction, and references to specific artifacts belong in
-  `experiments/**`. The execution framework defines these types; existing
-  library step builders are exceptions, not patterns to extend. See
-  `/.agents/skills/write-pipeline/SKILL.md`.
+  `experiments/**`. The execution framework defines these types; the step
+  builders in `poorin.experiment.data` are exceptions, not patterns to extend.
+  See `/.agents/skills/write-pipeline/SKILL.md`.
 - Use `fsspec.open` for filesystem access — do not special-case GCS unless absolutely necessary.
 - Do not copy data artifacts to local filesystem; stream through fsspec instead.
 - Avoid hard-coding GCS paths like `gs://marin-us-central2/foo/bar`. Bind

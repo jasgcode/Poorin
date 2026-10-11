@@ -41,8 +41,6 @@ from zephyr.readers import load_file
 
 from poorin.datakit.normalize import NormalizedData
 from poorin.datakit.source_key import DatakitArtifactPath, datakit_source_key
-from poorin.execution.artifact import read_artifact
-from poorin.execution.step_spec import StepSpec
 from poorin.processing.tokenize._core import (
     CHUNK_INDEX_FIELD,
     resolve_window_and_batch,
@@ -275,93 +273,4 @@ def tokenize_attributes(config: TokenizeAttributesConfig) -> TokenizedAttrData:
         tokenizer=config.tokenizer,
         tokenizer_backend=config.tokenizer_backend.value,
         counters=counters,
-    )
-
-
-def tokenize_attributes_step(
-    *,
-    name: str,
-    train_normalize: StepSpec | None = None,
-    validation_normalize: StepSpec | None = None,
-    tokenizer: str,
-    tokenizer_backend: TokenizerBackend = TokenizerBackend.HF,
-    tokenizer_revision: str | None = None,
-    data_format: LmDatasetFormatBase | None = None,
-    sample_count: int | None = None,
-    text_field: str = "text",
-    max_workers: int = 4096,
-    worker_resources: ResourceConfig | None = None,
-    zephyr_context: ZephyrContext | None = None,
-    override_output_path: str | None = None,
-) -> StepSpec:
-    """Create a :class:`StepSpec` that tokenizes :class:`NormalizedData` source(s) into attribute parquet.
-
-    At least one of ``train_normalize`` or ``validation_normalize`` must be provided;
-    each upstream step's output is loaded as :class:`NormalizedData` and routed to
-    the corresponding split. The artifact persisted at the step's output path is
-    a :class:`TokenizedAttrData`.
-
-    Args:
-        name: Step name (e.g. ``"fineweb/tokenize"``).
-        train_normalize: Upstream normalize step whose output feeds the train split.
-        validation_normalize: Upstream normalize step whose output feeds the validation split.
-        tokenizer: Tokenizer name/path forwarded to :class:`TokenizeAttributesConfig`.
-        tokenizer_backend: Tokenizer backend.
-        tokenizer_revision: Optional immutable HF commit to pin. When set it is folded
-            into the step hash so a retag invalidates the cache. NOTE: identity-only
-            today -- ``levanter.tokenizers.load_tokenizer`` does not yet accept a
-            revision, so it does not change which bytes are fetched (tracked follow-up).
-        data_format: Levanter :class:`LmDatasetFormatBase`. Defaults to ``TextLmDatasetFormat()``.
-        sample_count: Per-shard sample cap, or ``None`` for full data.
-        text_field: Record field used for id fallback when input lacks ``id``.
-            Datakit-normalized inputs always carry ``id`` so this only matters
-            on non-normalized paths (not used here, but mirrored to the config).
-        max_workers: Zephyr worker cap.
-        worker_resources: Per-worker resources; defaults inside the config.
-        zephyr_context: Optional shared Zephyr context.
-        override_output_path: Optional explicit output path.
-    """
-    if train_normalize is None and validation_normalize is None:
-        raise ValueError("tokenize_attributes_step: at least one of train_normalize / validation_normalize required")
-
-    fmt = data_format or TextLmDatasetFormat()
-    deps: list[StepSpec] = [s for s in (train_normalize, validation_normalize) if s is not None]
-
-    def _fn(output_path: str) -> TokenizedAttrData:
-        kwargs: dict = {
-            "output_path": output_path,
-            "tokenizer": tokenizer,
-            "tokenizer_backend": tokenizer_backend,
-            "format": fmt,
-            "sample_count": sample_count,
-            "text_field": text_field,
-            "max_workers": max_workers,
-            "zephyr_context": zephyr_context,
-        }
-        if train_normalize is not None:
-            kwargs["train_source"] = read_artifact(train_normalize.output_path, NormalizedData)
-        if validation_normalize is not None:
-            kwargs["validation_source"] = read_artifact(validation_normalize.output_path, NormalizedData)
-        if worker_resources is not None:
-            kwargs["worker_resources"] = worker_resources
-        return tokenize_attributes(TokenizeAttributesConfig(**kwargs))
-
-    hash_attrs: dict = {
-        "artifact_version": TOKENIZED_ATTR_DATA_VERSION,
-        "tokenizer": tokenizer,
-        "tokenizer_backend": tokenizer_backend.value,
-        "format": repr(fmt),
-        "sample_count": sample_count,
-        "text_field": text_field,
-    }
-    # Only add the key when pinned, so existing callers keep their current hash.
-    if tokenizer_revision is not None:
-        hash_attrs["tokenizer_revision"] = tokenizer_revision
-
-    return StepSpec(
-        name=name,
-        deps=deps,
-        fn=_fn,
-        hash_attrs=hash_attrs,
-        override_output_path=override_output_path,
     )

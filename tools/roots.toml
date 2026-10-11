@@ -18,7 +18,6 @@ modules = [
     "poorin.processing.tokenize.*",
     "poorin.datakit.download.huggingface",
     "poorin.datakit.download.nemotron_v1",
-    "poorin.datakit.canonical.fineweb_edu",
     "poorin.datakit.normalize",
     "poorin.datakit.decon",
     "poorin.processing.classification.consolidate",

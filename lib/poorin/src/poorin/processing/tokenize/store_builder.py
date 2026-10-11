@@ -43,8 +43,6 @@ from zephyr.dataset import Dataset, format_shard_path
 from zephyr.readers import load_file
 
 from poorin.datakit.source_key import DatakitArtifactPath
-from poorin.execution.artifact import read_artifact
-from poorin.execution.step_spec import StepSpec
 from poorin.processing.tokenize._core import CHUNK_INDEX_FIELD
 from poorin.processing.tokenize.attributes import TokenizedAttrData
 
@@ -330,53 +328,3 @@ def build_levanter_store(config: BuildLevanterStoreConfig) -> LevanterStoreData:
 def _ledger_exists(cache_path: str) -> bool:
     """Return whether a Levanter cache ledger already exists at ``cache_path``."""
     return StoragePath(ShardedCacheLayout.parse(cache_path).ledger).exists()
-
-
-def build_levanter_store_step(
-    *,
-    name: str,
-    tokenize_steps: list[StepSpec],
-    max_workers: int = 4096,
-    levanter_batch_size: int | None = None,
-    worker_resources: ResourceConfig | None = None,
-    override_output_path: str | None = None,
-) -> StepSpec:
-    """Create a :class:`StepSpec` that assembles a Levanter store from one or more
-    :class:`TokenizedAttrData` step outputs.
-
-    The step's output path becomes ``LevanterStoreData.cache_path``; each
-    split's Levanter cache lives at ``cache_path/<split>``.
-
-    Args:
-        name: Step name.
-        tokenize_steps: Upstream :func:`tokenize_attributes_step` results to combine.
-            Records are concatenated across sources in the given order; sources
-            must agree on tokenizer/format (caller's responsibility).
-        max_workers: Zephyr worker cap.
-        levanter_batch_size: Per-shard Levanter cache flush size.
-        worker_resources: Per-worker resources; defaults inside the config.
-        override_output_path: Optional explicit output path.
-    """
-    if not tokenize_steps:
-        raise ValueError("build_levanter_store_step: at least one tokenize step required")
-
-    def _fn(output_path: str) -> LevanterStoreData:
-        kwargs: dict = {
-            "sources": [read_artifact(s.output_path, TokenizedAttrData) for s in tokenize_steps],
-            "cache_path": output_path,
-            "max_workers": max_workers,
-            "levanter_batch_size": levanter_batch_size,
-        }
-        if worker_resources is not None:
-            kwargs["worker_resources"] = worker_resources
-        return build_levanter_store(BuildLevanterStoreConfig(**kwargs))
-
-    return StepSpec(
-        name=name,
-        deps=list(tokenize_steps),
-        fn=_fn,
-        hash_attrs={
-            "levanter_batch_size": levanter_batch_size,
-        },
-        override_output_path=override_output_path,
-    )

@@ -39,7 +39,6 @@ from zephyr.writers import ThreadedBatchWriter, write_parquet_file
 from poorin.datakit import partition_filename
 from poorin.datakit.source_key import DatakitArtifactPath
 from poorin.execution.artifact import ARTIFACT_LOAD_CONTEXT_KEY
-from poorin.execution.step_spec import StepSpec
 
 logger = logging.getLogger(__name__)
 
@@ -58,14 +57,6 @@ COMPACTED_WHITESPACE_COUNTER = "datakit_normalize_compacted_whitespace"
 # a single normalize spans thousands of shards over very large staged dumps.
 DEFAULT_MAX_WORKERS = 1024
 NORMALIZED_DATA_VERSION = "v2"
-
-# The hash attributes every normalize step declares. They fix the identity of a
-# normalized artifact, so the set is effectively frozen — dropping or renaming one
-# re-keys every existing output. A step that does not declare them was not built
-# here and carries none of normalize's guarantees.
-NORMALIZE_IDENTITY_ATTRS = frozenset(
-    {"text_field", "id_field", "target_partition_bytes", "max_whitespace_run_chars", "dedup_mode"}
-)
 
 
 class DedupMode(StrEnum):
@@ -507,97 +498,4 @@ def normalize_to_parquet(
         main_output_dir=prefix_join(output_path, "outputs/main"),
         dup_output_dir=prefix_join(output_path, "outputs/dups"),
         counters=counters_dict,
-    )
-
-
-def normalize_step(
-    *,
-    name: str,
-    download: StepSpec,
-    text_field: str = "text",
-    id_field: str = "id",
-    target_partition_bytes: int = 256 * 1024 * 1024,
-    max_whitespace_run_chars: int = DEFAULT_MAX_WHITESPACE_RUN_CHARS,
-    worker_resources: ResourceConfig | None = None,
-    max_workers: int = DEFAULT_MAX_WORKERS,
-    output_path_prefix: str | None = None,
-    override_output_path: str | None = None,
-    relative_input_path: str | None = None,
-    file_extensions: tuple[str, ...] | None = None,
-    dedup_mode: DedupMode = DedupMode.EXACT,
-    bare: bool = False,
-    drop_fields: tuple[str, ...] = (),
-    output_schema: pa.Schema | None = None,
-) -> StepSpec:
-    """Create a StepSpec that normalizes downloaded data to Parquet.
-
-    Args:
-        name: Step name (e.g. ``"fineweb/normalize"``).
-        download: Upstream download step whose output_path is the input.
-        text_field: Name of the field containing primary text content.
-        id_field: Name of the field containing the source ID.
-        target_partition_bytes: Target size per output partition.
-        worker_resources: Per-worker resource request for the Zephyr pipeline.
-            See :func:`normalize_to_parquet` for the default.
-        max_workers: Maximum number of Zephyr workers. Defaults to
-            ``DEFAULT_MAX_WORKERS`` (1024).
-        output_path_prefix: Optional prefix for the normalized step output.
-        override_output_path: Override the computed output path.
-        relative_input_path: Override the input path relative to the download output.
-            Useful when normalizing a subdirectory of the download output.
-        file_extensions: Tuple of file extensions to include (e.g.
-            ``(".parquet",)``).  Defaults to all extensions supported by
-            ``zephyr.readers.load_file``.
-        dedup_mode: How to deduplicate records within each output shard.
-            Defaults to ``DedupMode.EXACT``; use ``DedupMode.NONE`` to skip.
-        drop_fields: Source fields to remove while preserving other metadata.
-        output_schema: Optional schema for normalized output records.
-    """
-    if relative_input_path:
-        # ``prefix_join`` yields exactly one separator even when ``download.output_path``
-        # ends with ``/`` (e.g. ``gs://.../nemotro-cc-eeb783/``); a naive f-string join
-        # would leave the doubled ``//`` that ``_discover_files`` then fails to resolve on GCS.
-        resolved_input = prefix_join(download.output_path, relative_input_path)
-    else:
-        resolved_input = download.output_path
-
-    hash_attrs: dict[str, Any] = {
-        "text_field": text_field,
-        "id_field": id_field,
-        "target_partition_bytes": target_partition_bytes,
-        "max_whitespace_run_chars": max_whitespace_run_chars,
-        "relative_input_path": relative_input_path,
-        "file_extensions": file_extensions,
-        "dedup_mode": dedup_mode,
-    }
-    # Only include bare in hash when set so default callers' hash_id stays
-    # identical to pre-feature step specs (cache identity).
-    if bare:
-        hash_attrs["bare"] = bare
-    if drop_fields:
-        hash_attrs["drop_fields"] = drop_fields
-    if output_schema is not None:
-        hash_attrs["output_schema"] = str(output_schema)
-    assert NORMALIZE_IDENTITY_ATTRS <= hash_attrs.keys()
-    return StepSpec(
-        name=name,
-        fn=lambda output_path: normalize_to_parquet(
-            input_path=resolved_input,
-            output_path=output_path,
-            text_field=text_field,
-            id_field=id_field,
-            target_partition_bytes=target_partition_bytes,
-            max_whitespace_run_chars=max_whitespace_run_chars,
-            worker_resources=worker_resources,
-            max_workers=max_workers,
-            file_extensions=file_extensions,
-            dedup_mode=dedup_mode,
-            bare=bare,
-            drop_fields=drop_fields,
-            output_schema=output_schema,
-        ),
-        deps=[download],
-        hash_attrs=hash_attrs,
-        output_path_prefix=output_path_prefix,
-        override_output_path=override_output_path,
     )
