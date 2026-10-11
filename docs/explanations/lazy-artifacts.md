@@ -194,6 +194,35 @@ fresh suffixed version, so only `--resume` reuses one.
 
 Pinned artifacts (`override_path`) are not checked, because they point at existing data.
 
+## Code provenance
+
+The fingerprint covers an artifact's config, not the code that ran it. Each output's record names
+the code instead: the commit, its subject, the branch, and any uncommitted changes.
+
+Before `--run` builds anything, the command line checks the working tree, untracked files
+included. A calendar-versioned artifact builds only from committed code: if one would build from a
+dirty tree, the run stops and lists the artifacts and the uncommitted paths. A run that builds only
+`dev` artifacts saves the uncommitted changes as a snapshot commit under `refs/poorin/snapshots/`,
+leaving the branch, index, and files alone, and the record names the snapshot.
+`--allow-uncommitted` builds calendar artifacts from a snapshot as well. A run that builds nothing
+saves no snapshot and is never refused.
+
+The plan prints the code's one-line label and what `--run` would do:
+
+```text
+Prefix: /data/poorin
+Code:   main@a0a406f + 3 uncommitted: llama.py, model.py, notes.md
+        --run saves a snapshot
+```
+
+`--note TEXT` puts your own words in the label in place of the commit subject or file list. The
+label also reaches W&B as the run config's `code` field.
+
+`python -m poorin.experiment.runs list [FILTER]` lists the runs under the prefix, newest first,
+one line each. `python -m poorin.experiment.runs show NAME@VERSION` shows one run's code in full,
+with `git diff` and `git worktree add` commands for its snapshot. Snapshot refs are not pushed by
+`git push origin main`; `git push origin 'refs/poorin/*:refs/poorin/*'` backs them up.
+
 ## Overrides and sweeps
 
 `--set PATH=VALUE` overrides one field of the experiment's config by dotted path. The value is

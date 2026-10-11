@@ -1,6 +1,7 @@
 # Code provenance for experiment runs
 
-Status: design for review, 2026-10-11. Decision D107 when adopted.
+Status: approved design, 2026-10-11; implemented 2026-10-11 (plan
+`plans/2026-10-11-run-code-provenance.md`). Decision D107.
 
 ## TL;DR
 

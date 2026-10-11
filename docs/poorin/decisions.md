@@ -1638,6 +1638,11 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
 - **Rulings while planning:** a run that builds nothing saves no snapshot and is never refused; a
   repository with no commits counts as outside a checkout; one dirty state gives one snapshot
   commit, because the commit's dates are fixed to `HEAD`'s.
+- **Rulings while building:** the owner asked, 2026-10-11, for two changes to the run list. It
+  resolves every commit a record names with `git rev-parse --verify --end-of-options` and passes
+  only the verified hash to Git, so a crafted record cannot inject a Git option. Its `show` names
+  why a run has no code: a build still running, a failed build, a finished output without a
+  record, or a record written before code provenance.
 - **Why:** The owner, 2026-10-11: the fingerprint covers config, not code, and a record named its
   code by a hash that was lost for uncommitted work and unreadable at a glance. The owner chose
   the split by version over refusing every dirty run or never refusing.

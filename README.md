@@ -69,6 +69,10 @@ An existing output whose recipe changed is refused before anything runs; `--acce
 keeps it. [Lazy artifacts](docs/explanations/lazy-artifacts.md) explains versions, caching,
 overrides, and drift.
 
+A calendar-versioned artifact builds only from committed code; a dev run saves uncommitted code as
+a snapshot commit. `python -m poorin.experiment.runs list` shows each run with a one-line label of
+its code.
+
 <!--marin-example-start-->
 
 A complete script that tokenizes [TinyStories](https://huggingface.co/datasets/roneneldan/TinyStories)
