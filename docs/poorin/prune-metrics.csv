@@ -102,3 +102,4 @@ date,phase,step,first_party_lines,reachable_lines,reachable_modules,r1_imported_
 2026-10-11,Cleanup,Resolve Zephyr's memory limit once; reuse rigging's backoff,117202,116254,377,6520,3.61,67.4,28.4,8019762254
 2026-10-11,Cleanup,Drop the harness config's unread max_gen_toks,117197,116249,377,6520,3.64,69.7,29.4,8019762254
 2026-10-11,Cleanup,Trim the tutorial's devices to this workstation's two,117179,116231,377,6520,3.6,69.1,29.7,8019762254
+2026-10-11,D107,Record each run's commit subject and changes,117279,116331,377,6520,3.82,75.1,30.7,8019762254

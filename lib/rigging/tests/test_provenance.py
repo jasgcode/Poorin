@@ -6,22 +6,60 @@ import subprocess
 from pathlib import Path
 
 import pytest
-from rigging.provenance import Provenance, username_segment
+from rigging.provenance import Provenance, current_launch, launch_provenance, launched_as, username_segment
 
 
-def test_str_clean_shows_commit_branch_user():
-    p = Provenance(tree_hash="aaaa", base_commit="bbbb", dirty=False, branch="main", built_by="power")
-    assert str(p) == "bbbb (main) (power)"
+def _clean(**fields) -> Provenance:
+    base = dict(tree_hash="aaaa", base_commit="a0a406ff4", dirty=False, branch="main", built_by="power")
+    return Provenance(**{**base, **fields})
 
 
-def test_str_dirty_shows_tree_off_of_base():
-    p = Provenance(tree_hash="aaaa", base_commit="bbbb", dirty=True, branch="feat", built_by="power")
-    assert str(p) == "aaaa (off of bbbb) (feat) (power)"
+def test_a_clean_label_names_the_branch_commit_and_subject():
+    assert _clean(commit_subject="Trim the devices").label == "main@a0a406f  Trim the devices"
 
 
-def test_str_omits_missing_branch_and_user():
-    p = Provenance(tree_hash="aaaa", base_commit="bbbb", dirty=False, branch=None, built_by=None)
-    assert str(p) == "bbbb"
+def test_a_note_replaces_the_subject():
+    assert _clean(commit_subject="Trim the devices", note="try rmsnorm").label == "main@a0a406f  try rmsnorm"
+
+
+def test_a_dirty_label_names_up_to_three_files_and_the_snapshot():
+    p = _clean(
+        dirty=True,
+        uncommitted=(" M experiments/llama.py", "?? experiments/grug/moe/model.py", " M docs/a.md", " M docs/b.md"),
+        snapshot_commit="5c1d2e9aa0",
+    )
+    assert p.label == "main@a0a406f + 4 uncommitted: llama.py, model.py, a.md, …  (snapshot 5c1d2e9)"
+
+
+def test_a_dirty_label_with_a_note_counts_the_files():
+    p = _clean(
+        dirty=True, uncommitted=(" M a.py", " M b.py", " M c.py"), note="try rmsnorm", snapshot_commit="5c1d2e9aa0"
+    )
+    assert p.label == "main@a0a406f + 3 uncommitted  try rmsnorm  (snapshot 5c1d2e9)"
+
+
+def test_a_label_stays_on_one_line_and_cuts_long_text():
+    p = _clean(note="first line\nsecond line " + "x" * 80)
+    assert "\n" not in p.label
+    text = p.label.removeprefix("main@a0a406f  ")
+    assert len(text) == 60 and text.endswith("…") and text.startswith("first line second line")
+
+
+def test_a_detached_head_and_a_missing_checkout_have_labels():
+    assert _clean(branch=None, commit_subject="s").label == "detached@a0a406f  s"
+    assert _clean(base_commit="").label == "no git checkout"
+
+
+def test_a_record_from_before_labels_still_loads_and_labels():
+    old = '{"tree_hash": "aaaa", "base_commit": "a0a406ff4", "dirty": true, "branch": "main", "built_by": "power"}'
+    p = Provenance.from_json(old)
+    assert (p.commit_subject, p.uncommitted, p.snapshot_commit, p.note) == ("", (), None, None)
+    assert p.label == "main@a0a406f + uncommitted changes"
+
+
+def test_str_is_the_label():
+    p = _clean(commit_subject="s")
+    assert str(p) == p.label
 
 
 def test_json_round_trip():
@@ -138,3 +176,42 @@ def test_json_round_trip_preserves_run_fields():
         command_line=("python", "-m", "experiments.foo"),
     )
     assert Provenance.from_json(p.to_json()) == p
+
+
+def test_capture_records_the_subject_time_and_uncommitted_paths(tmp_path):
+    repo = _init_repo(tmp_path)
+    (repo / "f.txt").write_text("changed\n")
+    (repo / "new file é.txt").write_text("new\n")
+    _run(["git", "mv", "f.txt", "g.txt"], repo)
+    p = Provenance.capture(repo)
+    assert p.commit_subject == "init"
+    assert p.commit_time  # HEAD's committer date, ISO 8601
+    paths = sorted(entry[3:] for entry in p.uncommitted)
+    assert paths == ["g.txt", "new file é.txt"]  # the rename once, under its new path; no quoting
+    assert p.dirty is True
+
+
+def test_capture_of_a_clean_checkout_has_no_uncommitted_paths(tmp_path):
+    p = Provenance.capture(_init_repo(tmp_path))
+    assert (p.dirty, p.uncommitted) == (False, ())
+
+
+def test_json_round_trip_preserves_the_code_fields():
+    p = _clean(
+        dirty=True,
+        commit_subject="s",
+        commit_time="2026-10-11T09:50:00-05:00",
+        uncommitted=(" M a.py",),
+        snapshot_commit="5c1d2e9aa0",
+        note="n",
+    )
+    assert Provenance.from_json(p.to_json()) == p
+
+
+def test_launched_as_installs_a_launch_until_the_block_exits():
+    launch = _clean(note="installed")
+    assert current_launch() is None
+    with launched_as(launch):
+        assert current_launch() is launch
+        assert launch_provenance() is launch
+    assert current_launch() is None

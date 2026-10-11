@@ -16,6 +16,7 @@ exist. :meth:`Provenance.capture` is best-effort — every field degrades to emp
 outside a checkout — for stamping an artifact built by an arbitrary launch.
 """
 
+import contextlib
 import dataclasses
 import functools
 import getpass
@@ -25,11 +26,17 @@ import re
 import subprocess
 import sys
 import threading
+from collections.abc import Iterator, Sequence
 from dataclasses import dataclass
 from datetime import datetime
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 logger = logging.getLogger(__name__)
+
+# The longest note or commit subject a label shows before cutting it with "…".
+LABEL_TEXT_WIDTH = 60
+# The most uncommitted files a label names; more end in ", …".
+LABEL_FILES = 3
 
 
 @dataclass(frozen=True)
@@ -46,6 +53,12 @@ class Provenance:
         git_remote: ``origin`` remote URL, or ``None`` if unknown.
         created_at: ISO-8601 time the launch was captured, or ``""`` if uncaptured.
         command_line: ``sys.argv`` of the launching process; empty if uncaptured.
+        commit_subject: First line of the HEAD commit's message, or "" if uncaptured.
+        commit_time: HEAD's committer date, ISO 8601, or "" if uncaptured.
+        uncommitted: The working tree's changes as ``"XY path"`` entries (``git status
+            --porcelain`` codes), untracked files included; a rename is listed under its new path.
+        snapshot_commit: The commit that saved the uncommitted changes (``save_snapshot``), if any.
+        note: The launch's own description of what the run tries, if given.
     """
 
     tree_hash: str
@@ -56,6 +69,11 @@ class Provenance:
     git_remote: str | None = None
     created_at: str = ""
     command_line: tuple[str, ...] = ()
+    commit_subject: str = ""
+    commit_time: str = ""
+    uncommitted: tuple[str, ...] = ()
+    snapshot_commit: str | None = None
+    note: str | None = None
 
     @classmethod
     def from_git(cls, repo_dir: Path | None = None) -> "Provenance":
@@ -82,7 +100,8 @@ class Provenance:
     @classmethod
     def capture(cls, repo_dir: Path | None = None) -> "Provenance":
         """Best-effort provenance of the current launch: git context plus the origin
-        remote, capture time, and argv.
+        remote, capture time, and argv. It also records HEAD's subject and date and the
+        uncommitted paths.
 
         Tolerant git capture: every git field degrades to empty/``None`` outside a checkout or
         when the ``git`` binary is absent, so it never raises. Use to stamp an artifact built by
@@ -91,24 +110,24 @@ class Provenance:
         cwd = str(repo_dir) if repo_dir is not None else None
 
         def g(*args: str) -> str:
-            # A missing `git` binary (bundle image without git) degrades like being outside
-            # a checkout: git fields empty, launch context still captured.
-            try:
-                return _git(list(args), cwd, check=False)
-            except FileNotFoundError:
-                return ""
+            return read_git(args, cwd).strip()
 
         stash = g("stash", "create")
         ref = stash or "HEAD"
+        uncommitted = _status_entries(read_git(["status", "--porcelain", "-z", "--untracked-files=all"], cwd))
+        commit_time, _, commit_subject = g("log", "-1", "--format=%cI%n%s").partition("\n")
         return cls(
             tree_hash=g("rev-parse", "--short", f"{ref}^{{tree}}"),
             base_commit=g("rev-parse", "--short", "HEAD"),
-            dirty=bool(g("status", "--porcelain", "--untracked-files=all")),
+            dirty=bool(uncommitted),
             branch=g("symbolic-ref", "--short", "-q", "HEAD") or None,
             built_by=_getuser(),
             git_remote=g("remote", "get-url", "origin") or None,
             created_at=datetime.now().isoformat(),
             command_line=tuple(sys.argv),
+            commit_subject=commit_subject,
+            commit_time=commit_time,
+            uncommitted=uncommitted,
         )
 
     @classmethod
@@ -128,6 +147,11 @@ class Provenance:
             git_remote=d.get("git_remote"),
             created_at=d.get("created_at", ""),
             command_line=tuple(d.get("command_line", ())),
+            commit_subject=d.get("commit_subject", ""),
+            commit_time=d.get("commit_time", ""),
+            uncommitted=tuple(d.get("uncommitted", ())),
+            snapshot_commit=d.get("snapshot_commit"),
+            note=d.get("note"),
         )
 
     def to_json(self) -> str:
@@ -138,15 +162,64 @@ class Provenance:
         """The value to key image tags and version comparisons on."""
         return self.tree_hash
 
+    @property
+    def change_summary(self) -> str:
+        """The uncommitted files in a few words, such as ``3 uncommitted: llama.py, model.py, notes.md``."""
+        if not self.uncommitted:
+            return "uncommitted changes"
+        names = [PurePosixPath(entry[3:]).name for entry in self.uncommitted]
+        shown = ", ".join(names[:LABEL_FILES]) + (", …" if len(names) > LABEL_FILES else "")
+        return f"{len(names)} uncommitted: {shown}"
+
+    @property
+    def label(self) -> str:
+        """The code in one line: branch, short commit, and the subject, the note, or the changes."""
+        if not self.base_commit:
+            return "no git checkout"
+        head = f"{self.branch or 'detached'}@{self.base_commit[:7]}"
+        if not self.dirty:
+            return f"{head}  {_one_line(self.note or self.commit_subject)}".rstrip()
+        if self.note:
+            changes = f"+ {len(self.uncommitted)} uncommitted  {_one_line(self.note)}"
+        else:
+            changes = f"+ {self.change_summary}"
+        snapshot = f"  (snapshot {self.snapshot_commit[:7]})" if self.snapshot_commit else ""
+        return f"{head} {changes}{snapshot}"
+
     def __str__(self) -> str:
-        suffix = ""
-        if self.branch:
-            suffix += f" ({self.branch})"
-        if self.built_by:
-            suffix += f" ({self.built_by})"
-        if self.dirty:
-            return f"{self.tree_hash} (off of {self.base_commit}){suffix}"
-        return f"{self.base_commit}{suffix}"
+        return self.label
+
+
+def read_git(args: Sequence[str], repo_dir: Path | str | None = None) -> str:
+    """Raw stdout of ``git args`` run in ``repo_dir``; "" when Git fails or is not installed."""
+    try:
+        result = subprocess.run(["git", *args], capture_output=True, text=True, cwd=repo_dir)
+    except FileNotFoundError:
+        return ""
+    return result.stdout if result.returncode == 0 else ""
+
+
+def _status_entries(porcelain_z: str) -> tuple[str, ...]:
+    """``git status --porcelain -z`` output as ``"XY path"`` entries.
+
+    ``-z`` leaves paths unquoted. A rename or copy is followed by its source path, which is skipped,
+    so it is listed once under its new path.
+    """
+    entries: list[str] = []
+    fields = iter(porcelain_z.split("\0"))
+    for field in fields:
+        if not field:
+            continue
+        entries.append(field)
+        if "R" in field[:2] or "C" in field[:2]:
+            next(fields, None)
+    return tuple(entries)
+
+
+def _one_line(text: str) -> str:
+    """``text`` on one line, cut with "…" at the label's width."""
+    flat = " ".join(text.split())
+    return flat if len(flat) <= LABEL_TEXT_WIDTH else flat[: LABEL_TEXT_WIDTH - 1] + "…"
 
 
 @functools.cache
@@ -160,10 +233,37 @@ def _capture_once() -> Provenance:
 _capture_lock = threading.Lock()
 
 
-def launch_provenance() -> Provenance:
-    """The current launch's provenance, captured once per process (thread-safe)."""
+# The provenance an experiment command installed for its launch, innermost last.
+_launches: list[Provenance] = []
+
+
+@contextlib.contextmanager
+def launched_as(provenance: Provenance) -> Iterator[Provenance]:
+    """Make ``provenance`` this process's launch provenance until the block exits.
+
+    The experiment command line installs the provenance it captured, snapshot and note included, so
+    the artifact records and the W&B tracker of the jobs it runs, which are threads of this
+    process, record the same launch.
+    """
     with _capture_lock:
-        return _capture_once()
+        _launches.append(provenance)
+    try:
+        yield provenance
+    finally:
+        with _capture_lock:
+            _launches.remove(provenance)
+
+
+def current_launch() -> Provenance | None:
+    """The provenance installed with :func:`launched_as`, or ``None`` outside one."""
+    with _capture_lock:
+        return _launches[-1] if _launches else None
+
+
+def launch_provenance() -> Provenance:
+    """The current launch's provenance: the installed one, else captured once per process (thread-safe)."""
+    with _capture_lock:
+        return _launches[-1] if _launches else _capture_once()
 
 
 def _git(args: list[str], cwd: str | None, check: bool = True) -> str:
