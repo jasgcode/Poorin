@@ -57,7 +57,7 @@ export XLA_PYTHON_CLIENT_MEM_FRACTION=0.5
 ## Running an Experiment
 
 Now you can run an experiment.
-The unified tutorial script [`experiments/tutorials/train_tiny_model.py`](https://github.com/marin-community/marin/blob/main/experiments/tutorials/train_tiny_model.py)
+The unified tutorial script [`experiments/tutorials/train_tiny_model.py`](https://github.com/jasgcode/Poorin/blob/main/experiments/tutorials/train_tiny_model.py)
 accepts a `--device` flag that selects the accelerator:
 
 ```bash
@@ -70,7 +70,7 @@ uv run --no-sync python experiments/tutorials/train_tiny_model.py \
 `POORIN_PREFIX` sets the root directory for all outputs; it can be a local path or anything
 fsspec supports, such as `s3://` or `gs://`.
 
-The same script runs on CPU, GPU, and TPU — only `--device` and `--dataset` change. The GPU
+The same script runs on the CPU and on one RTX 5090; only `--device` and `--dataset` change. The GPU
 device entry in `train_tiny_model.py` configures resources and batch size:
 
 ```python

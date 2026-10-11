@@ -1611,6 +1611,19 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
 - **Cost if wrong:** A plan now fails where it used to print a graph with two recipes for one
   output; that graph always failed at `--run`.
 
+### D106. The tutorial's devices are the two this workstation has
+
+- **When:** 2026-10-11. **Status:** Adopted.
+- **Decision:** `experiments/tutorials/train_tiny_model.py` keeps the `cpu` and `rtx5090x1`
+  devices. The `h100x1`, `h100x8`, `gb200x1`, `gb200x4`, `v5litepod-16`, and `v6e-4` entries go,
+  with the comment on routing GPU jobs across CoreWeave regions and the `ANY_REGION` import.
+- **Why:** The owner, 2026-10-11. Fray's `LocalClient` is the only backend, so those entries ran
+  on this machine under a cloud device's name and batch size; the tutorial's docstring had kept
+  them for a cloud backend that sub-project 2 has not built.
+- **Alternatives:** Keep them until sub-project 2 adds a cloud backend.
+- **Cost if wrong:** Sub-project 2 adds the cloud devices it supports back to `DEVICES`, one entry
+  each.
+
 ---
 
 ## Deferred

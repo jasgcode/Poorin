@@ -4,8 +4,8 @@
 """Tutorial: train a tiny model, choosing the accelerator and dataset on the command line.
 
     python -m experiments.tutorials.train_tiny_model --device cpu --dataset tinystories --version dev
-    python -m experiments.tutorials.train_tiny_model --device h100x8 --dataset wikitext --version dev --run
-    python -m experiments.tutorials.train_tiny_model --device v5litepod-16 --dataset fineweb-edu --version dev --run
+    python -m experiments.tutorials.train_tiny_model --device rtx5090x1 --dataset wikitext --version dev --run
+    python -m experiments.tutorials.train_tiny_model --device rtx5090x1 --dataset fineweb-edu --version dev --run
     python -m experiments.tutorials.train_tiny_model --dataset wikitext --version dev \\
         --set optimizer.learning_rate=1e-3 --run
 
@@ -13,9 +13,8 @@ Every training decision is stated inline: the model, the data, the optimizer, th
 budget. :func:`~poorin.experiment.train.train_lm` handles only the accelerator plumbing (the
 mesh, the resumption checkpointer, the Fray dispatch); the same script runs on every device.
 
-Fray's ``LocalClient`` is Poorin's only backend, and it ignores a job's resources, so every
-``--device`` runs on this machine; the H100, GB200, and TPU entries matter once a cloud backend
-exists (sub-project 2).
+Fray's ``LocalClient`` is Poorin's only backend and runs every job on this machine, so the devices
+are the two this workstation has. Cloud devices return with a cloud backend (sub-project 2).
 
 The checkpoint's version is *deferred*: it is set once for the whole run by the shared
 ``--version`` (``--run`` builds, the default prints the plan). The datasets pin explicit calendar
@@ -24,7 +23,7 @@ versions — they are shared caches that should not rebuild on a mutable version
 """
 
 import click
-from fray.types import ANY_REGION, ResourceConfig
+from fray.types import ResourceConfig
 from levanter.optim.config import AdamConfig
 from poorin.execution.lazy import ArtifactStep
 from poorin.experiment.cli import build_options
@@ -39,27 +38,9 @@ from experiments.marin_tokenizer import marin_tokenizer
 
 # Each device is one accelerator the same recipe runs on: its resources and a batch size
 # that fits. Adding a device is one entry here, not a new file.
-#
-# The GPU entries pass ``regions=[ANY_REGION]``. A training job inherits the region of the
-# worker that submitted it, which keeps it near its data; the GPU fleets live in federated
-# CoreWeave clusters that advertise no region, so an inherited region would exclude every
-# host that has the GPU and the job would be unschedulable. ``gb200x4`` is one whole
-# gb200-4x node (4 Blackwell GPUs on Grace ARM hosts, cw-us-east-08a).
 DEVICES = {
     "cpu": (ResourceConfig.with_cpu(), 4),
-    "h100x1": (ResourceConfig.with_gpu("H100", count=1, cpu=8, disk="128G", ram="64G", regions=[ANY_REGION]), 32),
     "rtx5090x1": (ResourceConfig.with_gpu("RTX5090", count=1, cpu=16, disk="128G", ram="96G"), 32),
-    "h100x8": (
-        ResourceConfig.with_gpu("H100", count=8, cpu=32, disk="128G", ram="128G", regions=[ANY_REGION]),
-        256,
-    ),
-    "gb200x1": (ResourceConfig.with_gpu("GB200", count=1, cpu=8, disk="128G", ram="64G", regions=[ANY_REGION]), 32),
-    "gb200x4": (
-        ResourceConfig.with_gpu("GB200", count=4, cpu=32, disk="128G", ram="256G", regions=[ANY_REGION]),
-        128,
-    ),
-    "v5litepod-16": (ResourceConfig.with_tpu("v5litepod-16", slice_count=1, cpu=32, ram="128g", disk="50g"), 128),
-    "v6e-4": (ResourceConfig.with_tpu("v6e-4", slice_count=1, cpu=32, ram="128g", disk="50g"), 32),
 }
 
 # Raw HuggingFace text datasets tokenized inline (a small sample for a quick run).
