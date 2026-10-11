@@ -23,6 +23,7 @@ dependencies = [
     "fsspec>=2025.3.0",
     "gcsfs",
     "grain>=0.2.18",
+    "h5py>=3.16",
     "google-cloud-storage",
     "huggingface-hub",
     "marin-haliax",
