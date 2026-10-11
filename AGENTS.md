@@ -71,7 +71,7 @@ uv run --no-sync python -m tools.prune_check --phase P<n> --step "<short label>"
   money.
 - Commit before running a calendar-versioned experiment: `--run` refuses to build one from
   uncommitted code (D107). A dev run saves uncommitted code as a snapshot commit.
-  `python -m poorin.experiment.runs show NAME@VERSION` shows the code behind a run.
+  `uv run --no-sync python -m poorin.experiment.runs show NAME@VERSION` shows the code behind a run.
 
 ## Communication & Commits
 
