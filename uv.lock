@@ -298,6 +298,21 @@ wheels = [
 ]
 
 [[package]]
+name = "array-record"
+version = "0.8.4"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "absl-py" },
+    { name = "etils", extra = ["epath"] },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/59/8d/6256d0e3c208730195e318202cacc11cdd6b34c415be582cc28e4c442214/array_record-0.8.4-cp313-cp313-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:a80a45c94101e45dafa8ceea27012103278b1517585a3a5c4d1c684760012277", size = 3686367, upload-time = "2026-10-08T15:30:53.312Z" },
+    { url = "https://files.pythonhosted.org/packages/d7/75/ce4cd320433a3b2c8c95f2dab5815917a26f06629a2ae59dd14caea562d3/array_record-0.8.4-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:ea8a42227268a10bfecf20f59485421bef50d0fb21459384779baf5ba6b63589", size = 3835264, upload-time = "2026-10-08T15:30:55.383Z" },
+    { url = "https://files.pythonhosted.org/packages/7f/fe/c08c5060e38758121be401d5ee1e32f67780097923bfe38485ac13da530a/array_record-0.8.4-cp314-cp314-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:ca3b956c6cdb742ea219cb84875460e572e3b89f94464e46a7910f72ca412536", size = 3686973, upload-time = "2026-10-08T15:30:58.597Z" },
+    { url = "https://files.pythonhosted.org/packages/66/49/8033b4752dce2ef58813969174831ef2ff6e33703917d7aa4ea2501c4268/array_record-0.8.4-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:b5fe5f9d09c26bd6eade31c518b965328a423dcedf6ba318bf1d3417f0ae663e", size = 3835170, upload-time = "2026-10-08T15:30:59.959Z" },
+]
+
+[[package]]
 name = "attrs"
 version = "26.1.0"
 source = { registry = "https://pypi.org/simple" }
@@ -3484,6 +3499,7 @@ name = "poorin"
 version = "0.2.0"
 source = { editable = "lib/poorin" }
 dependencies = [
+    { name = "array-record" },
     { name = "av" },
     { name = "backports-zstd", marker = "python_full_version < '3.14' or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-14-marin-levanter-tpu') or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-6-poorin-cpu') or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-6-poorin-tpu') or (extra == 'extra-14-marin-levanter-tpu' and extra == 'extra-6-poorin-gpu') or (extra == 'extra-6-poorin-cpu' and extra == 'extra-6-poorin-gpu') or (extra == 'extra-6-poorin-gpu' and extra == 'extra-6-poorin-tpu')" },
     { name = "braceexpand" },
@@ -3499,6 +3515,7 @@ dependencies = [
     { name = "marin-haliax" },
     { name = "marin-levanter" },
     { name = "marin-zephyr" },
+    { name = "msgpack" },
     { name = "msgspec" },
     { name = "numpy" },
     { name = "pandas" },
@@ -3588,6 +3605,7 @@ test = [
 
 [package.metadata]
 requires-dist = [
+    { name = "array-record", specifier = ">=0.8.4" },
     { name = "av", specifier = ">=19.0.1" },
     { name = "backports-zstd", marker = "python_full_version < '3.14'", specifier = ">=1.0.0" },
     { name = "braceexpand" },
@@ -3610,6 +3628,7 @@ requires-dist = [
     { name = "marin-haliax" },
     { name = "marin-levanter", editable = "lib/levanter" },
     { name = "marin-zephyr", editable = "lib/zephyr" },
+    { name = "msgpack", specifier = ">=1.0" },
     { name = "msgspec", specifier = ">=0.18.0" },
     { name = "numpy" },
     { name = "nvidia-cublas", marker = "sys_platform == 'linux' and extra == 'gpu'", specifier = ">=13.2.0.9" },

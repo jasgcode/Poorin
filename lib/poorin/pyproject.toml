@@ -11,6 +11,7 @@ dependencies = [
     # Provides the compression.zstd module that fsspec imports to register its
     # zstd codec on Python < 3.14; required for reading/writing zstd via fsspec.
     "backports-zstd>=1.0.0; python_version < '3.14'",
+    "array-record>=0.8.4",
     "av>=19.0.1",
     "braceexpand",
     "datasets<5.0.0",
@@ -27,6 +28,7 @@ dependencies = [
     "jaxopt>=0.8.3",
     "marin-levanter",
     "transformers>=5.5.3,<6.0",
+    "msgpack>=1.0",
     "msgspec>=0.18.0",
     "numpy",
     "pandas>=2.0",
