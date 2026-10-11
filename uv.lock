@@ -3520,6 +3520,7 @@ name = "poorin"
 version = "0.2.0"
 source = { editable = "lib/poorin" }
 dependencies = [
+    { name = "absl-py" },
     { name = "array-record" },
     { name = "av" },
     { name = "backports-zstd", marker = "python_full_version < '3.14' or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-14-marin-levanter-tpu') or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-6-poorin-cpu') or (extra == 'extra-14-marin-levanter-gpu' and extra == 'extra-6-poorin-tpu') or (extra == 'extra-14-marin-levanter-tpu' and extra == 'extra-6-poorin-gpu') or (extra == 'extra-6-poorin-cpu' and extra == 'extra-6-poorin-gpu') or (extra == 'extra-6-poorin-gpu' and extra == 'extra-6-poorin-tpu')" },
@@ -3627,6 +3628,7 @@ test = [
 
 [package.metadata]
 requires-dist = [
+    { name = "absl-py", specifier = ">=2.5.0" },
     { name = "array-record", specifier = ">=0.8.4" },
     { name = "av", specifier = ">=19.0.1" },
     { name = "backports-zstd", marker = "python_full_version < '3.14'", specifier = ">=1.0.0" },
