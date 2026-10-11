@@ -300,7 +300,7 @@ for a stated user:
 | `poorin.experiment` | Package marker; docstring points to the `data`, `sweep`, and `train` submodules | R1 |
 | `poorin.experiment.cli` | Click options (`--version`, `--version-of`, `--set`, `--sweep`, `--run`) that plan or build an experiment graph | R1 |
 | `poorin.experiment.code_check` | Whether `--run` may build from the working tree's code, and the plan's `Code:` lines | R1 |
-| `poorin.experiment.data` | Lazy dataset builders: HF and raw downloads, tokenized, pretokenized, and mixture handles | R1 |
+| `poorin.experiment.data` | Lazy dataset builders: tokenized, pretokenized, and mixture handles | R1 |
 | `poorin.experiment.namespacing` | Prefixes mutable training artifact names with the user to avoid path collisions | R2 |
 | `poorin.experiment.overrides` | Typed dotted-path config overrides from --set and --sweep, decoded by draccus | R1 |
 | `poorin.experiment.runs` | Lists the runs under the prefix and shows the code behind one | `poorin.experiment.runs` |
@@ -487,6 +487,7 @@ for a stated user:
 |---|---|---|
 | `experiments` | Package marker | package |
 | `experiments.datasets` | Package marker; docstring sets conventions for dataset catalog modules | package |
+| `experiments.datasets.fineweb_edu` | The FineWeb-Edu 10M pretokenized dataset at a pinned Hub revision, shared by the tutorial and grug | R1 |
 | `experiments.evals` | Package marker | package |
 | `experiments.evals.task_configs` | Named lm-eval task lists (`EvalTaskConfig`) by suite: core, MMLU, leaderboard, multilingual | `experiments.evals.task_configs` |
 | `experiments.grug` | Package marker | R2 |
