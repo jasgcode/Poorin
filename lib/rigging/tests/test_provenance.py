@@ -3,6 +3,7 @@
 
 import logging
 import os
+import shutil
 import subprocess
 import threading
 from concurrent.futures import ThreadPoolExecutor
@@ -201,6 +202,37 @@ def test_capture_records_the_subject_time_and_uncommitted_paths(tmp_path):
     paths = sorted(entry[3:] for entry in p.uncommitted)
     assert paths == ["g.txt", "new file é.txt"]  # the rename once, under its new path; no quoting
     assert p.dirty is True
+
+
+def test_capture_lists_an_untracked_file_whose_name_is_not_utf8(tmp_path):
+    repo = _init_repo(tmp_path)
+    (repo / os.fsdecode(b"bad\xff.txt")).write_text("new\n")
+    p = Provenance.capture(repo)
+    assert p.dirty is True
+    [entry] = p.uncommitted
+    assert entry.startswith("?? bad") and entry.endswith(".txt")
+
+
+@pytest.mark.skipif(shutil.which("ssh-keygen") is None, reason="signing a commit needs ssh-keygen")
+def test_capture_and_snapshot_read_a_signed_head_with_log_show_signature_on(tmp_path):
+    repo = _init_repo(tmp_path / "repo")
+    key = tmp_path / "key"
+    _run(["ssh-keygen", "-q", "-t", "ed25519", "-N", "", "-f", str(key)], tmp_path)
+    for name, value in (
+        ("gpg.format", "ssh"),
+        ("user.signingkey", str(key)),
+        ("commit.gpgsign", "true"),
+        ("log.showSignature", "true"),
+    ):
+        _run(["git", "config", name, value], repo)
+    (repo / "f.txt").write_text("signed\n")
+    _run(["git", "commit", "-a", "-m", "signed"], repo)
+    (repo / "f.txt").write_text("dirty\n")
+    p = Provenance.capture(repo)
+    assert p.commit_subject == "signed"
+    assert p.commit_time == _out(["git", "log", "-1", "--no-show-signature", "--format=%cI"], repo).strip()
+    commit = save_snapshot("try it", repo)
+    assert _out(["git", "log", "-1", "--no-show-signature", "--format=%cI", commit], repo).strip() == p.commit_time
 
 
 def test_capture_of_a_clean_checkout_has_no_uncommitted_paths(tmp_path):

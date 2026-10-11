@@ -126,7 +126,7 @@ class Provenance:
         stash = g("stash", "create")
         ref = stash or "HEAD"
         uncommitted = _status_entries(read_git(["status", "--porcelain", "-z", "--untracked-files=all"], cwd))
-        commit_time, _, commit_subject = g("log", "-1", "--format=%cI%n%s").partition("\n")
+        commit_time, _, commit_subject = g("log", "-1", "--no-show-signature", "--format=%cI%n%s").partition("\n")
         return cls(
             tree_hash=g("rev-parse", "--short", f"{ref}^{{tree}}"),
             base_commit=g("rev-parse", "--short", "HEAD"),
@@ -202,9 +202,12 @@ class Provenance:
 
 
 def read_git(args: Sequence[str], repo_dir: Path | str | None = None) -> str:
-    """Raw stdout of ``git args`` run in ``repo_dir``; "" when Git fails or is not installed."""
+    """Raw stdout of ``git args`` run in ``repo_dir``; "" when Git fails or is not installed.
+
+    Bytes that are not UTF-8, such as in a file name, decode to U+FFFD instead of raising.
+    """
     try:
-        result = subprocess.run(["git", *args], capture_output=True, text=True, cwd=repo_dir)
+        result = subprocess.run(["git", *args], capture_output=True, text=True, errors="replace", cwd=repo_dir)
     except FileNotFoundError:
         return ""
     return result.stdout if result.returncode == 0 else ""
@@ -291,7 +294,7 @@ def save_snapshot(message: str, repo_dir: Path | None = None) -> str:
     """
     cwd = str(repo_dir) if repo_dir is not None else None
     head = _git(["rev-parse", "HEAD"], cwd)
-    head_date = _git(["log", "-1", "--format=%cI", "HEAD"], cwd)
+    head_date = _git(["log", "-1", "--no-show-signature", "--format=%cI", "HEAD"], cwd)
     with tempfile.TemporaryDirectory(prefix="poorin-snapshot-") as tmp:
         env = {
             **os.environ,

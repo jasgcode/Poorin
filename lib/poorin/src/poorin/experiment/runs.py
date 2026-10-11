@@ -124,7 +124,7 @@ def _with_subject(provenance: Provenance) -> Provenance:
     if provenance.commit_subject or not provenance.base_commit:
         return provenance
     full = _commit(provenance.base_commit)
-    subject = read_git(["log", "-1", "--format=%s", full]).strip() if full else ""
+    subject = read_git(["log", "-1", "--no-show-signature", "--format=%s", full]).strip() if full else ""
     return dataclasses.replace(provenance, commit_subject=subject)
 
 
