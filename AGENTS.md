@@ -64,7 +64,7 @@ uv run --no-sync python -m tools.prune_check --phase P<n> --step "<short label>"
   in-process with `-n 0`; run GPU tests the same way, without `JAX_PLATFORMS=cpu`.
 - Do not pass a partial marker expression such as `-m "not slow"`: it replaces the default
   expression and selects cluster and Docker tests. `tools.affected_tests` passes a complete one.
-- Python >= 3.12.
+- Python >= 3.13.
 - Dependencies may be upgraded freely. Each dependency change is its own commit, and its
   `uv.lock` diff is checked for versions that moved without being asked.
 - Avoid large transfers between cloud regions or from the open internet; storage egress costs

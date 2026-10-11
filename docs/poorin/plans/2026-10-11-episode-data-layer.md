@@ -115,6 +115,8 @@ git commit -m "[poorin] Add the episode data layer spec and plan (D110)" \
 
 ### Task 1: Move to Python 3.14 (D111)
 
+> Executed as Python 3.13: draccus 0.11.6 cannot parse union-typed fields on 3.14. See D111.
+
 **Files:**
 - Modify: `.python-version`
 - Modify: `pyproject.toml` (`requires-python`, `[tool.ruff] target-version`, `[tool.ty.environment] python-version`)

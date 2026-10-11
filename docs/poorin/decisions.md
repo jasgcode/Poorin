@@ -1759,6 +1759,40 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
 
 ---
 
+### D111. Python 3.13
+
+- **When:** 2026-10-11. **Status:** Adopted.
+- **Decision:** Poorin requires Python 3.13 (3.13.16 here). Every `requires-python` is `>=3.13`; the
+  `<3.14` caps Marin set on poorin, fray, finelog, zephyr, and rigging are gone, and so is a stray
+  `requires-python` under poorin's `[build-system]`. Ruff and ty target 3.13. Dupekit's Rust wheel
+  keeps `abi3-py312`, which loads on 3.13.
+- **Why:** The owner asked for 3.13 or 3.14 on 2026-10-11, and the plan moved to 3.14. On 3.14,
+  `argparse.add_argument` rejects a `type=` that is not callable, and union types such as
+  `int | None` are no longer callable, so draccus 0.11.6, the latest release, fails to build a parser
+  for any config with an optional field (marin-community/draccus#69, open; the fix in #70 closed
+  unmerged). That took out `levanter.config.main` and 49 Levanter tests. The owner chose 3.13 over a
+  patched draccus fork, 2026-10-11. Moving before sub-project 3 locks its new dependencies once.
+- **Versions that moved:** none. uv went from 0.8.17 to 0.13.0 (the owner approved it while trying
+  3.14; 0.8.17 offered only 3.14.0rc2), and the lock's format revision went from 3 to 5.
+- **Rulings while building:** `itertools.batched` in `verify_fuzzy_dups` passes `strict=False`,
+  which ruff requires from 3.13 and which keeps a short final batch. Ruff rewrote nine
+  `Generator[X, None, None]` annotations to `Generator[X]`. A fingerprint names a class value by its
+  module and qualified name, and 3.13 moved `pathlib.Path` to `pathlib._local`, so a config holding
+  the `Path` class itself (not a path, which encodes as a string) fingerprints differently than on
+  3.12; `test_fingerprint` now checks the name with `datetime.timedelta`, whose module is stable.
+- **Found:** `lib/levanter/tests/grug/test_fa4_cute_attention.py` fails 21 of 85 tests on the GPU, the
+  same 21 on 3.12 before this change: the CuTe DSL reports `requires a code object with 4 free vars,
+  not 0`, and jaxtyping rejects the launcher's arguments. Grug uses FlashAttention 4 by default on a
+  GPU, and R2 trains with it in the full check, so the kernels work outside the tests. The likely
+  cause is the tests' jaxtyping import hook on `levanter.grug`, which wraps the launcher the CuTe DSL
+  then rejects. Recorded under Deferred.
+- **Alternatives:** Python 3.14 with draccus pinned to a patched fork; staying on 3.12.
+- **Cost if wrong:** Moving to 3.14 later is a second relock and environment rebuild, once draccus
+  ships a fix. 3.14 also turns on Ruff's `UP037`, which unquotes forward references that jaxtyping's
+  import hook then fails to resolve; that move has to keep `UP037` off.
+
+---
+
 ## Deferred
 
 Known gaps left open on purpose. Each names where it gets resolved.
@@ -1804,3 +1838,5 @@ Known gaps left open on purpose. Each names where it gets resolved.
 | Adaptive search (Optuna) is not supported; a study would be a Python loop over `resolve`, written when one needs it | D92 | Open |
 | Fray has no SLURM backend | D92 | Open |
 | `--set` is not forwarded to SkyRL runs as Hydra overrides (D68) | D92 | Open |
+| `test_fa4_cute_attention.py` fails 21 tests on the GPU on both 3.12 and 3.13: the CuTe DSL reports a free-variable mismatch in the segmented forward launcher, likely because the tests' jaxtyping import hook wraps it; R2 trains with FlashAttention 4 and passes | D111 | Open |
+| Python 3.14 waits on draccus parsing union-typed fields on 3.14 (marin-community/draccus#69) | D111 | Open |

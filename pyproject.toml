@@ -7,7 +7,7 @@ name = "poorin-root"
 version = "0.1.0"
 description = "Marin workspace root and experiments"
 license = { file = "LICENSE" }
-requires-python = ">=3.12"
+requires-python = ">=3.13"
 dependencies = [
     # workspaces
     "poorin-fray",
@@ -128,7 +128,7 @@ explicit = true
 
 [tool.ruff]
 line-length = 121
-target-version = "py312"
+target-version = "py313"
 
 [tool.ruff.lint]
 # A,B,E,F,I,NPY,RUF,UP,W are the established families. The individually-listed
@@ -180,7 +180,7 @@ known-third-party = ["wandb", "poorin"]
 # Verifyit are deleted in P2 to P5 and stay unchecked.
 [tool.ty.environment]
 python = ".venv"
-python-version = "3.12"
+python-version = "3.13"
 
 [tool.ty.src]
 include = [

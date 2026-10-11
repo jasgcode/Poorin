@@ -113,8 +113,8 @@ class BlobDescriptor:
 class _BlobReader(io.RawIOBase):
     """Forward-only file interface over a sequence of bounded blob parts."""
 
-    def __init__(self, parts: Generator[bytes, None, None]) -> None:
-        self._parts: Generator[bytes, None, None] | None = parts
+    def __init__(self, parts: Generator[bytes]) -> None:
+        self._parts: Generator[bytes] | None = parts
         self._current = memoryview(b"")
 
     def readable(self) -> bool:
@@ -453,7 +453,7 @@ class _ReadOperations:
             return None
         return io.BufferedReader(_BlobReader(self.blob_parts(BlobDescriptor.from_row(row))))
 
-    def blob_parts(self, descriptor: BlobDescriptor) -> Generator[bytes, None, None]:
+    def blob_parts(self, descriptor: BlobDescriptor) -> Generator[bytes]:
         """Yield a pinned descriptor's inline value or ordered chunked parts."""
         name = descriptor.name
         part_count = descriptor.part_count

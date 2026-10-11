@@ -6,7 +6,7 @@ In this tutorial, you will install Poorin on your local machine.
 
 Before you begin, ensure you have the following installed:
 
-- Python 3.12 or higher
+- Python 3.13 or higher
 - uv (Python package manager)
 - Git
 - Rust toolchain via [rustup](https://rustup.rs) (only needed for source builds of Rust crates; see Rust Crates section below)
@@ -31,7 +31,7 @@ If you're on a GPU, see [Local GPU Setup](local-gpu.md) for a GPU-specific walkt
 
 2. Create and activate a virtual environment (~0s):
    ```bash
-   uv venv --python 3.12
+   uv venv --python 3.13
    source .venv/bin/activate  # On Windows: .venv\Scripts\activate
    ```
 

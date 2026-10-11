@@ -143,7 +143,7 @@ def reset_mirror_budget(token: contextvars.Token) -> None:
 
 
 @contextlib.contextmanager
-def mirror_budget(budget_gb: float) -> Generator[None, None, None]:
+def mirror_budget(budget_gb: float) -> Generator[None]:
     """Context manager to scope a MirrorFileSystem transfer budget."""
     token = set_mirror_budget(budget_gb)
     try:

@@ -212,7 +212,7 @@ def data_config() -> DataConfig:
 
 
 @contextlib.contextmanager
-def use_data_config(config: DataConfig) -> Generator[DataConfig, None, None]:
+def use_data_config(config: DataConfig) -> Generator[DataConfig]:
     """Bind *config* as the active :class:`DataConfig` for the duration of the block."""
     token = _active_data_config.set(config)
     try:

@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "poorin-rigging"
 version = "0.2.0"
-requires-python = ">=3.12,<3.14"
+requires-python = ">=3.13"
 dependencies = [
     # Imported directly by rigging.filesystem.s3_compat, which subclasses
     # aiobotocore's AIOHTTPSession to add a whole-request aiohttp timeout.

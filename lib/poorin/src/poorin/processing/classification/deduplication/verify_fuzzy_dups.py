@@ -308,7 +308,7 @@ def _attach_document_text(
     lookup_batch_size: int,
 ) -> Iterator[dict[str, Any]]:
     """Fetch bounded text batches while preserving reducer record order."""
-    for record_batch in batched(records, lookup_batch_size):
+    for record_batch in batched(records, lookup_batch_size, strict=False):
         texts = document_store.get_many([(record["file_idx"], record["id"]) for record in record_batch])
         for record, text in zip(record_batch, texts, strict=True):
             counters.pipeline.update_counter(f"{_COUNTER_PREFIX}/candidate_text_chars", len(text))

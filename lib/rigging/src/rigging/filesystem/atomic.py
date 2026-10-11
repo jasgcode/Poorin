@@ -35,7 +35,7 @@ def _mv_with_retry(filesystem: _AtomicFileSystem, source: str, destination: str)
 
 
 @contextlib.contextmanager
-def atomic_rename(output_path: str, filesystem: _AtomicFileSystem | None = None) -> Generator[str, None, None]:
+def atomic_rename(output_path: str, filesystem: _AtomicFileSystem | None = None) -> Generator[str]:
     """Write through a temporary sibling and rename it to ``output_path``.
 
     Callers may pass a configured filesystem to reuse backend-specific options.

@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "poorin-finelog"
 version = "0.2.11"
 description = "Python client for the Finelog log and metrics store."
-requires-python = ">=3.12,<3.14"
+requires-python = ">=3.13"
 # duckdb runs SQL over Parquet objects in-process for the object query client.
 dependencies = [
     "poorin-rigging",

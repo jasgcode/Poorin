@@ -30,7 +30,7 @@ def _hard_kill(item: pytest.Item, settings: Settings) -> None:
 
 
 @pytest.hookimpl(hookwrapper=True, tryfirst=True)
-def pytest_timeout_set_timer(item: pytest.Item, settings: Settings) -> Generator[None, None, None]:
+def pytest_timeout_set_timer(item: pytest.Item, settings: Settings) -> Generator[None]:
     if settings.method == "signal" and hasattr(signal, "SIGALRM"):
         timer = threading.Timer(settings.timeout + HARD_KILL_DELAY, _hard_kill, (item, settings))
         timer.name = f"pytest hard timeout {item.nodeid}"
@@ -42,7 +42,7 @@ def pytest_timeout_set_timer(item: pytest.Item, settings: Settings) -> Generator
 
 
 @pytest.hookimpl(hookwrapper=True, tryfirst=True)
-def pytest_timeout_cancel_timer(item: pytest.Item) -> Generator[None, None, None]:
+def pytest_timeout_cancel_timer(item: pytest.Item) -> Generator[None]:
     try:
         yield
     finally:

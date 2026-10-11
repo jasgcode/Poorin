@@ -187,7 +187,7 @@ def lease_refresh(
     lease: DistributedLease,
     *,
     interval: float = HEARTBEAT_INTERVAL,
-) -> Generator[None, None, None]:
+) -> Generator[None]:
     """Keep an acquired lease fresh for the duration of a block.
 
     A definitive lease loss is logged and ends further refresh attempts. Other

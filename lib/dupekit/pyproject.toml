@@ -9,7 +9,7 @@ name = "marin-dupekit"
 version = "0.1.2"
 description = "Optimized text de-duplication kernels (Rust) with a pure-Python surface."
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.13"
 # `import dupekit` re-exports the native `dupekit_native` extension, which ships
 # as the companion marin-dupekit-native platform wheel, built with maturin from
 # rust/. It is a hard runtime dependency — the pure package is only the

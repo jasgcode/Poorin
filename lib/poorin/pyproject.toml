@@ -1,13 +1,12 @@
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
-requires-python = ">=3.12,<3.14"
 
 [project]
 name = "poorin"
 version = "0.2.0"
 
-requires-python = ">=3.12"
+requires-python = ">=3.13"
 dependencies = [
     # Provides the compression.zstd module that fsspec imports to register its
     # zstd codec on Python < 3.14; required for reading/writing zstd via fsspec.

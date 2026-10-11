@@ -13,7 +13,7 @@ name = "marin-levanter"
 version = "0.2.0"
 description = "Scalable Training for Foundation Models with Named Tensors and JAX"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.13"
 
 authors = [
     { name = "David Hall", email = "dlwh@cs.stanford.edu" },
@@ -146,7 +146,7 @@ conflicts = [
 
 [tool.ruff]
 line-length = 119
-target-version = "py312"
+target-version = "py313"
 extend-exclude = ["scripts/"]
 
 [tool.ruff.lint]

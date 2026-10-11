@@ -291,7 +291,7 @@ class StoragePath:
         fs, path = _url_to_fs(str(self))
         return [StoragePath(_reattach_protocol(fs, child)) for child in fs.ls(path, detail=False)]
 
-    def walk(self) -> "Generator[tuple[StoragePath, list[str], list[str]], None, None]":
+    def walk(self) -> "Generator[tuple[StoragePath, list[str], list[str]]]":
         """Walk this tree top-down, yielding ``(dir, subdir_names, file_names)`` like ``os.walk``.
 
         ``dir`` is a reopenable :class:`StoragePath`; the name lists are plain strings, so

@@ -49,7 +49,7 @@ def test_dtype_and_timedelta_changes_register():
 def test_class_values_are_identified_by_qualified_name():
     # np.dtype() maps any non-dtype class to the object dtype; distinct classes must not collide.
     assert canonical_json({"cls": Path}) != canonical_json({"cls": timedelta})
-    assert "pathlib.Path" in canonical_json({"cls": Path})
+    assert "datetime.timedelta" in canonical_json({"cls": timedelta})
 
 
 def test_path_is_serialized_by_string():

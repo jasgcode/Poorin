@@ -27,7 +27,7 @@ def current_client() -> Client:
 
 
 @contextlib.contextmanager
-def set_current_client(client: Client) -> Generator[Client, None, None]:
+def set_current_client(client: Client) -> Generator[Client]:
     """Context manager that sets the current client and restores on exit."""
     token = _current_client_var.set(client)
     try:

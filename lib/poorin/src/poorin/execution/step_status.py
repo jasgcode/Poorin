@@ -183,7 +183,7 @@ class StepAlreadyDone(Exception):
 
 
 @contextlib.contextmanager
-def step_lock(output_path: str, step_label: str, *, force_rerun: bool = False) -> Generator[StatusFile, None, None]:
+def step_lock(output_path: str, step_label: str, *, force_rerun: bool = False) -> Generator[StatusFile]:
     """Context manager that acquires a distributed lock with heartbeat refresh.
 
     Acquires the lock, starts a daemon heartbeat thread, yields the
