@@ -4,6 +4,7 @@
 """Whether a run may build from the working tree's code (poorin.experiment.code_check)."""
 
 import os
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -88,3 +89,21 @@ def test_a_refusal_names_the_artifacts_and_the_uncommitted_paths():
     assert message.endswith(
         "Commit the changes and run again, run a dev version, or pass --allow-uncommitted to build from a snapshot."
     )
+
+
+def test_a_refusal_lists_ten_paths_and_counts_the_rest():
+    many = replace(DIRTY, uncommitted=tuple(f" M file{i}.py" for i in range(12)))
+    lines = refusal(check_code(many, _builds(_calendar()), allow_uncommitted=False)).splitlines()
+    shown = ", ".join(f"M file{i}.py" for i in range(10))
+    assert f"Uncommitted (12): {shown}, and 2 more" in lines
+
+
+def test_a_refusal_without_a_checkout_says_the_code_cannot_be_recorded():
+    message = refusal(check_code(NO_CHECKOUT, _builds(_calendar()), allow_uncommitted=False))
+    assert "This is not a Git checkout, so the code cannot be recorded." in message
+    assert "Uncommitted" not in message
+
+
+def test_the_plan_says_a_run_without_a_checkout_records_no_code():
+    check = check_code(NO_CHECKOUT, _builds(_dev()), allow_uncommitted=False)
+    assert plan_lines(check) == [f"Code:   {NO_CHECKOUT.label}", "        not a Git checkout: --run records no code"]
