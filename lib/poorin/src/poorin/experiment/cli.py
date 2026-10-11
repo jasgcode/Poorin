@@ -65,8 +65,8 @@ from poorin.execution.artifact import (
     validate_version,
 )
 from poorin.execution.build_context import BuildContext, VersionCodex, build_context
-from poorin.execution.cache_state import HandleState, check_accept_drift, handle_state
-from poorin.execution.lazy import ArtifactStep, graph_handles, lower, run
+from poorin.execution.cache_state import HandleState, check_accept_drift, graph_states
+from poorin.execution.lazy import ArtifactStep, graph_handles, run
 from poorin.experiment.overrides import Override, OverrideError, Overrides
 from poorin.experiment.sweep import grid
 
@@ -90,13 +90,8 @@ def _version_callback(ctx: click.Context, param: click.Parameter, value: str | N
 
 def _resume_callback(ctx: click.Context, param: click.Parameter, value: str | None) -> str | None:
     """Accept only a mutable version: calendar versions are stable and need no resume."""
-    if value is None:
-        return None
-    try:
-        validate_version(value)
-    except ValueError as e:
-        raise click.BadParameter(str(e), ctx=ctx, param=param) from e
-    if not is_mutable_version(value):
+    value = _version_callback(ctx, param, value)
+    if value is not None and not is_mutable_version(value):
         raise click.BadParameter(
             f"{value!r} is a calendar version; --resume continues a '-dev' run", ctx=ctx, param=param
         )
@@ -193,11 +188,7 @@ def _print_plan(states: list[HandleState], shown: list[HandleState]) -> None:
     """One line per artifact (state, fingerprint, ``name@version``) with the diff under a drifted
     one, then the identity config of each artifact in ``shown`` as YAML."""
     click.echo(f"Prefix: {poorin_prefix()}")
-    seen: set[str] = set()
     for state in states:
-        if state.label in seen:
-            continue
-        seen.add(state.label)
         click.echo(f"  {state.state.value:<26} {state.fingerprint}  {state.label}")
         if state.change:
             click.echo(textwrap.indent(state.change.strip(), "      "))
@@ -269,8 +260,9 @@ def build_options_with_runner(fn: Callable[..., BuildResult], runner: BuildRunne
     @click.option(
         "--max-concurrent",
         type=click.IntRange(min=1),
-        default=None,
-        help=f"Max steps built concurrently (default {DEFAULT_MAX_CONCURRENT}). Trainings run one at a time.",
+        default=DEFAULT_MAX_CONCURRENT,
+        show_default=True,
+        help="Max steps built concurrently. Trainings run one at a time.",
     )
     @functools.wraps(fn)
     def wrapper(
@@ -283,7 +275,7 @@ def build_options_with_runner(fn: Callable[..., BuildResult], runner: BuildRunne
         accept_drift: tuple[str, ...],
         do_run: bool,
         show_config: bool,
-        max_concurrent: int | None,
+        max_concurrent: int,
         **kwargs: Any,
     ) -> None:
         if (default_version is None) == (resume_version is None):
@@ -304,7 +296,9 @@ def build_options_with_runner(fn: Callable[..., BuildResult], runner: BuildRunne
             ]
             with build_context(BuildContext(versions=codex)):
                 handles = [h for trial in trials for h in _as_handles(fn(*args, overrides=trial, **kwargs))]
-            states = [handle_state(h) for h in graph_handles(handles)]  # applies every override
+            graph = graph_handles(handles)
+            for handle in graph:
+                handle.fingerprint()  # applies every override for the checks below; reads nothing
         except OverrideError as e:
             raise click.UsageError(str(e)) from e
         unused = codex.unused_names()
@@ -322,23 +316,24 @@ def build_options_with_runner(fn: Callable[..., BuildResult], runner: BuildRunne
             )
         if show_config and do_run:
             raise click.UsageError("--show-config prints the plan; it cannot be combined with --run")
-        returned = {id(h) for h in handles}
-        if resume_version is not None:
-            empty = [s.label for s in states if id(s.handle) in returned and s.recorded_fingerprint is None]
-            if empty:
-                raise click.UsageError(
-                    f"nothing to resume at {empty}: no run started there. "
-                    "Check that the --set flags match the original run's."
-                )
         try:
-            if not do_run:
-                for handle in handles:
-                    lower(handle)  # run() lowers too; the plan lowers to reject a graph it could not run
-                check_accept_drift(states, accept_drift)  # as --run would, so a typo shows in the plan
-                _print_plan(states, [s for s in states if id(s.handle) in returned] if show_config else [])
-                return
-            concurrency = DEFAULT_MAX_CONCURRENT if max_concurrent is None else max_concurrent
-            runner(handles, concurrency, frozenset(accept_drift))
+            # A run reads every artifact's recorded recipe itself (lazy.run); only the plan and a
+            # resume read them here.
+            if not do_run or resume_version is not None:
+                states = graph_states(graph)
+                returned = {f"{h.name}@{h.version}" for h in handles}
+                if resume_version is not None:
+                    empty = [s.label for s in states if s.label in returned and s.recorded_fingerprint is None]
+                    if empty:
+                        raise click.UsageError(
+                            f"nothing to resume at {empty}: no run started there. "
+                            "Check that the --set flags match the original run's."
+                        )
+                if not do_run:
+                    check_accept_drift(states, accept_drift)  # as --run would, so a typo shows in the plan
+                    _print_plan(states, [s for s in states if s.label in returned] if show_config else [])
+                    return
+            runner(handles, max_concurrent, frozenset(accept_drift))
         except (FingerprintMismatchError, DriftAcceptanceError) as e:
             raise click.ClickException(str(e)) from e
 

@@ -58,7 +58,7 @@ from poorin.execution.artifact import (
     write_record,
 )
 from poorin.execution.build_context import resolve_version
-from poorin.execution.cache_state import CacheState, HandleState, check_accept_drift, handle_state, record_path
+from poorin.execution.cache_state import CacheState, HandleState, check_accept_drift, graph_states, record_path
 from poorin.execution.fingerprint import canonical_json, fingerprint_hash
 from poorin.execution.step_runner import StepRunner
 from poorin.execution.step_spec import StepSpec, _is_relative_path
@@ -221,6 +221,14 @@ class ArtifactStep(Generic[T]):
         validate_version(self.version)
         if self.adopt_source is not None and self.override_path is not None:
             raise ValueError(f"{self.name}@{self.version}: an artifact cannot be both adopted and pinned")
+        if not is_mutable_version(self.version):
+            for dep in self.deps:
+                if is_mutable_version(dep.version):
+                    raise ValueError(
+                        f"{self.name}@{self.version} is a fixed version but depends on mutable "
+                        f"{dep.name}@{dep.version}; a mutable dep would rebuild while the fixed parent "
+                        "stays cached. Make the parent dev, or pin the dep."
+                    )
 
     def fingerprint_payload(self) -> str:
         """The canonical config bytes this handle's fingerprint hashes. For a computed
@@ -329,8 +337,6 @@ def _lower(handle: "ArtifactStep", provenance: Provenance, memo: dict[int, StepS
     lowered once. Without it a diamond re-walks the shared subgraph — and re-runs its
     ``build_config`` — once per path through it. Pass one ``memo`` across a whole ``run`` to share
     it between terminals.
-
-    Raises :class:`ValueError` if a fixed (non-``dev``) handle has a ``dev`` dep.
     """
     memo = {} if memo is None else memo
     cached = memo.get(id(handle))
@@ -339,15 +345,6 @@ def _lower(handle: "ArtifactStep", provenance: Provenance, memo: dict[int, StepS
     dep_specs = [_lower(dep, provenance, memo) for dep in handle.deps]
     payload = handle.fingerprint_payload()
     fingerprint = fingerprint_hash(payload)
-
-    if not is_mutable_version(handle.version):
-        for dep in handle.deps:
-            if is_mutable_version(dep.version):
-                raise ValueError(
-                    f"{handle.name}@{handle.version} is a fixed version but depends on mutable "
-                    f"{dep.name}@{dep.version}; a mutable dep would rebuild while the fixed parent stays "
-                    "cached. Make the parent dev, or pin the dep."
-                )
 
     dep_refs = [f"{d.name}@{d.version}" for d in handle.deps]
     rt_name = result_type_name(handle.artifact_type)
@@ -417,26 +414,15 @@ def _lower(handle: "ArtifactStep", provenance: Provenance, memo: dict[int, StepS
     return spec
 
 
-def _refuse_drift(handles: list["ArtifactStep"], accept_drift: Collection[str]) -> None:
+def _refuse_drift(states: list[HandleState], accept_drift: Collection[str]) -> None:
     """Refuse a run if any artifact in the graph records a different recipe, unless accepted.
 
-    Checks every handle, dependencies the runner would prune behind a built consumer included. An
-    accepted artifact's recorded recipe is re-stamped, so the runner serves or resumes it. Several
-    handles can build one output (a sweep's trials each construct the shared dataset): handles that
-    share a ``name@version`` and a fingerprint are one artifact, reported and re-stamped once, and
-    handles that share a ``name@version`` but not a fingerprint are two recipes claiming one output,
-    which is refused.
+    ``states`` covers every artifact, dependencies the runner would prune behind a built consumer
+    included (:func:`~poorin.execution.cache_state.graph_states`). An accepted artifact's recorded
+    recipe is re-stamped, so the runner serves or resumes it.
     """
-    states: dict[str, HandleState] = {}
-    for state in map(handle_state, handles):
-        first = states.setdefault(state.label, state)
-        if first.fingerprint != state.fingerprint:
-            raise FingerprintMismatchError(
-                f"{state.label} is built from two recipes in this graph, {first.fingerprint} and "
-                f"{state.fingerprint}. Give each recipe its own name or version."
-            )
-    check_accept_drift(states.values(), accept_drift)
-    drifted = [s for s in states.values() if s.state is CacheState.DRIFTED]
+    check_accept_drift(states, accept_drift)
+    drifted = [s for s in states if s.state is CacheState.DRIFTED]
     refused = [s for s in drifted if s.handle.name not in accept_drift]
     if refused:
         raise FingerprintMismatchError(
@@ -461,13 +447,12 @@ def run(
     ``force_run_failed`` reruns a previously-FAILED step instead of raising.
 
     Before anything runs, every artifact in the graph is checked against the recipe its output
-    records; ``accept_drift`` names artifacts whose changed recipe is accepted. Lowering validates
-    the graph first, so a graph it rejects re-stamps no record.
+    records; ``accept_drift`` names artifacts whose changed recipe is accepted.
     """
+    _refuse_drift(graph_states(graph_handles(list(handles))), accept_drift)
     provenance = Provenance.capture()
     memo: dict[int, StepSpec] = {}
     specs = [_lower(h, provenance, memo) for h in handles]
-    _refuse_drift(graph_handles(list(handles)), accept_drift)
     StepRunner().run(specs, force_run_failed=force_run_failed, max_concurrent=max_concurrent)
     return [h.artifact_type.raw_load(h.path()) for h in handles]
 
@@ -475,11 +460,10 @@ def run(
 def lower(handle: "ArtifactStep") -> StepSpec:
     """Lower ``handle``'s graph into a ``StepSpec`` the ``StepRunner`` can run.
 
-    Captures provenance once and threads it through the graph. Lowering validates the graph:
-    :mod:`poorin.experiment.cli` lowers the plan it prints, to reject a graph it could not run. To
-    build handles, call :func:`run`. ``StepRunner().run`` on lowered specs skips ``run``'s
-    whole-graph drift check, which covers dependencies the runner prunes behind a built consumer
-    and two recipes for one ``name@version``.
+    Captures provenance once and threads it through the graph. To build handles, call
+    :func:`run`: ``StepRunner().run`` on lowered specs skips ``run``'s whole-graph drift check,
+    which covers dependencies the runner prunes behind a built consumer and two recipes for one
+    ``name@version``.
     """
     return _lower(handle, Provenance.capture())
 

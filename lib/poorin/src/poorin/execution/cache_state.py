@@ -17,7 +17,12 @@ from typing import Protocol
 from rigging.filesystem.cluster_config import poorin_prefix
 from rigging.filesystem.storage_path import prefix_join
 
-from poorin.execution.artifact import DriftAcceptanceError, is_mutable_version, recorded_recipe
+from poorin.execution.artifact import (
+    DriftAcceptanceError,
+    FingerprintMismatchError,
+    is_mutable_version,
+    recorded_recipe,
+)
 from poorin.execution.fingerprint import describe_drift, fingerprint_hash
 from poorin.execution.step_status import STATUS_SUCCESS, StatusFile
 
@@ -83,6 +88,27 @@ def handle_state(handle: Handle) -> HandleState:
     if recorded is not None:
         return HandleState(handle, fingerprint, CacheState.STARTED, recorded_fingerprint, "")
     return HandleState(handle, fingerprint, CacheState.NOT_BUILT, None, "")
+
+
+def graph_states(handles: Iterable[Handle]) -> list[HandleState]:
+    """The state of each distinct ``name@version`` among ``handles``, a graph walk, in order.
+
+    Several handles can build one output (each trial of a sweep constructs the shared dataset):
+    handles that share a ``name@version`` and a recipe are one artifact, read once. Handles that
+    share a ``name@version`` but not a recipe claim one output for two recipes, and raise
+    :class:`FingerprintMismatchError` before anything is read.
+    """
+    first: dict[str, tuple[Handle, str]] = {}
+    for handle in handles:
+        label = f"{handle.name}@{handle.version}"
+        fingerprint = fingerprint_hash(handle.fingerprint_payload())
+        seen = first.setdefault(label, (handle, fingerprint))[1]
+        if seen != fingerprint:
+            raise FingerprintMismatchError(
+                f"{label} is built from two recipes in this graph, {seen} and {fingerprint}. "
+                "Give each recipe its own name or version."
+            )
+    return [handle_state(handle) for handle, _ in first.values()]
 
 
 def check_accept_drift(states: Iterable[HandleState], accept_drift: Collection[str]) -> None:

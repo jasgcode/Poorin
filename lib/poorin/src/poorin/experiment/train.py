@@ -177,8 +177,7 @@ def train_lm(
         raise ValueError("train_lm needs a run_id when overrides are set, so each trial logs to its own tracker run")
     # Each version is its own output path (a mutable one is fresh per invocation, see
     # poorin.experiment.cli.run_version), so it gets its own W&B run; a rerun of a version resumes it.
-    base_id = f"{run_id}-{version}" if run_id is not None else None
-    tracker_id = overrides.run_id(base_id) if base_id is not None else None
+    tracker_id = overrides.run_id(f"{run_id}-{version}") if run_id is not None else None
     if (num_train_steps is None) == (num_train_epochs is None):
         raise ValueError("Exactly one of num_train_steps or num_train_epochs must be set.")
     if num_train_epochs is not None:

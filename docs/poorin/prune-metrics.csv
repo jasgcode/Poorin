@@ -98,3 +98,4 @@ date,phase,step,first_party_lines,reachable_lines,reachable_modules,r1_imported_
 2026-10-09,Cleanup,Delete the in-tree Haliax,117266,116318,377,6520,3.9,70.6,29.6,8019762254
 2026-10-11,Cleanup,Pin grug's training data to a Hub revision,117269,116321,377,6520,5.64,74.8,41.0,8019762254
 2026-10-11,Cleanup,Share helpers across the tools,117264,116316,377,6520,3.68,68.6,31.4,8019762254
+2026-10-11,Cleanup,Read each artifact's state once per command,117265,116317,377,6520,3.72,68.9,30.7,8019762254

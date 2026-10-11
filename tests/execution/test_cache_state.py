@@ -4,8 +4,8 @@
 """What the plan and the drift check read at an artifact's output path."""
 
 import pytest
-from poorin.execution.artifact import Artifact
-from poorin.execution.cache_state import CacheState, handle_state
+from poorin.execution.artifact import Artifact, FingerprintMismatchError
+from poorin.execution.cache_state import CacheState, graph_states, handle_state
 from poorin.execution.lazy import ArtifactStep, run
 
 V = "2026.06.28"
@@ -69,3 +69,18 @@ def test_a_pinned_artifact_is_not_checked(tmp_path):
         override_path=str(tmp_path / "elsewhere"),
     )
     assert handle_state(pinned).state is CacheState.PINNED
+
+
+def test_handles_for_one_artifact_are_read_once():
+    # Each trial of a sweep constructs the shared dataset; they are one artifact.
+    run(_toy(V, "a"))
+    states = graph_states([_toy(V, "a"), _toy(V, "a"), _toy("2026.06.29", "a")])
+    assert [(s.label, s.state) for s in states] == [
+        (f"datasets/toy@{V}", CacheState.BUILT),
+        ("datasets/toy@2026.06.29", CacheState.NOT_BUILT),
+    ]
+
+
+def test_two_recipes_for_one_artifact_are_refused():
+    with pytest.raises(FingerprintMismatchError, match=f"datasets/toy@{V} is built from two recipes"):
+        graph_states([_toy(V, "a"), _toy(V, "b")])

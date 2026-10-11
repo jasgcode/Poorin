@@ -1578,6 +1578,39 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
 - **Cost if wrong:** Another prefix holding a copy from before the pin refuses with a diff naming
   `hf_revision` until it is accepted the same way.
 
+### D105. A simplify pass over the fork's own code
+
+- **When:** 2026-10-11. **Status:** Adopted.
+- **Decision:** Four reviews (reuse, simplification, efficiency, altitude) read the code this
+  fork wrote or rewrote since `upstream-baseline`. Applied:
+  - The experiment CLI computes fingerprints, which read nothing, to apply and check overrides,
+    and reads each artifact's recorded recipe only for the plan or `--resume`; `run()` reads them
+    itself. `--run` no longer reads every record and status twice before the runner starts.
+  - `cache_state.graph_states` serves the plan and `run()`: handles that share a `name@version`
+    and a recipe are one artifact, read once (a sweep no longer re-reads its shared dataset per
+    trial), and two recipes for one `name@version` are refused by the plan too, not only by
+    `--run`.
+  - A fixed version over a `dev` dependency is refused when the handle is constructed, not when
+    it is lowered, so the plan no longer lowers each handle (six Git calls apiece for provenance
+    it discarded) and `run()` has no ordering constraint.
+  - Smaller: `--max-concurrent` defaults to 8 directly, `--resume` reuses `--version`'s
+    validation, the training lock is a plain `with`, and the tools share one module-name helper,
+    one Git file listing, and `reachability.closure`; Zephyr's memory limit is resolved once per
+    process through `psutil`, its unused CPU limit goes, and the dashboard waits for its server
+    with `rigging.timing.ExponentialBackoff`; Levanter's unread `max_gen_toks` compatibility
+    property on the harness config goes.
+- **Not applied, and why:** the runner indirection (`build_options_with_runner`) is the seam D68
+  keeps for launching SkyRL runs; the runner's own drift check is what the spec requires for code
+  that calls `StepRunner` directly; deriving tracker run IDs from the step name and moving
+  `replicate_path` into `apply_output_path` would reverse D94 and D97 rulings and change W&B IDs;
+  narrowing the tests' beartype hook would drop its checks of grug's dispatch, checkpointing, and
+  optimizer code; batching object-storage requests helps only a remote prefix; training each root
+  once in `prune_check` would change how its metrics are measured; the eval-harness config split
+  is code moved from upstream.
+- **Why:** The owner asked for a `/simplify` pass of the project on 2026-10-11.
+- **Cost if wrong:** A plan now fails where it used to print a graph with two recipes for one
+  output; that graph always failed at `--run`.
+
 ---
 
 ## Deferred

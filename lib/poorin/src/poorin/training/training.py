@@ -496,13 +496,10 @@ def exclusive_training(run_id: str) -> Iterator[None]:
     trainings running at once would log into one W&B run, the first to finish would finish the
     other's tracker, and ``tracker_metrics.jsonl`` could be written into the wrong output.
     """
-    if not _TRAINING_LOCK.acquire(blocking=False):
+    if _TRAINING_LOCK.locked():
         logger.info("Training %s waits for the training running in this process to finish", run_id)
-        _TRAINING_LOCK.acquire()
-    try:
+    with _TRAINING_LOCK:
         yield
-    finally:
-        _TRAINING_LOCK.release()
 
 
 def run_levanter_train_lm(config: TrainLmOnPodConfig):

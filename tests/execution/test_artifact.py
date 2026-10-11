@@ -176,16 +176,6 @@ def test_accepting_drift_restamps_the_record_where_the_output_now_lives(tmp_path
     assert {path: path.read_bytes() for path in built.rglob("*") if path.is_file()} == before
 
 
-def test_a_graph_refused_before_it_runs_leaves_an_accepted_record_unchanged(tmp_path, monkeypatch):
-    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
-    run(_toy(V, "a"))
-    on_a_dev_dep = _consumer(dataclasses.replace(_toy("dev", "a"), name="datasets/scratch"))
-    with pytest.raises(ValueError, match="depends on mutable"):
-        run(_toy(V, "b"), on_a_dev_dep, accept_drift={"datasets/toy"})
-    record = read_record(f"{tmp_path}/datasets/toy/{V}")
-    assert (record.fingerprint, record.accepted_from) == (_toy(V, "a").fingerprint(), [])
-
-
 def test_a_runner_called_directly_refuses_a_changed_recipe(tmp_path, monkeypatch):
     # Code that lowers handles and runs StepRunner itself skips run()'s whole-graph check, so the
     # runner's own check must refuse the output.
@@ -230,19 +220,10 @@ def test_a_pin_to_an_output_built_from_another_recipe_is_served(tmp_path, monkey
     assert served.payload == "a"
 
 
-def test_fixed_version_rejects_dev_dependency(tmp_path, monkeypatch):
-    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
-    dep = _toy("dev", "a")
-    parent = ArtifactStep(
-        name="checkpoints/p",
-        version=V,
-        artifact_type=Toy,
-        run=lambda config: Toy(payload="p"),
-        build_config=lambda ctx: {"out": ctx.output_path, "data": ctx.artifact_path(dep)},
-        deps=(dep,),
-    )
-    with pytest.raises(ValueError, match="mutable"):
-        parent.lower()
+def test_a_fixed_version_cannot_depend_on_a_dev_one():
+    # Refused when the handle is built, so neither a plan nor a run can start from such a graph.
+    with pytest.raises(ValueError, match="depends on mutable"):
+        _consumer(_toy("dev", "a"))
 
 
 def test_a_dev_version_rebuilds_on_every_run(tmp_path, monkeypatch):
