@@ -70,8 +70,8 @@ keeps it. [Lazy artifacts](docs/explanations/lazy-artifacts.md) explains version
 overrides, and drift.
 
 A calendar-versioned artifact builds only from committed code; a dev run saves uncommitted code as
-a snapshot commit. `python -m poorin.experiment.runs list` shows each run with a one-line label of
-its code.
+a snapshot commit. `uv run --no-sync python -m poorin.experiment.runs list` shows each run with a
+one-line label of its code.
 
 <!--marin-example-start-->
 

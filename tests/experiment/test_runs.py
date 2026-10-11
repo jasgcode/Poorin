@@ -122,9 +122,13 @@ def test_show_describes_a_run_from_a_snapshot(checkout, prefix):
     assert "Note         try v2" in out
     assert f"Commit       {launch.base_commit} on main" in out and "Add the model" in out
     assert "main has moved 1 commit past it" in out
+    assert f"Uncommitted  1 file, saved as snapshot {launch.snapshot_commit[:12]}" in out
     assert "M   model.py" in out and "+1 -1" in out
-    assert f"git diff {launch.base_commit} {launch.snapshot_commit[:7]}" in out
-    assert f"git worktree add ../run-{launch.snapshot_commit[:7]} {launch.snapshot_commit[:7]}" in out
+    # The commands print hashes Git verified, never the record's text.
+    base = _git(checkout, "rev-parse", launch.base_commit)
+    snapshot = launch.snapshot_commit[:12]
+    assert f"git diff {base[:12]} {snapshot}" in out
+    assert f"git worktree add ../run-{snapshot} {snapshot}" in out
 
 
 def test_show_reads_a_record_from_before_subjects_were_recorded(checkout, prefix):

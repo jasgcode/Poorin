@@ -196,8 +196,9 @@ Pinned artifacts (`override_path`) are not checked, because they point at existi
 
 ## Code provenance
 
-The fingerprint covers an artifact's config, not the code that ran it. Each output's record names
-the code instead: the commit, its subject, the branch, and any uncommitted changes.
+The fingerprint covers an artifact's config. The code that ran it is outside the fingerprint, so
+each output's record names the code: the commit, its subject, the branch, and any uncommitted
+changes.
 
 Before `--run` builds anything, the command line checks the working tree, untracked files
 included. A calendar-versioned artifact builds only from committed code: if one would build from a
@@ -205,7 +206,8 @@ dirty tree, the run stops and lists the artifacts and the uncommitted paths. A r
 `dev` artifacts saves the uncommitted changes as a snapshot commit under `refs/poorin/snapshots/`,
 leaving the branch, index, and files alone, and the record names the snapshot.
 `--allow-uncommitted` builds calendar artifacts from a snapshot as well. A run that builds nothing
-saves no snapshot and is never refused.
+saves no snapshot and is never refused. Outside a Git checkout the code cannot be recorded, so
+calendar builds are refused there too unless `--allow-uncommitted` is passed.
 
 The plan prints the code's one-line label and what `--run` would do:
 
@@ -218,10 +220,13 @@ Code:   main@a0a406f + 3 uncommitted: llama.py, model.py, notes.md
 `--note TEXT` puts your own words in the label in place of the commit subject or file list. The
 label also reaches W&B as the run config's `code` field.
 
-`python -m poorin.experiment.runs list [FILTER]` lists the runs under the prefix, newest first,
-one line each. `python -m poorin.experiment.runs show NAME@VERSION` shows one run's code in full,
-with `git diff` and `git worktree add` commands for its snapshot. Snapshot refs are not pushed by
-`git push origin main`; `git push origin 'refs/poorin/*:refs/poorin/*'` backs them up.
+`uv run --no-sync python -m poorin.experiment.runs list [FILTER]` lists the runs under the prefix,
+newest first, one line each. `uv run --no-sync python -m poorin.experiment.runs show NAME@VERSION`
+shows one run's code in full, with `git diff` and `git worktree add` commands for its snapshot.
+
+Snapshot refs stay in the local repository: `git push origin main` does not send them, and
+`git push origin 'refs/poorin/*:refs/poorin/*'` backs them up. A snapshot holds every untracked file
+that `.gitignore` does not exclude, so check the working tree before pushing them anywhere public.
 
 ## Overrides and sweeps
 

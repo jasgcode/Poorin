@@ -48,6 +48,10 @@ LABEL_FILES = 3
 SNAPSHOT_REF_PREFIX = "refs/poorin/snapshots/"
 # How long a snapshot waits for a concurrent launch of the same state to finish writing its ref.
 SNAPSHOT_REF_WAIT = 5.0
+# The author and committer of every snapshot: a snapshot needs no Git identity on the machine, and
+# one state gives one commit on any machine. The record's ``built_by`` names who ran it.
+SNAPSHOT_AUTHOR_NAME = "Poorin snapshot"
+SNAPSHOT_AUTHOR_EMAIL = "snapshot@poorin.invalid"
 
 
 @dataclass(frozen=True)
@@ -285,9 +289,10 @@ def save_snapshot(message: str, repo_dir: Path | None = None) -> str:
     files, and return the commit's full hash.
 
     The tree is built in a temporary index, so ``.gitignore`` applies and the real index is left
-    alone. The commit's parent is ``HEAD`` and its dates are ``HEAD``'s committer date, so one tree,
-    parent, and message always give one commit, and repeated runs of one dirty state share it. A
-    ref under :data:`SNAPSHOT_REF_PREFIX` keeps it from ``git gc``.
+    alone. The commit's parent is ``HEAD``, its dates are ``HEAD``'s committer date, and its author
+    and committer are the fixed snapshot identity, so one tree, parent, and message always give one
+    commit, and repeated runs of one dirty state share it. A ref under :data:`SNAPSHOT_REF_PREFIX`
+    keeps it from ``git gc``.
 
     Raises:
         RuntimeError: Outside a checkout, or in a repository with no commits.
@@ -301,6 +306,10 @@ def save_snapshot(message: str, repo_dir: Path | None = None) -> str:
             "GIT_INDEX_FILE": os.path.join(tmp, "index"),
             "GIT_AUTHOR_DATE": head_date,
             "GIT_COMMITTER_DATE": head_date,
+            "GIT_AUTHOR_NAME": SNAPSHOT_AUTHOR_NAME,
+            "GIT_AUTHOR_EMAIL": SNAPSHOT_AUTHOR_EMAIL,
+            "GIT_COMMITTER_NAME": SNAPSHOT_AUTHOR_NAME,
+            "GIT_COMMITTER_EMAIL": SNAPSHOT_AUTHOR_EMAIL,
         }
         _git(["read-tree", "HEAD"], cwd, env=env)
         _git(["add", "--all"], cwd, env=env)

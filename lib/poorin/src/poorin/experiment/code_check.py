@@ -22,9 +22,10 @@ from poorin.execution.step_spec import StepSpec
 REFUSAL_PATHS = 10
 # Aligns a continuation line under the plan's "Code:   " label.
 PLAN_INDENT = " " * 8
-SNAPSHOT_ADVICE = (
-    "Commit the changes and run again, run a dev version, or pass --allow-uncommitted to build from a snapshot."
-)
+# What to do about a refusal. The refused run may itself be a dev run whose calendar input would
+# build, so neither suggests a dev version.
+SNAPSHOT_ADVICE = "Commit the changes and run again, or pass --allow-uncommitted to build from a snapshot."
+NO_CHECKOUT_ADVICE = "Run from a Git checkout, or pass --allow-uncommitted to build without recording the code."
 
 
 class CodeVerdict(StrEnum):
@@ -74,6 +75,11 @@ def _artifacts(count: int) -> str:
     return f"{count} calendar-versioned artifact{'' if count == 1 else 's'}"
 
 
+def _source(check: CodeCheck) -> str:
+    """Where the refused build's code would come from."""
+    return "from uncommitted code" if check.provenance.base_commit else "outside a Git checkout"
+
+
 def plan_lines(check: CodeCheck) -> list[str]:
     """The plan's ``Code:`` line and, for a tree that is not clean, what ``--run`` would do."""
     lines = [f"Code:   {check.provenance.label}"]
@@ -82,20 +88,21 @@ def plan_lines(check: CodeCheck) -> list[str]:
     elif check.verdict is CodeVerdict.UNRECORDED:
         lines.append(f"{PLAN_INDENT}not a Git checkout: --run records no code")
     elif check.verdict is CodeVerdict.REFUSED:
-        lines.append(f"{PLAN_INDENT}--run refuses: {_artifacts(len(check.calendar))} would build from uncommitted code")
+        lines.append(f"{PLAN_INDENT}--run refuses: {_artifacts(len(check.calendar))} would build {_source(check)}")
     return lines
 
 
 def refusal(check: CodeCheck) -> str:
     """Why ``--run`` refuses, which artifacts it would have built, and what to do."""
-    lines = [f"{_artifacts(len(check.calendar))} would build from uncommitted code:"]
+    lines = [f"{_artifacts(len(check.calendar))} would build {_source(check)}:"]
     lines.extend(f"  {label}" for label in check.calendar)
     uncommitted = check.provenance.uncommitted
     if check.provenance.base_commit:
         shown = ", ".join(entry.strip() for entry in uncommitted[:REFUSAL_PATHS])
         more = f", and {len(uncommitted) - REFUSAL_PATHS} more" if len(uncommitted) > REFUSAL_PATHS else ""
         lines.append(f"Uncommitted ({len(uncommitted)}): {shown}{more}")
+        lines.append(SNAPSHOT_ADVICE)
     else:
         lines.append("This is not a Git checkout, so the code cannot be recorded.")
-    lines.append(SNAPSHOT_ADVICE)
+        lines.append(NO_CHECKOUT_ADVICE)
     return "\n".join(lines)

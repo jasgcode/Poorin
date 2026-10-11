@@ -86,9 +86,9 @@ def test_a_refusal_names_the_artifacts_and_the_uncommitted_paths():
     assert "1 calendar-versioned artifact would build from uncommitted code:" in message
     assert "  data/toy@2026.07.16" in message
     assert "Uncommitted (1): M model.py" in message
-    assert message.endswith(
-        "Commit the changes and run again, run a dev version, or pass --allow-uncommitted to build from a snapshot."
-    )
+    # The refused run may itself be a dev run whose calendar input would build, so the advice
+    # never suggests switching to a dev version.
+    assert message.endswith("Commit the changes and run again, or pass --allow-uncommitted to build from a snapshot.")
 
 
 def test_a_refusal_lists_ten_paths_and_counts_the_rest():
@@ -100,8 +100,17 @@ def test_a_refusal_lists_ten_paths_and_counts_the_rest():
 
 def test_a_refusal_without_a_checkout_says_the_code_cannot_be_recorded():
     message = refusal(check_code(NO_CHECKOUT, _builds(_calendar()), allow_uncommitted=False))
+    assert message.startswith("1 calendar-versioned artifact would build outside a Git checkout:")
     assert "This is not a Git checkout, so the code cannot be recorded." in message
     assert "Uncommitted" not in message
+    assert message.endswith("Run from a Git checkout, or pass --allow-uncommitted to build without recording the code.")
+
+
+def test_the_plan_predicts_a_refusal_without_a_checkout():
+    check = check_code(NO_CHECKOUT, _builds(_calendar()), allow_uncommitted=False)
+    assert (
+        plan_lines(check)[1] == "        --run refuses: 1 calendar-versioned artifact would build outside a Git checkout"
+    )
 
 
 def test_the_plan_says_a_run_without_a_checkout_records_no_code():

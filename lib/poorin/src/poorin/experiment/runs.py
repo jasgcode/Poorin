@@ -33,6 +33,8 @@ STATUS_FILENAME = ".executor_status"
 # Prefix directories that hold scratch space, not artifacts.
 SCRATCH_DIRS = frozenset({"tmp"})
 DEFAULT_LIMIT = 30
+# Hash characters `show` prints in a command: unambiguous in a repository of any size.
+SHOWN_HASH_LENGTH = 12
 # Continuation lines of `show` start under its values.
 SHOW_INDENT = " " * 15
 NO_CODE = "-"
@@ -168,21 +170,23 @@ def _line_counts(base: str, snapshot: str) -> dict[str, str]:
 
 def _uncommitted_lines(provenance: Provenance, full: str) -> list[str]:
     snapshot = provenance.snapshot_commit
-    short = snapshot[:7] if snapshot else ""
     kept = _commit(snapshot) if snapshot else ""
-    files = f"{len(provenance.uncommitted)} files" if provenance.uncommitted else "changes"
+    count = len(provenance.uncommitted)
+    files = f"{count} file{'' if count == 1 else 's'}" if count else "changes"
     if not snapshot:
         saved = "not saved"
     else:
-        saved = f"saved as snapshot {short}" + ("" if kept else " (not in this repository)")
+        saved = f"saved as snapshot {snapshot[:SHOWN_HASH_LENGTH]}" + ("" if kept else " (not in this repository)")
     lines = [f"  Uncommitted  {files}, {saved}"]
     counts = _line_counts(full, kept) if full and kept else {}
     width = max((len(entry) - 3 for entry in provenance.uncommitted), default=0)
     for entry in provenance.uncommitted:
         status, path = entry[:2].strip(), entry[3:]
         lines.append(f"{SHOW_INDENT}  {status:<3} {path:<{width}}  {counts.get(path, '')}".rstrip())
+    # The commands print the hashes Git verified, never the record's text.
+    short = kept[:SHOWN_HASH_LENGTH]
     if full and kept:
-        lines.append(f"  See changes  git diff {provenance.base_commit} {short}")
+        lines.append(f"  See changes  git diff {full[:SHOWN_HASH_LENGTH]} {short}")
     if kept:
         lines.append(f"  Restore      git worktree add ../run-{short} {short}")
     return lines

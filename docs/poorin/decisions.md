@@ -1652,6 +1652,30 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
   build its calendar dataset; commit first or pass `--allow-uncommitted`. Snapshot refs stay local
   until pushed with `git push origin 'refs/poorin/*:refs/poorin/*'`.
 
+### D108. Follow-ups to code provenance
+
+- **When:** 2026-10-11. **Status:** Adopted.
+- **Decision:** Four changes from D107's final review.
+  - The refusal no longer suggests a dev version. The refused run may itself be a dev run whose
+    calendar input would build. Its advice is "Commit the changes and run again, or pass
+    `--allow-uncommitted` to build from a snapshot." Outside a Git checkout the refusal says the
+    build would happen outside a checkout, and its advice is to run from one or to pass
+    `--allow-uncommitted`. This replaces the refusal text the D107 spec gives.
+  - Snapshots commit as a fixed identity, `Poorin snapshot <snapshot@poorin.invalid>`. A machine
+    with no Git identity, such as a fresh container, no longer fails with a raw `commit-tree` error,
+    and one dirty state gives one commit on any machine. The record's `built_by` names who ran it.
+  - `runs show` prints, in its `git diff` and `git worktree add` commands, 12 characters of the
+    hashes Git verified, never the record's own text, and says "1 file" for one file.
+  - The docs run the run list with `uv run --no-sync` and say that a snapshot holds every untracked
+    file `.gitignore` does not exclude, before suggesting a push of `refs/poorin/*`.
+- **Why:** The owner asked for the review's optional follow-ups on 2026-10-11. The old advice was
+  wrong for the case the D107 spec gives as its example: a first dev run on an empty prefix,
+  refused because its calendar dataset would build.
+- **Alternatives:** Keep each snapshot's author as the user's Git identity, and turn a missing
+  identity into a readable error.
+- **Cost if wrong:** Snapshot commits no longer carry the user's name; the record's `built_by`
+  still does.
+
 ---
 
 ## Deferred

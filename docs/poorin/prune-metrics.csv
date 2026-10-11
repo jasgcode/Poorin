@@ -117,3 +117,4 @@ date,phase,step,first_party_lines,reachable_lines,reachable_modules,r1_imported_
 2026-10-11,D107,Document code provenance for runs,117759,116811,379,6521,3.63,68.6,28.6,8019762254
 2026-10-11,D107,[rigging] Read git output that is not UTF-8 or follows a signature,117762,116814,379,6521,3.64,69.6,29.4,8019762254
 2026-10-11,D107,[poorin] Run the run list with uv run in AGENTS.md,117762,116814,379,6521,3.85,79.6,31.4,8019762254
+2026-10-11,D108,Correct the refusal advice and snapshot identity,117782,116834,379,6521,3.58,67.8,29.9,8019762254

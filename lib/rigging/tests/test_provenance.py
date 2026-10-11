@@ -11,6 +11,8 @@ from pathlib import Path
 
 import pytest
 from rigging.provenance import (
+    SNAPSHOT_AUTHOR_EMAIL,
+    SNAPSHOT_AUTHOR_NAME,
     SNAPSHOT_REF_PREFIX,
     Provenance,
     current_launch,
@@ -327,6 +329,23 @@ def test_a_snapshot_takes_both_its_dates_from_head(tmp_path):
     (repo / "f.txt").write_text("edited\n")
     commit = save_snapshot("try it", repo)
     assert _out(["git", "log", "-1", "--format=%aI %cI", commit], repo).split() == [old, old]
+
+
+def test_a_snapshot_needs_no_git_identity_of_its_own(tmp_path, monkeypatch):
+    # A fresh machine or container may have no user.name or user.email; the snapshot still commits,
+    # under the fixed snapshot identity.
+    repo = _init_repo(tmp_path / "repo")
+    _run(["git", "config", "--unset", "user.name"], repo)
+    _run(["git", "config", "--unset", "user.email"], repo)
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    monkeypatch.setenv("GIT_CONFIG_GLOBAL", os.devnull)
+    monkeypatch.setenv("GIT_CONFIG_NOSYSTEM", "1")
+    for variable in ("GIT_AUTHOR_NAME", "GIT_AUTHOR_EMAIL", "GIT_COMMITTER_NAME", "GIT_COMMITTER_EMAIL", "EMAIL"):
+        monkeypatch.delenv(variable, raising=False)
+    (repo / "f.txt").write_text("edited\n")
+    commit = save_snapshot("try it", repo)
+    identity = f"{SNAPSHOT_AUTHOR_NAME} <{SNAPSHOT_AUTHOR_EMAIL}>"
+    assert _out(["git", "log", "-1", "--format=%an <%ae>|%cn <%ce>", commit], repo).strip() == f"{identity}|{identity}"
 
 
 def test_a_snapshot_from_a_subdirectory_holds_the_whole_tree(tmp_path):
