@@ -96,3 +96,4 @@ date,phase,step,first_party_lines,reachable_lines,reachable_modules,r1_imported_
 2026-10-09,Cleanup,Serve Zephyr's dashboard on localhost,133536,132558,425,6520,3.79,71.0,29.8,8018461180
 2026-10-09,Cleanup,Depend on the published marin-haliax,133536,132558,425,6520,4.69,92.4,31.1,8019762254
 2026-10-09,Cleanup,Delete the in-tree Haliax,117266,116318,377,6520,3.9,70.6,29.6,8019762254
+2026-10-11,Cleanup,Pin grug's training data to a Hub revision,117269,116321,377,6520,5.64,74.8,41.0,8019762254

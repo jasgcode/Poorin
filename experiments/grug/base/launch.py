@@ -58,6 +58,9 @@ _TRAIN_DATA = pretokenized(
     repo_id="marin-community/fineweb-edu-pretokenized-10M",
     tokenizer=marin_tokenizer,
     version="2026.06.28",
+    # The repository's head since 2025-05-15, pinned so a new upload cannot change the data under
+    # this version (D104).
+    revision="f13fbe24e962f9e20d75c3c6f08830bcfd0606b8",
 )
 
 GRUG_130M_MODEL = GrugModelConfig(

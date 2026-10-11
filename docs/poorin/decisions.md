@@ -1563,6 +1563,21 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
   follows Marin's main branch, so a newer pin can change behavior. `upstream-baseline` holds the
   old copy.
 
+### D104. Grug's training data is pinned to a Hub revision
+
+- **When:** 2026-10-11. **Status:** Adopted.
+- **Decision:** Grug's `fineweb-edu-10M` passes `revision="f13fbe24e962f9e20d75c3c6f08830bcfd0606b8"`
+  to `pretokenized`: the head of `marin-community/fineweb-edu-pretokenized-10M`, unchanged since
+  2025-05-15. The dataset keeps its version, 2026.06.28. The copy in prune_check's cache was
+  downloaded in October 2026, after that commit and before any other, so it is this revision's data;
+  its changed recipe (only `hf_revision`, from none to the commit) was accepted with `accept_drift`.
+- **Why:** The owner, 2026-10-11. An unpinned download follows the repository's default branch, so
+  a new upload would change the data under an unchanged version, and a fresh prefix would train on
+  different tokens than the cache did.
+- **Alternatives:** Bump the dataset version and download again (about 20 MB); leave it unpinned.
+- **Cost if wrong:** Another prefix holding a copy from before the pin refuses with a diff naming
+  `hf_revision` until it is accepted the same way.
+
 ---
 
 ## Deferred
@@ -1605,7 +1620,7 @@ Known gaps left open on purpose. Each names where it gets resolved.
 | Levanter's TensorBoard tracker is still in the tree, though D38 said P7 would delete it; its test needs `tensorboardX`, which the GPU environment does not install, so `tools.affected_tests` skips it | Backlog | D93: deleted |
 | A run writes its materialized config only when it succeeds, so a failed run leaves none; it should write it when the run starts | D92 | Open |
 | Grug's log file goes to `logs/` under the working directory, not into the run's output directory | D92 | Open |
-| Grug's training data passes no `revision` to `pretokenized`, so its Hugging Face download follows the repository's default branch instead of a pinned revision | D92 | Open |
+| Grug's training data passes no `revision` to `pretokenized`, so its Hugging Face download follows the repository's default branch instead of a pinned revision | D92 | D104: pinned |
 | `--set` has no named presets, so a bundle of overrides is retyped or kept in a shell alias | D92 | Open |
 | Adaptive search (Optuna) is not supported; a study would be a Python loop over `resolve`, written when one needs it | D92 | Open |
 | Fray has no SLURM backend | D92 | Open |
