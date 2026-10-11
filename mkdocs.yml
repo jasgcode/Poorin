@@ -70,6 +70,7 @@ nav:
       - Evaluation: explanations/evaluation.md
       - Experiments: explanations/experiments.md
       - Lazy artifacts: explanations/lazy-artifacts.md
+      - Episode datasets: explanations/episodes.md
       - Guidelines: explanations/guidelines.md
   - Developer Guide:
       - Development: dev-guide/development.md

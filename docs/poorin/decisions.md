@@ -1739,7 +1739,7 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
 
 ### D110. An episode data layer, read through Grain
 
-- **When:** 2026-10-11. **Status:** Adopted; implementing. Spec:
+- **When:** 2026-10-11. **Status:** Adopted. Spec:
   `specs/2026-10-11-episode-data-layer-design.md`; plan: `plans/2026-10-11-episode-data-layer.md`.
 - **Decision:** Sub-projects 3, 4, and 5 come next, in that order; 1b, 2, 6, 7, and 8 wait.
   Episode data (video, trajectories, latents) gets its own format: a schema, a parquet index, and
@@ -1751,6 +1751,28 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
   the storage choice. Levanter's data stack assumes items that cost nothing to decode; Grain keeps
   its deterministic, resumable data order and adds decoding in worker processes. The owner's
   `open-dreamer` already uses Grain and ArrayRecord.
+- **Rulings while planning:** A field's encoding is a class (`RawEncoding`, `VideoEncoding`), not an
+  enum member, following AGENTS.md's "separate classes over flags"; the spec's "enum plus a pair"
+  becomes "a class plus a branch". A reader delivers frames at the schema's size and step rate
+  (`load_video` does this for files), and the build checks and encodes them. `episodes(...)` takes
+  `num_shards`. Source units are opaque strings the reader resolves. The example readers download
+  their data; VPT's subset is the first 10 episodes of the `all_6xx_Jun_29` index.
+- **Rulings while building:** `VideoEncoding` rejects a codec that is not a video codec when the
+  schema is built; PyAV otherwise fails inside `add_stream` with an unrelated error. Grain 0.2.18
+  reads one of its absl flags when it starts worker processes and fails in any program that is not
+  an absl app, so `batch_iterator` marks absl's flags parsed first; poorin declares `absl-py`.
+  `tools/roots.toml` keeps `poorin.episodes.*` and the examples as workbench roots. The LIBERO
+  reader reads each camera before flipping it, because h5py slices only with positive steps.
+  `throughput.py` measures 500 batches after 20 warmup batches: the plan's 50 after 5 timed the
+  workers' full prefetch buffers draining (4 workers read 10,647 clips/s). ty may leave ArrayRecord's
+  compiled module unresolved, as it does jaxlib's.
+- **Acceptance (2026-10-11):** Something-Something v2, 500 clips: 22,299 steps, 29 MB, built in 5 s.
+  LIBERO-Spatial: 500 demonstrations, 62,250 steps, 125 MB, 122 s with the 6.2 GB download.
+  Minecraft VPT, 10 episodes: 60,000 steps, 71 MB, 24 s with the download. Throughput on SSv2 at
+  128 px, 16-step clips: 760, 1,470, 1,632, 2,219, and 2,838 clips/s at 1, 4, 8, 16, and 24 workers,
+  against 1,000. The LIBERO smoke run trained on the GPU and resumed at step 100 with 100 identical
+  batches. At exit, Python's resource tracker reports one shared-memory object left by Grain's
+  worker prefetch.
 - **Alternatives:** Extend Levanter's cache and loader with field encodings; adopt LeRobot v3 as the
   on-disk format; a separate rate per field; CoinRun as an example (Procgen has no wheels above
   Python 3.10).

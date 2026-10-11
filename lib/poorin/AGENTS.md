@@ -6,6 +6,8 @@ Vendored Marin pipeline framework. In this file, leading `/` refers to repositor
 
 - `/.agents/skills/add-dataset/SKILL.md` — dataset addition workflow
 - `/lib/poorin/pyproject.toml` — packaging metadata, extras, dependency groups
+- `/docs/explanations/episodes.md` — `poorin.episodes`: episode datasets for video, trajectories, and
+  latents, read as clips through Grain
 
 ## Development
 
