@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import logging
+import os
 import subprocess
+import threading
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
@@ -280,6 +282,21 @@ def test_one_state_and_message_give_one_snapshot(tmp_path):
     assert save_snapshot("try it", repo) != save_snapshot("another note", repo)
 
 
+def test_a_snapshot_takes_both_its_dates_from_head(tmp_path):
+    repo = _init_repo(tmp_path)
+    old = "2001-02-03T04:05:06+09:00"
+    subprocess.run(
+        ["git", "commit", "--amend", "--no-edit", f"--date={old}"],
+        cwd=repo,
+        check=True,
+        capture_output=True,
+        env={**os.environ, "GIT_COMMITTER_DATE": old},
+    )
+    (repo / "f.txt").write_text("edited\n")
+    commit = save_snapshot("try it", repo)
+    assert _out(["git", "log", "-1", "--format=%aI %cI", commit], repo).split() == [old, old]
+
+
 def test_a_snapshot_from_a_subdirectory_holds_the_whole_tree(tmp_path):
     repo = _dirty_repo(tmp_path)
     commit = save_snapshot("try it", repo / "sub")
@@ -307,3 +324,41 @@ def test_a_repository_without_commits_cannot_be_snapshotted(tmp_path):
     (tmp_path / "f.txt").write_text("x\n")
     with pytest.raises(RuntimeError):
         save_snapshot("try it", tmp_path)
+
+
+def _snapshot_with_its_ref_locked(repo: Path) -> tuple[str, str, Path]:
+    """Snapshot ``repo``, delete the snapshot's ref, and hold the ref's lock as a concurrent launch would."""
+    commit = save_snapshot("try it", repo)
+    ref = f"{SNAPSHOT_REF_PREFIX}{commit}"
+    _run(["git", "update-ref", "-d", ref], repo)
+    lock = repo / ".git" / f"{ref}.lock"
+    lock.parent.mkdir(parents=True, exist_ok=True)
+    lock.touch()
+    return commit, ref, lock
+
+
+def test_a_snapshot_waits_for_a_concurrent_launch_to_write_its_ref(tmp_path, monkeypatch):
+    monkeypatch.setattr("rigging.provenance.SNAPSHOT_REF_WAIT", 3.0)
+    repo = _dirty_repo(tmp_path)
+    commit, ref, lock = _snapshot_with_its_ref_locked(repo)
+
+    def finish_the_other_launch():
+        lock.unlink()
+        _run(["git", "update-ref", ref, commit], repo)
+
+    # Past git's own 100 ms wait for a held ref lock, so only the snapshot's wait can succeed.
+    timer = threading.Timer(0.3, finish_the_other_launch)
+    timer.start()
+    try:
+        assert save_snapshot("try it", repo) == commit
+    finally:
+        timer.join()
+    assert _out(["git", "rev-parse", ref], repo).strip() == commit
+
+
+def test_a_snapshot_fails_when_its_ref_stays_locked(tmp_path, monkeypatch):
+    monkeypatch.setattr("rigging.provenance.SNAPSHOT_REF_WAIT", 0.2)
+    repo = _dirty_repo(tmp_path)
+    _snapshot_with_its_ref_locked(repo)
+    with pytest.raises(RuntimeError, match="update-ref"):
+        save_snapshot("try it", repo)
