@@ -27,6 +27,9 @@ modules = [
     "poorin.processing.classification.deduplication.verify_fuzzy_dups",
     "poorin.experiment.cli",
     "poorin.experiment.runs",
+    # Workbench: episode data for video world models, VLAs, and WAMs, and the examples that test it
+    "poorin.episodes.*",
+    "experiments.datasets.episodes.*",
     # Workbench: evaluation
     "levanter.main.eval_lm",
     "levanter.eval_harness",

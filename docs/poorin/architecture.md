@@ -279,9 +279,9 @@ for a stated user:
 | `poorin.episodes` | Episode-dataset package: per-step fields for video world models, VLAs, and WAMs, read as clips | R1 |
 | `poorin.episodes.build` | Builds an episode dataset in one Zephyr stage: ArrayRecord shards, `episodes.parquet`, `dataset.json`; `EpisodeDataset` artifact | R1 |
 | `poorin.episodes.encodings` | Encodes a field to bytes and decodes any steps of it back: raw array bytes, or H.264 seeked from the nearest keyframe | R1 |
-| `poorin.episodes.read` | Reads an episode dataset as Grain clips: clip planning from the index, worker-process decoding, resume by slicing, mesh placement | test support |
+| `poorin.episodes.read` | Reads an episode dataset as Grain clips: clip planning from the index, worker-process decoding, resume by slicing, mesh placement | `poorin.episodes.read` |
 | `poorin.episodes.schema` | Episode schema: field kinds, per-field encodings, one step rate per dataset, episode validation | R1 |
-| `poorin.episodes.video_files` | Decodes a video file to frames at a dataset's size and step rate, for source readers | test support |
+| `poorin.episodes.video_files` | Decodes a video file to frames at a dataset's size and step rate, for source readers | `poorin.episodes.video_files` |
 | `poorin.evaluation` | Package marker | R1 |
 | `poorin.evaluation.endpoint` | OpenAI-compatible endpoint and tokenizer types for a served model under evaluation | `poorin.evaluation.lm_eval` |
 | `poorin.evaluation.eval_measurements` | Converts eval run records into statistics-engine measurements; owns harness output shapes | `poorin.evaluation.eval_measurements` |
@@ -493,6 +493,12 @@ for a stated user:
 |---|---|---|
 | `experiments` | Package marker | package |
 | `experiments.datasets` | Package marker; docstring sets conventions for dataset catalog modules | package |
+| `experiments.datasets.episodes` | Package marker; docstring names the three example episode datasets and says they are not supported datasets | package |
+| `experiments.datasets.episodes.libero` | Example: LIBERO-Spatial HDF5 demonstrations as episodes with two cameras, proprioception, and actions | `experiments.datasets.episodes.libero` |
+| `experiments.datasets.episodes.smoke_train` | End-to-end check: LIBERO clips through `to_mesh` into a toy JAX step, then a resume that must see the same batches | `experiments.datasets.episodes.smoke_train` |
+| `experiments.datasets.episodes.ssv2` | Example: Something-Something v2 clips as episodes without actions, the label as metadata | `experiments.datasets.episodes.ssv2` |
+| `experiments.datasets.episodes.throughput` | Measures clips per second from an episode dataset against the number of decoding workers | `experiments.datasets.episodes.throughput` |
+| `experiments.datasets.episodes.vpt` | Example: Minecraft VPT contractor episodes, video with keyboard and mouse actions | `experiments.datasets.episodes.vpt` |
 | `experiments.datasets.fineweb_edu` | The FineWeb-Edu 10M pretokenized dataset at a pinned Hub revision, shared by the tutorial and grug | R1 |
 | `experiments.evals` | Package marker | package |
 | `experiments.evals.task_configs` | Named lm-eval task lists (`EvalTaskConfig`) by suite: core, MMLU, leaderboard, multilingual | `experiments.evals.task_configs` |
