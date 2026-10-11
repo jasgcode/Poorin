@@ -276,6 +276,11 @@ for a stated user:
 | `poorin.datakit.download.zstd_jsonl` | Streaming reader for zstd-compressed JSONL download sources | `poorin.datakit.download.nemotron_v1` |
 | `poorin.datakit.normalize` | Normalizes raw JSONL/Parquet into Datakit Parquet with content ids, dedup, sorted partitions | R1 |
 | `poorin.datakit.source_key` | Strips Marin bucket and prefix roots to give Datakit artifacts stable source keys | R1 |
+| `poorin.episodes` | Episode-dataset package: per-step fields for video world models, VLAs, and WAMs, read as clips | R1 |
+| `poorin.episodes.build` | Builds an episode dataset in one Zephyr stage: ArrayRecord shards, `episodes.parquet`, `dataset.json`; `EpisodeDataset` artifact | R1 |
+| `poorin.episodes.encodings` | Encodes a field to bytes and decodes any steps of it back: raw array bytes, or H.264 seeked from the nearest keyframe | R1 |
+| `poorin.episodes.schema` | Episode schema: field kinds, per-field encodings, one step rate per dataset, episode validation | R1 |
+| `poorin.episodes.video_files` | Decodes a video file to frames at a dataset's size and step rate, for source readers | test support |
 | `poorin.evaluation` | Package marker | R1 |
 | `poorin.evaluation.endpoint` | OpenAI-compatible endpoint and tokenizer types for a served model under evaluation | `poorin.evaluation.lm_eval` |
 | `poorin.evaluation.eval_measurements` | Converts eval run records into statistics-engine measurements; owns harness output shapes | `poorin.evaluation.eval_measurements` |
@@ -300,7 +305,7 @@ for a stated user:
 | `poorin.experiment` | Package marker; docstring points to the `data`, `sweep`, and `train` submodules | R1 |
 | `poorin.experiment.cli` | Click options (`--version`, `--version-of`, `--set`, `--sweep`, `--run`) that plan or build an experiment graph | R1 |
 | `poorin.experiment.code_check` | Whether `--run` may build from the working tree's code, and the plan's `Code:` lines | R1 |
-| `poorin.experiment.data` | Lazy dataset builders: tokenized, pretokenized, and mixture handles | R1 |
+| `poorin.experiment.data` | Lazy dataset builders: tokenized, pretokenized, mixture, and episode handles | R1 |
 | `poorin.experiment.namespacing` | Prefixes mutable training artifact names with the user to avoid path collisions | R2 |
 | `poorin.experiment.overrides` | Typed dotted-path config overrides from --set and --sweep, decoded by draccus | R1 |
 | `poorin.experiment.runs` | Lists the runs under the prefix and shows the code behind one | `poorin.experiment.runs` |

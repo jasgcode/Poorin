@@ -18,14 +18,20 @@ weights live in the experiment that chose them, not buried in a catalog constant
   training components plus weight-0 ``validation`` handles, reading each cache's
   tokenizer/format from its :class:`~poorin.processing.tokenize.tokenize.TokenizedCache`
   record at run time.
+- :func:`episodes` returns an ``ArtifactStep[EpisodeDataset]`` handle: per-step video, action, and
+  state fields read from source units by a reader, for video world models, VLAs, and WAMs
+  (:mod:`poorin.episodes`).
 """
 
 from collections.abc import Callable, Mapping, Sequence
+from typing import Any
 
 from fray.types import ResourceConfig
 from levanter.data.text.datasets import DEFAULT_LM_DATA_SHUFFLE, BlockShuffleConfig, LmDataConfig, UrlDatasetSourceConfig
 from levanter.data.text.formats import TextLmDatasetFormat
 
+from poorin.episodes.build import EpisodeBuildConfig, EpisodeDataset, build_episodes
+from poorin.episodes.schema import DatasetSchema
 from poorin.execution.artifact import resolve_path
 from poorin.execution.build_context import resolve_version
 from poorin.execution.lazy import ArtifactStep, StepContext
@@ -155,6 +161,50 @@ def pretokenized(
         version=version,
         artifact_type=TokenizedCache,
         run=_on(fetch_pretokenized_cache, resources),
+        build_config=build_config,
+        override_path=pin,
+    )
+
+
+def episodes(
+    name: str,
+    *,
+    sources: Sequence[str],
+    reader: str,
+    schema: DatasetSchema,
+    num_shards: int,
+    reader_options: Mapping[str, Any] | None = None,
+    version: str | None = None,
+    pin: str | None = None,
+    resources: ResourceConfig | None = None,
+) -> ArtifactStep[EpisodeDataset]:
+    """An episode-dataset handle (:mod:`poorin.episodes`).
+
+    ``reader`` is ``module.path:function``: it turns one entry of ``sources`` into episodes, and
+    ``reader_options`` is passed to it. The sources, the reader's import path, its options, the
+    schema, and ``num_shards`` are the recipe. ``pin`` references a dataset that already exists.
+    ``version`` defers to the ambient build context when omitted.
+    """
+    version = resolve_version(name, version)
+    options = dict(reader_options or {})
+
+    def build_config(ctx: StepContext) -> EpisodeBuildConfig:
+        return EpisodeBuildConfig(
+            output_path=ctx.output_path,
+            # A source unit is opaque to the framework (a path, a Hub file name, a clip id); the
+            # reader resolves it.
+            sources=tuple(sources),
+            reader=reader,
+            reader_options=options,
+            schema=schema,
+            num_shards=num_shards,
+        )
+
+    return ArtifactStep(
+        name=name,
+        version=version,
+        artifact_type=EpisodeDataset,
+        run=_on(build_episodes, resources),
         build_config=build_config,
         override_path=pin,
     )

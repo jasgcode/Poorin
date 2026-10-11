@@ -216,6 +216,8 @@ allowed-unresolved-imports = [
     "trackio", "trackio.**",
     "transformer_engine", "transformer_engine.**",
     "xprof", "xprof.**",
+    # Compiled extension modules that ship no stubs.
+    "array_record.python.array_record_module",
 ]
 
 [tool.hatch.metadata]
