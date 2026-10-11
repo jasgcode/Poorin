@@ -20,7 +20,6 @@ import pytest
 from fsspec.implementations.local import LocalFileSystem
 from rigging.filesystem.storage_path import StoragePath
 from zephyr import memory_budget
-from zephyr.resources import HostResources
 from zephyr.runners import _InProcessWorkerContext
 from zephyr.shard_keys import deterministic_hash
 from zephyr.shuffle import (
@@ -536,10 +535,9 @@ def test_scatter_auto_flush_uses_task_memory_budget(tmp_path):
     token = _worker_ctx_var.set(ctx)
     try:
         with (
-            patch("zephyr.shuffle.HostResources.from_environment") as environment_resources,
+            patch("zephyr.shuffle.memory_limit_bytes", return_value=1024**3),
             patch("zephyr.shuffle._process_rss_bytes", return_value=0),
         ):
-            environment_resources.return_value = HostResources(memory_bytes=1024**3, cpu_cores=1)
             writer = ScatterWriter(data_path=str(tmp_path / "scatter"), key_fn=_key, source_shard=0)
             writer.write(frame)
             writer.write(frame)

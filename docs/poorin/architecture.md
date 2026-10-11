@@ -372,7 +372,7 @@ for a stated user:
 | `zephyr.parquet_scan` | Polars Parquet scan with correct addressing for S3-compatible stores | R1 |
 | `zephyr.plan` | Physical planner: fuses logical ops into stages and executes a stage | R1 |
 | `zephyr.readers` | Readers for JSONL, Parquet, Vortex, and zip inputs via fsspec | R1 |
-| `zephyr.resources` | Detects process memory and CPU limits from cgroups or /proc | R1 |
+| `zephyr.resources` | Detects the process memory limit from cgroups, else the host total | R1 |
 | `zephyr.runners` | Shard execution strategies: in-process InlineRunner and per-shard SubprocessRunner | R1 |
 | `zephyr.shard_keys` | Deterministic key encoding and hashing for shard routing | R1 |
 | `zephyr.shard_subprocess` | Child entry point that runs one shard for SubprocessRunner | `zephyr.shard_subprocess` |

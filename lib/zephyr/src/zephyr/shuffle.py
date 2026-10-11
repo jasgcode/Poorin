@@ -57,7 +57,7 @@ from rigging.timing import RateLimiter, log_time
 
 from zephyr import memory_budget
 from zephyr.parquet_scan import scan_parquet
-from zephyr.resources import HostResources
+from zephyr.resources import memory_limit_bytes
 from zephyr.shard_keys import encode_key, hash_encoded_key
 from zephyr.worker_context import _worker_ctx_var
 from zephyr.writers import ensure_parent_dir
@@ -137,11 +137,7 @@ def _task_memory_bytes() -> int:
     if ctx is not None and ctx.task_memory_bytes > 0:
         return ctx.task_memory_bytes
 
-    memory_bytes = HostResources.from_environment().memory_bytes
-    if memory_bytes <= 0:
-        logger.warning("No task memory is available. Using a 1 GiB memory budget.")
-        return 1024 * 1024 * 1024
-    return memory_bytes
+    return memory_limit_bytes()
 
 
 def _dumps(item: Any) -> bytes:

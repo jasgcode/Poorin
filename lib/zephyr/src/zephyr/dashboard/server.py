@@ -12,11 +12,11 @@ import errno
 import logging
 import socket
 import threading
-import time
 from dataclasses import dataclass
 from types import TracebackType
 
 import uvicorn
+from rigging.timing import Duration, ExponentialBackoff
 from starlette.types import ASGIApp
 
 logger = logging.getLogger(__name__)
@@ -24,7 +24,6 @@ logger = logging.getLogger(__name__)
 DASHBOARD_HOST = "127.0.0.1"
 # How long serve_dashboard waits for uvicorn to accept connections.
 _STARTUP_TIMEOUT = 10.0
-_STARTUP_POLL = 0.01
 
 
 @dataclass
@@ -61,13 +60,13 @@ def serve_dashboard(app: ASGIApp, port: int) -> DashboardServer:
         target=server.run, kwargs={"sockets": [sock]}, daemon=True, name=f"zephyr-dashboard-{bound_port}"
     )
     thread.start()
-    deadline = time.monotonic() + _STARTUP_TIMEOUT
-    while not server.started:
-        if not thread.is_alive() or time.monotonic() > deadline:
-            server.should_exit = True
-            sock.close()
-            raise RuntimeError(f"the Zephyr dashboard server did not start on {DASHBOARD_HOST}:{bound_port}")
-        time.sleep(_STARTUP_POLL)
+    ExponentialBackoff(initial=0.01, maximum=0.1).wait_until(
+        lambda: server.started or not thread.is_alive(), timeout=Duration.from_seconds(_STARTUP_TIMEOUT)
+    )
+    if not server.started:
+        server.should_exit = True
+        sock.close()
+        raise RuntimeError(f"the Zephyr dashboard server did not start on {DASHBOARD_HOST}:{bound_port}")
     url = f"http://{DASHBOARD_HOST}:{bound_port}/"
     if bound_port != port:
         logger.warning("Port %d is in use; the Zephyr dashboard is at %s", port, url)
