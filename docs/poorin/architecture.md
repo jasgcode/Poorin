@@ -301,6 +301,7 @@ for a stated user:
 | `poorin.execution.step_status` | Per-step status files and heartbeat lock files under each output path | R1 |
 | `poorin.experiment` | Package marker; docstring points to the `data`, `sweep`, and `train` submodules | R1 |
 | `poorin.experiment.cli` | Click options (`--version`, `--version-of`, `--set`, `--sweep`, `--run`) that plan or build an experiment graph | R1 |
+| `poorin.experiment.code_check` | Whether `--run` may build from the working tree's code, and the plan's `Code:` lines | R1 |
 | `poorin.experiment.data` | Lazy dataset builders: HF and raw downloads, tokenized, pretokenized, and mixture handles | R1 |
 | `poorin.experiment.namespacing` | Prefixes mutable training artifact names with the user to avoid path collisions | R2 |
 | `poorin.experiment.overrides` | Typed dotted-path config overrides from --set and --sweep, decoded by draccus | R1 |
