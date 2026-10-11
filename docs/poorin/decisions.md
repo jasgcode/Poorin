@@ -1737,6 +1737,28 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
 
 ---
 
+### D110. An episode data layer, read through Grain
+
+- **When:** 2026-10-11. **Status:** Adopted; implementing. Spec:
+  `specs/2026-10-11-episode-data-layer-design.md`; plan: `plans/2026-10-11-episode-data-layer.md`.
+- **Decision:** Sub-projects 3, 4, and 5 come next, in that order; 1b, 2, 6, 7, and 8 wait.
+  Episode data (video, trajectories, latents) gets its own format: a schema, a parquet index, and
+  ArrayRecord shards of msgpack records, one per episode. It reads through Grain. Text stays on
+  Levanter's caches, and Levanter stays the training library. Every field of a dataset shares one
+  step clock. How a field is stored is a per-field encoding (`raw` or `video` to start), not a
+  property of the format.
+- **Why:** The owner, 2026-10-11, has not chosen datasets and wants a foundation that does not fix
+  the storage choice. Levanter's data stack assumes items that cost nothing to decode; Grain keeps
+  its deterministic, resumable data order and adds decoding in worker processes. The owner's
+  `open-dreamer` already uses Grain and ArrayRecord.
+- **Alternatives:** Extend Levanter's cache and loader with field encodings; adopt LeRobot v3 as the
+  on-disk format; a separate rate per field; CoinRun as an example (Procgen has no wheels above
+  Python 3.10).
+- **Cost if wrong:** Two data stacks persist. If Grain's worker processes cannot meet 1,000 clips
+  per second, the read path changes encoding or moves decoding to the GPU.
+
+---
+
 ## Deferred
 
 Known gaps left open on purpose. Each names where it gets resolved.
