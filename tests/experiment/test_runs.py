@@ -134,6 +134,21 @@ def test_show_reads_a_record_from_before_subjects_were_recorded(checkout, prefix
     assert "main has not moved since" in result.output
 
 
+def test_show_does_not_pass_a_recorded_commit_to_git_as_an_option(checkout, prefix, tmp_path):
+    pwned = tmp_path / "pwned"
+    crafted = dataclasses.replace(
+        Provenance.capture(),
+        dirty=True,
+        base_commit=f"--output={pwned}",
+        snapshot_commit=_git(checkout, "rev-parse", "HEAD"),
+        uncommitted=("M  model.py",),
+    )
+    _build("data/toy", crafted)
+    result = CliRunner().invoke(main, ["show", "data/toy@2026.07.16"])
+    assert result.exit_code == 0, result.output
+    assert not pwned.exists()
+
+
 def test_show_rejects_an_unknown_run(checkout, prefix):
     result = CliRunner().invoke(main, ["show", "data/nothing@2026.07.16"])
     assert result.exit_code != 0

@@ -94,9 +94,13 @@ def collect_runs(prefix: str) -> list[Run]:
     return sorted(runs, key=lambda r: r.when, reverse=True)
 
 
-def _commit(base_commit: str) -> str:
-    """The full hash of ``base_commit`` when it is in this repository, else ""."""
-    return read_git(["rev-parse", "--verify", "--quiet", f"{base_commit}^{{commit}}"]).strip()
+def _commit(rev: str) -> str:
+    """The full hash of the commit ``rev`` names when it is in this repository, else "".
+
+    A record's commits come from a file, so every later Git call takes this hash, never the recorded
+    value; ``--end-of-options`` stops a value that starts with "-" from being read as an option here.
+    """
+    return read_git(["rev-parse", "--verify", "--quiet", "--end-of-options", f"{rev}^{{commit}}"]).strip()
 
 
 def _with_subject(provenance: Provenance) -> Provenance:
@@ -118,8 +122,7 @@ def _time(iso: str) -> str:
     return f"{datetime.fromisoformat(iso):%Y-%m-%d %H:%M}" if iso else "unknown"
 
 
-def _commit_lines(provenance: Provenance) -> list[str]:
-    full = _commit(provenance.base_commit)
+def _commit_lines(provenance: Provenance, full: str) -> list[str]:
     when = f", {_time(provenance.commit_time)}" if provenance.commit_time else ""
     branch = provenance.branch or "a detached HEAD"
     lines = [f"  Commit       {provenance.base_commit} on {branch}{when}"]
@@ -138,15 +141,16 @@ def _commit_lines(provenance: Provenance) -> list[str]:
     return lines
 
 
-def _line_counts(base_commit: str, snapshot: str) -> dict[str, str]:
+def _line_counts(base: str, snapshot: str) -> dict[str, str]:
+    """Per-path line counts of the snapshot against its base, both full hashes."""
     counts = {}
-    for row in read_git(["diff", "--numstat", base_commit, snapshot]).splitlines():
+    for row in read_git(["diff", "--numstat", base, snapshot]).splitlines():
         added, removed, path = row.split("\t", 2)
         counts[path] = "binary" if added == "-" else f"+{added} -{removed}" if removed != "0" else f"+{added}"
     return counts
 
 
-def _uncommitted_lines(provenance: Provenance) -> list[str]:
+def _uncommitted_lines(provenance: Provenance, full: str) -> list[str]:
     snapshot = provenance.snapshot_commit
     short = snapshot[:7] if snapshot else ""
     kept = _commit(snapshot) if snapshot else ""
@@ -156,13 +160,14 @@ def _uncommitted_lines(provenance: Provenance) -> list[str]:
     else:
         saved = f"saved as snapshot {short}" + ("" if kept else " (not in this repository)")
     lines = [f"  Uncommitted  {files}, {saved}"]
-    counts = _line_counts(provenance.base_commit, kept) if kept else {}
+    counts = _line_counts(full, kept) if full and kept else {}
     width = max((len(entry) - 3 for entry in provenance.uncommitted), default=0)
     for entry in provenance.uncommitted:
         status, path = entry[:2].strip(), entry[3:]
         lines.append(f"{SHOW_INDENT}  {status:<3} {path:<{width}}  {counts.get(path, '')}".rstrip())
-    if kept:
+    if full and kept:
         lines.append(f"  See changes  git diff {provenance.base_commit} {short}")
+    if kept:
         lines.append(f"  Restore      git worktree add ../run-{short} {short}")
     return lines
 
@@ -182,9 +187,10 @@ def describe(run: Run) -> list[str]:
     if not provenance.base_commit:
         lines.append("  Commit       none: not built from a Git checkout")
     else:
-        lines.extend(_commit_lines(provenance))
+        full = _commit(provenance.base_commit)
+        lines.extend(_commit_lines(provenance, full))
         if provenance.dirty:
-            lines.extend(_uncommitted_lines(provenance))
+            lines.extend(_uncommitted_lines(provenance, full))
     if run.record.deps:
         lines.append(f"  Inputs       {', '.join(run.record.deps)}")
     return lines
