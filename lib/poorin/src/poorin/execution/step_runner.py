@@ -113,6 +113,18 @@ def step_is_built(step: StepSpec) -> bool:
     return StatusFile(step.output_path, worker_id="cache-check").status == STATUS_SUCCESS
 
 
+def steps_to_build(steps: Iterable[StepSpec]) -> list[StepSpec]:
+    """The steps a :meth:`StepRunner.run` of ``steps`` would launch, in schedule order.
+
+    A built step is served from its cache, and the inputs behind it are pruned from the schedule
+    (:func:`step_is_built`), so neither is listed.
+    """
+    seen: set[str] = set()
+    pruned: set[str] = set()
+    scheduled = [s for step in steps for s in _expand_unseen(step, seen, step_is_built, pruned)]
+    return [s for s in scheduled if s.output_path not in pruned]
+
+
 def _expand_unseen(
     step: StepSpec,
     seen: set[str],

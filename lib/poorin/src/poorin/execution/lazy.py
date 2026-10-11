@@ -32,7 +32,7 @@ learn.
 
 import inspect
 import json
-from collections.abc import Callable, Collection, Iterable, Mapping
+from collections.abc import Callable, Collection, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any, Final, Generic, TypeVar, cast
 
@@ -432,11 +432,18 @@ def _refuse_drift(states: list[HandleState], accept_drift: Collection[str]) -> N
         accept_recipe(record_path(state.handle), state.fingerprint, state.handle.fingerprint_payload())
 
 
+def lower_all(handles: Sequence["ArtifactStep"], provenance: Provenance) -> list[StepSpec]:
+    """Lower ``handles`` into one ``StepSpec`` graph, sharing common steps and recording ``provenance``."""
+    memo: dict[int, StepSpec] = {}
+    return [_lower(h, provenance, memo) for h in handles]
+
+
 def run(
     *handles: "ArtifactStep[T]",
     max_concurrent: int = 8,
     force_run_failed: bool = True,
     accept_drift: Collection[str] = (),
+    provenance: Provenance | None = None,
 ) -> list[T]:
     """Build ``handles`` and return their loaded, typed artifacts, in argument order.
 
@@ -448,11 +455,13 @@ def run(
 
     Before anything runs, every artifact in the graph is checked against the recipe its output
     records; ``accept_drift`` names artifacts whose changed recipe is accepted.
+
+    ``provenance`` is the launch recorded on every artifact built, such as the one the experiment
+    command line captured with its snapshot and note; omitted, it is captured from the working
+    directory.
     """
     _refuse_drift(graph_states(graph_handles(list(handles))), accept_drift)
-    provenance = Provenance.capture()
-    memo: dict[int, StepSpec] = {}
-    specs = [_lower(h, provenance, memo) for h in handles]
+    specs = lower_all(handles, provenance if provenance is not None else Provenance.capture())
     StepRunner().run(specs, force_run_failed=force_run_failed, max_concurrent=max_concurrent)
     return [h.artifact_type.raw_load(h.path()) for h in handles]
 

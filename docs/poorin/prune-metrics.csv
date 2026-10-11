@@ -105,3 +105,4 @@ date,phase,step,first_party_lines,reachable_lines,reachable_modules,r1_imported_
 2026-10-11,D107,Record each run's commit subject and changes,117279,116331,377,6520,3.82,75.1,30.7,8019762254
 2026-10-11,D107,Save uncommitted code as a snapshot commit,117330,116382,377,6520,3.81,70.7,30.6,8019762254
 2026-10-11,D107,Pin the snapshot's dates and lock wait in tests,117330,116382,377,6520,3.83,70.2,30.5,8019762254
+2026-10-11,D107,Expose the runner's schedule; let run() take a provenance,117351,116403,377,6520,3.81,70.3,30.8,8019762254

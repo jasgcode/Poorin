@@ -4,6 +4,7 @@
 import contextvars
 import json
 import os
+import shutil
 from pathlib import Path
 
 import poorin.execution.step_runner as step_runner_module
@@ -18,11 +19,13 @@ from poorin.execution.artifact import (
     read_record,
     write_artifact,
 )
+from poorin.execution.lazy import OUT, apply, lower_all, run
 from poorin.execution.remote import RemoteCallable, remote
-from poorin.execution.step_runner import StepRunner
+from poorin.execution.step_runner import StepRunner, steps_to_build
 from poorin.execution.step_spec import StepSpec
 from poorin.execution.step_status import STATUS_SUCCESS, StatusFile, worker_id
 from pydantic import BaseModel
+from rigging.provenance import Provenance
 
 # ---------------------------------------------------------------------------
 # Artifact types
@@ -910,3 +913,37 @@ def test_runner_propagates_fray_client(tmp_path):
         runner.run([step])
 
     assert observed_clients == [FakeClient], f"Expected FakeClient in worker thread, got {observed_clients}"
+
+
+# ---------------------------------------------------------------------------
+# steps_to_build
+# ---------------------------------------------------------------------------
+
+
+def _write(out, **_inputs):
+    os.makedirs(out, exist_ok=True)
+    Path(out, "done").write_text("built")
+
+
+def _graph():
+    data = apply("data/toy", _write, version="2026.07.16", out=OUT)
+    model = apply("models/toy", _write, version="2026.07.16", out=OUT, data=data)
+    return data, model
+
+
+def _names(steps):
+    return [s.name for s in steps]
+
+
+def test_steps_to_build_lists_the_unbuilt_graph_in_schedule_order():
+    _, model = _graph()
+    assert _names(steps_to_build(lower_all([model], Provenance.capture()))) == ["data/toy", "models/toy"]
+
+
+def test_steps_to_build_leaves_out_built_steps_and_inputs_pruned_behind_them():
+    data, model = _graph()
+    run(model)
+    shutil.rmtree(data.path())  # an input behind a built consumer is not rebuilt
+    report = apply("reports/toy", _write, version="dev", out=OUT, model=model)
+    assert _names(steps_to_build(lower_all([model], Provenance.capture()))) == []
+    assert _names(steps_to_build(lower_all([report], Provenance.capture()))) == ["reports/toy"]

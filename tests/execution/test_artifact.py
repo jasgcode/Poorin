@@ -10,6 +10,7 @@ exercised exactly as it fires in production (before a run starts), plus the manu
 
 import dataclasses
 import json
+import os
 import shutil
 
 import pytest
@@ -23,9 +24,10 @@ from poorin.execution.artifact import (
     write_artifact,
     write_step_record,
 )
-from poorin.execution.lazy import ArtifactStep, lower, run
+from poorin.execution.lazy import OUT, ArtifactStep, apply, lower, run
 from poorin.execution.step_runner import StepRunner
 from pydantic import BaseModel
+from rigging.provenance import Provenance
 
 # A frozen calendar version for the toy artifacts these tests build.
 V = "2026.06.28"
@@ -79,6 +81,17 @@ def test_same_recipe_rerun_is_cache_hit(tmp_path, monkeypatch):
     run(_toy(V, "a"))
     # Identical recipe + version: a cache hit, no error.
     run(_toy(V, "a"))
+
+
+def _make_dir(out):
+    os.makedirs(out, exist_ok=True)
+
+
+def test_run_records_the_provenance_it_is_given():
+    handle = apply("data/given", _make_dir, version="2026.07.16", out=OUT)
+    given = dataclasses.replace(Provenance.capture(), note="from the command line")
+    run(handle, provenance=given)
+    assert read_record(handle.path()).provenance.note == "from the command line"
 
 
 # --- recipe drift --------------------------------------------------------------
