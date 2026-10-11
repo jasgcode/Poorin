@@ -10,17 +10,23 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import pytest
+from pydantic import TypeAdapter
 from rigging.provenance import (
     SNAPSHOT_AUTHOR_EMAIL,
     SNAPSHOT_AUTHOR_NAME,
     SNAPSHOT_REF_PREFIX,
     Provenance,
     current_launch,
+    delete_snapshot_ref,
     launch_provenance,
     launched_as,
     save_snapshot,
+    snapshot_commits,
     username_segment,
 )
+
+# Artifact records serialize their provenance through pydantic.
+RECORD = TypeAdapter(Provenance)
 
 
 def _clean(**fields) -> Provenance:
@@ -66,7 +72,7 @@ def test_a_detached_head_and_a_missing_checkout_have_labels():
 
 def test_a_record_from_before_labels_still_loads_and_labels():
     old = '{"tree_hash": "aaaa", "base_commit": "a0a406ff4", "dirty": true, "branch": "main", "built_by": "power"}'
-    p = Provenance.from_json(old)
+    p = RECORD.validate_json(old)
     assert (p.commit_subject, p.uncommitted, p.snapshot_commit, p.note) == ("", (), None, None)
     assert p.label == "main@a0a406f + uncommitted changes"
 
@@ -74,11 +80,6 @@ def test_a_record_from_before_labels_still_loads_and_labels():
 def test_str_is_the_label():
     p = _clean(commit_subject="s")
     assert str(p) == p.label
-
-
-def test_json_round_trip():
-    p = Provenance(tree_hash="aaaa", base_commit="bbbb", dirty=True, branch=None, built_by="power")
-    assert Provenance.from_json(p.to_json()) == p
 
 
 def test_username_segment_sanitizes_email_to_a_clean_distinct_segment(monkeypatch):
@@ -120,46 +121,35 @@ def _init_repo(tmp_path: Path) -> Path:
     return tmp_path
 
 
-def test_from_git_clean(tmp_path):
+def test_capture_of_a_clean_tree_hashes_heads_tree(tmp_path):
     repo = _init_repo(tmp_path)
-    p = Provenance.from_git(repo)
-    assert p.dirty is False
-    assert p.branch == "main"
-    assert p.tree_hash and p.base_commit
-    # A clean tree's hash is HEAD's tree; dedup_key is that tree hash.
-    head_tree = subprocess.run(
-        ["git", "rev-parse", "--short", "HEAD^{tree}"], cwd=repo, capture_output=True, text=True
-    ).stdout.strip()
-    assert p.dedup_key == head_tree
+    p = Provenance.capture(repo)
+    assert (p.dirty, p.branch) == (False, "main")
+    assert p.tree_hash == _out(["git", "rev-parse", "--short", "HEAD^{tree}"], repo).strip()
 
 
-def test_from_git_dirty_changes_tree_not_base(tmp_path):
+def test_capture_of_a_dirty_tree_changes_the_tree_hash_not_the_base(tmp_path):
     repo = _init_repo(tmp_path)
-    clean = Provenance.from_git(repo)
+    clean = Provenance.capture(repo)
     (repo / "f.txt").write_text("changed\n")
-    dirty = Provenance.from_git(repo)
+    dirty = Provenance.capture(repo)
     assert dirty.dirty is True
     assert dirty.base_commit == clean.base_commit
     assert dirty.tree_hash != clean.tree_hash
 
 
-def test_git_provenance_untracked_file_is_dirty(tmp_path):
+def test_an_untracked_file_is_dirty_but_leaves_the_tree_hash(tmp_path):
     repo = _init_repo(tmp_path)
-    clean = Provenance.from_git(repo)
+    clean = Provenance.capture(repo)
     (repo / "untracked.txt").write_text("new\n")
-    strict = Provenance.from_git(repo)
     captured = Provenance.capture(repo)
-    assert strict.dirty is True
     assert captured.dirty is True
-    assert strict.tree_hash == clean.tree_hash
     assert captured.tree_hash == clean.tree_hash
 
 
 def test_capture_is_best_effort_outside_a_repo(tmp_path):
-    # from_git is strict (the tree hash is the point); capture degrades instead of raising,
-    # still recording the launch context that has nothing to do with git.
-    with pytest.raises(RuntimeError):
-        Provenance.from_git(tmp_path)
+    # capture degrades instead of raising, still recording the launch context that has nothing to
+    # do with git.
     p = Provenance.capture(tmp_path)
     assert p.tree_hash == ""
     assert p.dirty is False
@@ -177,20 +167,6 @@ def test_capture_tolerates_missing_git_binary(tmp_path, monkeypatch):
     assert p.dirty is False
     assert p.command_line  # argv, captured regardless of git
     assert p.created_at  # timestamp, captured regardless of git
-
-
-def test_json_round_trip_preserves_run_fields():
-    p = Provenance(
-        tree_hash="aaaa",
-        base_commit="bbbb",
-        dirty=False,
-        branch="main",
-        built_by="power",
-        git_remote="git@github.com:o/r.git",
-        created_at="2026-06-30T00:00:00",
-        command_line=("python", "-m", "experiments.foo"),
-    )
-    assert Provenance.from_json(p.to_json()) == p
 
 
 def test_capture_records_the_subject_time_and_uncommitted_paths(tmp_path):
@@ -242,16 +218,19 @@ def test_capture_of_a_clean_checkout_has_no_uncommitted_paths(tmp_path):
     assert (p.dirty, p.uncommitted) == (False, ())
 
 
-def test_json_round_trip_preserves_the_code_fields():
+def test_a_record_round_trips_every_field():
     p = _clean(
         dirty=True,
+        git_remote="git@github.com:o/r.git",
+        created_at="2026-06-30T00:00:00",
+        command_line=("python", "-m", "experiments.foo"),
         commit_subject="s",
         commit_time="2026-10-11T09:50:00-05:00",
         uncommitted=(" M a.py",),
         snapshot_commit="5c1d2e9aa0",
         note="n",
     )
-    assert Provenance.from_json(p.to_json()) == p
+    assert RECORD.validate_json(RECORD.dump_json(p)) == p
 
 
 def test_launched_as_installs_a_launch_until_the_block_exits():
@@ -308,6 +287,15 @@ def test_a_snapshot_is_kept_by_a_ref(tmp_path):
     repo = _dirty_repo(tmp_path)
     commit = save_snapshot("try it", repo)
     assert _out(["git", "rev-parse", f"{SNAPSHOT_REF_PREFIX}{commit}"], repo).strip() == commit
+
+
+def test_deleting_a_snapshot_ref_leaves_the_others(tmp_path):
+    repo = _dirty_repo(tmp_path)
+    first = save_snapshot("try it", repo)
+    second = save_snapshot("another note", repo)
+    assert snapshot_commits(repo) == {first, second}
+    delete_snapshot_ref(first, repo)
+    assert snapshot_commits(repo) == {second}
 
 
 def test_one_state_and_message_give_one_snapshot(tmp_path):

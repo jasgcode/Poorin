@@ -3,8 +3,9 @@
 
 """The uncommitted change that Poorin's tools check."""
 
-import subprocess
 from pathlib import Path
+
+from rigging.provenance import run_git
 
 
 def changed_files(repo_root: Path, base: str = "HEAD") -> list[str]:
@@ -37,5 +38,4 @@ def tracked_files(repo_root: Path) -> list[str]:
 
 
 def _git(repo_root: Path, *args: str) -> list[str]:
-    out = subprocess.run(["git", *args], cwd=repo_root, check=True, capture_output=True, text=True).stdout
-    return [line for line in out.splitlines() if line]
+    return [line for line in run_git(args, repo_root).splitlines() if line]

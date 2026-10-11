@@ -22,7 +22,7 @@ import numpy as np
 import wandb
 from draccus import field
 from git import InvalidGitRepositoryError, NoSuchPathError, Repo
-from rigging.provenance import Provenance, current_launch
+from rigging.provenance import Provenance, current_launch, read_git
 
 from levanter.tracker.background import maybe_wrap_background
 from levanter.tracker.helpers import generate_pip_freeze, infer_experiment_git_root
@@ -669,16 +669,18 @@ def _git_run_config(commit: Optional[str], source_dir: str) -> dict[str, Any]:
         source_dir: The checkout the commit was read from. The dirty flag is read from this
             checkout, which can differ from the working directory.
     """
-    provenance = Provenance.capture(Path(source_dir))
+    # The experiment command line's launch, when it describes this checkout, adds its snapshot and note.
+    launch = current_launch()
+    head = read_git(["rev-parse", "HEAD"], source_dir) if launch is not None else ""
+    if launch is not None and launch.base_commit and head.startswith(launch.base_commit):
+        provenance = launch
+    else:
+        provenance = Provenance.capture(Path(source_dir))
     if not provenance.base_commit:
         return {"git_commit": commit} if commit else {}
     if commit is not None and not commit.startswith(provenance.base_commit):
         # The provenance describes a different checkout, so its dirty flag does not apply.
         return {"git_commit": commit}
-    launch = current_launch()
-    if launch is not None and launch.base_commit == provenance.base_commit:
-        # The experiment command line's launch adds its snapshot and note to the same checkout.
-        provenance = launch
     config: dict[str, Any] = {
         "git_commit": commit or provenance.base_commit,
         "git_dirty": provenance.dirty,

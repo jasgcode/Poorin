@@ -1,29 +1,21 @@
 # Copyright The Marin Authors
 # SPDX-License-Identifier: Apache-2.0
 
-"""Provenance of a built artifact: a content-addressed tree hash plus the human
-and launch context (branch, base commit, builder, origin, time, argv) needed to read it.
+"""Provenance of a built artifact: the commit and working-tree state it was built from, plus the
+launch context (branch, builder, origin, time, argv) needed to read it.
 
-The ``tree_hash`` is content-addressed and deterministic — the same working-tree
-content always produces the same hash regardless of when or by whom it is built —
-so it is the natural deduplication key for image tags and version comparisons. The
-remaining fields render that hash in a form a human can recognize and record the
-launch that produced an artifact.
-
-Two constructors capture it. :meth:`Provenance.from_git` is strict — it raises if git
-is unavailable — for an image build, where the content-addressed ``tree_hash`` must
-exist. :meth:`Provenance.capture` is best-effort — every field degrades to empty
-outside a checkout — for stamping an artifact built by an arbitrary launch.
+:meth:`Provenance.capture` records it best-effort: every field degrades to empty outside a
+checkout. An experiment command installs the provenance of its launch with :func:`launched_as`, so
+the artifacts and trackers of the jobs it runs record the same launch.
 
 A dirty tree's changes can be saved with :func:`save_snapshot`, a commit kept under
-``refs/poorin/snapshots/`` that leaves the branch and index alone.
+``refs/poorin/snapshots/`` that leaves the branch and index alone. :func:`snapshot_commits` lists
+the commits those refs keep, and :func:`delete_snapshot_ref` drops one.
 """
 
 import contextlib
-import dataclasses
 import functools
 import getpass
-import json
 import logging
 import os
 import re
@@ -59,8 +51,8 @@ class Provenance:
     """Identity, human context, and launch context of a built artifact.
 
     Attributes:
-        tree_hash: Short git tree hash of the tracked working-tree content. The
-            deduplication key — content-addressed and stable across builds.
+        tree_hash: Short Git tree hash of the tracked working-tree content: content-addressed,
+            so one tree always gives one hash.
         base_commit: Short hash of the HEAD commit the tree was built from.
         dirty: Whether the working tree had uncommitted or untracked changes.
         branch: Branch name at build time, or ``None`` for a detached HEAD.
@@ -91,28 +83,6 @@ class Provenance:
     note: str | None = None
 
     @classmethod
-    def from_git(cls, repo_dir: Path | None = None) -> "Provenance":
-        """Capture build provenance from the git repository at ``repo_dir`` (or cwd).
-
-        Strict: raises if git is unavailable, since the content-addressed
-        ``tree_hash`` is the reason to build at all.
-        """
-        cwd = str(repo_dir) if repo_dir is not None else None
-        # `git stash create` captures any dirty state as a transient commit whose
-        # tree we deref below — dropping the per-call timestamp a commit hash
-        # would carry, so tree_hash stays purely content-addressed. Empty (no
-        # output) means a clean tree, so fall back to HEAD.
-        stash = _git(["stash", "create"], cwd)
-        ref = stash or "HEAD"
-        return cls(
-            tree_hash=_git(["rev-parse", "--short", f"{ref}^{{tree}}"], cwd),
-            base_commit=_git(["rev-parse", "--short", "HEAD"], cwd),
-            dirty=bool(_git(["status", "--porcelain", "--untracked-files=all"], cwd)),
-            branch=_git(["symbolic-ref", "--short", "-q", "HEAD"], cwd, check=False) or None,
-            built_by=_getuser(),
-        )
-
-    @classmethod
     def capture(cls, repo_dir: Path | None = None) -> "Provenance":
         """Best-effort provenance of the current launch: git context plus the origin
         remote, capture time, and argv. It also records HEAD's subject and date and the
@@ -122,14 +92,15 @@ class Provenance:
         when the ``git`` binary is absent, so it never raises. Use to stamp an artifact built by
         an arbitrary run.
         """
-        cwd = str(repo_dir) if repo_dir is not None else None
 
         def g(*args: str) -> str:
-            return read_git(args, cwd).strip()
+            return read_git(args, repo_dir).strip()
 
+        # `git stash create` writes a dirty tree as a commit without touching the branch; hashing
+        # its tree, not the commit, leaves out the commit's timestamp. A clean tree gives no output.
         stash = g("stash", "create")
         ref = stash or "HEAD"
-        uncommitted = _status_entries(read_git(["status", "--porcelain", "-z", "--untracked-files=all"], cwd))
+        uncommitted = _status_entries(read_git(["status", "--porcelain", "-z", "--untracked-files=all"], repo_dir))
         commit_time, _, commit_subject = g("log", "-1", "--no-show-signature", "--format=%cI%n%s").partition("\n")
         return cls(
             tree_hash=g("rev-parse", "--short", f"{ref}^{{tree}}"),
@@ -144,38 +115,6 @@ class Provenance:
             commit_time=commit_time,
             uncommitted=uncommitted,
         )
-
-    @classmethod
-    def from_json(cls, raw: str) -> "Provenance":
-        d = json.loads(raw)
-        built_by = d.get("built_by")
-        if built_by is not None and not isinstance(built_by, str):
-            # built_by feeds per-user namespacing; a non-string is a malformed payload,
-            # not an identity.
-            raise TypeError(f"built_by must be a string or null, got {type(built_by).__name__}")
-        return cls(
-            tree_hash=d["tree_hash"],
-            base_commit=d["base_commit"],
-            dirty=bool(d["dirty"]),
-            branch=d.get("branch"),
-            built_by=built_by,
-            git_remote=d.get("git_remote"),
-            created_at=d.get("created_at", ""),
-            command_line=tuple(d.get("command_line", ())),
-            commit_subject=d.get("commit_subject", ""),
-            commit_time=d.get("commit_time", ""),
-            uncommitted=tuple(d.get("uncommitted", ())),
-            snapshot_commit=d.get("snapshot_commit"),
-            note=d.get("note"),
-        )
-
-    def to_json(self) -> str:
-        return json.dumps(dataclasses.asdict(self))
-
-    @property
-    def dedup_key(self) -> str:
-        """The value to key image tags and version comparisons on."""
-        return self.tree_hash
 
     @property
     def change_summary(self) -> str:
@@ -215,6 +154,18 @@ def read_git(args: Sequence[str], repo_dir: Path | str | None = None) -> str:
     except FileNotFoundError:
         return ""
     return result.stdout if result.returncode == 0 else ""
+
+
+def run_git(args: Sequence[str], repo_dir: Path | str | None = None, env: Mapping[str, str] | None = None) -> str:
+    """Raw stdout of ``git args`` run in ``repo_dir``, decoded as :func:`read_git` decodes it.
+
+    Raises:
+        RuntimeError: Git exits nonzero; the message holds its stderr.
+    """
+    result = subprocess.run(["git", *args], capture_output=True, text=True, errors="replace", cwd=repo_dir, env=env)
+    if result.returncode != 0:
+        raise RuntimeError(f"git {' '.join(args)} failed: {result.stderr.strip()}")
+    return result.stdout
 
 
 def _status_entries(porcelain_z: str) -> tuple[str, ...]:
@@ -297,9 +248,8 @@ def save_snapshot(message: str, repo_dir: Path | None = None) -> str:
     Raises:
         RuntimeError: Outside a checkout, or in a repository with no commits.
     """
-    cwd = str(repo_dir) if repo_dir is not None else None
-    head = _git(["rev-parse", "HEAD"], cwd)
-    head_date = _git(["log", "-1", "--no-show-signature", "--format=%cI", "HEAD"], cwd)
+    head = run_git(["rev-parse", "HEAD"], repo_dir).strip()
+    head_date = run_git(["log", "-1", "--no-show-signature", "--format=%cI", "HEAD"], repo_dir).strip()
     with tempfile.TemporaryDirectory(prefix="poorin-snapshot-") as tmp:
         env = {
             **os.environ,
@@ -311,17 +261,17 @@ def save_snapshot(message: str, repo_dir: Path | None = None) -> str:
             "GIT_COMMITTER_NAME": SNAPSHOT_AUTHOR_NAME,
             "GIT_COMMITTER_EMAIL": SNAPSHOT_AUTHOR_EMAIL,
         }
-        _git(["read-tree", "HEAD"], cwd, env=env)
-        _git(["add", "--all"], cwd, env=env)
-        tree = _git(["write-tree"], cwd, env=env)
-        commit = _git(["commit-tree", tree, "-p", head, "-m", message], cwd, env=env)
+        run_git(["read-tree", "HEAD"], repo_dir, env)
+        run_git(["add", "--all"], repo_dir, env)
+        tree = run_git(["write-tree"], repo_dir, env).strip()
+        commit = run_git(["commit-tree", tree, "-p", head, "-m", message], repo_dir, env).strip()
     ref = f"{SNAPSHOT_REF_PREFIX}{commit}"
     try:
-        _git(["update-ref", ref, commit], cwd)
+        run_git(["update-ref", ref, commit], repo_dir)
     except RuntimeError:
         # Another launch of the same state holds the ref's lock and is writing this same commit.
         written = ExponentialBackoff(initial=0.01, maximum=0.1).wait_until(
-            lambda: read_git(["rev-parse", "--verify", "--quiet", ref], cwd).strip() == commit,
+            lambda: read_git(["rev-parse", "--verify", "--quiet", ref], repo_dir).strip() == commit,
             timeout=Duration.from_seconds(SNAPSHOT_REF_WAIT),
         )
         if not written:
@@ -329,11 +279,15 @@ def save_snapshot(message: str, repo_dir: Path | None = None) -> str:
     return commit
 
 
-def _git(args: list[str], cwd: str | None, check: bool = True, env: Mapping[str, str] | None = None) -> str:
-    result = subprocess.run(["git", *args], capture_output=True, text=True, cwd=cwd, env=env)
-    if check and result.returncode != 0:
-        raise RuntimeError(f"git {' '.join(args)} failed: {result.stderr.strip()}")
-    return result.stdout.strip()
+def snapshot_commits(repo_dir: Path | None = None) -> set[str]:
+    """The commits the snapshot refs of the repository at ``repo_dir`` (or cwd) keep now."""
+    refs = run_git(["for-each-ref", "--format=%(refname)", SNAPSHOT_REF_PREFIX], repo_dir).split()
+    return {ref.removeprefix(SNAPSHOT_REF_PREFIX) for ref in refs}
+
+
+def delete_snapshot_ref(commit: str, repo_dir: Path | None = None) -> None:
+    """Delete the ref that keeps snapshot ``commit``; the commit stays until garbage collection."""
+    run_git(["update-ref", "-d", f"{SNAPSHOT_REF_PREFIX}{commit}"], repo_dir)
 
 
 def _getuser() -> str | None:
