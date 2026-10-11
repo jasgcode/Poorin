@@ -89,8 +89,11 @@ A source unit is a string the reader resolves: a file path, a Hub file name, a c
 delivers each field at the schema's shape and step rate; `poorin.episodes.video_files.load_video`
 decodes a video file at a given size (scaled on the shorter side, then center-cropped) and step
 rate. The build checks every episode against the schema and fails, naming the episode and the field,
-on a missing or extra field, a wrong dtype or per-step shape, or fields of unequal length. It also
-refuses an episode id that appears twice.
+on a missing or extra field, a value that is not a `[length, *shape]` array, a wrong dtype or
+per-step shape, or fields of unequal length. It also refuses an episode id that appears twice.
+
+Shards are ArrayRecord files, which open local paths only, so an episode dataset needs a local
+prefix; the build and the reader refuse an object-store path.
 
 `poorin.experiment.data.episodes(...)` returns the handle. The Something-Something v2 example
 (`experiments/datasets/episodes/ssv2.py`) stores video clips without actions, with each clip's label
@@ -141,8 +144,9 @@ are examples that test the format, not supported datasets.
 ## Reading clips in training
 
 A clip is `length` steps taken every `skip` steps; clip starts in an episode are `stride` steps
-apart. A clip spans `(length - 1) * skip + 1` steps, never crosses its episode's end, and an
-episode shorter than one clip has none.
+apart; each is at least 1. A clip spans `(length - 1) * skip + 1` steps, never crosses its episode's
+end, and an episode shorter than one clip has none. `clip_dataset` refuses a clip that fits in no
+episode, naming the span and the longest episode.
 
 `clip_dataset` returns every clip of a dataset as a finite, unshuffled `grain.MapDataset` of
 `{field: [length, *shape]}` arrays, plus any requested metadata values. Only the selected fields are
@@ -208,6 +212,13 @@ measured, on 2026-10-11:
 | 16 | 2,219 |
 | 24 | 2,838 |
 
-The target is 1,000 clips per second. If a model needs more, the levers are a shorter keyframe
-interval (less wasted decoding per clip), a smaller frame size, an encoding that decodes per frame
-(JPEG), or decoding on the GPU.
+The target is 1,000 clips per second. SSv2's clips are short (13 to 72 steps), so each record is
+about 0.1 MB. Long episodes read more slowly: one record holds a whole episode, so every clip reads
+all of it. The VPT example's 6,000-step episodes are 8.8 MB records, and reading one takes 5.7 ms of
+the 8.4 ms a clip costs in one process; the same 16-step clips measured 298, 301, and 360 clips/s at
+1, 8, and 24 workers. Why extra workers barely help is not yet known. Splitting long episodes into
+keyframe-aligned records is the likely fix and changes the format.
+
+If a model needs more on short episodes, the levers are a shorter keyframe interval (less wasted
+decoding per clip), a smaller frame size, an encoding that decodes per frame (JPEG), or decoding on
+the GPU.

@@ -69,6 +69,10 @@ class DatasetSchema:
     """Steps per second, shared by every field."""
     fields: Mapping[str, FieldSpec]
 
+    def __post_init__(self) -> None:
+        if not self.fields:
+            raise ValueError("a dataset schema needs at least one field")
+
     def to_json(self) -> dict:
         return {"step_rate": self.step_rate, "fields": {name: _field_json(spec) for name, spec in self.fields.items()}}
 
@@ -95,18 +99,22 @@ def validate_episode(schema: DatasetSchema, episode: Episode) -> int:
     if set(episode.fields) != set(schema.fields):
         field = sorted(set(episode.fields) ^ set(schema.fields))[0]
         raise ValueError(f"episode {episode.id!r}: field {field!r} is in only one of the episode and the schema")
-    lengths = {name: len(values) for name, values in episode.fields.items()}
-    length = next(iter(lengths.values()))
     for name, spec in schema.fields.items():
         values = episode.fields[name]
+        if not isinstance(values, np.ndarray) or values.ndim == 0:
+            raise ValueError(
+                f"episode {episode.id!r}: field {name!r} is a {type(values).__name__}, not a [length, *shape] array"
+            )
         if values.dtype != np.dtype(spec.dtype) or values.shape[1:] != spec.shape:
             raise ValueError(
                 f"episode {episode.id!r}: field {name!r} is {values.dtype} {list(values.shape[1:])} per step, "
                 f"the schema says {spec.dtype} {list(spec.shape)}"
             )
-        if lengths[name] != length:
-            raise ValueError(f"episode {episode.id!r}: field {name!r} has {lengths[name]} steps, others have {length}")
-    return length
+    lengths = {name: len(episode.fields[name]) for name in schema.fields}
+    if len(set(lengths.values())) > 1:
+        described = ", ".join(f"field {name!r} has {length} steps" for name, length in lengths.items())
+        raise ValueError(f"episode {episode.id!r}: fields differ in length: {described}")
+    return next(iter(lengths.values()))
 
 
 def _field_json(spec: FieldSpec) -> dict:

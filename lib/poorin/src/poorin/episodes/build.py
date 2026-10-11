@@ -22,6 +22,7 @@ import pandas as pd
 from array_record.python.array_record_module import ArrayRecordWriter
 from fray.types import ResourceConfig
 from rigging.filesystem.factory import open_url
+from rigging.filesystem.storage_path import StoragePath
 from zephyr.context import ZephyrContext
 from zephyr.dataset import Dataset, ShardInfo
 
@@ -67,6 +68,7 @@ class EpisodeDataset(Artifact):
 
     @property
     def shard_paths(self) -> list[str]:
+        _require_local_path(self.path)
         count = int(self.index["shard"].max()) + 1 if len(self.index) else 0
         return [os.path.join(self.path, SHARD_PATTERN.format(shard)) for shard in range(count)]
 
@@ -79,6 +81,7 @@ def load_reader(path: str) -> Reader:
 
 
 def build_episodes(config: EpisodeBuildConfig) -> None:
+    _require_local_path(config.output_path)
     groups = [list(group) for group in np.array_split(np.asarray(config.sources, dtype=object), config.num_shards)]
     groups = [group for group in groups if group]
     os.makedirs(config.output_path, exist_ok=True)
@@ -89,6 +92,12 @@ def build_episodes(config: EpisodeBuildConfig) -> None:
     ctx = ZephyrContext(name="episodes", max_workers=min(len(groups), os.cpu_count() or 1), resources=WORKER_RESOURCES)
     rows = [row for shard_rows in ctx.execute(Dataset.from_list(groups).map_shard(write)).results for row in shard_rows]
     _write_index(config, rows)
+
+
+def _require_local_path(path: str) -> None:
+    # ArrayRecord opens plain filesystem paths only: it would write gs://b/x to ./gs:/b/x.
+    if StoragePath(path).scheme is not None:
+        raise ValueError(f"episode shards are ArrayRecord files, which need a local path, not {path!r}")
 
 
 def _write_shard(config: EpisodeBuildConfig, shard: int, units: list[str]) -> list[dict]:

@@ -4,6 +4,7 @@
 import grain
 import jax
 import numpy as np
+import pytest
 from jax.sharding import Mesh
 from poorin.episodes.build import EpisodeBuildConfig, EpisodeDataset, build_episodes
 from poorin.episodes.read import ClipSpec, batch_iterator, clip_dataset, clip_starts, to_mesh
@@ -116,3 +117,16 @@ def test_to_mesh_shards_numeric_fields_and_passes_text_through():
     assert isinstance(placed["action"], jax.Array)
     assert placed["action"].sharding.spec == jax.sharding.PartitionSpec(("data",))
     np.testing.assert_array_equal(placed["task"], batch["task"])
+
+
+@pytest.mark.parametrize("field", ["length", "stride", "skip"])
+def test_a_clip_spec_below_one_step_is_refused(field):
+    values = {"length": 4, "stride": 1, "skip": 1, field: 0}
+    with pytest.raises(ValueError, match=field):
+        ClipSpec(**values)
+
+
+def test_a_dataset_with_no_clip_this_long_is_refused(tmp_path):
+    dataset = build(tmp_path, "ds", ["a:12,b:7"])
+    with pytest.raises(ValueError, match=r"no clip.*13 steps.*longest episode has 12"):
+        clip_dataset(dataset, clip=ClipSpec(length=7, stride=1, skip=2), fields=["action"])

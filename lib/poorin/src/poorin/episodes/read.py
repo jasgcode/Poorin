@@ -38,6 +38,11 @@ class ClipSpec:
     skip: int
     """Steps between consecutive steps of a clip; 1 takes every step."""
 
+    def __post_init__(self) -> None:
+        too_small = {name: value for name, value in vars(self).items() if value < 1}
+        if too_small:
+            raise ValueError(f"a clip's length, stride, and skip are at least 1 step, not {too_small}")
+
     @property
     def span(self) -> int:
         return (self.length - 1) * self.skip + 1
@@ -116,7 +121,12 @@ def clip_dataset(
 ) -> grain.MapDataset:
     """Every clip of ``dataset``, in index order, as ``{field: [clip.length, *shape]}`` plus the
     requested per-episode ``metadata`` values. Only ``fields`` are decoded."""
-    return grain.MapDataset.source(_ClipSource(dataset, clip)).map(_ClipReader(dataset, clip, fields, metadata))
+    source = _ClipSource(dataset, clip)
+    if not len(source):
+        lengths = dataset.index["length"]
+        longest = int(lengths.max()) if len(lengths) else 0
+        raise ValueError(f"no clip of {clip.span} steps fits in this dataset: its longest episode has {longest}")
+    return grain.MapDataset.source(source).map(_ClipReader(dataset, clip, fields, metadata))
 
 
 def batch_iterator(clips: grain.MapDataset, *, batch_size: int, start_step: int, num_workers: int) -> grain.IterDataset:

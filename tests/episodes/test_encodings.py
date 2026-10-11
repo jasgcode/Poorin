@@ -96,3 +96,25 @@ def test_an_episode_that_breaks_the_schema_names_the_episode_and_field():
 def test_a_video_encoding_with_a_non_video_codec_names_the_codec():
     with pytest.raises(ValueError, match=r"'aac' is not a video codec"):
         VideoEncoding(codec="aac")
+
+
+def test_unequal_lengths_name_every_field_with_its_length():
+    schema = DatasetSchema(
+        step_rate=20.0,
+        fields={"video": video_spec(), "action": FieldSpec(FieldKind.ARRAY, "float32", (7,), RawEncoding())},
+    )
+    short_first = {"video": moving_pattern(9), "action": np.zeros((10, 7), np.float32)}
+    with pytest.raises(ValueError, match=r"episode 'e4'.*field 'video' has 9 steps.*field 'action' has 10 steps"):
+        validate_episode(schema, Episode(id="e4", fields=short_first, metadata={}))
+
+
+@pytest.mark.parametrize("value", [[0.0] * 7, np.float32(0.0)], ids=["list", "scalar"])
+def test_a_field_that_is_not_a_per_step_array_names_the_episode_and_field(value):
+    schema = DatasetSchema(step_rate=20.0, fields={"action": FieldSpec(FieldKind.ARRAY, "float32", (7,), RawEncoding())})
+    with pytest.raises(ValueError, match=r"episode 'e5'.*field 'action'"):
+        validate_episode(schema, Episode(id="e5", fields={"action": value}, metadata={}))
+
+
+def test_a_schema_needs_a_field():
+    with pytest.raises(ValueError, match=r"at least one field"):
+        DatasetSchema(step_rate=20.0, fields={})

@@ -115,3 +115,21 @@ def test_the_handle_builds_and_its_fingerprint_follows_the_schema(tmp_path):
     assert handle.fingerprint() != resized.fingerprint()
     dataset = resolve(handle)
     assert sorted(dataset.index["episode"]) == ["a", "b"]
+
+
+def test_an_object_store_output_path_is_refused_before_anything_is_written(tmp_path):
+    config = EpisodeBuildConfig(
+        output_path="gs://bucket/ds",
+        sources=("a:12",),
+        reader=READER,
+        reader_options={},
+        schema=SCHEMA,
+        num_shards=1,
+    )
+    with pytest.raises(ValueError, match=r"local path.*gs://bucket/ds"):
+        build_episodes(config)
+
+
+def test_an_object_store_dataset_is_refused_when_read():
+    with pytest.raises(ValueError, match=r"local path.*gs://bucket/ds"):
+        list(EpisodeDataset(path="gs://bucket/ds").shard_paths)

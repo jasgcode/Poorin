@@ -1773,6 +1773,16 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
   against 1,000. The LIBERO smoke run trained on the GPU and resumed at step 100 with 100 identical
   batches. At exit, Python's resource tracker reports one shared-memory object left by Grain's
   worker prefetch.
+- **Final review (2026-10-11):** The build and the reader now refuse an object-store path: ArrayRecord
+  opens local paths only and wrote `gs://b/x` to `./gs:/b/x`. Episode validation names every field's
+  length when they differ and refuses a value that is not a per-step array; a schema needs a field;
+  `ClipSpec` refuses a length, stride, or skip below 1; `clip_dataset` refuses a clip that fits in no
+  episode. The acceptance run measured only SSv2's short clips. On the VPT example's 6,000-step
+  episodes (8.8 MB records) a clip costs 8.4 ms in one process, 5.7 ms of it reading the whole
+  record, and throughput stays at 298, 301, and 360 clips/s at 1, 8, and 24 workers; uncompressed
+  shards reach 333 to 426, and turning off the reader's readahead changes nothing. Why workers do not
+  scale on long episodes is open, and keyframe-aligned records for long episodes would change the
+  format; both are recorded under Deferred for the owner.
 - **Alternatives:** Extend Levanter's cache and loader with field encodings; adopt LeRobot v3 as the
   on-disk format; a separate rate per field; CoinRun as an example (Procgen has no wheels above
   Python 3.10).
@@ -1862,3 +1872,4 @@ Known gaps left open on purpose. Each names where it gets resolved.
 | `--set` is not forwarded to SkyRL runs as Hydra overrides (D68) | D92 | Open |
 | `test_fa4_cute_attention.py` fails 21 tests on the GPU on both 3.12 and 3.13: the CuTe DSL reports a free-variable mismatch in the segmented forward launcher, likely because the tests' jaxtyping import hook wraps it; R2 trains with FlashAttention 4 and passes | D111 | Open |
 | Python 3.14 waits on draccus parsing union-typed fields on 3.14 (marin-community/draccus#69) | D111 | Open |
+| Long episodes read at about 300 to 430 clips/s whatever the worker count (VPT, 6,000 steps): profile the read path; keyframe-aligned records per long episode would change the format | D110 | Open |
