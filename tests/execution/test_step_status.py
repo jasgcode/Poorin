@@ -5,12 +5,13 @@ import logging
 from pathlib import Path
 
 import poorin.execution.step_status as step_status
-from poorin.execution.step_status import STATUS_RUNNING, StatusFile, should_run, worker_id
+from poorin.execution.step_status import STATUS_RUNNING, StatusFile, should_run
+from rigging.filesystem.distributed_lock import default_worker_id
 
 
 def test_should_run_waits_for_an_active_lock_owner_and_logs_it(tmp_path: Path, caplog, monkeypatch):
     output_path = str(tmp_path / "active-lock")
-    owner_id = worker_id()
+    owner_id = default_worker_id()
 
     owner = StatusFile(output_path, owner_id)
     waiter = StatusFile(output_path, "waiting-worker")

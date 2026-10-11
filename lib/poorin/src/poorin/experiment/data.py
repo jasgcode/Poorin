@@ -7,14 +7,10 @@ The library provides *mechanism* — concise builders — while an experiment st
 the *policy*: which datasets, at what weights. The split is deliberate, so mixture
 weights live in the experiment that chose them, not buried in a catalog constant.
 
-- :func:`tokenized` returns an ``ArtifactStep[TokenizedCache]`` handle. Its raw input is one of:
-  ``source`` (a HuggingFace id or single path), ``paths`` (raw globs resolved against
-  the run prefix), or ``raw=`` a download handle + ``glob`` within it (a download ->
-  tokenize dependency). ``pin`` references already-tokenized data at an existing location
-  instead of recomputing it.
-- :func:`hf_download` is a HuggingFace-Hub download as a raw-data ``ArtifactStep[Artifact]`` that
-  :func:`tokenized` (via ``raw=``) can depend on; :func:`raw_download` is the same for a
-  non-Hub source.
+- :func:`tokenized` returns an ``ArtifactStep[TokenizedCache]`` handle. Its raw input is either
+  ``source`` (a HuggingFace id or single path) or ``paths`` (raw globs resolved against the run
+  prefix). ``pin`` references already-tokenized data at an existing location instead of
+  recomputing it.
 - :func:`pretokenized` handles an already-tokenized Levanter cache hosted on
   HuggingFace (e.g. the fineweb-edu prebuilt subcaches): it downloads rather than
   re-tokenizes, and is consumed like any other ``TokenizedCache``.
@@ -22,24 +18,18 @@ weights live in the experiment that chose them, not buried in a catalog constant
   training components plus weight-0 ``validation`` handles, reading each cache's
   tokenizer/format from its :class:`~poorin.processing.tokenize.tokenize.TokenizedCache`
   record at run time.
-- :func:`dataset_main` is the ``python -m`` entry point for a dataset module: it prints
-  the build plan by default and builds the module's handles under ``--run``.
 """
 
 from collections.abc import Callable, Mapping, Sequence
 
-import click
 from fray.types import ResourceConfig
 from levanter.data.text.datasets import DEFAULT_LM_DATA_SHUFFLE, BlockShuffleConfig, LmDataConfig, UrlDatasetSourceConfig
 from levanter.data.text.formats import TextLmDatasetFormat
-from rigging.filesystem.storage_path import prefix_join
 
-from poorin.datakit.download.huggingface import DownloadConfig, download_hf
-from poorin.execution.artifact import Artifact
+from poorin.execution.artifact import resolve_path
 from poorin.execution.build_context import resolve_version
-from poorin.execution.lazy import ArtifactStep, StepContext, lower, run
+from poorin.execution.lazy import ArtifactStep, StepContext
 from poorin.execution.remote import remote
-from poorin.execution.step_spec import _is_relative_path
 from poorin.processing.tokenize.data_configs import dataset_component
 from poorin.processing.tokenize.download_pretokenized import PretokenizedCacheDownloadConfig, fetch_pretokenized_cache
 from poorin.processing.tokenize.tokenize import (
@@ -64,78 +54,6 @@ def _looks_like_hf_id(source: str) -> bool:
     return source.count("/") == 1 and "://" not in source and not source.startswith("/")
 
 
-def _resolve(prefix: str, path: str) -> str:
-    """Make a prefix-relative raw path absolute; leave absolute/URL paths alone."""
-    return prefix_join(prefix, path) if _is_relative_path(path) else path
-
-
-def hf_download(
-    name: str,
-    *,
-    hf_id: str,
-    revision: str,
-    version: str | None = None,
-    urls_glob: Sequence[str] = (),
-    pin: str | None = None,
-    resources: ResourceConfig | None = None,
-) -> ArtifactStep[Artifact]:
-    """A HuggingFace-Hub dataset download as a raw-data handle.
-
-    Wraps :func:`poorin.datakit.download.huggingface.download_hf` into a handle that
-    :func:`tokenized` (via ``raw=``) or :func:`poorin.execution.lazy.apply` can depend on.
-    ``urls_glob`` restricts which files in the repo are fetched (empty = all). ``pin``
-    references an existing download at a fixed location instead of re-fetching it. ``version``
-    defers to the ambient :class:`~poorin.execution.build_context.BuildContext` when omitted.
-    """
-    version = resolve_version(name, version)
-
-    def build_config(ctx: StepContext) -> DownloadConfig:
-        return DownloadConfig(
-            hf_dataset_id=hf_id,
-            revision=revision,
-            hf_urls_glob=[*urls_glob],
-            gcs_output_path=ctx.output_path,
-            wait_for_completion=True,
-        )
-
-    return ArtifactStep(
-        name=name,
-        version=version,
-        artifact_type=Artifact,
-        run=_on(download_hf, resources),
-        build_config=build_config,
-        override_path=pin,
-    )
-
-
-def raw_download(
-    name: str,
-    *,
-    fn: Callable[[object], object],
-    build_config: Callable[[StepContext], object],
-    version: str | None = None,
-    pin: str | None = None,
-    resources: ResourceConfig | None = None,
-) -> ArtifactStep[Artifact]:
-    """A raw-data download as an ``ArtifactStep[Artifact]`` that :func:`tokenized` can depend on.
-
-    The generic download builder for a source that is not a HuggingFace-Hub dataset (use
-    :func:`hf_download` for that): ``fn(build_config(ctx))`` writes the download to
-    ``ctx.output_path``. Returned as a raw :class:`~poorin.execution.artifact.Artifact` (not a
-    tokenized cache). ``pin`` references an existing download instead of re-fetching it. ``version``
-    defers to the ambient :class:`~poorin.execution.build_context.BuildContext` when omitted.
-    """
-    version = resolve_version(name, version)
-    return ArtifactStep(
-        name=name,
-        version=version,
-        artifact_type=Artifact,
-        run=_on(fn, resources),
-        build_config=build_config,
-        override_path=pin,
-    )
-
-
 def tokenized(
     name: str,
     *,
@@ -143,8 +61,6 @@ def tokenized(
     version: str | None = None,
     source: str | None = None,
     paths: Sequence[str] | None = None,
-    raw: ArtifactStep[Artifact] | None = None,
-    glob: str | None = None,
     validation: bool = False,
     pin: str | None = None,
     text_key: str = "text",
@@ -155,20 +71,17 @@ def tokenized(
     """A tokenized-dataset handle.
 
     Provide exactly one raw input: ``source`` (a HuggingFace id ``org/name`` or a single
-    raw path), ``paths`` (raw globs resolved against the run prefix), or ``raw`` + ``glob``
-    (a download handle and a subpath glob within it). ``validation=True`` routes the data
+    raw path) or ``paths`` (raw globs resolved against the run prefix). ``validation=True`` routes the data
     to the cache's validation split. ``sample_count`` caps the documents tokenized per shard
     (it bears identity — a sampled cache differs from the full one). ``pin`` references
     already-tokenized data at an existing location instead of recomputing it. ``version`` defers
-    to the ambient :class:`~poorin.execution.build_context.BuildContext` when omitted — but a large
+    to the ambient :func:`~poorin.execution.build_context.build_context` when omitted — but a large
     corpus should pin an explicit calendar version, since a mutable (``dev``) tokenize rebuilds the
     whole cache on every run.
     """
     version = resolve_version(name, version)
-    if sum(x is not None for x in (source, paths, raw)) != 1:
-        raise ValueError(f"{name}: provide exactly one of source, paths, or raw")
-    if (raw is None) != (glob is None):
-        raise ValueError(f"{name}: raw and glob must be given together")
+    if (source is None) == (paths is None):
+        raise ValueError(f"{name}: provide exactly one of source or paths")
 
     fmt = TextLmDatasetFormat(text_key=text_key)
 
@@ -182,12 +95,10 @@ def tokenized(
                 sample_count=sample_count,
                 tags=[*tags],
             )
-        if raw is not None:
-            resolved = [f"{ctx.artifact_path(raw)}/{glob}"]
-        elif paths is not None:
-            resolved = [_resolve(ctx.prefix, p) for p in paths]
+        if paths is not None:
+            resolved = [resolve_path(ctx.prefix, p) for p in paths]
         else:
-            resolved = [_resolve(ctx.prefix, source)]
+            resolved = [resolve_path(ctx.prefix, source)]
         return TokenizeConfig(
             train_paths=[] if validation else resolved,
             validation_paths=resolved if validation else [],
@@ -204,7 +115,6 @@ def tokenized(
         artifact_type=TokenizedCache,
         run=_on(_tokenize_fn, resources),
         build_config=build_config,
-        deps=(raw,) if raw is not None else (),
         override_path=pin,
     )
 
@@ -227,7 +137,7 @@ def pretokenized(
     re-tokenization. Use it where a tokenizing :func:`tokenized` handle would be too
     slow — e.g. the fineweb-edu prebuilt subcaches. ``pin`` references an
     already-downloaded cache at an existing location instead of fetching it again. ``version``
-    defers to the ambient :class:`~poorin.execution.build_context.BuildContext` when omitted.
+    defers to the ambient :func:`~poorin.execution.build_context.build_context` when omitted.
     """
     version = resolve_version(name, version)
 
@@ -274,7 +184,7 @@ def mixture(
     ``train`` maps each handle to its mixture weight; ``validation`` handles are added at
     weight 0. The component key is the handle's ``name`` (two handles sharing a name are
     rejected). At run time each component is built from its ``TokenizedCache`` record
-    (tokenizer/format/path), never from the producing recipe — so adopted and pinned caches
+    (tokenizer/format/path), never from the producing recipe — so pinned caches
     work the same as freshly tokenized ones. At fingerprint time (no records yet) the data
     contribution is the sorted ``{name@version: weight}`` map; the tokenizer is determined by
     the chosen datasets and verified at run time. Call this inside a consumer's ``build_config``
@@ -326,41 +236,3 @@ def mixture(
         shuffle=shuffle,
         permutation_type="feistel",
     )
-
-
-def dataset_main(datasets: Mapping[str, ArtifactStep[TokenizedCache]]) -> None:
-    """CLI entry point for a runnable dataset module.
-
-    Use as the body of a module's ``if __name__ == "__main__":`` block, passing the
-    module's family map keyed by subset (a single-corpus module passes a one-entry map).
-    Building is opt-in so ``python -m experiments.datasets.<name>`` never starts a large
-    tokenize by accident: by default it prints the lowered plan for the selected handles;
-    ``--run`` builds them, and ``--only`` restricts a family to named keys.
-
-    Dataset catalogs are intentionally *outside* the deferred-version surface
-    (:mod:`poorin.experiment.cli`): they pin an explicit calendar version because a mutable
-    tokenize would rebuild the whole (often multi-TB) cache. The handles here are constructed
-    eagerly at import, so a catalog that omitted its version would fail fast — by design — rather
-    than silently resolve to ``dev``.
-    """
-
-    @click.command()
-    @click.option("--run", "build", is_flag=True, help="Build the handles (default: only print the plan).")
-    @click.option("--only", help="Comma-separated subset keys to select (default: all).")
-    @click.option("--max-concurrent", type=int, default=8, help="Max handles built concurrently.")
-    def cli(build: bool, only: str | None, max_concurrent: int) -> None:
-        selected = datasets
-        if only is not None:
-            keys = only.split(",")
-            unknown = [key for key in keys if key not in datasets]
-            if unknown:
-                raise click.BadParameter(f"unknown keys {unknown}; available: {sorted(datasets)}", param_hint="--only")
-            selected = {key: datasets[key] for key in keys}
-        handles = list(selected.values())
-        if not build:
-            for handle in handles:
-                click.echo(lower(handle))
-            return
-        run(*handles, max_concurrent=max_concurrent)
-
-    cli()

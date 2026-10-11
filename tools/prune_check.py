@@ -46,7 +46,7 @@ from finelog.client import LogClient
 from finelog.embedded import require_embedded_server
 from levanter.tracker.finelog_metrics import LEVANTER_METRICS_NAMESPACE
 from poorin.experiment.runs import collect_runs
-from rigging.provenance import SNAPSHOT_REF_PREFIX
+from rigging.provenance import delete_snapshot_ref, snapshot_commits
 
 from tools import affected_tests
 from tools.lint import TY
@@ -123,25 +123,14 @@ def remove_run_outputs(prefix: Path) -> None:
         shutil.rmtree(users)
 
 
-def snapshot_refs(repo: Path) -> set[str]:
-    """The snapshot refs (``refs/poorin/snapshots/...``) the repository at ``repo`` holds now."""
-    listing = subprocess.run(
-        ["git", "for-each-ref", "--format=%(refname)", SNAPSHOT_REF_PREFIX],
-        cwd=repo,
-        check=True,
-        capture_output=True,
-        text=True,
-    ).stdout
-    return set(listing.split())
-
-
 def remove_run_snapshots(prefix: Path, before: set[str], repo: Path) -> None:
     """Delete the snapshot refs the check's own runs created, before their outputs are removed.
 
-    A ref goes when it appeared after ``before`` was taken, a per-user run output under ``prefix``
-    names its commit, and no output the check keeps (a tokenized dataset) names it. A run of the
-    user's that snapshots the identical working tree during the check shares that commit; its ref
-    goes too, and the commit stays in Git's object store until garbage collection.
+    A ref goes when its commit is not in ``before``, the snapshot commits taken before the check's
+    runs, a per-user run output under ``prefix`` names the commit, and no output the check keeps (a
+    tokenized dataset) names it. A run of the user's that snapshots the identical working tree
+    during the check shares that commit; its ref goes too, and the commit stays in Git's object
+    store until garbage collection.
     """
     users = prefix / "users"
     removed: set[str] = set()
@@ -151,9 +140,8 @@ def remove_run_snapshots(prefix: Path, before: set[str], repo: Path) -> None:
         if provenance is None or provenance.snapshot_commit is None:
             continue
         (removed if Path(run.path).is_relative_to(users) else kept).add(provenance.snapshot_commit)
-    for ref in sorted(snapshot_refs(repo) - before):
-        if ref.removeprefix(SNAPSHOT_REF_PREFIX) in removed - kept:
-            subprocess.run(["git", "update-ref", "-d", ref], cwd=repo, check=True)
+    for commit in sorted((snapshot_commits(repo) - before) & (removed - kept)):
+        delete_snapshot_ref(commit, repo)
 
 
 def snapshot_entries(dirs: Iterable[Path]) -> dict[Path, set[str]]:
@@ -216,7 +204,7 @@ def train_roots(
     check does not leave a checkpoint behind.
     """
     before = snapshot_entries(log_dirs)
-    refs_before = snapshot_refs(repo)
+    snapshots_before = snapshot_commits(repo)
     warm: dict[str, float] = {}
     try:
         for root in runnable:
@@ -224,7 +212,7 @@ def train_roots(
             warm[root.name] = train(root, env)
     finally:
         try:
-            remove_run_snapshots(prefix, refs_before, repo)
+            remove_run_snapshots(prefix, snapshots_before, repo)
         finally:
             remove_run_outputs(prefix)
             remove_new_entries(before)

@@ -4,7 +4,7 @@
 """
 Each step produces an `output_path`.
 We associate each `output_path` with:
-- A status file (`output_path/.executor_status`) containing simple text: SUCCESS, FAILED, DEP_FAILED, or RUNNING
+- A status file (`output_path/.executor_status`) containing one token: SUCCESS, FAILED, or RUNNING
 - A LOCK file (`output_path/.executor_status.lock`) for distributed locking
 
 The LOCK file contains JSON with {worker_id, timestamp} and is refreshed periodically.
@@ -12,7 +12,6 @@ On GCS, we use generation-based conditional writes for atomicity.
 """
 
 import contextlib
-import json
 import logging
 import os
 from collections.abc import Generator
@@ -34,13 +33,24 @@ logger = logging.getLogger(__name__)
 STATUS_RUNNING = "RUNNING"
 STATUS_FAILED = "FAILED"
 STATUS_SUCCESS = "SUCCESS"
-STATUS_DEP_FAILED = "DEP_FAILED"  # Dependency failed
+# The file beside every output the runner scheduled; it marks an artifact's directory.
+STATUS_FILENAME = ".executor_status"
 _LOCK_WAIT_LOG_INTERVAL = 5 * 60
 
 
 def get_status_path(output_path: str) -> str:
     """Return the path of the status file associated with `output_path`."""
-    return prefix_join(output_path, ".executor_status")
+    return prefix_join(output_path, STATUS_FILENAME)
+
+
+def read_status(output_path: str) -> str | None:
+    """The status token at ``output_path``, or ``None`` when no step has started there."""
+    path = get_status_path(output_path)
+    fs = url_to_fs(path, use_listings_cache=False)[0]
+    if not fs.exists(path):
+        return None
+    with fs.open(path, "r") as f:
+        return f.read().strip() or None
 
 
 class StatusFile:
@@ -49,7 +59,7 @@ class StatusFile:
     Two types of files:
     - LOCK file (JSON): Single file for distributed lock acquisition.
       Contains {worker_id, timestamp}. Must be refreshed periodically.
-    - Status file (simple text): Step state - SUCCESS, FAILED, DEP_FAILED, or RUNNING.
+    - Status file (simple text): Step state - SUCCESS, FAILED, or RUNNING.
 
     Lock acquisition and release delegate to ``rigging.filesystem.distributed_lock``.
     """
@@ -64,47 +74,7 @@ class StatusFile:
 
     @property
     def status(self) -> str | None:
-        """Read current status from status file.
-
-        The modern representation stores a single status token, but older
-        executors wrote JSON-line event logs. We support both until the legacy
-        files are gone.
-        """
-        if not self.fs.exists(self.path):
-            return None
-
-        with self.fs.open(self.path, "r") as f:
-            lines = [line.strip() for line in f.readlines() if line.strip()]
-
-        if not lines:
-            return None
-
-        # New format: a single status token such as SUCCESS/RUNNING/etc.
-        if len(lines) == 1 and not lines[0].startswith("{"):
-            return lines[0]
-
-        # Legacy format: JSON event log, one object per line.
-        legacy_status = self._parse_legacy_status(lines)
-        if legacy_status:
-            return legacy_status
-
-        # Fall back to the last non-empty line if parsing fails.
-        return lines[-1]
-
-    @staticmethod
-    def _parse_legacy_status(lines: list[str]) -> str | None:
-        """Return the latest status from the deprecated JSON-lines format."""
-        last_status: str | None = None
-        for line in lines:
-            try:
-                event = json.loads(line)
-            except json.JSONDecodeError:
-                continue
-            if isinstance(event, dict):
-                status = event.get("status")
-                if isinstance(status, str):
-                    last_status = status
-        return last_status
+        return read_status(self.output_path)
 
     def write_status(self, status: str) -> None:
         """Write the status file without changing lock ownership.
@@ -143,22 +113,7 @@ class StatusFile:
         return self._lock.active_holder_id()
 
 
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-
-def worker_id() -> str:
-    return default_worker_id()
-
-
-class PreviousTaskFailedError(Exception):
-    """Raised when a step failed previously and force_run_failed is False."""
-
-
-def should_run(
-    status_file: StatusFile, step_name: str, force_run_failed: bool = True, force_rerun: bool = False
-) -> bool:
+def should_run(status_file: StatusFile, step_name: str, force_rerun: bool = False) -> bool:
     """Check if the step should run based on lease-based distributed locking.
 
     Uses double-check locking: check status, attempt to acquire lock,
@@ -182,11 +137,8 @@ def should_run(
             logger.info(f"[{wid}] Step {step_name} has already succeeded.")
             return False
 
-        if status in [STATUS_FAILED, STATUS_DEP_FAILED]:
-            if force_run_failed:
-                logger.info(f"[{wid}] Force running {step_name}, previous status: {status}")
-            else:
-                raise PreviousTaskFailedError(f"Step {step_name} failed previously. Status: {status}")
+        if status == STATUS_FAILED:
+            logger.info(f"[{wid}] Rerunning {step_name}, previous status: {status}")
         elif status == STATUS_RUNNING and active_lock_holder is not None:
             if wait_log_limiter.should_run():
                 logger.info(
@@ -231,9 +183,7 @@ class StepAlreadyDone(Exception):
 
 
 @contextlib.contextmanager
-def step_lock(
-    output_path: str, step_label: str, *, force_run_failed: bool = True, force_rerun: bool = False
-) -> Generator[StatusFile, None, None]:
+def step_lock(output_path: str, step_label: str, *, force_rerun: bool = False) -> Generator[StatusFile, None, None]:
     """Context manager that acquires a distributed lock with heartbeat refresh.
 
     Acquires the lock, starts a daemon heartbeat thread, yields the
@@ -245,8 +195,8 @@ def step_lock(
     while we waited for the lock. ``force_rerun`` rebuilds over an existing
     success (mutable ``dev`` artifacts).
     """
-    status_file = StatusFile(output_path, worker_id())
-    if not should_run(status_file, step_label, force_run_failed=force_run_failed, force_rerun=force_rerun):
+    status_file = StatusFile(output_path, default_worker_id())
+    if not should_run(status_file, step_label, force_rerun=force_rerun):
         raise StepAlreadyDone(output_path)
 
     # Start heartbeat — LeaseLostError is fatal and signals the main thread.

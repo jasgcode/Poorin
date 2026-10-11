@@ -38,30 +38,20 @@ from levanter.trainer import TrainerConfig
 from poorin.execution.build_context import resolve_version
 from poorin.execution.lazy import ArtifactStep, StepContext
 from poorin.experiment.cli import build_options
-from poorin.experiment.data import mixture, pretokenized
+from poorin.experiment.data import mixture
 from poorin.experiment.namespacing import user_namespaced_name
 from poorin.experiment.overrides import Overrides
 from poorin.training.training import LevanterCheckpoint, resolve_checkpointer_output_path
 
+from experiments.datasets.fineweb_edu import fineweb_edu_10m_dataset
 from experiments.grug.base.model import GrugModelConfig
 from experiments.grug.base.train import GrugEvalConfig, GrugRunConfig, GrugTrainerConfig, run_grug
-from experiments.marin_tokenizer import marin_tokenizer
 
 # One local RTX 5090. A run-arg, not part of the config's identity: the same checkpoint can be
 # rebuilt on other hardware. The local backend ignores these values; they describe the machine.
 _TRAIN_RESOURCES = ResourceConfig.with_gpu("RTX5090", count=1, cpu=16, disk="128G", ram="96G")
 
-# 10M pretokenized FineWeb-Edu tokens (about 20 MB) from the Hugging Face Hub, tokenized with the
-# Marin tokenizer (the Llama 3 vocabulary, 128,256 entries, matching GRUG_130M_MODEL).
-_TRAIN_DATA = pretokenized(
-    "fineweb-edu-10M",
-    repo_id="marin-community/fineweb-edu-pretokenized-10M",
-    tokenizer=marin_tokenizer,
-    version="2026.06.28",
-    # The repository's head since 2025-05-15, pinned so a new upload cannot change the data under
-    # this version (D104).
-    revision="f13fbe24e962f9e20d75c3c6f08830bcfd0606b8",
-)
+_TRAIN_DATA = fineweb_edu_10m_dataset()
 
 GRUG_130M_MODEL = GrugModelConfig(
     vocab_size=128_256,

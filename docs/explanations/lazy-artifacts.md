@@ -35,7 +35,7 @@ creates a distinct artifact; changing how an existing `name@version` is built is
 before anything runs (see [Recipe drift](#recipe-drift)).
 
 In practice, experiment scripts rarely construct `ArtifactStep(...)` directly. Helpers such
-as `tokenized`, `hf_download`, and `train_lm` return the appropriate `ArtifactStep[T]` handle
+as `tokenized`, `pretokenized`, and `train_lm` return the appropriate `ArtifactStep[T]` handle
 from high-level arguments.
 
 ## Where pipeline code belongs
@@ -112,9 +112,8 @@ return train_lm(
 
 ## Lowering and running
 
-`lower(handle)` converts an `ArtifactStep[T]` graph into a `StepSpec` graph that
-`StepRunner` can execute; it traverses dependencies recursively. `run(*handles)` lowers and
-builds them (independent steps in parallel) and **returns each handle's loaded, typed
+`run(*handles)` lowers the handle graph into the `StepSpec` graph that `StepRunner` executes and
+builds it (independent steps in parallel) and **returns each handle's loaded, typed
 artifact**, in argument order — so the driver gets the resolved values directly, no separate
 read. `resolve(handle)` is `run` for a single handle, returning its one artifact.
 
@@ -133,7 +132,7 @@ guarantees is materialized first. `run`/`resolve` are the driver-level entry poi
 
 1. **Cache check** — if the output records a different recipe, the run is refused (see
    [Recipe drift](#recipe-drift)). If the output path's `.executor_status` reads `SUCCESS`,
-   skip. A `dev` version is mutable and always rebuilds.
+   skip. A `dev` version is mutable and always rebuilds. A step that failed earlier runs again.
 2. **Lock** — prevents concurrent processes from building the same step twice.
 
 The standard `main` block in a Poorin experiment wraps `build` in the shared command-line
@@ -160,7 +159,7 @@ from `ctx`. The fingerprint captures hyperparameters and dep identities but is i
 of the storage prefix, region, or hardware.
 
 An output records the fingerprint it was built from: in `.artifact.json` when the build
-finished, or in the `.executor_info` stub the runner writes when a build starts. Before
+finished, or in `.artifact.started.json`, which the runner writes when a build starts. Before
 anything runs, `run` checks every artifact in the graph against the fingerprint its output
 records, including dependencies that the runner would skip behind an already-built consumer.
 If any differ, the run is refused, and the error lists each changed artifact and its changed
@@ -236,7 +235,7 @@ YAML, decoded by draccus against the field's annotated type: `--set steps=200` g
 registered as `muon`. Values are YAML 1.1, so a string such as `yes`, `on`, or `null` meant
 literally must be quoted: `--set label="'yes'"`. `--sweep PATH=[V1, ...]` runs one trial per
 value, as if each were passed to `--set`. Several `--sweep` options form their Cartesian product
-(`poorin.experiment.sweep.grid`), and each `--set` applies to every trial.
+(`poorin.experiment.cli.grid`), and each `--set` applies to every trial.
 
 ```bash
 uv run --no-sync python experiments/grug/base/launch.py --version 2026.10.09 \
@@ -273,8 +272,8 @@ Trainings in one process run one at a time, at any `--max-concurrent`. Fray's lo
 each job as a thread of the process, and Levanter's tracker and the W&B run belong to the process,
 so a training that would start while another runs waits for it to finish
 (`poorin.training.training.exclusive_training`). Other steps, such as tokenization, still run up
-to `--max-concurrent` at once. Trainings also run one at a time in a sweep built in Python with
-`poorin.experiment.sweep.sweep` and `run`, and in any graph with several training steps.
+to `--max-concurrent` at once. Trainings also run one at a time in a sweep built in Python and passed to `run`, and in any
+graph with several training steps.
 
 With a calendar version, a rerun of a sweep builds only the trials that are missing, and a longer
 value list builds only the new values. With `dev`, every invocation runs every trial at a fresh
@@ -285,47 +284,21 @@ does not follow it. The tutorial passes `seq_len=model.max_seq_len` to `train_lm
 `--set model.max_seq_len=512` leaves `train_seq_len` unchanged. `--show-config` prints each
 trial's config without running anything.
 
-## Adopting pre-existing data
+## Pinning existing data
 
-`ArtifactStep.adopt` brings data that already exists on disk into the lazy artifact graph
-without moving or recomputing it:
-
-```python
-from poorin.execution.lazy import ArtifactStep
-from poorin.processing.tokenize.tokenize import TokenizedCache
-
-dclm_tokenized = ArtifactStep.adopt(
-    "tokenized/dclm-baseline",
-    "2026.06.28",
-    source="gs://marin-us-central1/tokenized/dclm/...",
-    kind=TokenizedCache,
-)
-```
-
-`kind` selects the handle's typed result, so a raw checkpoint path becomes a typed handle a
-consumer can read metrics from — e.g. `ArtifactStep.adopt(name, version, "gs://…", kind=LevanterCheckpoint)`.
-A consumer that depends on `dclm_tokenized` resolves to the source path. Running the adopted
-step writes a provenance record at the canonical `{prefix}/{name}/{version}` path, so the drift
-check covers the alias: re-adopting the same `name@version` from a different source is
-refused.
-
-Use `ArtifactStep.adopt` for datasets tokenized outside the current experiment graph, for
-checkpoints produced by a separate run, or for any pre-existing artifact that needs to appear
-in the dependency graph with full provenance tracking.
+A handle with a pin (`pin=` on the data builders, `override_path` on `ArtifactStep`) points at
+data that already exists instead of building it at `{prefix}/{name}/{version}`. A relative pin is
+resolved against the prefix. A pin writes no record, and the drift check skips it, so pin only data
+whose contents you trust not to change under the handle.
 
 ## Data builders
 
 `poorin.experiment.data` provides concise builders that return `ArtifactStep[TokenizedCache]`
 handles:
 
-- `tokenized(name, *, tokenizer, version, source=…, paths=…, raw=…, glob=…)` — tokenize a
-  HuggingFace dataset or a raw path glob into a Levanter cache. Provide exactly one of
-  `source`, `paths`, or `raw+glob`.
-- `hf_download(name, *, hf_id, revision, version, urls_glob=…)` — download a HuggingFace
-  repo under the output prefix as a raw-data `ArtifactStep[Artifact]` for `tokenized` to consume.
-- `raw_download(name, *, fn, build_config, version)` — a raw-data download driven by a custom
-  `fn`/`build_config`, for sources `hf_download` does not cover.
-- `pretokenized(name, *, repo_id, tokenizer, version)` — a pre-built Levanter cache hosted on
+- `tokenized(name, *, tokenizer, version, source=…, paths=…)` — tokenize a HuggingFace dataset
+  or a raw path glob into a Levanter cache. Provide exactly one of `source` or `paths`.
+- `pretokenized(name, *, repo_id, tokenizer, version, revision=…)` — a pre-built Levanter cache hosted on
   HuggingFace (downloads rather than re-tokenizes).
 
 For a custom single step (a filter, conversion, or format change), construct an

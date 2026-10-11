@@ -26,7 +26,6 @@ modules = [
     "poorin.processing.classification.deduplication.fuzzy_dups",
     "poorin.processing.classification.deduplication.verify_fuzzy_dups",
     "poorin.experiment.cli",
-    "poorin.experiment.sweep",
     "poorin.experiment.runs",
     # Workbench: evaluation
     "levanter.main.eval_lm",

@@ -14,7 +14,7 @@ from poorin.execution.artifact import ArtifactRecord, write_record
 from poorin.execution.lazy import OUT, apply, run
 from poorin.execution.step_status import STATUS_SUCCESS, StatusFile
 from poorin.experiment.runs import main
-from rigging.provenance import Provenance, save_snapshot
+from rigging.provenance import Provenance, launched_as, save_snapshot
 
 
 def _git(checkout: Path, *args: str) -> str:
@@ -53,7 +53,8 @@ def _fail(out):
 
 def _build(name, provenance, version="2026.07.16", **inputs):
     handle = apply(name, _write, version=version, out=OUT, **inputs)
-    run(handle, provenance=provenance)
+    with launched_as(provenance):
+        run(handle)
     return handle
 
 
@@ -102,8 +103,8 @@ def test_list_limit_keeps_the_newest_runs(checkout, prefix):
 
 
 def test_list_shows_a_failed_build_without_code(checkout, prefix):
-    with pytest.raises(RuntimeError):
-        run(apply("data/broken", _fail, version="2026.07.16", out=OUT), provenance=Provenance.capture())
+    with pytest.raises(RuntimeError), launched_as(Provenance.capture()):
+        run(apply("data/broken", _fail, version="2026.07.16", out=OUT))
     result = CliRunner().invoke(main, ["list"])
     assert "failed" in result.output and "data/broken@2026.07.16" in result.output
     assert result.output.rstrip().endswith("-")
@@ -156,8 +157,8 @@ def test_show_does_not_pass_a_recorded_commit_to_git_as_an_option(checkout, pref
 
 
 def test_show_says_a_failed_build_wrote_no_record(checkout, prefix):
-    with pytest.raises(RuntimeError):
-        run(apply("data/broken", _fail, version="2026.07.16", out=OUT), provenance=Provenance.capture())
+    with pytest.raises(RuntimeError), launched_as(Provenance.capture()):
+        run(apply("data/broken", _fail, version="2026.07.16", out=OUT))
     result = CliRunner().invoke(main, ["show", "data/broken@2026.07.16"])
     assert result.exit_code == 0, result.output
     assert result.output.splitlines()[0].endswith("failed")

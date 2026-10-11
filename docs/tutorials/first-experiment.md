@@ -178,12 +178,7 @@ Rerunning the same script skips steps whose outputs already exist.
 ### Rerunning a failed step
 
 `run` skips steps that succeeded and reruns steps that failed, so a failed step retries on
-the next invocation. To make a previous failure raise instead of retrying, pass
-`force_run_failed=False`:
-
-```python
-run(build(), force_run_failed=False)
-```
+the next invocation.
 
 ### Rerunning a succeeded step
 

@@ -1681,6 +1681,60 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
   shares the check's commit and loses its ref; the commit stays in Git's object store until garbage
   collection.
 
+### D109. One path through the experiment and execution layers
+
+- **When:** 2026-10-11. **Status:** Adopted.
+- **Decision:** A second `/simplify` pass, over the experiment workflow, the execution layer, and
+  `rigging.provenance`, judged by one rule from the owner: one person can understand the whole
+  project. Each change removes a path no experiment takes or a second way to do one thing.
+  - The step runner runs `step.fn(output_path)` and nothing else. Its own Fray submission
+    (`StepSpec.resources`, the `RemoteCallable` unwrap) goes; a remote step's function submits
+    itself through `poorin.execution.remote`, as every builder already did. `dry_run`,
+    `force_run_failed`, `PreviousTaskFailedError`, and the never-written `DEP_FAILED` status go:
+    a failed step always reruns.
+  - `StepSpec` is only the lowered form of an `ArtifactStep`. It carries `version`,
+    `fingerprint`, `fingerprint_payload`, and `pinned` as fields in place of the `hash_attrs`
+    dict and its string keys; `hash_id`, `name_with_hash`, `output_path_prefix`,
+    `writes_record`, and the plain-step record path (`write_step_record`, `StepRecordIdentity`)
+    go. The plain-`StepSpec` factories in datakit and processing (download, normalize, MinHash,
+    fuzzy dedup, decontamination, attribute tokenizing, store building) go with them, and only
+    tests called them; the functions they wrapped stay.
+  - The readers of Marin's on-disk formats go: the Ray `.executor_info` sidecar, the pre-#6649
+    bare-payload record, and the JSON-lines status file. Every output under the owner's prefix
+    has an `.artifact.json` and a one-token status. A started build records its recipe in
+    `.artifact.started.json` in place of the Ray-shaped `.executor_info` stub, so nothing needs a
+    tag to tell the stub from a record. This replaces the stub the overrides spec names.
+  - Adopting existing data (`ArtifactStep.adopt`) goes; a pin is the one way to use data built
+    elsewhere.
+  - Launch provenance reaches a record one way: the step writes `launch_provenance()`, which
+    `launched_as` sets for a command-line run. The `provenance=` parameter of `run`, `lower_all`,
+    and the CLI's runner seam goes, and so do `lazy.lower` and `ArtifactStep.lower`, which captured
+    their own. W&B uses the installed launch after one `git rev-parse` in place of a capture of its
+    own.
+  - Smaller: `BuildContext` (one field) gives way to the `VersionCodex` it held; `sweep.py` goes
+    (`grid` moves into `cli.py`, and `sweep()` had only test callers); `dataset_main`,
+    `hf_download`, `raw_download`, and `tokenized(raw=, glob=)` go; `train_lm` loses six
+    parameters no call passed; `rigging.provenance` loses `from_git`, `dedup_key`, `from_json`, and
+    `to_json`, has one strict and one lenient Git runner, and owns listing and deleting snapshot
+    refs for `tools.prune_check`. The step concurrency default, the path rooting at the prefix,
+    the `{prefix}/{name}/{version}` address, the `name@version` label, the status file name and a
+    lock-free status read each have one definition. The plan builds each handle's config two fewer
+    times, and a printed Git command shows 12 characters of a hash everywhere.
+  - The tutorial and grug share one FineWeb-Edu handle, `experiments/datasets/fineweb_edu.py`, so
+    the tutorial's copy gains D104's pinned revision; the two copies had given one
+    `name@version` two recipes.
+- **Not applied, and why:** `tree_hash` stays in the record and in W&B; dropping it changes both.
+  The data and dedup functions the deleted factories wrapped stay: they are the workbench's data
+  preparation (`tools/roots.toml`). `apply` stays, as the documented way to write a custom step.
+  `runs list` still reads every record before filtering, since its sort needs each record's time.
+- **Why:** The owner asked for a `/simplify` pass of the experiment workflow and modules on
+  2026-10-11, with the goal that a human can understand the entire project, and chose to delete
+  the legacy readers, keep pin over adopt, type the step's identity, delete datakit's step
+  builders and `train_lm`'s unused parameters, and keep one provenance channel.
+- **Cost if wrong:** An output built by Marin's Ray executor, or a build started before this change
+  and not finished, no longer reads as recorded; rebuild it or write its record. Data built
+  elsewhere is pinned, and a pin is not drift-checked.
+
 ---
 
 ## Deferred

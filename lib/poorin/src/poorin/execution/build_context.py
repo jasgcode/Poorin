@@ -11,9 +11,8 @@ policy that rides on an ambient context:
 
 - A :class:`VersionCodex` maps an artifact ``name`` to a version — one ``default`` plus per-name
   versions in ``by_name``.
-- A :class:`BuildContext` carries the codex (and is the seam for future build-time properties).
-  It is set as an ambient :class:`~contextvars.ContextVar` while an experiment's handles are
-  *constructed*, via :func:`build_context`.
+- :func:`build_context` makes a codex ambient (a :class:`~contextvars.ContextVar`) while an
+  experiment's handles are *constructed*.
 - :func:`resolve_version` is what a builder calls: an explicit ``version=`` always wins; otherwise
   the version comes from the ambient codex. A builder invoked with no explicit version and no
   active context is an error — a deferred version never silently defaults.
@@ -33,18 +32,15 @@ from contextlib import contextmanager
 from contextvars import ContextVar
 from dataclasses import dataclass, field
 
-from poorin.execution.artifact import validate_version
-
 
 @dataclass(frozen=True)
 class VersionCodex:
     """Resolves an artifact ``name`` to a version: a ``default`` plus per-name versions in ``by_name``.
 
     ``by_name`` is keyed by the ``name`` passed to the builder (before any per-user namespacing),
-    matched exactly. The default and every per-name version are validated at construction, so a
-    malformed ``--version-of`` fails before anything is built. ``unused_names`` reports names that
-    no builder ever asked for — typically a typo, or a name aimed at an artifact that hardcodes its
-    version.
+    matched exactly. Each version is validated where it is used, by the handle it versions.
+    ``unused_names`` reports names that no builder ever asked for — typically a typo, or a name
+    aimed at an artifact that hardcodes its version.
     """
 
     default: str
@@ -52,14 +48,6 @@ class VersionCodex:
     # Names actually consulted via version_for, for the unused-name check. Instrumentation
     # only (compare=False, init=False); mutating the set on a frozen instance is allowed.
     _used: set[str] = field(default_factory=set, compare=False, repr=False, init=False)
-
-    def __post_init__(self) -> None:
-        validate_version(self.default)
-        for name, version in self.by_name.items():
-            try:
-                validate_version(version)
-            except ValueError as e:
-                raise ValueError(f"{name!r}: {e}") from e
 
     def version_for(self, name: str) -> str:
         """The version for artifact ``name``: its entry in ``by_name`` if there is one, else the default."""
@@ -73,53 +61,36 @@ class VersionCodex:
         return frozenset(self.by_name) - frozenset(self._used)
 
 
-@dataclass(frozen=True)
-class BuildContext:
-    """Ambient context that rides while an experiment's handles are constructed.
-
-    Carries the :class:`VersionCodex` today; the extension point for other build-time properties
-    (e.g. shared tags or a region hint) later, so those can ride the context instead of being
-    threaded through every builder.
-    """
-
-    versions: VersionCodex
-
-
-_ACTIVE: ContextVar["BuildContext | None"] = ContextVar("poorin_build_context", default=None)
+_ACTIVE: ContextVar["VersionCodex | None"] = ContextVar("poorin_build_versions", default=None)
 
 
 @contextmanager
-def build_context(ctx: BuildContext) -> Iterator[BuildContext]:
-    """Make ``ctx`` the ambient build context for the duration of the ``with`` block.
+def build_context(versions: VersionCodex) -> Iterator[VersionCodex]:
+    """Make ``versions`` the ambient codex for the duration of the ``with`` block.
 
     Construct the experiment's handle graph inside the block so deferring builders can resolve
-    their versions from ``ctx``. Nests correctly and is restored on exit (including on exception).
+    their versions from it. Nests correctly and is restored on exit (including on exception).
     """
-    token = _ACTIVE.set(ctx)
+    token = _ACTIVE.set(versions)
     try:
-        yield ctx
+        yield versions
     finally:
         _ACTIVE.reset(token)
-
-
-def current_build_context() -> BuildContext | None:
-    """The active :class:`BuildContext`, or ``None`` outside any :func:`build_context` block."""
-    return _ACTIVE.get()
 
 
 def resolve_version(name: str, version: str | None) -> str:
     """The version for artifact ``name``: ``version`` if given, else the ambient codex's choice.
 
     An explicit ``version`` always wins (deferral is opt-in per call). With no explicit version and
-    no active :class:`BuildContext`, this raises rather than guessing — a deferred version never
+    no active :func:`build_context`, this raises rather than guessing — a deferred version never
     silently defaults.
     """
     if version is not None:
         return version
-    ctx = current_build_context()
-    if ctx is None:
+    versions = _ACTIVE.get()
+    if versions is None:
         raise ValueError(
-            f"{name}: no version given and no active BuildContext. Pass version=..., or construct "
-            "this handle inside build_context(BuildContext(versions=VersionCodex(default=...)))."
+            f"{name}: no version given and no active build_context. Pass version=..., or construct "
+            "this handle inside build_context(VersionCodex(default=...))."
         )
-    return ctx.versions.version_for(name)
+    return versions.version_for(name)

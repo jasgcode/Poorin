@@ -11,9 +11,6 @@ Each leaf module is one dataset (or dataset family) and exposes lazy
   subset, for a family. Mixture weights stay separate (``<NAME>_MIXTURE_WEIGHTS``);
   an experiment chooses weights and assembles them with ``mixture()``.
 
-Each module is also runnable: ``python -m experiments.datasets.<name>`` prints its
-build plan, and ``--run`` builds it (see :func:`poorin.experiment.data.dataset_main`).
-
 Import the catalog you need directly, e.g.
 ``from experiments.datasets.<name> import <name>_datasets``. Upstream Marin's catalogs (the Delphi
 mix: Nemotron-CC, StarCoder, ProofPile, Paloma, uncheatable-eval) were removed by D88 and remain at

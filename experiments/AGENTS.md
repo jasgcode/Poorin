@@ -14,7 +14,7 @@ experiment-specific tests beside the experiment, outside root `tests/**` and
 
 All dataset definitions live under `experiments/datasets/`, one leaf module per
 dataset (or dataset family), built with the lazy data builders in
-`poorin.experiment.data` (`tokenized`, `hf_download`, `pretokenized`, ...).
+`poorin.experiment.data` (`tokenized`, `pretokenized`).
 
 - A single-corpus dataset exposes `<name>_dataset() -> ArtifactStep[TokenizedCache]`.
 - A keyed family exposes `<name>_datasets() -> dict[str, ArtifactStep[TokenizedCache]]`,
@@ -23,11 +23,8 @@ dataset (or dataset family), built with the lazy data builders in
 - Mixture weights are policy, not catalog: keep them in a separate
   `<NAME>_MIXTURE_WEIGHTS` constant keyed the same way, and let the experiment pick
   weights and assemble them with `mixture()`.
-- A module that builds tokenized-cache handles is runnable: end it with
-  `if __name__ == "__main__": dataset_main(<family-dict>)`. `python -m
-  experiments.datasets.<name>` prints the build plan; `--run` (optionally `--only
-  <keys>`) builds it. Never change a handle's `name=`/`version=`/`pin=`/path
-  strings — those are artifact identities.
+- Never change a handle's `name=`/`version=`/`pin=`/path strings — those are artifact
+  identities.
 - `__init__.py` stays docstring-only (no re-exports); import catalogs directly, e.g.
   `from experiments.datasets.<name> import <name>_datasets`.
 
@@ -35,7 +32,7 @@ dataset (or dataset family), built with the lazy data builders in
 
 - Do not hardcode `gs://...` paths in experiment configs unless there is no viable alternative.
 - Prefer artifact dependencies resolved at run time via `ctx.artifact_path(dep)` inside a recipe's `build_config`, so paths stay region-aware and reproducible.
-- To reference a pre-existing external output, use `ArtifactStep.adopt(name, version, source)` (see `poorin.execution.lazy`) instead of a raw `gs://` URL.
+- To reference a pre-existing external output, pin it (`pin=` on the data builders, `override_path` on `ArtifactStep`) instead of hardcoding a raw `gs://` URL in a config.
 - If a referenced artifact may come from another region, point its source at a `mirror://...` path so reads are local-first and copied once when needed.
 
 ## Cross-Region Large Artifacts

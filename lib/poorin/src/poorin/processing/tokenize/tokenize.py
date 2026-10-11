@@ -74,20 +74,13 @@ class TokenizedCache(Artifact):
     The realized artifact for every tokenized-dataset handle. ``load`` is a path ref (no tokens
     pulled into the launcher); the cache's tokenizer/format/tags are read from its recorded
     config, so a consumer (a training :func:`~poorin.experiment.data.mixture`) builds a Levanter
-    component from the artifact alone, never from the producing recipe. Adopted caches resolve
-    through ``record.source``; their tokenizer/format come from the synthetic config recorded when
-    the cache is adopted.
+    component from the artifact alone, never from the producing recipe. The cache directory is the
+    artifact's ``path``.
     """
 
     @property
     def _config(self) -> dict:
         return (self.record.config if self.record is not None else None) or {}
-
-    @property
-    def cache_dir(self) -> str:
-        """The Levanter cache directory: an adopted cache's source, else this artifact's path."""
-        rec = self.record
-        return (rec.source if rec is not None and rec.source else None) or self.path
 
     @property
     def tokenizer(self) -> str:
@@ -113,7 +106,7 @@ class TokenizedCache(Artifact):
     @property
     def num_train_tokens(self) -> int:
         """Total number of tokens in the training split (from the cache's ``.stats.json``)."""
-        return read_tokenized_cache_stats(self.cache_dir, "train").total_tokens
+        return read_tokenized_cache_stats(self.path, "train").total_tokens
 
     def as_component(self) -> DatasetComponent:
         """A Levanter mixture component pointing at this built cache.
@@ -121,7 +114,7 @@ class TokenizedCache(Artifact):
         A built cache needs no raw urls; the component carries the cache dir, format, and tags.
         """
         source = UrlDatasetSourceConfig(
-            tags=self.tags, train_urls=[], validation_urls=[], cache_dir=self.cache_dir, format=self.format
+            tags=self.tags, train_urls=[], validation_urls=[], cache_dir=self.path, format=self.format
         )
         return DatasetComponent(source=source, cache_dir=source.cache_dir, format=source.format, tags=source.tags)
 

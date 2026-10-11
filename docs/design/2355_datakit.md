@@ -114,6 +114,9 @@ Multiple attribute datasets from different stages can be joined together during 
 
 ## Step Orchestration via StepSpec
 
+> Superseded in Poorin: datakit stages are plain functions, and an experiment wraps them in
+> `ArtifactStep` handles. `StepSpec` is now only the runner's lowered form of a handle (D109).
+
 Datakit builds on `StepSpec` \- the pure-data step descriptor that captures identity, dependencies. Each datakit stage (normalize, classify, dedup, etc.) is a `StepSpec` with:
 
 * **`name`**: human-readable stage name (e.g., `"fineweb/normalize"`)

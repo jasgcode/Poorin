@@ -6,20 +6,14 @@
 A mutable (``dev``) checkpoint addresses identity on ``{name}/dev`` alone, so two people
 iterating on the same experiment write to the same path and clobber each other — and a
 resumption checkpointer would resume from whichever run last touched it.
-:func:`user_owned_name` prefixes an artifact unconditionally when its output is
-owned by the caller. :func:`user_namespaced_name` applies that prefix only to
-mutable training steps. Fixed checkpoints and datasets otherwise keep their
+:func:`user_namespaced_name` prefixes the name of a mutable training step with the user's.
+Fixed checkpoints and datasets otherwise keep their
 shared names, so published runs stay citable and tokenized caches remain shared.
 """
 
 from rigging.provenance import username_segment
 
 from poorin.execution.artifact import is_mutable_version
-
-
-def user_owned_name(name: str) -> str:
-    """Return ``users/{username}/{name}`` for a user-owned artifact."""
-    return f"users/{username_segment()}/{name}"
 
 
 def user_namespaced_name(name: str, version: str) -> str:
@@ -31,4 +25,4 @@ def user_namespaced_name(name: str, version: str) -> str:
     """
     if not is_mutable_version(version):
         return name
-    return user_owned_name(name)
+    return f"users/{username_segment()}/{name}"

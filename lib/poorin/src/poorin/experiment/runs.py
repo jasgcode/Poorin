@@ -25,16 +25,13 @@ from rigging.filesystem.cluster_config import poorin_prefix
 from rigging.filesystem.factory import url_to_fs
 from rigging.provenance import Provenance, read_git
 
-from poorin.execution.artifact import ArtifactRecord, read_record
-from poorin.execution.step_status import STATUS_DEP_FAILED, STATUS_FAILED, STATUS_SUCCESS, StatusFile
+from poorin.execution.artifact import ArtifactRecord, artifact_path, read_record
+from poorin.execution.step_status import STATUS_FAILED, STATUS_FILENAME, STATUS_SUCCESS, read_status
+from poorin.experiment.code_check import SHOWN_HASH_LENGTH
 
-# The file beside every output the runner scheduled; it marks an artifact's directory.
-STATUS_FILENAME = ".executor_status"
 # Prefix directories that hold scratch space, not artifacts.
 SCRATCH_DIRS = frozenset({"tmp"})
 DEFAULT_LIMIT = 30
-# Hash characters `show` prints in a command: unambiguous in a repository of any size.
-SHOWN_HASH_LENGTH = 12
 # Continuation lines of `show` start under its values.
 SHOW_INDENT = " " * 15
 NO_CODE = "-"
@@ -70,10 +67,10 @@ class Run:
 
 
 def _state(output_path: str) -> RunState:
-    status = StatusFile(output_path, worker_id="runs").status
+    status = read_status(output_path)
     if status == STATUS_SUCCESS:
         return RunState.BUILT
-    if status in (STATUS_FAILED, STATUS_DEP_FAILED):
+    if status == STATUS_FAILED:
         return RunState.FAILED
     return RunState.STARTED
 
@@ -241,7 +238,7 @@ def show(target: str, prefix: str | None) -> None:
     """Everything about one run's code. TARGET is NAME@VERSION or the output's path."""
     if "@" in target:
         name, _, version = target.rpartition("@")
-        path = f"{(prefix or poorin_prefix()).rstrip('/')}/{name}/{version}"
+        path = artifact_path(prefix or poorin_prefix(), name, version)
     else:
         path = target.rstrip("/")
     record = read_record(path)

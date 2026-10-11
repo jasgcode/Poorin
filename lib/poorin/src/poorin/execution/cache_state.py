@@ -14,9 +14,6 @@ from dataclasses import dataclass
 from enum import StrEnum
 from typing import Protocol
 
-from rigging.filesystem.cluster_config import poorin_prefix
-from rigging.filesystem.storage_path import prefix_join
-
 from poorin.execution.artifact import (
     DriftAcceptanceError,
     FingerprintMismatchError,
@@ -24,7 +21,7 @@ from poorin.execution.artifact import (
     recorded_recipe,
 )
 from poorin.execution.fingerprint import describe_drift, fingerprint_hash
-from poorin.execution.step_status import STATUS_SUCCESS, StatusFile
+from poorin.execution.step_status import STATUS_SUCCESS, read_status
 
 
 class Handle(Protocol):
@@ -33,6 +30,11 @@ class Handle(Protocol):
     name: str
     version: str
     override_path: str | None
+
+    @property
+    def label(self) -> str: ...
+
+    def path(self) -> str: ...
 
     def fingerprint_payload(self) -> str: ...
 
@@ -52,6 +54,8 @@ class CacheState(StrEnum):
 @dataclass(frozen=True)
 class HandleState:
     handle: Handle
+    payload: str
+    """The canonical config JSON ``fingerprint`` hashes."""
     fingerprint: str
     state: CacheState
     recorded_fingerprint: str | None
@@ -60,34 +64,29 @@ class HandleState:
 
     @property
     def label(self) -> str:
-        return f"{self.handle.name}@{self.handle.version}"
+        return self.handle.label
 
 
-def record_path(handle: Handle) -> str:
-    """Where ``handle``'s status and record live: ``{prefix}/{name}/{version}``, an adopted handle
-    included (its data stays at the source; its record does not)."""
-    return prefix_join(poorin_prefix(), f"{handle.name}/{handle.version}")
+def _handle_state(handle: Handle, payload: str, fingerprint: str) -> HandleState:
+    """``handle``'s state, from the recipe and status recorded at its output path."""
 
+    def state(cache_state: CacheState, recorded_fingerprint: str | None = None, change: str = "") -> HandleState:
+        return HandleState(handle, payload, fingerprint, cache_state, recorded_fingerprint, change)
 
-def handle_state(handle: Handle) -> HandleState:
-    """``handle``'s state, from the recipe and status recorded at :func:`record_path`."""
-    payload = handle.fingerprint_payload()
-    fingerprint = fingerprint_hash(payload)
     if handle.override_path is not None:
-        return HandleState(handle, fingerprint, CacheState.PINNED, None, "")
-    path = record_path(handle)
+        return state(CacheState.PINNED)
+    path = handle.path()
     recorded = recorded_recipe(path)
     if recorded is not None and recorded.fingerprint != fingerprint:
-        change = describe_drift(recorded.payload, payload)
-        return HandleState(handle, fingerprint, CacheState.DRIFTED, recorded.fingerprint, change)
+        return state(CacheState.DRIFTED, recorded.fingerprint, describe_drift(recorded.payload, payload))
     recorded_fingerprint = recorded.fingerprint if recorded is not None else None
     if is_mutable_version(handle.version):
-        return HandleState(handle, fingerprint, CacheState.MUTABLE, recorded_fingerprint, "")
-    if StatusFile(path, worker_id="plan").status == STATUS_SUCCESS:
-        return HandleState(handle, fingerprint, CacheState.BUILT, recorded_fingerprint, "")
+        return state(CacheState.MUTABLE, recorded_fingerprint)
+    if read_status(path) == STATUS_SUCCESS:
+        return state(CacheState.BUILT, recorded_fingerprint)
     if recorded is not None:
-        return HandleState(handle, fingerprint, CacheState.STARTED, recorded_fingerprint, "")
-    return HandleState(handle, fingerprint, CacheState.NOT_BUILT, None, "")
+        return state(CacheState.STARTED, recorded_fingerprint)
+    return state(CacheState.NOT_BUILT)
 
 
 def graph_states(handles: Iterable[Handle]) -> list[HandleState]:
@@ -98,17 +97,17 @@ def graph_states(handles: Iterable[Handle]) -> list[HandleState]:
     share a ``name@version`` but not a recipe claim one output for two recipes, and raise
     :class:`FingerprintMismatchError` before anything is read.
     """
-    first: dict[str, tuple[Handle, str]] = {}
+    first: dict[str, tuple[Handle, str, str]] = {}
     for handle in handles:
-        label = f"{handle.name}@{handle.version}"
-        fingerprint = fingerprint_hash(handle.fingerprint_payload())
-        seen = first.setdefault(label, (handle, fingerprint))[1]
+        payload = handle.fingerprint_payload()
+        fingerprint = fingerprint_hash(payload)
+        seen = first.setdefault(handle.label, (handle, payload, fingerprint))[2]
         if seen != fingerprint:
             raise FingerprintMismatchError(
-                f"{label} is built from two recipes in this graph, {seen} and {fingerprint}. "
+                f"{handle.label} is built from two recipes in this graph, {seen} and {fingerprint}. "
                 "Give each recipe its own name or version."
             )
-    return [handle_state(handle) for handle, _ in first.values()]
+    return [_handle_state(*entry) for entry in first.values()]
 
 
 def check_accept_drift(states: Iterable[HandleState], accept_drift: Collection[str]) -> None:

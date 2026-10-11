@@ -15,13 +15,14 @@ from enum import StrEnum
 
 from rigging.provenance import Provenance
 
-from poorin.execution.artifact import FINGERPRINT_KEY, PINNED_KEY, VERSION_KEY, is_mutable_version
 from poorin.execution.step_spec import StepSpec
 
 # The most uncommitted paths a refusal lists.
 REFUSAL_PATHS = 10
 # Aligns a continuation line under the plan's "Code:   " label.
 PLAN_INDENT = " " * 8
+# Hash characters a printed Git command uses: unambiguous in a repository of any size.
+SHOWN_HASH_LENGTH = 12
 # What to do about a refusal. The refused run may itself be a dev run whose calendar input would
 # build, so neither suggests a dev version.
 SNAPSHOT_ADVICE = "Commit the changes and run again, or pass --allow-uncommitted to build from a snapshot."
@@ -52,13 +53,7 @@ class CodeCheck:
 def check_code(provenance: Provenance, builds: Sequence[StepSpec], *, allow_uncommitted: bool) -> CodeCheck:
     """Whether a run that launches ``builds`` (:func:`~poorin.execution.step_runner.steps_to_build`)
     may build from the code ``provenance`` describes."""
-    calendar = tuple(
-        f"{step.name}@{step.hash_attrs[VERSION_KEY]}"
-        for step in builds
-        if FINGERPRINT_KEY in step.hash_attrs
-        and not step.hash_attrs.get(PINNED_KEY)
-        and not is_mutable_version(step.hash_attrs[VERSION_KEY])
-    )
+    calendar = tuple(step.label for step in builds if not step.pinned and not step.rebuilds)
     checkout = bool(provenance.base_commit)
     if checkout and not provenance.dirty:
         verdict = CodeVerdict.COMMITTED
@@ -80,9 +75,14 @@ def _source(check: CodeCheck) -> str:
     return "from uncommitted code" if check.provenance.base_commit else "outside a Git checkout"
 
 
+def code_line(provenance: Provenance) -> str:
+    """The ``Code:`` line the plan and a run print."""
+    return f"Code:   {provenance.label}"
+
+
 def plan_lines(check: CodeCheck) -> list[str]:
     """The plan's ``Code:`` line and, for a tree that is not clean, what ``--run`` would do."""
-    lines = [f"Code:   {check.provenance.label}"]
+    lines = [code_line(check.provenance)]
     if check.verdict is CodeVerdict.SNAPSHOT:
         lines.append(f"{PLAN_INDENT}--run saves a snapshot")
     elif check.verdict is CodeVerdict.UNRECORDED:

@@ -266,15 +266,13 @@ for a stated user:
 |---|---|---|
 | `poorin` | Package marker | package |
 | `poorin.datakit` | Datakit package: standard Parquet format notes and `part-NNNNN-of-MMMMM` filename helper | R1 |
-| `poorin.datakit.canonical` | Package marker | package |
-| `poorin.datakit.canonical.fineweb_edu` | FineWeb-Edu download step from Hugging Face at a pinned revision | `poorin.datakit.canonical.fineweb_edu` |
 | `poorin.datakit.chat_template` | Marin chat template string shared by tokenizer export and Datakit rendering | R1 |
 | `poorin.datakit.copartitioned` | Co-partitioned input/output shard layout and source manifest for Datakit stages | `poorin.processing.classification.deduplication.fuzzy_dups` |
 | `poorin.datakit.decon` | Bloom-filter n-gram decontamination of normalized data against eval text, emitting attributes | `poorin.datakit.decon` |
 | `poorin.datakit.download` | Package marker | R1 |
 | `poorin.datakit.download.http_session` | Retrying `requests.Session` factory for HTTP downloaders | `poorin.datakit.download.nemotron_v1` |
-| `poorin.datakit.download.huggingface` | Streams a Hugging Face dataset repo to an fsspec path; download step builder | R1 |
-| `poorin.datakit.download.nemotron_v1` | Nemotron-CC v1 download from Common Crawl and per-split normalize steps | `poorin.datakit.download.nemotron_v1` |
+| `poorin.datakit.download.huggingface` | Streams a Hugging Face dataset repo to an fsspec path | R1 |
+| `poorin.datakit.download.nemotron_v1` | Nemotron-CC v1 download from Common Crawl and its per-split directory layout | `poorin.datakit.download.nemotron_v1` |
 | `poorin.datakit.download.zstd_jsonl` | Streaming reader for zstd-compressed JSONL download sources | `poorin.datakit.download.nemotron_v1` |
 | `poorin.datakit.normalize` | Normalizes raw JSONL/Parquet into Datakit Parquet with content ids, dedup, sorted partitions | R1 |
 | `poorin.datakit.source_key` | Strips Marin bucket and prefix roots to give Datakit artifacts stable source keys | R1 |
@@ -296,8 +294,8 @@ for a stated user:
 | `poorin.execution.fingerprint` | Canonical JSON encoding and hashing of step configs for drift detection | R1 |
 | `poorin.execution.lazy` | Lazy artifact steps: `name@version` handles, step context, lowering to the step runner, graph walk | R1 |
 | `poorin.execution.remote` | `@remote` decorator that submits a step function as a Fray job | R1 |
-| `poorin.execution.step_runner` | DAG scheduler running `StepSpec`s with caching, locking, status writes, Fray dispatch | R1 |
-| `poorin.execution.step_spec` | `StepSpec` dataclass: step name, deps, hash attributes, output path, function | R1 |
+| `poorin.execution.step_runner` | DAG scheduler running `StepSpec`s with caching, drift checks, locking, status writes | R1 |
+| `poorin.execution.step_spec` | `StepSpec` dataclass: a lowered artifact's name, version, output path, fingerprint, deps, function | R1 |
 | `poorin.execution.step_status` | Per-step status files and heartbeat lock files under each output path | R1 |
 | `poorin.experiment` | Package marker; docstring points to the `data`, `sweep`, and `train` submodules | R1 |
 | `poorin.experiment.cli` | Click options (`--version`, `--version-of`, `--set`, `--sweep`, `--run`) that plan or build an experiment graph | R1 |
@@ -306,7 +304,6 @@ for a stated user:
 | `poorin.experiment.namespacing` | Prefixes mutable training artifact names with the user to avoid path collisions | R2 |
 | `poorin.experiment.overrides` | Typed dotted-path config overrides from --set and --sweep, decoded by draccus | R1 |
 | `poorin.experiment.runs` | Lists the runs under the prefix and shows the code behind one | `poorin.experiment.runs` |
-| `poorin.experiment.sweep` | Grid enumeration and one trial handle per grid point for hyperparameter sweeps | R1 |
 | `poorin.experiment.train` | `train_lm`: assembles a Levanter LM training step with mesh, checkpointer, evals | R1 |
 | `poorin.processing` | Package marker | R1 |
 | `poorin.processing.classification` | Package marker | `poorin.processing.classification.deduplication.exact` |

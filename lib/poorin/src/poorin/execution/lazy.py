@@ -23,8 +23,8 @@ The model:
   everything pulled from ``ctx``) is recorded beside the output, never in the path, and a changed
   recipe under an existing output is refused.
 
-Pre-existing data is brought in with :meth:`ArtifactStep.adopt`. :func:`run` runs handles for their side
-effects; :func:`resolve` runs one and loads its typed artifact. A custom step is
+Existing data is referenced with a pin (``override_path``). :func:`run` builds handles and loads
+their typed artifacts; :func:`resolve` does that for one. A custom step is
 just a function that constructs and returns an ``ArtifactStep`` (see ``poorin.experiment.data`` /
 ``poorin.experiment.train`` for the dataset and training builders) — there is no generic wrapper to
 learn.
@@ -37,31 +37,27 @@ from dataclasses import dataclass, field
 from typing import Any, Final, Generic, TypeVar, cast
 
 from rigging.filesystem.cluster_config import poorin_prefix, poorin_region
-from rigging.filesystem.factory import url_to_fs
-from rigging.filesystem.storage_path import prefix_join
-from rigging.provenance import Provenance
+from rigging.provenance import launch_provenance
 
 from poorin.execution.artifact import (
-    FINGERPRINT_KEY,
-    PINNED_KEY,
-    RESULT_TYPE_KEY,
-    VERSION_KEY,
     Artifact,
     ArtifactRecord,
     FingerprintMismatchError,
     accept_recipe,
+    artifact_path,
     drift_message,
     is_mutable_version,
+    resolve_path,
     result_type_name,
     validate_path_segment,
     validate_version,
     write_record,
 )
 from poorin.execution.build_context import resolve_version
-from poorin.execution.cache_state import CacheState, HandleState, check_accept_drift, graph_states, record_path
+from poorin.execution.cache_state import CacheState, HandleState, check_accept_drift, graph_states
 from poorin.execution.fingerprint import canonical_json, fingerprint_hash
-from poorin.execution.step_runner import StepRunner
-from poorin.execution.step_spec import StepSpec, _is_relative_path
+from poorin.execution.step_runner import DEFAULT_MAX_CONCURRENT, StepRunner
+from poorin.execution.step_spec import StepSpec
 
 T = TypeVar("T", bound=Artifact)
 
@@ -122,7 +118,7 @@ class StepContext:
     def _require_declared(self, dep: "ArtifactStep") -> None:
         if dep not in self._deps:
             raise ValueError(
-                f"{dep.name}@{dep.version} is not a declared dependency of this step; "
+                f"{dep.label} is not a declared dependency of this step; "
                 "add it to deps=(...) so the runner materializes it before this step runs"
             )
 
@@ -175,7 +171,7 @@ class StepContext:
             prefix="<prefix>",
             region="<region>",
             is_fingerprint=True,
-            _dep_ref=lambda d: f"{d.name}@{d.version}",
+            _dep_ref=lambda d: d.label,
             _runtime_args={key: f"<{key}>" for key in runtime_arg_keys},
             _deps=tuple(deps),
         )
@@ -206,36 +202,27 @@ class ArtifactStep(Generic[T]):
     fingerprint, so changing one never forks identity."""
     override_path: str | None = None
     """Pin the artifact to an existing location instead of ``{name}/{version}``. A relative
-    pin is resolved against the prefix; an absolute one is used as-is. Writes no record.
-    Mutually exclusive with ``adopt_source``."""
-    adopt_source: str | None = None
-    """Adopt pre-existing data at this location as a managed ``name@version`` (set via
-    :meth:`ArtifactStep.adopt`). Consumers resolve to ``adopt_source``; running it writes a provenance
-    record at the canonical address. Mutually exclusive with ``override_path``."""
-    adopt_config: dict | None = None
-    """For an adopted artifact, the synthetic ``config`` to record (e.g. a tokenized cache's
-    tokenizer/format), so consumers read metadata the same way as for a produced artifact."""
+    pin is resolved against the prefix; an absolute one is used as-is. Writes no record."""
 
     def __post_init__(self) -> None:
         validate_path_segment("name", self.name)
         validate_version(self.version)
-        if self.adopt_source is not None and self.override_path is not None:
-            raise ValueError(f"{self.name}@{self.version}: an artifact cannot be both adopted and pinned")
         if not is_mutable_version(self.version):
             for dep in self.deps:
                 if is_mutable_version(dep.version):
                     raise ValueError(
-                        f"{self.name}@{self.version} is a fixed version but depends on mutable "
-                        f"{dep.name}@{dep.version}; a mutable dep would rebuild while the fixed parent "
+                        f"{self.label} is a fixed version but depends on mutable "
+                        f"{dep.label}; a mutable dep would rebuild while the fixed parent "
                         "stays cached. Make the parent dev, or pin the dep."
                     )
 
+    @property
+    def label(self) -> str:
+        return f"{self.name}@{self.version}"
+
     def fingerprint_payload(self) -> str:
-        """The canonical config bytes this handle's fingerprint hashes. For a computed
-        artifact, the config built with dep versions for paths and placeholders for pulled
-        values; for an adopted one, its source location and recorded config."""
-        if self.adopt_source is not None:
-            return json.dumps({"adopt_source": self.adopt_source, "config": self.adopt_config}, sort_keys=True)
+        """The canonical config bytes this handle's fingerprint hashes: the config built with dep
+        versions for paths and placeholders for pulled values."""
         config = self.build_config(StepContext.for_fingerprint(self.runtime_args.keys(), self.deps))
         return canonical_json(config)
 
@@ -245,63 +232,11 @@ class ArtifactStep(Generic[T]):
         return fingerprint_hash(self.fingerprint_payload())
 
     def path(self, prefix: str | None = None) -> str:
+        """The output directory: the pin's location, else ``{prefix}/{name}/{version}``."""
         resolved_prefix = prefix or poorin_prefix()
-        # An adopted artifact resolves to its source; a pin to its location; else the
-        # canonical name@version address.
-        location = self.adopt_source if self.adopt_source is not None else self.override_path
-        if location is not None:
-            if _is_relative_path(location):
-                return prefix_join(resolved_prefix, location)
-            return location
-        # The explicit, hash-free ``{prefix}/{name}/{version}`` address.
-        return prefix_join(resolved_prefix, f"{self.name}/{self.version}")
-
-    def lower(self) -> StepSpec:
-        """Lower this handle graph into a ``StepSpec`` graph the ``StepRunner`` can run.
-
-        A pure structural transform (no execution): captures provenance once and threads it
-        through the graph. See :func:`_lower`.
-        """
-        return _lower(self, Provenance.capture())
-
-    @classmethod
-    def adopt(
-        cls,
-        name: str,
-        version: str,
-        source: str,
-        *,
-        kind: type[T] = Artifact,  # ty: ignore[invalid-parameter-default]
-        config: dict | None = None,
-    ) -> "ArtifactStep[T]":
-        """Register pre-existing data at ``source`` as a managed ``name@version`` handle.
-
-        The data is neither moved nor recomputed: a consumer that depends on the returned handle
-        resolves to ``source``. Running it writes a provenance record at the canonical
-        ``{prefix}/{name}/{version}`` (with ``source`` recorded). ``kind`` selects the handle's
-        ``artifact_type`` for consumer routing (:class:`Artifact` by default), so a raw checkpoint
-        path becomes a typed handle: ``ArtifactStep.adopt(name, version, "gs://…", kind=LevanterCheckpoint)``.
-        ``config`` records synthetic metadata (e.g. a tokenized cache's tokenizer/format) so
-        consumers read it the same way as for a produced artifact.
-        """
-        return cls(
-            name=name,
-            version=version,
-            artifact_type=kind,
-            run=_adopt_noop,
-            build_config=lambda _ctx: None,
-            adopt_source=source,
-            adopt_config=config,
-        )
-
-
-def artifact_identity(step: ArtifactStep) -> str:
-    """Return the immutable recipe identity carried across artifact boundaries."""
-    return f"{step.name}@{step.version}:{step.fingerprint()}"
-
-
-def _adopt_noop(_config: Any) -> None:
-    raise AssertionError("adopted artifacts are registered, not computed")
+        if self.override_path is not None:
+            return resolve_path(resolved_prefix, self.override_path)
+        return artifact_path(resolved_prefix, self.name, self.version)
 
 
 def materialized_config(handle: "ArtifactStep", prefix: str) -> Any:
@@ -319,96 +254,63 @@ def materialized_config(handle: "ArtifactStep", prefix: str) -> Any:
     )
 
 
-def _output_path_spec(handle: "ArtifactStep") -> str:
-    """The relative output path StepSpec should use: the pin if set, else ``{name}/{version}``."""
-    return handle.override_path or f"{handle.name}/{handle.version}"
+def _lower(handle: "ArtifactStep", memo: dict[int, StepSpec]) -> StepSpec:
+    """Lower a handle graph into a ``StepSpec`` graph.
 
-
-def _lower(handle: "ArtifactStep", provenance: Provenance, memo: dict[int, StepSpec] | None = None) -> StepSpec:
-    """Lower a handle graph into a ``StepSpec`` graph, recording ``provenance`` on every step.
-
-    Each handle becomes a step addressed by its explicit ``{name}/{version}`` (or its pin); the
-    fingerprint, version, artifact type, dep identities, and a pin's mark travel in ``hash_attrs``
-    so the runner applies the drift check before serving a cached output (skipping a pin), and the
-    step fn writes a full :class:`ArtifactRecord` on success (unless pinned). Pure transform of
-    *structure* — it never inspects ``handle.run``.
+    Each handle becomes a step at its output path, carrying its version, fingerprint, and pin, so
+    the runner applies the drift check before serving a cached output (skipping a pin). The step fn
+    writes a full :class:`ArtifactRecord` on success, unless pinned, with the launch's provenance
+    (:func:`~rigging.provenance.launch_provenance`). Pure transform of *structure*: it never
+    inspects ``handle.run``.
 
     ``memo`` caches the spec of each handle by identity, so a handle several consumers share is
-    lowered once. Without it a diamond re-walks the shared subgraph — and re-runs its
-    ``build_config`` — once per path through it. Pass one ``memo`` across a whole ``run`` to share
-    it between terminals.
+    lowered once. Without it a diamond re-walks the shared subgraph, and re-runs its
+    ``build_config``, once per path through it.
     """
-    memo = {} if memo is None else memo
     cached = memo.get(id(handle))
     if cached is not None:
         return cached
-    dep_specs = [_lower(dep, provenance, memo) for dep in handle.deps]
+    dep_specs = [_lower(dep, memo) for dep in handle.deps]
     payload = handle.fingerprint_payload()
     fingerprint = fingerprint_hash(payload)
+    pinned = handle.override_path is not None
 
-    dep_refs = [f"{d.name}@{d.version}" for d in handle.deps]
-    rt_name = result_type_name(handle.artifact_type)
-    # A pin references existing data; it writes no record. Everything else records provenance.
-    record_provenance = handle.override_path is None
-
-    def fn(output_path: str, _handle: "ArtifactStep" = handle) -> Any:
-        if _handle.adopt_source is not None:
-            # Adoption registers pre-existing data: no compute, the record points at it.
-            source = _handle.path(poorin_prefix())
-            fs = url_to_fs(source, use_listings_cache=False)[0]
-            if not fs.exists(source):
-                raise FileNotFoundError(f"cannot adopt {_handle.name}@{_handle.version}: no data at {source}")
-            result = None
-            config_json: dict[str, Any] | None = _handle.adopt_config
-            result_json: dict[str, Any] | None = None
-        else:
-            ctx = StepContext.for_run(
+    def fn(output_path: str, _handle: "ArtifactStep" = handle) -> None:
+        ctx = StepContext.for_run(
+            output_path=output_path,
+            prefix=poorin_prefix(),
+            region=poorin_region(),
+            runtime_args=_handle.runtime_args,
+            deps=_handle.deps,
+        )
+        config = _handle.build_config(ctx)
+        result = _handle.run(config)
+        if pinned:
+            return  # A pin references existing data; it writes no record.
+        write_record(
+            ArtifactRecord(
+                name=_handle.name,
+                version=_handle.version,
+                fingerprint=fingerprint,
+                result_type=result_type_name(_handle.artifact_type),
                 output_path=output_path,
-                prefix=poorin_prefix(),
-                region=poorin_region(),
-                runtime_args=_handle.runtime_args,
-                deps=_handle.deps,
+                deps=[dep.label for dep in _handle.deps],
+                config=json.loads(canonical_json(config)),
+                result=result.result_payload() if isinstance(result, Artifact) else None,
+                fingerprint_payload=payload,
+                provenance=launch_provenance(),
             )
-            config = _handle.build_config(ctx)
-            result = _handle.run(config)
-            source = None
-            config_json = json.loads(canonical_json(config))
-            result_json = result.result_payload() if isinstance(result, Artifact) else None
-        if record_provenance:
-            write_record(
-                ArtifactRecord(
-                    name=_handle.name,
-                    version=_handle.version,
-                    fingerprint=fingerprint,
-                    result_type=rt_name,
-                    output_path=output_path,
-                    deps=dep_refs,
-                    config=config_json,
-                    source=source,
-                    result=result_json,
-                    fingerprint_payload=payload,
-                    provenance=provenance,
-                )
-            )
-        return result
-
-    hash_attrs: dict[str, Any] = {
-        FINGERPRINT_KEY: fingerprint,
-        VERSION_KEY: handle.version,
-        RESULT_TYPE_KEY: rt_name,
-        "deps": dep_refs,
-    }
-    if handle.override_path is not None:
-        hash_attrs[PINNED_KEY] = True
+        )
 
     spec = StepSpec(
         name=handle.name,
-        override_output_path=_output_path_spec(handle),
-        deps=dep_specs,
-        hash_attrs=hash_attrs,
+        version=handle.version,
+        output_path=handle.path(),
+        fingerprint=fingerprint,
         fingerprint_payload=payload,
         fn=fn,
-        writes_record=True,
+        deps=dep_specs,
+        pinned=pinned,
     )
     memo[id(handle)] = spec
     return spec
@@ -426,58 +328,46 @@ def _refuse_drift(states: list[HandleState], accept_drift: Collection[str]) -> N
     refused = [s for s in drifted if s.handle.name not in accept_drift]
     if refused:
         raise FingerprintMismatchError(
-            "\n\n".join(drift_message(s.label, s.recorded_fingerprint or "", s.fingerprint, s.change) for s in refused)
+            "\n\n".join(
+                drift_message(s.handle.name, s.handle.version, s.recorded_fingerprint or "", s.fingerprint, s.change)
+                for s in refused
+            )
         )
     for state in drifted:
-        accept_recipe(record_path(state.handle), state.fingerprint, state.handle.fingerprint_payload())
+        accept_recipe(state.handle.path(), state.fingerprint, state.payload)
 
 
-def lower_all(handles: Sequence["ArtifactStep"], provenance: Provenance) -> list[StepSpec]:
-    """Lower ``handles`` into one ``StepSpec`` graph, sharing common steps and recording ``provenance``."""
+def lower_all(handles: Sequence["ArtifactStep"]) -> list[StepSpec]:
+    """Lower ``handles`` into one ``StepSpec`` graph, sharing common steps."""
     memo: dict[int, StepSpec] = {}
-    return [_lower(h, provenance, memo) for h in handles]
+    return [_lower(h, memo) for h in handles]
 
 
 def run(
     *handles: "ArtifactStep[T]",
-    max_concurrent: int = 8,
-    force_run_failed: bool = True,
+    max_concurrent: int = DEFAULT_MAX_CONCURRENT,
     accept_drift: Collection[str] = (),
-    provenance: Provenance | None = None,
 ) -> list[T]:
     """Build ``handles`` and return their loaded, typed artifacts, in argument order.
 
     The entry point for one or several handles: lowers the graph, builds every step (independent
     steps in parallel up to ``max_concurrent``), then loads each top-level handle's typed artifact
     from the record the runner just wrote — so the caller gets the resolved values directly, no
-    separate read. Provenance is captured once, so every artifact built records the same launch.
-    ``force_run_failed`` reruns a previously-FAILED step instead of raising.
+    separate read. A failed step from an earlier run is rerun.
 
     Before anything runs, every artifact in the graph is checked against the recipe its output
     records; ``accept_drift`` names artifacts whose changed recipe is accepted.
 
-    ``provenance`` is the launch recorded on every artifact built, such as the one the experiment
-    command line captured with its snapshot and note; omitted, it is captured from the working
-    directory.
+    Every artifact built records the launch's provenance: the one installed with
+    :func:`~rigging.provenance.launched_as`, as the experiment command line does with its snapshot
+    and note, else one captured once per process.
     """
     _refuse_drift(graph_states(graph_handles(list(handles))), accept_drift)
-    specs = lower_all(handles, provenance if provenance is not None else Provenance.capture())
-    StepRunner().run(specs, force_run_failed=force_run_failed, max_concurrent=max_concurrent)
+    StepRunner().run(lower_all(handles), max_concurrent=max_concurrent)
     return [h.artifact_type.raw_load(h.path()) for h in handles]
 
 
-def lower(handle: "ArtifactStep") -> StepSpec:
-    """Lower ``handle``'s graph into a ``StepSpec`` the ``StepRunner`` can run.
-
-    Captures provenance once and threads it through the graph. To build handles, call
-    :func:`run`: ``StepRunner().run`` on lowered specs skips ``run``'s whole-graph drift check,
-    which covers dependencies the runner prunes behind a built consumer and two recipes for one
-    ``name@version``.
-    """
-    return _lower(handle, Provenance.capture())
-
-
-def resolve(handle: "ArtifactStep[T]", *, max_concurrent: int = 8) -> T:
+def resolve(handle: "ArtifactStep[T]", *, max_concurrent: int = DEFAULT_MAX_CONCURRENT) -> T:
     """Build one ``handle`` and return its loaded, typed artifact — :func:`run` for a single handle.
 
     The driver-side "build this and give me the value" verb. To resolve several handles, prefer
@@ -573,7 +463,7 @@ def apply(
     an already-wrapped ``remote(fn, resources=…)`` as ``fn``. ``artifact_type`` selects the
     produced :class:`Artifact` type; ``pin`` references existing data.
 
-    ``version`` defaults to the ambient :class:`~poorin.execution.build_context.BuildContext`'s
+    ``version`` defaults to the ambient :func:`~poorin.execution.build_context.build_context`'s
     version for ``name`` when omitted (build inside :func:`~poorin.execution.build_context.build_context`);
     an explicit value always wins.
 

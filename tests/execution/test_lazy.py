@@ -13,8 +13,17 @@ from dataclasses import dataclass, replace
 
 import pytest
 from fray.types import ResourceConfig
-from poorin.execution.artifact import Artifact, ArtifactTypeMismatchError
-from poorin.execution.lazy import OUT, ArtifactStep, StepContext, apply, lower, materialized_config, resolve, run
+from poorin.execution.artifact import Artifact, ArtifactTypeMismatchError, read_record
+from poorin.execution.lazy import (
+    OUT,
+    ArtifactStep,
+    StepContext,
+    apply,
+    lower_all,
+    materialized_config,
+    resolve,
+    run,
+)
 from poorin.execution.remote import remote
 
 # --- Toy configs/fns standing in for tokenize + train --------------------------
@@ -104,7 +113,7 @@ def test_trailing_slash_prefix_writer_and_reader_agree(monkeypatch):
     ``…marin/name/version`` — a different object-store key, so the reader found no record."""
     monkeypatch.setenv("POORIN_PREFIX", "s3://marin-na/marin/")
     handle = dclm_tokens()
-    spec = lower(handle)
+    (spec,) = lower_all([handle])
     assert spec.output_path == handle.path()
     assert spec.output_path == "s3://marin-na/marin/datasets/dclm_tokens/2026.06.25"
 
@@ -113,7 +122,7 @@ def test_trailing_slash_prefix_resolves_relative_pin(monkeypatch):
     """Same invariant for a relatively pinned handle (the ``override_path`` branch)."""
     monkeypatch.setenv("POORIN_PREFIX", "s3://marin-na/marin/")
     pinned = apply("data/pinned", _stage, version="2026.06.28", pin="pinned/loc", output_path=OUT)
-    assert lower(pinned).output_path == pinned.path()
+    assert lower_all([pinned])[0].output_path == pinned.path()
     assert pinned.path() == "s3://marin-na/marin/pinned/loc"
 
 
@@ -161,16 +170,22 @@ def test_shared_dep_is_lowered_once_per_graph():
         deps=(left, right),
     )
 
-    spec = lower(top)
+    (spec,) = lower_all([top])
     assert calls == 1
     # Both branches point at the same lowered dep, so the runner sees one node.
     assert spec.deps[0].deps[0] is spec.deps[1].deps[0]
 
 
-def test_fingerprint_is_prefix_independent_but_drift_sensitive():
+def test_fingerprint_is_prefix_independent_but_drift_sensitive(monkeypatch):
+    """Regression for marin-community/marin#5216: the same pipeline under another ``POORIN_PREFIX``
+    (a region failover) must keep its identity; only the output path carries the prefix."""
+    monkeypatch.setenv("POORIN_PREFIX", "gs://marin-us-central1")
     base = dclm_1b().fingerprint()
-    # Region/prefix must not change identity.
-    assert base == dclm_1b().fingerprint()
+    central_path = dclm_1b().path()
+
+    monkeypatch.setenv("POORIN_PREFIX", "gs://marin-us-east5")
+    assert dclm_1b().fingerprint() == base
+    assert dclm_1b().path() != central_path
     # A config value change must change the fingerprint (local drift).
     assert dclm_1b(lr=1e-3).fingerprint() != base
 
@@ -308,6 +323,20 @@ def test_end_to_end_through_step_runner(tmp_path, monkeypatch):
 
     # Re-running is a cache hit (no error, idempotent).
     run(dclm_1b())
+
+
+def test_record_names_its_dependencies_and_the_config_that_ran(tmp_path, monkeypatch):
+    """A record is walkable back to its inputs: ``deps`` names each by ``name@version``, and
+    ``config`` holds the materialized config, the dependency's resolved path included."""
+    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
+    run(dclm_1b())
+
+    record = read_record(f"{tmp_path}/checkpoints/dclm_1b/2026.06.28")
+    assert record is not None
+    assert record.deps == ["datasets/dclm_tokens@2026.06.25"]
+    assert record.config is not None
+    assert record.config["data"] == f"{tmp_path}/datasets/dclm_tokens/2026.06.25"
+    assert read_record(record.config["data"]).name == "datasets/dclm_tokens"
 
 
 def test_resolve_round_trips_a_value_artifact(tmp_path, monkeypatch):

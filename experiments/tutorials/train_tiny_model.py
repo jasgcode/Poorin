@@ -27,12 +27,13 @@ from fray.types import ResourceConfig
 from levanter.optim.config import AdamConfig
 from poorin.execution.lazy import ArtifactStep
 from poorin.experiment.cli import build_options
-from poorin.experiment.data import pretokenized, tokenized
+from poorin.experiment.data import tokenized
 from poorin.experiment.overrides import Overrides
 from poorin.experiment.train import train_lm
 from poorin.processing.tokenize.tokenize import TokenizedCache
 from poorin.training.training import LevanterCheckpoint
 
+from experiments.datasets.fineweb_edu import fineweb_edu_10m_dataset
 from experiments.llama import llama_150m, llama_nano
 from experiments.marin_tokenizer import marin_tokenizer
 
@@ -57,12 +58,7 @@ def dataset(name: str) -> ArtifactStep[TokenizedCache]:
     tokenize a 1000-document sample of a raw HuggingFace text dataset inline.
     """
     if name == "fineweb-edu":
-        return pretokenized(
-            "fineweb-edu-10M",
-            repo_id="marin-community/fineweb-edu-pretokenized-10M",
-            tokenizer=marin_tokenizer,
-            version="2026.06.28",
-        )
+        return fineweb_edu_10m_dataset()
     return tokenized(name, tokenizer=marin_tokenizer, source=RAW_SOURCES[name], sample_count=1000, version="2026.06.28")
 
 
@@ -106,7 +102,7 @@ def build(*, device: str, data: str, overrides: Overrides) -> ArtifactStep[Levan
 )
 @build_options
 def main(device: str, data: str, overrides: Overrides) -> ArtifactStep[LevanterCheckpoint]:
-    # Return the checkpoint handle; build_options builds it inside a BuildContext, so --version /
+    # Return the checkpoint handle; build_options builds it inside a build_context, so --version /
     # --version-of reach the deferred checkpoint version, and passes each trial's --set / --sweep
     # values as overrides. The dataset tokenizes/downloads (cached), then one training job runs on
     # the chosen device.

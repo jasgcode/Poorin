@@ -332,7 +332,7 @@ def test_a_dev_run_on_uncommitted_code_records_a_snapshot_of_it(runner, tmp_path
     assert provenance.note == "try v2"
     assert _git(checkout, "show", f"{provenance.snapshot_commit}:model.py") == "v2"
     assert _git(checkout, "rev-parse", f"refs/poorin/snapshots/{provenance.snapshot_commit}")
-    assert f"git diff {provenance.base_commit} {provenance.snapshot_commit[:9]}" in result.output
+    assert f"git diff {provenance.base_commit} {provenance.snapshot_commit[:12]}" in result.output
     assert _git(checkout, "status", "--porcelain") == "M model.py"  # the tree is left as it was
 
 

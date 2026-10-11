@@ -1,7 +1,7 @@
 # Copyright The Marin Authors
 # SPDX-License-Identifier: Apache-2.0
 
-"""Sweep helpers: grid fan-out, and selection as ordinary code over resolved outputs.
+"""Sweeps: grid fan-out, and selection as ordinary code over resolved outputs.
 
 The toy trials here *write* their metrics to their own output, the way a real training run
 does (``train_lm`` mirrors them to ``tracker_metrics.jsonl``), so the selection test exercises
@@ -15,7 +15,7 @@ import json
 import fsspec
 import pytest
 from poorin.execution.lazy import ArtifactStep, resolve
-from poorin.experiment.sweep import grid, sweep
+from poorin.experiment.cli import grid
 from poorin.training.training import LevanterCheckpoint
 
 
@@ -48,18 +48,12 @@ def test_grid_is_the_cartesian_product():
     ]
 
 
-def test_sweep_gives_each_grid_point_a_distinct_identity():
-    trials = sweep(_trial, learning_rate=[1e-4, 1e-3], weight_decay=[0.1])
-    assert len(trials) == 2
-    assert trials[0].fingerprint() != trials[1].fingerprint()
-
-
 def test_selection_is_user_code_over_resolved_metrics(tmp_path, monkeypatch):
     """The replacement for the old ``select``: run the sweep, read each trial's metrics through
     its typed artifact, and reduce — no framework verb involved."""
     monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
     # losses: 0.1, 0.3 (lr.1), 0.3, 0.5 (lr.3) -> min is lr=0.1, wd=0.0
-    trials = sweep(_trial, learning_rate=[0.1, 0.3], weight_decay=[0.0, 0.2])
+    trials = [_trial(**point) for point in grid(learning_rate=[0.1, 0.3], weight_decay=[0.0, 0.2])]
 
     scored = [(trial, resolve(trial).training_metrics().eval_loss) for trial in trials]
     best, best_loss = min(scored, key=lambda pair: pair[1])

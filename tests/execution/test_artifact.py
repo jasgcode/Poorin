@@ -9,7 +9,6 @@ exercised exactly as it fires in production (before a run starts), plus the manu
 """
 
 import dataclasses
-import json
 import os
 import shutil
 
@@ -18,16 +17,14 @@ from poorin.execution.artifact import (
     Artifact,
     DriftAcceptanceError,
     FingerprintMismatchError,
-    StepRecordIdentity,
     read_artifact,
     read_record,
     write_artifact,
-    write_step_record,
 )
-from poorin.execution.lazy import OUT, ArtifactStep, apply, lower, run
+from poorin.execution.lazy import OUT, ArtifactStep, apply, lower_all, run
 from poorin.execution.step_runner import StepRunner
 from pydantic import BaseModel
-from rigging.provenance import Provenance
+from rigging.provenance import Provenance, launched_as
 
 # A frozen calendar version for the toy artifacts these tests build.
 V = "2026.06.28"
@@ -87,10 +84,11 @@ def _make_dir(out):
     os.makedirs(out, exist_ok=True)
 
 
-def test_run_records_the_provenance_it_is_given():
+def test_run_records_the_launch_provenance():
     handle = apply("data/given", _make_dir, version="2026.07.16", out=OUT)
     given = dataclasses.replace(Provenance.capture(), note="from the command line")
-    run(handle, provenance=given)
+    with launched_as(given):
+        run(handle)
     assert read_record(handle.path()).provenance.note == "from the command line"
 
 
@@ -195,7 +193,7 @@ def test_a_runner_called_directly_refuses_a_changed_recipe(tmp_path, monkeypatch
     monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
     run(_toy(V, "a"))
     with pytest.raises(FingerprintMismatchError, match="payload: 'a' -> 'b'"):
-        StepRunner().run([lower(_toy(V, "b"))])
+        StepRunner().run(lower_all([_toy(V, "b")]))
     assert read_record(f"{tmp_path}/datasets/toy/{V}").result == {"payload": "a"}
 
 
@@ -215,6 +213,18 @@ def test_a_restarted_build_with_a_changed_recipe_is_refused(tmp_path, monkeypatc
         run(dataclasses.replace(_toy(V, "a"), run=_crash))
     with pytest.raises(FingerprintMismatchError, match="payload: 'a' -> 'b'"):
         run(_toy(V, "b"))
+
+
+def test_accepting_drift_of_a_restarted_build_builds_the_new_recipe(tmp_path, monkeypatch):
+    # A started build has no output to keep: accepting replaces its recipe, so the build resumes
+    # under the new one and the finished record lists no earlier fingerprint.
+    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
+    with pytest.raises(RuntimeError):
+        run(dataclasses.replace(_toy(V, "a"), run=_crash))
+    (built,) = run(_toy(V, "b"), accept_drift={"datasets/toy"})
+    assert built.payload == "b"
+    record = read_record(f"{tmp_path}/datasets/toy/{V}")
+    assert (record.fingerprint, record.accepted_from) == (_toy(V, "b").fingerprint(), [])
 
 
 def test_a_resumed_dev_run_with_a_changed_recipe_is_refused(tmp_path, monkeypatch):
@@ -279,147 +289,3 @@ def test_read_artifact_requires_a_pydantic_schema(tmp_path):
 def test_read_artifact_missing_raises(tmp_path):
     with pytest.raises(FileNotFoundError):
         read_artifact((tmp_path / "nothing").as_posix(), _Doc)
-
-
-# --- the legacy Ray executor .executor_info fallback ---------------------------
-
-# A trimmed per-step ``.executor_info`` in the old ``ExecutorStepInfo`` schema, as written for the
-# pinned llama3 Nemotron-CC caches: the tokenizer lives only under ``config``.
-_EXECUTOR_INFO = json.dumps(
-    {
-        "name": "tokenized/nemotron_cc/hq_actual",
-        "fn_name": "tokenize",
-        "config": {"tokenizer": "meta-llama/Meta-Llama-3.1-8B", "tags": ["nemotron"]},
-        "description": None,
-        "override_output_path": None,
-        "version": {},
-        "dependencies": ["gs://bucket/raw/nemotron"],
-        "output_path": "gs://bucket/tokenized/nemotron_cc/hq_actual-5af4cc",
-    }
-)
-
-
-def test_read_record_recovers_config_from_executor_info(tmp_path):
-    """A cache with only a legacy ``.executor_info`` resolves its config, not ``None``."""
-    (tmp_path / ".executor_info").write_text(_EXECUTOR_INFO)
-
-    record = read_record(tmp_path.as_posix())
-    assert record is not None
-    assert record.config == {"tokenizer": "meta-llama/Meta-Llama-3.1-8B", "tags": ["nemotron"]}
-    assert record.name == "tokenized/nemotron_cc/hq_actual"
-    assert record.deps == ["gs://bucket/raw/nemotron"]
-
-
-def test_read_record_prefers_modern_record_over_executor_info(tmp_path):
-    """``.executor_info`` is a last resort: a modern ``.artifact.json`` still wins."""
-    (tmp_path / ".executor_info").write_text(_EXECUTOR_INFO)
-    (tmp_path / ".artifact.json").write_text('{"name": "modern", "config": {"tokenizer": "gpt2"}}')
-
-    record = read_record(tmp_path.as_posix())
-    assert record.name == "modern"
-    assert record.config == {"tokenizer": "gpt2"}
-
-
-# --- the pre-#6649 bare-payload .artifact.json ---------------------------------
-
-# Before #6649 the value model was serialized straight into ``.artifact.json`` with no record
-# wrapper: every payload field sits at top level and there is no name/fingerprint/result_type/result.
-_LEGACY_BARE_PAYLOAD = json.dumps(
-    {"version": "v1", "output_dir": "gs://bucket/datakit/embed/cp/peps_52c03790", "counters": {"rows": 128}}
-)
-
-
-class _EmbedPayload(BaseModel):
-    version: str
-    output_dir: str
-    counters: dict
-
-
-def test_read_artifact_adopts_pre_6649_bare_payload(tmp_path):
-    """A pre-#6649 bare ``.artifact.json`` loads: the whole document becomes the result payload."""
-    (tmp_path / ".artifact.json").write_text(_LEGACY_BARE_PAYLOAD)
-
-    loaded = read_artifact(tmp_path.as_posix(), _EmbedPayload)
-    assert loaded == _EmbedPayload(
-        version="v1", output_dir="gs://bucket/datakit/embed/cp/peps_52c03790", counters={"rows": 128}
-    )
-
-
-def test_read_record_leaves_a_genuine_data_record_untouched(tmp_path):
-    """A modern record with identity but no ``result`` is not mistaken for a bare payload."""
-    (tmp_path / ".artifact.json").write_text(
-        '{"name": "datasets/x", "version": "v1", "fingerprint": "abc", "result": null}'
-    )
-
-    record = read_record(tmp_path.as_posix())
-    assert record.name == "datasets/x"
-    assert record.result is None
-
-
-# --- the schedule-time StepRunner .executor_info stub --------------------------
-
-# A schedule-time ``StepRunner`` stub: same filename, but ``executor_version == "step_runner"`` and
-# a ``config`` that is the identity ``hash_attrs`` (no materialized tokenizer/format/tags).
-_STEP_RUNNER_STUB = json.dumps(
-    {
-        "executor_version": "step_runner",
-        "name": "paloma/4chan-llama3",
-        "config": {"fingerprint": "449bd131", "version": "2026.06.28", "deps": []},
-        "output_path": "gs://bucket/paloma/4chan-llama3/2026.06.28",
-    }
-)
-
-
-def test_read_record_ignores_step_runner_stub(tmp_path):
-    """A schedule-time ``StepRunner`` ``.executor_info`` stub is not served as a record — it
-    carries no materialized config, so the output reads back as record-less rather than as a
-    tokenizer-less cache (#6836)."""
-    (tmp_path / ".executor_info").write_text(_STEP_RUNNER_STUB)
-
-    assert read_record(tmp_path.as_posix()) is None
-
-
-class _Meta(BaseModel):
-    path: str
-    n: int
-
-
-def test_write_step_record_roundtrips_identity_and_payload(tmp_path):
-    """The full step record carries name/deps/config/fingerprint_payload + the typed payload, and
-    stamps best-effort provenance without failing when git is unavailable."""
-    out = tmp_path.as_posix()
-    write_step_record(
-        StepRecordIdentity(
-            name="child",
-            deps=["parent_ab12cd34"],
-            dep_paths=[f"{out}/normalize"],
-            config={"tokenizer": "gpt2"},
-            fingerprint_payload="fp-json",
-        ),
-        output_path=out,
-        result=_Meta(path=out, n=7),
-    )
-
-    rec = read_record(out)
-    assert rec is not None
-    assert rec.name == "child"
-    assert rec.deps == ["parent_ab12cd34"]
-    assert rec.dep_paths == [f"{out}/normalize"]
-    assert rec.config == {"tokenizer": "gpt2"}
-    assert rec.fingerprint_payload == "fp-json"
-    assert rec.result == {"path": out, "n": 7}
-    # provenance is best-effort: git fields degrade to empty on a git-less bundle; never raises
-    assert read_artifact(out, _Meta).n == 7
-
-
-def test_write_step_record_tolerates_none_result(tmp_path):
-    """A side-effect step (fn returns None) records identity + lineage with a null payload."""
-    out = tmp_path.as_posix()
-    identity = StepRecordIdentity(name="train", deps=[], dep_paths=[], config={"seed": 42})
-    write_step_record(identity, output_path=out, result=None)
-
-    rec = read_record(out)
-    assert rec is not None
-    assert rec.name == "train"
-    assert rec.config == {"seed": 42}
-    assert rec.result is None

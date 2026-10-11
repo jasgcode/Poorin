@@ -5,7 +5,7 @@
 
 import pytest
 from poorin.execution.artifact import Artifact, FingerprintMismatchError
-from poorin.execution.cache_state import CacheState, graph_states, handle_state
+from poorin.execution.cache_state import CacheState, HandleState, graph_states
 from poorin.execution.lazy import ArtifactStep, run
 
 V = "2026.06.28"
@@ -30,20 +30,25 @@ def _toy(version: str, payload: str, *, fail: bool = False) -> ArtifactStep[Toy]
     )
 
 
+def _state(handle: ArtifactStep) -> HandleState:
+    (state,) = graph_states([handle])
+    return state
+
+
 @pytest.fixture(autouse=True)
 def _prefix(tmp_path, monkeypatch):
     monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
 
 
 def test_a_calendar_artifact_moves_from_not_built_to_built():
-    assert handle_state(_toy(V, "a")).state is CacheState.NOT_BUILT
+    assert _state(_toy(V, "a")).state is CacheState.NOT_BUILT
     run(_toy(V, "a"))
-    assert handle_state(_toy(V, "a")).state is CacheState.BUILT
+    assert _state(_toy(V, "a")).state is CacheState.BUILT
 
 
 def test_a_changed_recipe_reads_as_drifted_with_the_field_diff():
     run(_toy(V, "a"))
-    state = handle_state(_toy(V, "b"))
+    state = _state(_toy(V, "b"))
     assert state.state is CacheState.DRIFTED
     assert state.recorded_fingerprint == _toy(V, "a").fingerprint()
     assert "payload: 'a' -> 'b'" in state.change
@@ -52,11 +57,11 @@ def test_a_changed_recipe_reads_as_drifted_with_the_field_diff():
 def test_a_build_that_crashed_reads_as_started():
     with pytest.raises(RuntimeError):
         run(_toy(V, "a", fail=True))
-    assert handle_state(_toy(V, "a")).state is CacheState.STARTED
+    assert _state(_toy(V, "a")).state is CacheState.STARTED
 
 
 def test_a_dev_version_reads_as_mutable():
-    assert handle_state(_toy("dev", "a")).state is CacheState.MUTABLE
+    assert _state(_toy("dev", "a")).state is CacheState.MUTABLE
 
 
 def test_a_pinned_artifact_is_not_checked(tmp_path):
@@ -68,7 +73,7 @@ def test_a_pinned_artifact_is_not_checked(tmp_path):
         build_config=lambda ctx: {},
         override_path=str(tmp_path / "elsewhere"),
     )
-    assert handle_state(pinned).state is CacheState.PINNED
+    assert _state(pinned).state is CacheState.PINNED
 
 
 def test_handles_for_one_artifact_are_read_once():

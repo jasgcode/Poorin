@@ -164,14 +164,6 @@ def test_init_from_chains_the_parent(tmp_path):
     assert tc.initialize_from_checkpoint_path == f"{tmp_path}/checkpoints/unit/{_V}/checkpoints"
 
 
-def test_lowers_to_a_runnable_graph():
-    corpus = _corpus()
-    spec = _build(datasets={corpus: 1.0}).lower()
-    assert spec.name == "checkpoints/unit"
-    # The corpus dependency is lowered into the graph.
-    assert any(dep.name == "corpus" for dep in spec.deps)
-
-
 def _build_epochs(*, datasets, num_train_epochs):
     return train_lm(
         name="checkpoints/unit",

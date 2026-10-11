@@ -16,12 +16,10 @@ their producers (``LevanterCheckpoint`` in ``poorin.training.training``, ``Token
   fingerprint, provenance, and (for a value artifact) its ``result``.
 - ``read_record``/``write_record`` (the full record) and ``read_artifact``/``write_artifact``
   (the manual typed-payload API), two entry points over one serialization scheme.
-- :func:`check_drift` — the recipe-drift guard the runner applies before serving or resuming an
-  output.
+- :func:`recorded_recipe` — the recipe an output records, which the drift check compares.
 """
 
 import functools
-import json
 import re
 from dataclasses import asdict, dataclass, is_dataclass
 from typing import Self, TypeVar
@@ -31,10 +29,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from rigging.filesystem.cluster_config import poorin_prefix
 from rigging.filesystem.factory import url_to_fs
 from rigging.filesystem.storage_path import StoragePath, prefix_join
-from rigging.provenance import Provenance, launch_provenance
-
-from poorin.execution.fingerprint import describe_drift
-from poorin.execution.step_spec import StepSpec, _is_relative_path
+from rigging.provenance import Provenance
 
 M = TypeVar("M", bound=BaseModel)
 
@@ -46,26 +41,11 @@ type JSONValue = None | bool | int | float | str | list[JSONValue] | dict[str, J
 # never mistake it for training data and parse it as JSONL.
 RECORD_FILENAME = ".artifact.json"
 
-# The old Ray executor wrote a per-step ``.executor_info`` sidecar (the ``ExecutorStepInfo``
-# schema) instead of an ``.artifact.json``. Caches built that way — e.g. the pinned llama3
-# Nemotron-CC caches — carry their materialized ``config`` (tokenizer, format, tags) only there,
-# so we read it as a last resort to recover the record. Never written.
-_LEGACY_EXECUTOR_INFO_FILENAME = ".executor_info"
+# The recipe a build records when it starts, before its record exists: a started build's
+# fingerprint, so a rerun under another recipe is refused instead of resuming it. Kept apart from
+# the record so an unfinished output never reads as built.
+STARTED_FILENAME = ".artifact.started.json"
 
-# The lazy ``StepRunner`` also writes a ``.executor_info`` — but at *schedule* time, before the
-# step runs — tagged with this ``executor_version``. Unlike a genuine legacy Ray sidecar, its
-# ``config`` is the identity ``hash_attrs`` (deps/fingerprint/version), not the materialized
-# config. ``read_record`` ignores it so an incomplete step's stub can never be served as a
-# record — which would present, e.g., a tokenizer-less tokenized cache (#6836).
-STEP_RUNNER_EXECUTOR_VERSION = "step_runner"
-
-# Keys under ``StepSpec.hash_attrs`` carrying the artifact's identity, so the runner can
-# apply the drift check without knowing about the lazy layer.
-FINGERPRINT_KEY = "fingerprint"
-VERSION_KEY = "version"
-RESULT_TYPE_KEY = "result_type"
-# Set only on a pinned (``override_path``) step, which points at existing data: the drift check skips it.
-PINNED_KEY = "pinned"
 ARTIFACT_LOAD_CONTEXT_KEY = "artifact_load"
 
 
@@ -129,10 +109,10 @@ class Artifact(BaseModel):
         :meth:`StepContext.resolved` (inside a step) — reach for ``raw_load`` only to read an
         artifact you already know is built.
 
-        Tolerant of a missing record by design: an adopted or pinned artifact resolves to its
-        pre-existing data location (:meth:`ArtifactStep.path`) — real data, but no marin record
-        there — and its resolved value is intentionally path-only, so a missing record yields a
-        path handle rather than an error. A normal computed handle is never loaded before it is
+        Tolerant of a missing record by design: a pinned artifact resolves to its pre-existing
+        data location (:meth:`ArtifactStep.path`) — real data, but no record there — and its
+        resolved value is intentionally path-only, so a missing record yields a path handle
+        rather than an error. A normal computed handle is never loaded before it is
         built (``run``/``resolve`` build first; ``StepContext.resolved`` reads only
         runner-materialized deps), so a missing record cannot arise through the supported paths.
 
@@ -152,8 +132,8 @@ class Artifact(BaseModel):
 class ArtifactRecord(BaseModel):
     """The single descriptor written next to a step's output.
 
-    All fields carry a default, so a minimal manual record (:func:`write_artifact`) and a
-    pre-existing legacy file both load without error; the lazy runner fills them all.
+    All fields carry a default, so a minimal manual record (:func:`write_artifact`) loads
+    without error; the lazy runner fills them all.
     """
 
     name: str = ""
@@ -163,14 +143,8 @@ class ArtifactRecord(BaseModel):
     output_path: str = ""
     deps: list[str] = Field(default_factory=list)
     """Dependency identities as ``name@version`` strings."""
-    dep_paths: list[str] = Field(default_factory=list)
-    """Resolved output paths of the dependencies, aligned index-wise with ``deps``. ``deps`` is
-    the portable identity; this is where each dep's record actually lives, which differs from a
-    reconstruction off the identity when the dep overrode its output path."""
     config: dict[str, JSONValue] | None = None
     """The materialized config that ran (canonical-encoded), for humans and consumer metadata."""
-    source: str | None = None
-    """For an adopted artifact, the pre-existing data location this ``name@version`` aliases."""
     result: dict[str, JSONValue] | None = None
     """A value artifact's declared fields; ``None`` for a data artifact."""
     fingerprint_payload: str | None = None
@@ -224,13 +198,16 @@ def validate_version(version: str) -> None:
         )
 
 
-def _resolved(output_path: str) -> str:
-    """A relative output path is rooted at ``poorin_prefix()``; an absolute/URL path is used as-is.
+def resolve_path(prefix: str, path: str) -> str:
+    """A relative ``path`` rooted at ``prefix``; an absolute path or a URL is used as-is."""
+    if urlparse(path).scheme or path.startswith("/"):
+        return path
+    return prefix_join(prefix, path)
 
-    Mirrors the launcher's path resolution so a manual ``read_artifact``/``read_record`` of a
-    relative step name reads the same location the runner wrote.
-    """
-    return prefix_join(poorin_prefix(), output_path) if _is_relative_path(output_path) else output_path
+
+def artifact_path(prefix: str, name: str, version: str) -> str:
+    """The output directory of ``name@version`` under ``prefix``: ``{prefix}/{name}/{version}``."""
+    return prefix_join(prefix, f"{name}/{version}")
 
 
 def _read_text(output_path: str, filename: str) -> str | None:
@@ -241,71 +218,24 @@ def _read_text(output_path: str, filename: str) -> str | None:
     return StoragePath(path).read_text()
 
 
-def _record_from_executor_info(text: str) -> ArtifactRecord | None:
-    """Map an old Ray executor ``.executor_info`` sidecar into an :class:`ArtifactRecord`.
-
-    Only the fields a consumer reads back are carried across: ``name``, the materialized
-    ``config`` (where a tokenized cache keeps its tokenizer/format/tags), ``output_path``, and
-    ``dependencies`` (recorded as output paths, not ``name@version``). The legacy ``version`` is a
-    per-dependency dict rather than a string, so it is dropped rather than coerced.
-
-    Returns ``None`` for a schedule-time ``StepRunner`` stub (``executor_version`` is
-    ``STEP_RUNNER_EXECUTOR_VERSION``): that file predates the step's own record and carries only
-    the identity ``hash_attrs`` under ``config``, so serving it would present a config-less (e.g.
-    tokenizer-less) record for a cache that may never have finished (#6836).
-    """
-    info = json.loads(text)
-    if info.get("executor_version") == STEP_RUNNER_EXECUTOR_VERSION:
-        return None
-    return ArtifactRecord(
-        name=info.get("name") or "",
-        config=info.get("config"),
-        output_path=info.get("output_path") or "",
-        deps=list(info.get("dependencies") or []),
-    )
-
-
-# Record-native identity fields a genuine ArtifactRecord sets; a pre-#6649 bare payload has none.
-_RECORD_IDENTITY_FIELDS = ("name", "fingerprint", "result_type", "result")
-_RECORD_FIELDS = frozenset(ArtifactRecord.model_fields)
-
-
-def _parse_record(text: str) -> ArtifactRecord:
-    """Parse an ``.artifact.json``, adopting a pre-#6649 bare payload as the record's ``result``.
-
-    Before #6649 the value model was serialized straight into ``.artifact.json`` (e.g.
-    ``{"version": "v1", "output_dir": ..., "counters": ...}``), so it parses as an
-    :class:`ArtifactRecord` with every native field defaulted and the real payload dropped as
-    ignored extras — leaving ``read_artifact`` with no ``result``. Detect that shape (no record
-    identity, but keys foreign to the record schema) and take the whole document as ``result`` so
-    those caches load. A genuine record never carries foreign keys, so it is untouched.
-    """
-    record = ArtifactRecord.model_validate_json(text)
-    if any(getattr(record, field) for field in _RECORD_IDENTITY_FIELDS):
-        return record
-    document = json.loads(text)
-    if isinstance(document, dict) and document.keys() - _RECORD_FIELDS:
-        return ArtifactRecord(result=document)
-    return record
-
-
 def read_record(output_path: str) -> ArtifactRecord | None:
-    """The record at ``{output_path}/.artifact.json``, else ``None``.
+    """The record at ``{output_path}/.artifact.json``, else ``None``. A relative ``output_path`` is
+    rooted at the prefix. A corrupt or partial file raises :class:`pydantic.ValidationError`."""
+    text = _read_text(resolve_path(poorin_prefix(), output_path), RECORD_FILENAME)
+    return ArtifactRecord.model_validate_json(text) if text is not None else None
 
-    Falls back to a genuine legacy Ray executor ``.executor_info`` sidecar when no record file is
-    present, so caches built before the record file existed still resolve their config. A
-    schedule-time ``StepRunner`` stub (see :data:`STEP_RUNNER_EXECUTOR_VERSION`) is *not* honored:
-    it carries no materialized config, so such an output reads back as having no record. A
-    corrupt/partial file raises :class:`pydantic.ValidationError`.
-    """
-    output_path = _resolved(output_path)
-    text = _read_text(output_path, RECORD_FILENAME)
-    if text is not None:
-        return _parse_record(text)
-    executor_info = _read_text(output_path, _LEGACY_EXECUTOR_INFO_FILENAME)
-    if executor_info is not None:
-        return _record_from_executor_info(executor_info)
-    return None
+
+class StartedRecipe(BaseModel):
+    """What :data:`STARTED_FILENAME` holds: the recipe of a build that started."""
+
+    fingerprint: str
+    fingerprint_payload: str
+
+
+def write_started_recipe(output_path: str, fingerprint: str, payload: str) -> None:
+    StoragePath(output_path).mkdirs()
+    started = StartedRecipe(fingerprint=fingerprint, fingerprint_payload=payload)
+    StoragePath(prefix_join(output_path, STARTED_FILENAME)).write_text(started.model_dump_json(indent=2))
 
 
 @dataclass(frozen=True)
@@ -315,69 +245,52 @@ class RecordedRecipe:
     fingerprint: str
     payload: str | None
     """The canonical config JSON the fingerprint hashes, for the drift diff; ``None`` when not recorded."""
-    filename: str
-    """The file that records it: the finished build's record or the runner's start stub."""
+    finished: bool
+    """Whether the record holds it; else the build only started."""
 
 
 def recorded_recipe(output_path: str) -> RecordedRecipe | None:
-    """The recipe recorded at ``output_path``: the record's when the build finished, else the stub's
-    the runner writes when a build starts. ``None`` when neither records a fingerprint (nothing
-    built, a manual :func:`write_artifact`, or a legacy Ray sidecar)."""
-    output_path = _resolved(output_path)
-    text = _read_text(output_path, RECORD_FILENAME)
-    if text is not None:
-        record = _parse_record(text)
-        if not record.fingerprint:
-            return None
-        return RecordedRecipe(record.fingerprint, record.fingerprint_payload, RECORD_FILENAME)
-    stub_text = _read_text(output_path, _LEGACY_EXECUTOR_INFO_FILENAME)
-    if stub_text is None:
+    """The recipe recorded at ``output_path``: the record's when the build finished, else the one
+    written when it started. ``None`` when neither records a fingerprint (nothing built, or a
+    manual :func:`write_artifact`)."""
+    record = read_record(output_path)
+    if record is not None:
+        return RecordedRecipe(record.fingerprint, record.fingerprint_payload, True) if record.fingerprint else None
+    text = _read_text(output_path, STARTED_FILENAME)
+    if text is None:
         return None
-    stub = json.loads(stub_text)
-    if stub.get("executor_version") != STEP_RUNNER_EXECUTOR_VERSION:
-        return None
-    fingerprint = (stub.get("config") or {}).get(FINGERPRINT_KEY)
-    if not fingerprint:
-        return None
-    return RecordedRecipe(fingerprint, stub.get("fingerprint_payload"), _LEGACY_EXECUTOR_INFO_FILENAME)
+    started = StartedRecipe.model_validate_json(text)
+    return RecordedRecipe(started.fingerprint, started.fingerprint_payload, False)
 
 
 def accept_recipe(output_path: str, fingerprint: str, payload: str) -> None:
     """Record ``fingerprint`` as the recipe of the output at ``output_path``: the owner accepted a
     changed recipe. A finished build's record keeps the old fingerprint in ``accepted_from``; a
-    started build's stub is re-stamped, so the build resumes under the new recipe. The record is
+    started build's recipe is replaced, so the build resumes under the new recipe. The record is
     written back where it was read, with ``output_path`` updated, even when it names the prefix it
     was built under before the output was copied."""
-    output_path = _resolved(output_path)
-    recorded = recorded_recipe(output_path)
-    if recorded is None:
-        raise ValueError(f"no recorded recipe at {output_path} to accept a change to")
-    if recorded.filename == RECORD_FILENAME:
-        record = read_record(output_path)
-        assert record is not None
-        write_record(
-            record.model_copy(
-                update={
-                    "output_path": output_path,
-                    "fingerprint": fingerprint,
-                    "fingerprint_payload": payload,
-                    "accepted_from": [*record.accepted_from, record.fingerprint],
-                }
-            )
-        )
+    record = read_record(output_path)
+    if record is None:
+        if _read_text(output_path, STARTED_FILENAME) is None:
+            raise ValueError(f"no recorded recipe at {output_path} to accept a change to")
+        write_started_recipe(output_path, fingerprint, payload)
         return
-    stub_path = StoragePath(prefix_join(output_path, _LEGACY_EXECUTOR_INFO_FILENAME))
-    stub = json.loads(stub_path.read_text())
-    stub["config"][FINGERPRINT_KEY] = fingerprint
-    stub["fingerprint_payload"] = payload
-    stub_path.write_text(json.dumps(stub, indent=2))
+    write_record(
+        record.model_copy(
+            update={
+                "output_path": output_path,
+                "fingerprint": fingerprint,
+                "fingerprint_payload": payload,
+                "accepted_from": [*record.accepted_from, record.fingerprint],
+            }
+        )
+    )
 
 
-def drift_message(label: str, recorded: str, now: str, change: str) -> str:
-    """Why ``label`` cannot reuse its output, and the two ways forward."""
-    name = label.split("@", 1)[0]
+def drift_message(name: str, version: str, recorded: str, now: str, change: str) -> str:
+    """Why ``name@version`` cannot reuse its output, and the two ways forward."""
     return (
-        f"{label}: the output records recipe {recorded}, but the recipe is now {now}.{change}\n"
+        f"{name}@{version}: the output records recipe {recorded}, but the recipe is now {now}.{change}\n"
         f"Change the version to build the new recipe, or pass --accept-drift {name} to keep the output."
     )
 
@@ -404,7 +317,6 @@ def read_artifact(output_path: str, schema: type[M]) -> M:
     """
     if not (isinstance(schema, type) and issubclass(schema, BaseModel)):
         raise TypeError(f"schema must be a pydantic BaseModel subclass, got {schema!r}")
-    output_path = _resolved(output_path)
     record = read_record(output_path)
     if record is not None and record.result is not None:
         return schema.model_validate(record.result, context={ARTIFACT_LOAD_CONTEXT_KEY: True})
@@ -414,67 +326,3 @@ def read_artifact(output_path: str, schema: type[M]) -> M:
 def write_artifact(value: object, output_path: str) -> None:
     """Write a minimal record carrying ``value`` as its ``result`` — the manual save API."""
     write_record(ArtifactRecord(output_path=output_path, result=payload_json(value)))
-
-
-@dataclass(frozen=True)
-class StepRecordIdentity:
-    """Identity + lineage of a ``StepRunner`` step, as plain data (no callable) so a remote
-    write site can serialize it into a worker closure."""
-
-    name: str
-    deps: list[str]
-    """Dependency identities, each a ``name_with_hash``."""
-    dep_paths: list[str]
-    """Resolved dependency locations, aligned index-wise with ``deps``."""
-    config: dict[str, JSONValue] | None
-    """The step's ``hash_attrs`` -- its materialized identity params."""
-    fingerprint_payload: str | None = None
-
-
-def write_step_record(identity: StepRecordIdentity, *, output_path: str, result: object) -> None:
-    """Persist a ``StepRunner`` step's full record: identity + lineage + payload + provenance.
-
-    Unlike :func:`write_artifact` (which records only ``output_path`` + ``result``), this carries
-    the ``name``, the dependency identities (``deps`` -- each a ``name_with_hash``) alongside their
-    resolved locations (``dep_paths`` -- where each dep's record actually lives, even when the dep
-    overrode its output path), the ``config`` that determined the output, and best-effort
-    provenance -- so a produced directory answers "what made me, from what" on its own, walkable
-    recursively through ``dep_paths``.
-    """
-    write_record(
-        ArtifactRecord(
-            name=identity.name,
-            output_path=output_path,
-            deps=identity.deps,
-            dep_paths=identity.dep_paths,
-            config=identity.config,
-            result=payload_json(result) if result is not None else None,
-            fingerprint_payload=identity.fingerprint_payload,
-            provenance=launch_provenance(),
-        )
-    )
-
-
-def check_drift(step: StepSpec) -> bool:
-    """The drift guard the runner applies before serving or resuming an output.
-
-    Returns ``False`` for a non-lazy step (no fingerprint). Raises :class:`FingerprintMismatchError`
-    when the output at the step's path records a different recipe, in a finished build's record or
-    a started build's stub; a pinned step points at existing data and is not compared. Otherwise
-    returns whether the version is mutable (``dev``), which always rebuilds.
-    :func:`poorin.execution.lazy.run` checks the whole graph before the runner starts; this covers
-    code that calls the runner directly.
-    """
-    fingerprint = step.hash_attrs.get(FINGERPRINT_KEY)
-    if fingerprint is None:
-        return False
-    version = step.hash_attrs.get(VERSION_KEY, "")
-    if step.hash_attrs.get(PINNED_KEY):
-        return is_mutable_version(version)
-    recorded = recorded_recipe(step.output_path)
-    if recorded is not None and recorded.fingerprint != fingerprint:
-        change = describe_drift(recorded.payload, step.fingerprint_payload)
-        raise FingerprintMismatchError(
-            drift_message(f"{step.name}@{version}", recorded.fingerprint, fingerprint, change)
-        )
-    return is_mutable_version(version)

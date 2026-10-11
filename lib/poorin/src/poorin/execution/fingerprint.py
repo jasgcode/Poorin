@@ -95,7 +95,7 @@ class _FingerprintEncoder(json.JSONEncoder):
             return str(o)
         if isinstance(o, set | frozenset):
             # A set's identity is its members, not their iteration order.
-            return {"__set__": sorted(o, key=_canonical_key)}
+            return {"__set__": sorted(o, key=canonical_json)}
         if isinstance(o, np.dtype):
             return {"__dtype__": o.name}
         if isinstance(o, np.generic):
@@ -120,10 +120,6 @@ class _FingerprintEncoder(json.JSONEncoder):
         if type(o).__repr__ is object.__repr__:
             raise TypeError(_unfingerprintable(o, "it uses the default object repr (a memory address)"))
         raise TypeError(_unfingerprintable(o, "no deterministic serialization is known"))
-
-
-def _canonical_key(o: object) -> str:
-    return json.dumps(o, sort_keys=True, cls=_FingerprintEncoder)
 
 
 def canonical_json(config: object) -> str:

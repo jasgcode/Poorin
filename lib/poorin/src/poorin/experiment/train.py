@@ -63,6 +63,15 @@ POORIN_PRECISION = "p=f32,c=bfloat16"
 # axis is laid out across the pod.
 _TOKEN_AXES = (ResourceAxis.REPLICA_DCN, ResourceAxis.REPLICA, ResourceAxis.DATA)
 
+# The standard training mesh: data parallel over every device, no tensor sharding.
+_MESH = MeshConfig(
+    axes={"replica": 1, "data": -1, "model": 1},
+    compute_mapping={"token": _TOKEN_AXES, "token_repeat": _TOKEN_AXES},
+)
+
+_STEPS_PER_EVAL = 1000
+_WANDB_PROJECT = "poorin"
+
 # Rolling resumption checkpoint cadence. Operational (it governs recovery, not the
 # trained model), so it is not an experiment knob.
 _RESUMPTION_INTERVAL = timedelta(minutes=10)
@@ -74,18 +83,6 @@ class EvalSuite:
 
     tasks: tuple[EvalTaskConfig, ...]
     every: int
-
-
-def _poorin_mesh(tensor_parallel_size: int) -> MeshConfig:
-    """The standard marin training mesh: data parallel, optional tensor sharding.
-
-    ``model`` is the tensor-parallel width (1 = no sharding); ``data`` absorbs the rest
-    of the pod. The token axes ride the replica/data axes the marin path expects.
-    """
-    return MeshConfig(
-        axes={"replica": 1, "data": -1, "model": tensor_parallel_size},
-        compute_mapping={"token": _TOKEN_AXES, "token_repeat": _TOKEN_AXES},
-    )
 
 
 def _train_job(pod_config: TrainLmOnPodConfig) -> None:
@@ -123,14 +120,8 @@ def train_lm(
     version: str | None = None,
     validation: Sequence[ArtifactStep[TokenizedCache]] = (),
     init_from: ArtifactStep[LevanterCheckpoint] | None = None,
-    mp: str = POORIN_PRECISION,
-    tensor_parallel_size: int = 1,
-    steps_per_eval: int = 1000,
-    wandb_project: str = "poorin",
-    wandb_group: str | None = None,
     run_id: str | None = None,
     tags: Sequence[str] = (),
-    env_vars: dict[str, str] | None = None,
     overrides: Overrides = Overrides(),
 ) -> ArtifactStep[LevanterCheckpoint]:
     """Assemble a language-model training run as an ``ArtifactStep[LevanterCheckpoint]``.
@@ -143,12 +134,10 @@ def train_lm(
     dependencies. ``evals=None`` opts out of harness evals explicitly — there is no
     implicit default suite.
 
-    The remaining parameters are execution choices that do not define the experiment:
-    ``mp`` (the standard marin precision, identity-bearing but universal),
-    ``tensor_parallel_size`` (model sharding width), and eval/checkpoint cadence. Tracker
-    metadata (project, tags, group, run ID) and ``resources`` (the device the job asks for) are
-    runtime args, so they never enter the checkpoint's fingerprint; ``LocalClient`` runs every
-    job on this machine.
+    The precision (:data:`POORIN_PRECISION`), the mesh, and the eval and checkpoint cadence are
+    fixed here; ``--set`` overrides any of them. Tracker metadata (tags, run ID) and ``resources``
+    (the device the job asks for) are runtime args, so they never enter the checkpoint's
+    fingerprint; ``LocalClient`` runs every job on this machine.
     ``init_from`` chains this run onto another checkpoint (it becomes a dep and seeds
     ``initialize_from_checkpoint_path``).
 
@@ -168,7 +157,7 @@ def train_lm(
     A mutable (``dev``) ``version`` namespaces the checkpoint per user — its name becomes
     ``users/{username}/{name}`` so concurrent authors of the same experiment do not clobber each
     other; a fixed (calendar) ``version`` keeps the shared name. ``version`` defers to the ambient
-    :class:`~poorin.execution.build_context.BuildContext` when omitted (resolved by ``name`` before
+    :func:`~poorin.execution.build_context.build_context` when omitted (resolved by ``name`` before
     the per-user namespacing), so a driver can set it once for the whole run via
     :mod:`poorin.experiment.cli`.
     """
@@ -222,13 +211,13 @@ def train_lm(
                 trainer=TrainerConfig(
                     id=ctx.runtime_arg("run_id"),
                     tracker=_run_tracker(ctx),
-                    mp=jmp.get_policy(mp),
+                    mp=jmp.get_policy(POORIN_PRECISION),
                     train_batch_size=batch_size,
                     per_device_parallelism=-1,
                     num_train_steps=resolve_num_train_steps(ctx),
-                    steps_per_eval=steps_per_eval,
+                    steps_per_eval=_STEPS_PER_EVAL,
                     checkpointer=CheckpointerConfig(save_interval=_RESUMPTION_INTERVAL, keep=[]),
-                    mesh=_poorin_mesh(tensor_parallel_size),
+                    mesh=_MESH,
                     per_device_eval_parallelism=-1,
                     allow_nondivisible_batch_size=True,
                 ),
@@ -246,7 +235,6 @@ def train_lm(
             train_config=inner,
             resources=ctx.runtime_arg("train_resources"),
             output_path=ctx.output_path,
-            env_vars=env_vars,
         )
 
     return ArtifactStep(
@@ -259,6 +247,6 @@ def train_lm(
         runtime_args={
             "train_resources": resources,
             "run_id": tracker_id,
-            "tracker": WandbConfig(project=wandb_project, name=tracker_id, tags=[*tags], group=wandb_group),
+            "tracker": WandbConfig(project=_WANDB_PROJECT, name=tracker_id, tags=[*tags]),
         },
     )

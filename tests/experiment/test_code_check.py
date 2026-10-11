@@ -26,7 +26,7 @@ def _write(out, **_inputs):
 
 
 def _builds(*handles):
-    return steps_to_build(lower_all(list(handles), CLEAN))
+    return steps_to_build(lower_all(list(handles)))
 
 
 def _calendar():
