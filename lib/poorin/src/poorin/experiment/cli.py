@@ -12,21 +12,29 @@ This module makes that a one-liner while wiring up the deferred-version machiner
   config field, repeatable), ``--sweep PATH=[V1, ...]`` (one trial per value, repeatable; several
   form a grid), ``--accept-drift NAME`` (keep an output whose recipe changed, repeatable),
   ``--run`` (build vs. print the plan), ``--show-config`` (the plan plus each returned artifact's
-  identity config), and ``--max-concurrent``. It builds the wrapped function's handle graph
-  **inside** a :class:`~poorin.execution.build_context.BuildContext` assembled from those options,
-  so any builder that deferred its version (omitted ``version=``) resolves against them. It calls
-  the wrapped function once per trial with an ``overrides`` keyword
+  identity config), ``--max-concurrent``, ``--note TEXT`` (labels the run's code), and
+  ``--allow-uncommitted`` (build calendar artifacts from a snapshot). It builds the wrapped
+  function's handle graph **inside** a :class:`~poorin.execution.build_context.BuildContext`
+  assembled from those options, so any builder that deferred its version (omitted ``version=``)
+  resolves against them. It calls the wrapped function once per trial with an ``overrides`` keyword
   (:class:`~poorin.experiment.overrides.Overrides`), which the experiment applies to its config.
 - :func:`experiment_main` wraps a ``build(*, overrides)`` function into a ready-to-run command.
 
 ``--version`` is required — there is no silent ``dev`` default, because a deferred *dataset* at a
 mutable version rebuilds its (often multi-TB) cache on every run and, unlike a training checkpoint,
 is not namespaced per user. To iterate, pass ``--version dev``: each invocation gets a fresh,
-suffixed version, and ``--resume <version>`` continues an earlier one. The printed plan gives
-each artifact's state at its output path (see :mod:`poorin.execution.cache_state`), so an artifact
-that resolved to a mutable version and will rebuild shows as ``mutable``. An artifact whose output
-records another recipe shows as ``built from another recipe`` with the changed fields, and
-``--run`` refuses it unless ``--accept-drift`` names it.
+suffixed version, and ``--resume <version>`` continues an earlier one.
+
+Before ``--run`` builds, the code is checked (:mod:`poorin.experiment.code_check`): a calendar-
+versioned artifact builds only from committed code, and a run that builds only ``dev`` artifacts
+saves uncommitted changes as a snapshot commit under ``refs/poorin/snapshots/``. The plan prints the
+code's one-line label and what ``--run`` would do.
+
+The printed plan gives each artifact's state at its output path (see
+:mod:`poorin.execution.cache_state`), so an artifact that resolved to a mutable version and will
+rebuild shows as ``mutable``. An artifact whose output records another recipe shows as ``built from
+another recipe`` with the changed fields, and ``--run`` refuses it unless ``--accept-drift`` names
+it.
 
 An experiment with its own options composes with :func:`build_options` by stacking it *below* the
 experiment's own ``@click.option``s and ``@click.command()`` on top::
@@ -45,6 +53,7 @@ no active context and raises. Handles are frozen at construction, so reusing one
 invocations keeps its first resolved version.
 """
 
+import dataclasses
 import functools
 import json
 import secrets
@@ -57,6 +66,7 @@ import click
 import yaml
 from draccus.cfgparsing import parse_string
 from rigging.filesystem.cluster_config import poorin_prefix
+from rigging.provenance import Provenance, launched_as, save_snapshot
 
 from poorin.execution.artifact import (
     DriftAcceptanceError,
@@ -66,12 +76,14 @@ from poorin.execution.artifact import (
 )
 from poorin.execution.build_context import BuildContext, VersionCodex, build_context
 from poorin.execution.cache_state import HandleState, check_accept_drift, graph_states
-from poorin.execution.lazy import ArtifactStep, graph_handles, run
+from poorin.execution.lazy import ArtifactStep, graph_handles, lower_all, run
+from poorin.execution.step_runner import steps_to_build
+from poorin.experiment.code_check import CodeVerdict, check_code, plan_lines, refusal
 from poorin.experiment.overrides import Override, OverrideError, Overrides
 from poorin.experiment.sweep import grid
 
 BuildResult = ArtifactStep | Mapping[str, ArtifactStep] | list[ArtifactStep] | tuple[ArtifactStep, ...]
-BuildRunner = Callable[[list[ArtifactStep], int, frozenset[str]], None]
+BuildRunner = Callable[[list[ArtifactStep], int, frozenset[str], Provenance], None]
 
 # Steps built at once when --max-concurrent is not given. Trainings still run one at a time (D98).
 DEFAULT_MAX_CONCURRENT = 8
@@ -184,10 +196,13 @@ def _as_handles(result: BuildResult) -> list[ArtifactStep]:
     )
 
 
-def _print_plan(states: list[HandleState], shown: list[HandleState]) -> None:
-    """One line per artifact (state, fingerprint, ``name@version``) with the diff under a drifted
-    one, then the identity config of each artifact in ``shown`` as YAML."""
+def _print_plan(states: list[HandleState], shown: list[HandleState], code: list[str]) -> None:
+    """The prefix, the code the run would use, one line per artifact (state, fingerprint,
+    ``name@version``) with the diff under a drifted one, then the identity config of each artifact
+    in ``shown`` as YAML."""
     click.echo(f"Prefix: {poorin_prefix()}")
+    for line in code:
+        click.echo(line)
     for state in states:
         click.echo(f"  {state.state.value:<26} {state.fingerprint}  {state.label}")
         if state.change:
@@ -197,8 +212,10 @@ def _print_plan(states: list[HandleState], shown: list[HandleState]) -> None:
         click.echo(f"\n# {state.label}\n{yaml.safe_dump(config, sort_keys=True).rstrip()}")
 
 
-def _run_locally(handles: list[ArtifactStep], max_concurrent: int, accept_drift: frozenset[str]) -> None:
-    run(*handles, max_concurrent=max_concurrent, accept_drift=accept_drift)
+def _run_locally(
+    handles: list[ArtifactStep], max_concurrent: int, accept_drift: frozenset[str], provenance: Provenance
+) -> None:
+    run(*handles, max_concurrent=max_concurrent, accept_drift=accept_drift, provenance=provenance)
 
 
 def build_options_with_runner(fn: Callable[..., BuildResult], runner: BuildRunner) -> Callable[..., None]:
@@ -264,6 +281,17 @@ def build_options_with_runner(fn: Callable[..., BuildResult], runner: BuildRunne
         show_default=True,
         help="Max steps built concurrently. Trainings run one at a time.",
     )
+    @click.option(
+        "--note",
+        default=None,
+        metavar="TEXT",
+        help="What this run tries, in a few words. It labels the run's code in place of the commit subject.",
+    )
+    @click.option(
+        "--allow-uncommitted",
+        is_flag=True,
+        help="Build calendar-versioned artifacts from uncommitted code, saved as a snapshot commit.",
+    )
     @functools.wraps(fn)
     def wrapper(
         *args: Any,
@@ -276,6 +304,8 @@ def build_options_with_runner(fn: Callable[..., BuildResult], runner: BuildRunne
         do_run: bool,
         show_config: bool,
         max_concurrent: int,
+        note: str | None,
+        allow_uncommitted: bool,
         **kwargs: Any,
     ) -> None:
         if (default_version is None) == (resume_version is None):
@@ -316,6 +346,8 @@ def build_options_with_runner(fn: Callable[..., BuildResult], runner: BuildRunne
             )
         if show_config and do_run:
             raise click.UsageError("--show-config prints the plan; it cannot be combined with --run")
+        launch = dataclasses.replace(Provenance.capture(), note=note)
+        check = check_code(launch, steps_to_build(lower_all(handles, launch)), allow_uncommitted=allow_uncommitted)
         try:
             # A run reads every artifact's recorded recipe itself (lazy.run); only the plan and a
             # resume read them here.
@@ -331,9 +363,19 @@ def build_options_with_runner(fn: Callable[..., BuildResult], runner: BuildRunne
                         )
                 if not do_run:
                     check_accept_drift(states, accept_drift)  # as --run would, so a typo shows in the plan
-                    _print_plan(states, [s for s in states if s.label in returned] if show_config else [])
+                    shown = [s for s in states if s.label in returned] if show_config else []
+                    _print_plan(states, shown, plan_lines(check))
                     return
-            runner(handles, max_concurrent, frozenset(accept_drift))
+            if check.verdict is CodeVerdict.REFUSED:
+                raise click.ClickException(refusal(check))
+            if check.verdict is CodeVerdict.SNAPSHOT:
+                snapshot = save_snapshot(launch.note or launch.change_summary)
+                launch = dataclasses.replace(launch, snapshot_commit=snapshot)
+            click.echo(f"Code:   {launch.label}")
+            with launched_as(launch):
+                runner(handles, max_concurrent, frozenset(accept_drift), launch)
+            if launch.snapshot_commit is not None:
+                click.echo(f"See changes: git diff {launch.base_commit} {launch.snapshot_commit[:9]}")
         except (FingerprintMismatchError, DriftAcceptanceError) as e:
             raise click.ClickException(str(e)) from e
 

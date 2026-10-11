@@ -4,12 +4,12 @@
 [[runnable]]
 name = "R1"
 module = "experiments.tutorials.train_tiny_model"
-args = ["--device", "rtx5090x1", "--dataset", "wikitext", "--version", "dev", "--run"]
+args = ["--device", "rtx5090x1", "--dataset", "wikitext", "--version", "dev", "--run", "--allow-uncommitted"]
 
 [[runnable]]
 name = "R2"
 module = "experiments.grug.base.launch"
-args = ["--version", "dev", "--run"]
+args = ["--version", "dev", "--run", "--allow-uncommitted"]
 
 [kept]
 modules = [

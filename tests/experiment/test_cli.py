@@ -12,7 +12,9 @@ option parsing.
 import dataclasses
 import os
 import re
+import subprocess
 from datetime import datetime
+from pathlib import Path
 
 import pytest
 from click.testing import CliRunner
@@ -38,6 +40,25 @@ def _build_two(**_):
 @pytest.fixture
 def runner():
     return CliRunner()
+
+
+def _git(checkout: Path, *args: str) -> str:
+    return subprocess.run(["git", *args], cwd=checkout, check=True, capture_output=True, text=True).stdout.strip()
+
+
+@pytest.fixture(autouse=True)
+def checkout(tmp_path, monkeypatch) -> Path:
+    """A clean Git checkout as the working directory, outside the prefix the tests write to."""
+    path = tmp_path / "checkout"
+    path.mkdir()
+    _git(path, "init", "-b", "main")
+    _git(path, "config", "user.email", "t@example.com")
+    _git(path, "config", "user.name", "tester")
+    (path / "model.py").write_text("v1\n")
+    _git(path, "add", "model.py")
+    _git(path, "commit", "-m", "init")
+    monkeypatch.chdir(path)
+    return path
 
 
 def test_version_and_version_of_reach_deferred_builders(runner):
@@ -280,3 +301,85 @@ def test_a_bad_override_fails_before_anything_runs(runner, tmp_path, monkeypatch
     assert result.exit_code != 0
     assert "did you mean steps" in result.output
     assert not list(tmp_path.rglob("done"))
+
+
+def _marker(**_):
+    return apply("scratch/marker", _write_marker, out=OUT)
+
+
+def _dev_over_calendar(**_):
+    data = apply("data/toy", _write_marker, version="2026.07.16", out=OUT)
+    return apply("models/toy", _write_marker_with, out=OUT, payload=data)
+
+
+def test_uncommitted_code_cannot_build_a_calendar_artifact(runner, tmp_path, monkeypatch, checkout):
+    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
+    (checkout / "model.py").write_text("v2\n")
+    result = runner.invoke(experiment_main(_marker), ["--version", "2026.07.16", "--run"])
+    assert result.exit_code != 0
+    assert "scratch/marker@2026.07.16" in result.output
+    assert "Uncommitted (1): M model.py" in result.output
+    assert not (tmp_path / "scratch" / "marker").exists()
+
+
+def test_a_dev_run_on_uncommitted_code_records_a_snapshot_of_it(runner, tmp_path, monkeypatch, checkout):
+    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
+    (checkout / "model.py").write_text("v2\n")
+    result = runner.invoke(experiment_main(_marker), ["--version", "dev", "--run", "--note", "try v2"])
+    assert result.exit_code == 0, result.output
+    [out] = (tmp_path / "scratch" / "marker").glob("*-dev")
+    provenance = read_record(str(out)).provenance
+    assert provenance.note == "try v2"
+    assert _git(checkout, "show", f"{provenance.snapshot_commit}:model.py") == "v2"
+    assert _git(checkout, "rev-parse", f"refs/poorin/snapshots/{provenance.snapshot_commit}")
+    assert f"git diff {provenance.base_commit} {provenance.snapshot_commit[:9]}" in result.output
+    assert _git(checkout, "status", "--porcelain") == "M model.py"  # the tree is left as it was
+
+
+def test_a_dev_run_may_build_over_a_calendar_input_built_from_committed_code(runner, tmp_path, monkeypatch, checkout):
+    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
+    assert runner.invoke(experiment_main(_dev_over_calendar), ["--version", "dev", "--run"]).exit_code == 0
+    (checkout / "model.py").write_text("v2\n")
+    result = runner.invoke(experiment_main(_dev_over_calendar), ["--version", "dev", "--run"])
+    assert result.exit_code == 0, result.output
+    assert len(list((tmp_path / "models" / "toy").glob("*-dev"))) == 2
+
+
+def test_allow_uncommitted_builds_a_calendar_artifact_from_a_snapshot(runner, tmp_path, monkeypatch, checkout):
+    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
+    (checkout / "model.py").write_text("v2\n")
+    args = ["--version", "2026.07.16", "--run", "--allow-uncommitted"]
+    result = runner.invoke(experiment_main(_marker), args)
+    assert result.exit_code == 0, result.output
+    provenance = read_record(str(tmp_path / "scratch" / "marker" / "2026.07.16")).provenance
+    assert provenance.dirty and provenance.snapshot_commit
+
+
+def test_a_run_that_builds_nothing_is_not_refused(runner, tmp_path, monkeypatch, checkout):
+    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
+    args = ["--version", "2026.07.16", "--run"]
+    assert runner.invoke(experiment_main(_marker), args).exit_code == 0
+    (checkout / "model.py").write_text("v2\n")
+    result = runner.invoke(experiment_main(_marker), args)
+    assert result.exit_code == 0, result.output
+
+
+def test_a_clean_run_records_its_commit_and_no_snapshot(runner, tmp_path, monkeypatch, checkout):
+    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
+    result = runner.invoke(experiment_main(_marker), ["--version", "dev", "--run"])
+    assert result.exit_code == 0, result.output
+    [out] = (tmp_path / "scratch" / "marker").glob("*-dev")
+    provenance = read_record(str(out)).provenance
+    assert (provenance.dirty, provenance.snapshot_commit) == (False, None)
+    assert provenance.base_commit == _git(checkout, "rev-parse", "--short", "HEAD")
+    assert f"Code:   main@{provenance.base_commit[:7]}  init" in result.output
+
+
+def test_the_plan_shows_the_code_and_predicts_a_refusal(runner, tmp_path, monkeypatch, checkout):
+    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
+    clean = runner.invoke(experiment_main(_marker), ["--version", "2026.07.16"])
+    assert re.search(r"^Code:   main@\w{7}  init$", clean.output, re.MULTILINE)
+    (checkout / "model.py").write_text("v2\n")
+    dirty = runner.invoke(experiment_main(_marker), ["--version", "2026.07.16"])
+    assert dirty.exit_code == 0, dirty.output
+    assert "--run refuses: 1 calendar-versioned artifact would build from uncommitted code" in dirty.output

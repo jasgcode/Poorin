@@ -108,3 +108,4 @@ date,phase,step,first_party_lines,reachable_lines,reachable_modules,r1_imported_
 2026-10-11,D107,Expose the runner's schedule; let run() take a provenance,117351,116403,377,6520,3.81,70.3,30.8,8019762254
 2026-10-11,D107,Decide whether a run may build from uncommitted code,117452,116403,377,6520,3.79,69.4,30.9,8019762254
 2026-10-11,D107,Test the code check's caps and no-checkout wording,117452,116403,377,6520,3.91,70.2,30.8,8019762254
+2026-10-11,D107,Refuse calendar builds from uncommitted code (D107),117494,116546,378,6521,3.58,69.7,29.4,8019762254

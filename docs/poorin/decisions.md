@@ -1624,6 +1624,29 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
 - **Cost if wrong:** Sub-project 2 adds the cloud devices it supports back to `DEVICES`, one entry
   each.
 
+### D107. Code provenance for experiment runs
+
+- **When:** 2026-10-11. **Status:** Adopted. Spec: `specs/2026-10-11-run-code-provenance-design.md`;
+  plan: `plans/2026-10-11-run-code-provenance.md`.
+- **Decision:** `--run` refuses to build a calendar-versioned artifact from uncommitted code. A run
+  that builds only `dev` artifacts saves its uncommitted changes, untracked files included, as a
+  snapshot commit under `refs/poorin/snapshots/`, leaving the branch, index, and files alone.
+  `--allow-uncommitted` builds calendar artifacts from a snapshot; the full check passes it,
+  because it runs before each commit. Each run's code has a one-line label (branch, short commit,
+  and the subject, the `--note`, or the changed files), shown in the plan, after the run, in W&B,
+  and by `python -m poorin.experiment.runs`.
+- **Rulings while planning:** a run that builds nothing saves no snapshot and is never refused; a
+  repository with no commits counts as outside a checkout; one dirty state gives one snapshot
+  commit, because the commit's dates are fixed to `HEAD`'s.
+- **Why:** The owner, 2026-10-11: the fingerprint covers config, not code, and a record named its
+  code by a hash that was lost for uncommitted work and unreadable at a glance. The owner chose
+  the split by version over refusing every dirty run or never refusing.
+- **Alternatives:** Refuse every `--run` on a dirty tree; never refuse and always snapshot;
+  enforce the rule inside `run()`, which would break every test run on a dirty tree.
+- **Cost if wrong:** A first run on an empty prefix with a dirty tree is refused, because it would
+  build its calendar dataset; commit first or pass `--allow-uncommitted`. Snapshot refs stay local
+  until pushed with `git push origin 'refs/poorin/*:refs/poorin/*'`.
+
 ---
 
 ## Deferred
