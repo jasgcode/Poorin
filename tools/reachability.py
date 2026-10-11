@@ -27,7 +27,7 @@ import tomllib
 from collections import deque
 from collections.abc import Collection, Iterable, Iterator, Mapping, Sequence
 from dataclasses import asdict, dataclass
-from pathlib import Path
+from pathlib import Path, PurePath
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 ROOTS_FILE = REPO_ROOT / "tools" / "roots.toml"
@@ -102,6 +102,15 @@ def _source_roots(repo_root: Path) -> Iterator[tuple[Path, Path]]:
             yield repo_root / name, repo_root
 
 
+def dotted_name(relative: PurePath) -> str:
+    """The module a Python file defines, from its path relative to its import root: ``a/b.py`` is
+    ``a.b`` and ``a/__init__.py`` is ``a``."""
+    parts = list(relative.with_suffix("").parts)
+    if parts and parts[-1] == "__init__":
+        parts.pop()
+    return ".".join(parts)
+
+
 def workspace_modules(repo_root: Path) -> dict[str, Path]:
     """Every non-test first-party module: dotted name -> file."""
     modules: dict[str, Path] = {}
@@ -110,10 +119,7 @@ def workspace_modules(repo_root: Path) -> dict[str, Path]:
             rel = py.relative_to(repo_root)
             if "__pycache__" in rel.parts or is_test_file(rel):
                 continue
-            parts = list(py.relative_to(import_root).with_suffix("").parts)
-            if parts[-1] == "__init__":
-                parts = parts[:-1]
-            modules[".".join(parts)] = py
+            modules[dotted_name(py.relative_to(import_root))] = py
     return modules
 
 

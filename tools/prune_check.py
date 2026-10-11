@@ -45,11 +45,9 @@ from finelog.embedded import require_embedded_server
 from levanter.tracker.finelog_metrics import LEVANTER_METRICS_NAMESPACE
 
 from tools import affected_tests
-from tools.changes import changed_files
 from tools.lint import TY
-from tools.reachability import ROOTS_FILE, RunnableRoot, expand, load_roots, summarize, workspace_modules
+from tools.reachability import REPO_ROOT, ROOTS_FILE, RunnableRoot, expand, load_roots, summarize, workspace_modules
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
 METRICS_FILE = REPO_ROOT / "docs" / "poorin" / "prune-metrics.csv"
 CACHE_HOME = Path.home() / ".cache" / "poorin"
 POORIN_PREFIX = CACHE_HOME / "prune-check"
@@ -155,11 +153,6 @@ def _run(cmd: Sequence[str], *, env: Mapping[str, str] | None = None) -> None:
     subprocess.run(cmd, cwd=REPO_ROOT, env=env, check=True)
 
 
-def run_affected_tests() -> None:
-    selections = affected_tests.select(changed_files(REPO_ROOT), REPO_ROOT)
-    affected_tests.run(affected_tests.pytest_runs(selections), REPO_ROOT)
-
-
 def import_kept_roots(kept: Sequence[str], static_only: Sequence[str], modules: Sequence[str]) -> None:
     targets = sorted(expand(kept, modules) - expand(static_only, modules))
     code = "import importlib, sys\nfor name in sys.argv[1:]:\n    importlib.import_module(name)\n"
@@ -236,7 +229,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     if not args.fast:
         _run(list(TY))
         _run([sys.executable, "-m", "tools.lint"])
-        run_affected_tests()
+        affected_tests.main([])
 
     with tempfile.TemporaryDirectory() as finelog_dir, require_embedded_server()(log_dir=finelog_dir) as finelog:
         runnable = with_finelog_url(roots.runnable, finelog.address)

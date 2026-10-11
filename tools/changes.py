@@ -31,6 +31,11 @@ def staged_files(repo_root: Path) -> list[str]:
     return sorted(_git(repo_root, "diff", "--cached", "--name-only", "--no-renames", "HEAD"))
 
 
+def tracked_files(repo_root: Path) -> list[str]:
+    """Every file Git tracks, sorted."""
+    return sorted(_git(repo_root, "ls-files"))
+
+
 def _git(repo_root: Path, *args: str) -> list[str]:
     out = subprocess.run(["git", *args], cwd=repo_root, check=True, capture_output=True, text=True).stdout
     return [line for line in out.splitlines() if line]

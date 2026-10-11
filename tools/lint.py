@@ -33,7 +33,7 @@ from pathlib import Path
 
 import yaml
 
-from tools.changes import changed_files, staged_files
+from tools.changes import changed_files, staged_files, tracked_files
 from tools.reachability import REPO_ROOT
 
 RUFF = ("uvx", "ruff@0.14.3", "check")
@@ -249,8 +249,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("paths", nargs="*", help="Files to lint, relative to the repository root.")
     args = parser.parse_args(argv)
     if args.all_files:
-        tracked = subprocess.run(["git", "ls-files"], cwd=REPO_ROOT, check=True, capture_output=True, text=True)
-        paths = tracked.stdout.splitlines()
+        paths = tracked_files(REPO_ROOT)
     elif args.staged:
         paths = staged_files(REPO_ROOT)
     else:

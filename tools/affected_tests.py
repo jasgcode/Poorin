@@ -37,7 +37,15 @@ from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 
 from tools.changes import changed_files
-from tools.reachability import REPO_ROOT, TOP_LEVEL_PACKAGES, imported_modules, is_test_file, workspace_modules
+from tools.reachability import (
+    REPO_ROOT,
+    TOP_LEVEL_PACKAGES,
+    closure,
+    dotted_name,
+    imported_modules,
+    is_test_file,
+    workspace_modules,
+)
 
 # Data that tests in several suites read and no module imports: the cluster configs and their test
 # fixtures. A change under one of these directories runs every suite.
@@ -94,16 +102,15 @@ def all_suites(repo_root: Path) -> list[Selection]:
 
 def select(changed: Sequence[str], repo_root: Path) -> list[Selection]:
     """The tests each suite must run for ``changed``, a list of repository-relative paths."""
-    all_suites = suites(repo_root)
     paths = [PurePosixPath(path) for path in changed]
     if any(path.is_relative_to(d) for path in paths for d in SHARED_DATA_DIRS):
-        return [Selection(suite, suite.test_dirs) for suite in all_suites]
+        return all_suites(repo_root)
     changed_modules = {name for path in paths if (name := _source_module(path)) is not None}
     modules = workspace_modules(repo_root)
     known = set(modules) | changed_modules
     affected = _with_importers(changed_modules, modules, known)
     selections = []
-    for suite in all_suites:
+    for suite in suites(repo_root):
         if _changes_whole_suite(suite, paths):
             selected = suite.test_dirs
         else:
@@ -138,14 +145,12 @@ def _source_module(path: PurePosixPath) -> str | None:
     """The module name of a first-party source file, whether or not the file still exists."""
     if path.suffix != ".py" or is_test_file(Path(path)):
         return None
-    parts = list(path.with_suffix("").parts)
+    parts = path.parts
     if len(parts) > 3 and parts[0] == "lib" and parts[2] == "src":
-        parts = parts[3:]
-    elif parts[0] not in TOP_LEVEL_PACKAGES:
+        return dotted_name(PurePosixPath(*parts[3:]))
+    if parts[0] not in TOP_LEVEL_PACKAGES:
         return None
-    if parts[-1] == "__init__":
-        parts.pop()
-    return ".".join(parts)
+    return dotted_name(path)
 
 
 def _with_importers(seeds: Collection[str], modules: Mapping[str, Path], known: Collection[str]) -> set[str]:
@@ -156,13 +161,7 @@ def _with_importers(seeds: Collection[str], modules: Mapping[str, Path], known: 
     for name, path in modules.items():
         for dependency in imported_modules(path, name, known, eager=False):
             importers[dependency].add(name)
-    affected = set(seeds)
-    queue = deque(seeds)
-    while queue:
-        for importer in importers[queue.popleft()] - affected:
-            affected.add(importer)
-            queue.append(importer)
-    return affected
+    return closure({dependency: frozenset(names) for dependency, names in importers.items()}, seeds)
 
 
 def _changes_whole_suite(suite: Suite, paths: Iterable[PurePosixPath]) -> bool:
@@ -191,7 +190,7 @@ def _affected_tests(
     local_imports: dict[PurePosixPath, set[PurePosixPath]] = {}
     reaches_affected: set[PurePosixPath] = set()
     for path in files:
-        module = _dotted(path, "")
+        module = dotted_name(path)
         names = imported_modules(repo_root / path, module, by_name, eager=False)
         local_imports[path] = {target for name in names for target in by_name[name]} - {path}
         if imported_modules(repo_root / path, module, known, eager=False) & affected:
@@ -233,18 +232,11 @@ def _is_local(path: PurePosixPath, suite: Suite) -> bool:
     return path == _config_conftest(suite) or any(path.is_relative_to(test_dir) for test_dir in suite.test_dirs)
 
 
-def _dotted(path: PurePosixPath, root: str) -> str:
-    parts = list((path.relative_to(root) if root else path).with_suffix("").parts)
-    if parts and parts[-1] == "__init__":
-        parts.pop()
-    return ".".join(parts)
-
-
 def _local_names(path: PurePosixPath, suite: Suite) -> set[str]:
     """Names a suite-local file is imported by: relative to the repository root, the suite's
     directory, and its test directory. Each is on ``sys.path`` in some suite."""
     roots = {"", suite.config_dir, *(test_dir for test_dir in suite.test_dirs if path.is_relative_to(test_dir))}
-    return {name for root in roots if (name := _dotted(path, root))}
+    return {name for root in roots if (name := dotted_name(path.relative_to(root) if root else path))}
 
 
 def _conftests_above(path: PurePosixPath, suite: Suite) -> list[PurePosixPath]:
