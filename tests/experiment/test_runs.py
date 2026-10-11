@@ -59,25 +59,44 @@ def _at(provenance, when):
     return dataclasses.replace(provenance, created_at=when)
 
 
+def _labels(output: str) -> list[str]:
+    """The ``name@version`` column of ``list``'s lines, top to bottom."""
+    return [line.split()[3] for line in output.splitlines()]
+
+
 def test_list_shows_runs_newest_first_with_their_code(checkout, prefix):
     clean = Provenance.capture()
-    _build("data/old", _at(clean, "2026-10-11T09:00:00"))
-    _build("data/new", _at(dataclasses.replace(clean, note="second try"), "2026-10-11T10:00:00"))
+    # Built d, a, c, b. Newest first is c, a, d, b: not alphabetical, not the build order, not its reverse.
+    _build("data/d", _at(clean, "2026-10-11T09:15:00"))
+    _build("data/a", _at(clean, "2026-10-11T09:30:00"))
+    _build("data/c", _at(dataclasses.replace(clean, note="second try"), "2026-10-11T10:00:00"))
+    _build("data/b", _at(clean, "2026-10-11T09:00:00"))
     result = CliRunner().invoke(main, ["list"])
     assert result.exit_code == 0, result.output
+    assert _labels(result.output) == [f"data/{name}@2026.07.16" for name in "cadb"]
     lines = result.output.splitlines()
-    assert lines[0].startswith("2026-10-11 10:00  built") and "data/new@2026.07.16" in lines[0]
-    assert lines[0].endswith("second try")
-    assert "data/old@2026.07.16" in lines[1] and lines[1].endswith(f"main@{clean.base_commit[:7]}  Add the model")
+    assert lines[0].startswith("2026-10-11 10:00  built") and lines[0].endswith("second try")
+    assert lines[3].startswith("2026-10-11 09:00  built")
+    assert lines[3].endswith(f"main@{clean.base_commit[:7]}  Add the model")
 
 
-def test_list_filters_by_name_and_limits_the_count(checkout, prefix):
+def test_list_filters_by_name(checkout, prefix):
     clean = Provenance.capture()
     for i in range(3):
         _build(f"data/toy{i}", _at(clean, f"2026-10-11T09:0{i}:00"))
     _build("models/toy", _at(clean, "2026-10-11T09:05:00"))
-    assert len(CliRunner().invoke(main, ["list", "data/"]).output.splitlines()) == 3
-    assert len(CliRunner().invoke(main, ["list", "--limit", "2"]).output.splitlines()) == 2
+    result = CliRunner().invoke(main, ["list", "data/"])
+    assert sorted(_labels(result.output)) == [f"data/toy{i}@2026.07.16" for i in range(3)]
+
+
+def test_list_limit_keeps_the_newest_runs(checkout, prefix):
+    clean = Provenance.capture()
+    _build("data/toy0", _at(clean, "2026-10-11T09:00:00"))
+    _build("data/toy1", _at(clean, "2026-10-11T09:02:00"))
+    _build("data/toy2", _at(clean, "2026-10-11T09:01:00"))
+    _build("models/toy", _at(clean, "2026-10-11T09:05:00"))
+    result = CliRunner().invoke(main, ["list", "--limit", "2"])
+    assert _labels(result.output) == ["models/toy@2026.07.16", "data/toy1@2026.07.16"]
 
 
 def test_list_shows_a_failed_build_without_code(checkout, prefix):

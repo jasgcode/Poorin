@@ -111,3 +111,4 @@ date,phase,step,first_party_lines,reachable_lines,reachable_modules,r1_imported_
 2026-10-11,D107,Refuse calendar builds from uncommitted code (D107),117494,116546,378,6521,3.58,69.7,29.4,8019762254
 2026-10-11,D107,Record the run's code label in W&B,117506,116558,378,6521,3.72,68.0,29.6,8019762254
 2026-10-11,D107,List runs and show the code behind each,117736,116788,379,6521,3.69,67.8,29.5,8019762254
+2026-10-11,D107,Pin the run list's newest-first order in tests,117736,116788,379,6521,3.71,68.7,30.2,8019762254
