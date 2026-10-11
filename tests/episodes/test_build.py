@@ -6,12 +6,11 @@ import re
 from collections.abc import Iterator, Mapping
 from typing import Any
 
-import msgpack
 import numpy as np
 import pytest
-from array_record.python.array_record_module import ArrayRecordReader
 from poorin.episodes.build import EpisodeBuildConfig, EpisodeDataset, build_episodes
 from poorin.episodes.encodings import decode_field
+from poorin.episodes.read import read_record
 from poorin.episodes.schema import DatasetSchema, Episode, FieldKind, FieldSpec, RawEncoding, VideoEncoding
 from poorin.execution.lazy import resolve
 from poorin.experiment.data import episodes
@@ -80,9 +79,7 @@ def test_build_writes_schema_index_and_records(tmp_path):
     assert len(dataset.shard_paths) == 2
 
     row = index.set_index("episode").loc["c"]
-    reader = ArrayRecordReader(dataset.shard_paths[int(row["shard"])])
-    record = msgpack.unpackb(reader.read([int(row["record"])])[0])
-    reader.close()
+    record = read_record(dataset, int(row["shard"]), int(row["record"]))
     expected = synthetic_episode("c", 20)
     np.testing.assert_array_equal(
         decode_field(SCHEMA.fields["action"], STEP_RATE, record["action"], 20, range(20)), expected.fields["action"]

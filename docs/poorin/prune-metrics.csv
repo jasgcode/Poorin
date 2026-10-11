@@ -123,3 +123,4 @@ date,phase,step,first_party_lines,reachable_lines,reachable_modules,r1_imported_
 2026-10-11,D111,Move to Python 3.13,115995,115070,379,6527,2.96,60.3,26.9,7929029578
 2026-10-11,D110,Add the episode schema and field encodings,116247,115070,379,6527,2.95,62.1,26.8,8076927720
 2026-10-11,D110,Build episode datasets as artifacts,116428,115468,383,6593,3.09,61.5,27.9,8087372190
+2026-10-11,D110,Read episode clips through Grain,116571,115468,383,6593,2.94,61.3,26.9,8093409741

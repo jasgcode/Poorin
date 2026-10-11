@@ -279,6 +279,7 @@ for a stated user:
 | `poorin.episodes` | Episode-dataset package: per-step fields for video world models, VLAs, and WAMs, read as clips | R1 |
 | `poorin.episodes.build` | Builds an episode dataset in one Zephyr stage: ArrayRecord shards, `episodes.parquet`, `dataset.json`; `EpisodeDataset` artifact | R1 |
 | `poorin.episodes.encodings` | Encodes a field to bytes and decodes any steps of it back: raw array bytes, or H.264 seeked from the nearest keyframe | R1 |
+| `poorin.episodes.read` | Reads an episode dataset as Grain clips: clip planning from the index, worker-process decoding, resume by slicing, mesh placement | test support |
 | `poorin.episodes.schema` | Episode schema: field kinds, per-field encodings, one step rate per dataset, episode validation | R1 |
 | `poorin.episodes.video_files` | Decodes a video file to frames at a dataset's size and step rate, for source readers | test support |
 | `poorin.evaluation` | Package marker | R1 |
