@@ -5,7 +5,8 @@ Every first-party module that survived the core prune, and why it exists. Pass 2
 modules that dominate the most reachable lines all have a Keep verdict.
 
 `tests/tools/test_architecture.py` fails when a workspace module has no row or a row names a module
-that no longer exists. It runs in every full test run (`tools.affected_tests --all`).
+that no longer exists. `tools.affected_tests` selects it when a change adds, deletes, or renames a
+module, or edits this page.
 
 ## How to read this page
 

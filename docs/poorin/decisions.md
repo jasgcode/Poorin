@@ -1125,7 +1125,8 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
 
 ### D83. Pass 2's ranked loop ends on Keep verdicts; architecture.md is checked by a test
 
-- **When:** 2026-10-07, Pass 2. **Status:** Adopted.
+- **When:** 2026-10-07, Pass 2. **Status:** Adopted; superseded in part by D112 (the test is
+  selected per change).
 - **Decision:** After the Phase A cuts, the ten modules that dominate the most reachable lines
   all get Keep verdicts: Haliax and its `core` and `nn`, grug's attention and its FA4 CuTe
   backend, the fused cross-entropy loss and its API, `zephyr.coordinator`, and
@@ -1735,8 +1736,6 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
   and not finished, no longer reads as recorded; rebuild it or write its record. Data built
   elsewhere is pinned, and a pin is not drift-checked.
 
----
-
 ### D110. An episode data layer, read through Grain
 
 - **When:** 2026-10-11. **Status:** Adopted. Spec:
@@ -1822,6 +1821,29 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
 - **Cost if wrong:** Moving to 3.14 later is a second relock and environment rebuild, once draccus
   ships a fix. 3.14 also turns on Ruff's `UP037`, which unquotes forward references that jaxtyping's
   import hook then fails to resolve; that move has to keep `UP037` off.
+
+---
+
+### D112. Adding or deleting a module selects the architecture test
+
+- **When:** 2026-10-11. **Status:** Adopted.
+- **Decision:** `tools.affected_tests` keeps a table of test files that compare the list of
+  workspace modules with a document, importing neither. Its one entry maps
+  `tests/tools/test_architecture.py` to `docs/poorin/architecture.md`. A change that adds or deletes
+  a module under a workspace `src/` tree, `experiments/`, or `tools/` (a rename does both), or edits
+  the document, selects the test. `tools.changes.added_files` gives the added paths from Git: new
+  tracked files, the new side of each rename, and untracked files. A changed source path that no
+  longer exists counts as deleted. Editing a module that already exists does not select the test.
+  This reverses D83's choice to run the test only with `--all`.
+- **Why:** The episode data layer's commits `33905fdfe` and `a91069a06` (D110) added modules
+  under `lib/poorin/src/poorin/episodes/` without rows. `tools.prune_check` runs
+  `affected_tests.main([])`, which selected nothing that reads the module list, so the check
+  passed while the test failed when run directly. D109's `experiments.datasets.fineweb_edu` slipped
+  through the same way.
+- **Alternatives:** Select the test whenever any module changes, which needs no Git status but
+  starts the root suite for every source edit.
+- **Cost if wrong:** One more Git call per selection. A caller of `select` that passes no `added`
+  paths misses additions but still catches deletions.
 
 ---
 

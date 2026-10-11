@@ -3,7 +3,7 @@
 
 import subprocess
 
-from tools.changes import changed_files, staged_files
+from tools.changes import added_files, changed_files, staged_files
 
 
 def _git(repo, *args):
@@ -29,6 +29,18 @@ def test_changed_files_include_edits_deletions_both_sides_of_a_rename_and_untrac
 
     # A renamed module's old name must count as changed: tests that still import it are affected.
     assert changed_files(tmp_path) == ["edited.py", "moved.py", "new.py", "removed.py", "renamed.py"]
+
+
+def test_added_files_are_new_and_untracked_files_and_the_new_side_of_a_rename(tmp_path):
+    _repo_with(tmp_path, "edited.py", "removed.py", "renamed.py")
+    (tmp_path / "edited.py").write_text("x = 2\n")
+    (tmp_path / "removed.py").unlink()
+    _git(tmp_path, "mv", "renamed.py", "moved.py")
+    (tmp_path / "staged.py").write_text("y = 1\n")
+    _git(tmp_path, "add", "staged.py")
+    (tmp_path / "new.py").write_text("y = 1\n")
+
+    assert added_files(tmp_path) == ["moved.py", "new.py", "staged.py"]
 
 
 def test_changed_files_since_a_base_add_the_branch_commits_but_not_later_base_commits(tmp_path):

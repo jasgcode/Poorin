@@ -152,6 +152,20 @@ def test_a_grug_module_selects_the_contract_test_that_imports_variants_by_comput
     ]
 
 
+def test_adding_or_deleting_a_module_selects_the_test_that_lists_every_module(repo):
+    # The architecture test compares workspace_modules with a document and imports neither.
+    write_files(repo, {"lib/alpha/src/alpha/new.py": "", "tests/tools/test_architecture.py": ""})
+    architecture = Selection(ROOT, ("tests/tools/test_architecture.py",))
+    assert select(["lib/alpha/src/alpha/new.py"], repo, added=["lib/alpha/src/alpha/new.py"]) == [architecture]
+    assert select(["docs/poorin/architecture.md"], repo) == [architecture]
+    assert architecture not in select(["lib/alpha/src/alpha/util.py"], repo)
+    (repo / "lib/alpha/src/alpha/other.py").unlink()
+    assert select(["lib/alpha/src/alpha/other.py"], repo) == [
+        architecture,
+        Selection(ALPHA, ("lib/alpha/tests/test_other.py", "lib/alpha/tests/test_relative.py")),
+    ]
+
+
 def test_test_data_selects_its_suite_but_experiment_files_and_docs_select_nothing(repo):
     assert select(["lib/alpha/tests/data/sample.txt"], repo) == [Selection(ALPHA, ALPHA.test_dirs)]
     assert select(["experiments/README.md", "docs/index.md"], repo) == []

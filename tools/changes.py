@@ -17,10 +17,15 @@ def changed_files(repo_root: Path, base: str = "HEAD") -> list[str]:
     Deleted paths are included, and a rename counts as a deletion plus an addition. Callers that
     read files skip the paths that no longer exist.
     """
-    [fork_point] = _git(repo_root, "merge-base", base, "HEAD")
-    tracked = _git(repo_root, "diff", "--name-only", "--no-renames", fork_point)
-    untracked = _git(repo_root, "ls-files", "--others", "--exclude-standard")
-    return sorted({*tracked, *untracked})
+    tracked = _git(repo_root, "diff", "--name-only", "--no-renames", _fork_point(repo_root, base))
+    return sorted({*tracked, *_untracked(repo_root)})
+
+
+def added_files(repo_root: Path, base: str = "HEAD") -> list[str]:
+    """The paths in :func:`changed_files` that did not exist where ``HEAD`` left ``base``: new
+    tracked files, the new side of each rename, and untracked files. Sorted."""
+    added = _git(repo_root, "diff", "--name-only", "--no-renames", "--diff-filter=A", _fork_point(repo_root, base))
+    return sorted({*added, *_untracked(repo_root)})
 
 
 def staged_files(repo_root: Path) -> list[str]:
@@ -35,6 +40,15 @@ def staged_files(repo_root: Path) -> list[str]:
 def tracked_files(repo_root: Path) -> list[str]:
     """Every file Git tracks, sorted."""
     return sorted(_git(repo_root, "ls-files"))
+
+
+def _fork_point(repo_root: Path, base: str) -> str:
+    [fork_point] = _git(repo_root, "merge-base", base, "HEAD")
+    return fork_point
+
+
+def _untracked(repo_root: Path) -> list[str]:
+    return _git(repo_root, "ls-files", "--others", "--exclude-standard")
 
 
 def _git(repo_root: Path, *args: str) -> list[str]:

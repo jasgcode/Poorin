@@ -11,7 +11,9 @@ repository root (``tests/`` and ``experiments/``) and every workspace library wi
 A test file is selected when it changed, or when it, a suite-local module it imports, or a
 ``conftest.py`` above it imports a changed module or a module that imports one transitively.
 Imports are read statically, including imports inside functions. A deleted module keeps its name,
-so tests that still import it are selected and fail. Some changes select whole suites: anything
+so tests that still import it are selected and fail. A test that lists every module without
+importing them, such as the architecture page's test, is selected when the change adds or deletes a
+module (a rename does both) or edits the page. Some changes select whole suites: anything
 under ``config/`` selects every suite, and a library's ``pyproject.toml`` or a non-Python file under
 ``tests/`` or ``lib/<name>/tests`` selects that suite. The root ``pyproject.toml`` and ``uv.lock``
 select nothing by themselves; ``--all`` runs every suite, once per phase (D70).
@@ -36,7 +38,7 @@ from collections.abc import Collection, Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 
-from tools.changes import changed_files
+from tools.changes import added_files, changed_files
 from tools.reachability import (
     REPO_ROOT,
     TOP_LEVEL_PACKAGES,
@@ -53,6 +55,9 @@ SHARED_DATA_DIRS = ("config",)
 # Test files that load modules by computed name, with the package they load from. No import graph
 # sees those edges, so a change to any module in the package selects the test.
 DYNAMIC_IMPORTERS = {"tests/test_grug_variant_contracts.py": "experiments.grug"}
+# Test files that compare the list of workspace modules with a document, importing neither. A change
+# that adds or deletes a module, or edits the document, selects the test.
+MODULE_LISTS = {"tests/tools/test_architecture.py": "docs/poorin/architecture.md"}
 ROOT_TEST_DIRS = ("tests", "experiments")
 # experiments/ is a source tree that also holds tests: its data files select no tests.
 SOURCE_TREES = frozenset({"experiments"})
@@ -100,8 +105,9 @@ def all_suites(repo_root: Path) -> list[Selection]:
     return [Selection(suite, suite.test_dirs) for suite in suites(repo_root)]
 
 
-def select(changed: Sequence[str], repo_root: Path) -> list[Selection]:
-    """The tests each suite must run for ``changed``, a list of repository-relative paths."""
+def select(changed: Sequence[str], repo_root: Path, *, added: Collection[str] = ()) -> list[Selection]:
+    """The tests each suite must run for ``changed``, a list of repository-relative paths, of which
+    ``added`` are new. A changed path that no longer exists was deleted."""
     paths = [PurePosixPath(path) for path in changed]
     if any(path.is_relative_to(d) for path in paths for d in SHARED_DATA_DIRS):
         return all_suites(repo_root)
@@ -109,12 +115,14 @@ def select(changed: Sequence[str], repo_root: Path) -> list[Selection]:
     modules = workspace_modules(repo_root)
     known = set(modules) | changed_modules
     affected = _with_importers(changed_modules, modules, known)
+    # A test whose module list or document changed counts as changed itself.
+    changed_tests = [*paths, *_stale_module_lists(paths, added, repo_root)]
     selections = []
     for suite in suites(repo_root):
         if _changes_whole_suite(suite, paths):
             selected = suite.test_dirs
         else:
-            selected = _affected_tests(suite, paths, affected, known, repo_root)
+            selected = _affected_tests(suite, changed_tests, affected, known, repo_root)
         if selected:
             selections.append(Selection(suite, selected))
     return selections
@@ -151,6 +159,19 @@ def _source_module(path: PurePosixPath) -> str | None:
     if parts[0] not in TOP_LEVEL_PACKAGES:
         return None
     return dotted_name(path)
+
+
+def _stale_module_lists(paths: Sequence[PurePosixPath], added: Collection[str], repo_root: Path) -> list[PurePosixPath]:
+    """The tests in ``MODULE_LISTS`` whose module list or document the change alters."""
+    added_paths = {PurePosixPath(path) for path in added}
+    adds_or_deletes = any(
+        _source_module(path) is not None and (path in added_paths or not (repo_root / path).exists()) for path in paths
+    )
+    return [
+        PurePosixPath(test)
+        for test, document in MODULE_LISTS.items()
+        if adds_or_deletes or PurePosixPath(document) in paths
+    ]
 
 
 def _with_importers(seeds: Collection[str], modules: Mapping[str, Path], known: Collection[str]) -> set[str]:
@@ -283,7 +304,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="Also count the commits made since the current branch left REF, such as main.",
     )
     args = parser.parse_args(argv)
-    selections = all_suites(REPO_ROOT) if args.all else select(changed_files(REPO_ROOT, args.base), REPO_ROOT)
+    if args.all:
+        selections = all_suites(REPO_ROOT)
+    else:
+        changed = changed_files(REPO_ROOT, args.base)
+        selections = select(changed, REPO_ROOT, added=added_files(REPO_ROOT, args.base))
     run(pytest_runs(selections), REPO_ROOT)
     return 0
 
