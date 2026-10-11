@@ -207,11 +207,6 @@ class LmEvalHarnessConfig:
     These can be overridden on a per-request basis by the evaluation harness.
     """
 
-    @property
-    def max_gen_toks(self) -> int:
-        """Backward compatibility property for max_gen_toks."""
-        return self.generation_kwargs.get("max_gen_toks", 256)
-
     def to_task_spec(self) -> list[str | dict]:
         """
         Convert task specifications to a list of dictionaries or strings.
