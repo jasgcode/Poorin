@@ -1655,7 +1655,7 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
 ### D108. Follow-ups to code provenance
 
 - **When:** 2026-10-11. **Status:** Adopted.
-- **Decision:** Four changes from D107's final review.
+- **Decision:** Four changes from D107's final review, and a cleanup in the full check.
   - The refusal no longer suggests a dev version. The refused run may itself be a dev run whose
     calendar input would build. Its advice is "Commit the changes and run again, or pass
     `--allow-uncommitted` to build from a snapshot." Outside a Git checkout the refusal says the
@@ -1668,13 +1668,18 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
     hashes Git verified, never the record's own text, and says "1 file" for one file.
   - The docs run the run list with `uv run --no-sync` and say that a snapshot holds every untracked
     file `.gitignore` does not exclude, before suggesting a push of `refs/poorin/*`.
-- **Why:** The owner asked for the review's optional follow-ups on 2026-10-11. The old advice was
-  wrong for the case the D107 spec gives as its example: a first dev run on an empty prefix,
-  refused because its calendar dataset would build.
+  - `tools.prune_check` deletes the snapshot refs its own training runs created: a ref that appeared
+    during the check, that a run output it removes names, and that no output it keeps names.
+- **Why:** The owner asked for the review's optional follow-ups on 2026-10-11, and for the check
+  to clean up after deleting the nine refs earlier checks had left. The old advice was wrong for the
+  case the D107 spec gives as its example: a first dev run on an empty prefix, refused because its
+  calendar dataset would build.
 - **Alternatives:** Keep each snapshot's author as the user's Git identity, and turn a missing
   identity into a readable error.
 - **Cost if wrong:** Snapshot commits no longer carry the user's name; the record's `built_by`
-  still does.
+  still does. A run of the owner's that snapshots the identical working tree during a full check
+  shares the check's commit and loses its ref; the commit stays in Git's object store until garbage
+  collection.
 
 ---
 

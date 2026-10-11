@@ -6,10 +6,13 @@
 import csv
 import os
 import subprocess
+from dataclasses import replace
 
 import pytest
 from finelog.embedded import require_embedded_server
 from levanter.tracker.finelog_metrics import LevanterMetricsWriter
+from poorin.execution.lazy import OUT, apply, run
+from rigging.provenance import SNAPSHOT_REF_PREFIX, Provenance, save_snapshot
 
 from tools.prune_check import (
     METRIC_COLUMNS,
@@ -19,10 +22,12 @@ from tools.prune_check import (
     parse_importtime,
     remove_new_entries,
     remove_run_outputs,
+    remove_run_snapshots,
     snapshot_entries,
+    snapshot_refs,
     train_roots,
 )
-from tools.reachability import RunnableRoot
+from tools.reachability import REPO_ROOT, RunnableRoot
 
 IMPORTTIME_STDERR = """\
 import time: self [us] | cumulative | imported package
@@ -83,8 +88,48 @@ def test_train_roots_removes_run_outputs_when_a_run_fails(tmp_path):
     (prefix / "users" / "someone" / "grug").mkdir(parents=True)
     failing = RunnableRoot("R", "tools.no_such_module", ())
     with pytest.raises(subprocess.CalledProcessError):
-        train_roots([failing], dict(os.environ), prefix=prefix, log_dirs=[])
+        train_roots([failing], dict(os.environ), prefix=prefix, log_dirs=[], repo=REPO_ROOT)
     assert not (prefix / "users").exists()
+
+
+def _git(repo, *args: str) -> str:
+    return subprocess.run(["git", *args], cwd=repo, check=True, capture_output=True, text=True).stdout.strip()
+
+
+def _make_dir(out):
+    os.makedirs(out, exist_ok=True)
+
+
+def test_remove_run_snapshots_deletes_only_the_refs_the_checks_runs_created(tmp_path, monkeypatch):
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    for args in (["init", "-b", "main"], ["config", "user.email", "t@example.com"], ["config", "user.name", "t"]):
+        _git(repo, *args)
+    (repo / "f.txt").write_text("v1\n")
+    _git(repo, "add", "f.txt")
+    _git(repo, "commit", "-m", "init")
+    (repo / "f.txt").write_text("v2\n")
+    older = save_snapshot("existed before the check", repo)
+    before = snapshot_refs(repo)
+    check_run = save_snapshot("the check's own run", repo)
+    kept_input = save_snapshot("a dataset the check keeps", repo)
+    elsewhere = save_snapshot("another launch during the check", repo)
+    prefix = tmp_path / "prefix"
+    monkeypatch.setenv("POORIN_PREFIX", str(prefix))
+    launch = Provenance.capture(repo)
+    for name, snapshot in (
+        ("users/t/checkpoints/toy", check_run),
+        ("users/t/checkpoints/old", older),
+        ("data/toy", kept_input),
+    ):
+        run(apply(name, _make_dir, version="2026.07.16", out=OUT), provenance=replace(launch, snapshot_commit=snapshot))
+
+    remove_run_snapshots(prefix, before, repo)
+
+    left = {ref.removeprefix(SNAPSHOT_REF_PREFIX) for ref in snapshot_refs(repo)}
+    # The run output the check removes loses its ref. A ref that existed before the check, one a
+    # kept output names, and one no output of the check names all stay.
+    assert left == {older, kept_input, elsewhere}
 
 
 def test_levanter_metric_rows_counts_the_rows_a_levanter_run_wrote(tmp_path):

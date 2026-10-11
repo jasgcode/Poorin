@@ -23,7 +23,9 @@ afterwards (D73).
 
 Runnable roots write under ``~/.cache/poorin/prune-check``. After the runs, even failed ones, the
 per-user run outputs there and the new entries in the repository's ``logs/`` and ``wandb/`` are
-deleted; tokenized datasets and kernel autotune caches are kept so later checks stay warm.
+deleted; tokenized datasets and kernel autotune caches are kept so later checks stay warm. The
+roots run with ``--allow-uncommitted``, so on an uncommitted change each saves a snapshot commit
+(D107); the snapshot refs those removed outputs name are deleted with them (D108).
 """
 
 import argparse
@@ -43,6 +45,8 @@ from pathlib import Path
 from finelog.client import LogClient
 from finelog.embedded import require_embedded_server
 from levanter.tracker.finelog_metrics import LEVANTER_METRICS_NAMESPACE
+from poorin.experiment.runs import collect_runs
+from rigging.provenance import SNAPSHOT_REF_PREFIX
 
 from tools import affected_tests
 from tools.lint import TY
@@ -119,6 +123,39 @@ def remove_run_outputs(prefix: Path) -> None:
         shutil.rmtree(users)
 
 
+def snapshot_refs(repo: Path) -> set[str]:
+    """The snapshot refs (``refs/poorin/snapshots/...``) the repository at ``repo`` holds now."""
+    listing = subprocess.run(
+        ["git", "for-each-ref", "--format=%(refname)", SNAPSHOT_REF_PREFIX],
+        cwd=repo,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout
+    return set(listing.split())
+
+
+def remove_run_snapshots(prefix: Path, before: set[str], repo: Path) -> None:
+    """Delete the snapshot refs the check's own runs created, before their outputs are removed.
+
+    A ref goes when it appeared after ``before`` was taken, a per-user run output under ``prefix``
+    names its commit, and no output the check keeps (a tokenized dataset) names it. A run of the
+    user's that snapshots the identical working tree during the check shares that commit; its ref
+    goes too, and the commit stays in Git's object store until garbage collection.
+    """
+    users = prefix / "users"
+    removed: set[str] = set()
+    kept: set[str] = set()
+    for run in collect_runs(str(prefix)):
+        provenance = run.record.provenance if run.record is not None else None
+        if provenance is None or provenance.snapshot_commit is None:
+            continue
+        (removed if Path(run.path).is_relative_to(users) else kept).add(provenance.snapshot_commit)
+    for ref in sorted(snapshot_refs(repo) - before):
+        if ref.removeprefix(SNAPSHOT_REF_PREFIX) in removed - kept:
+            subprocess.run(["git", "update-ref", "-d", ref], cwd=repo, check=True)
+
+
 def snapshot_entries(dirs: Iterable[Path]) -> dict[Path, set[str]]:
     """The entries each directory holds now; a missing directory has none."""
     return {directory: set(os.listdir(directory)) if directory.is_dir() else set() for directory in dirs}
@@ -166,22 +203,31 @@ def train(root: RunnableRoot, env: Mapping[str, str]) -> float:
 
 
 def train_roots(
-    runnable: Sequence[RunnableRoot], env: Mapping[str, str], *, prefix: Path, log_dirs: Sequence[Path]
+    runnable: Sequence[RunnableRoot],
+    env: Mapping[str, str],
+    *,
+    prefix: Path,
+    log_dirs: Sequence[Path],
+    repo: Path,
 ) -> dict[str, float]:
     """Train each root twice and time the second, warm run.
 
-    Run outputs are removed even when a run fails, so a failed check does not leave a checkpoint
-    behind.
+    Run outputs, and the snapshot refs they name, are removed even when a run fails, so a failed
+    check does not leave a checkpoint behind.
     """
     before = snapshot_entries(log_dirs)
+    refs_before = snapshot_refs(repo)
     warm: dict[str, float] = {}
     try:
         for root in runnable:
             train(root, env)  # first run fills the compile and autotune caches
             warm[root.name] = train(root, env)
     finally:
-        remove_run_outputs(prefix)
-        remove_new_entries(before)
+        try:
+            remove_run_snapshots(prefix, refs_before, repo)
+        finally:
+            remove_run_outputs(prefix)
+            remove_new_entries(before)
     return warm
 
 
@@ -233,7 +279,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     with tempfile.TemporaryDirectory() as finelog_dir, require_embedded_server()(log_dir=finelog_dir) as finelog:
         runnable = with_finelog_url(roots.runnable, finelog.address)
-        warm = train_roots(runnable, run_env(), prefix=POORIN_PREFIX, log_dirs=RUN_LOG_DIRS)
+        warm = train_roots(runnable, run_env(), prefix=POORIN_PREFIX, log_dirs=RUN_LOG_DIRS, repo=REPO_ROOT)
         metric_rows = levanter_metric_rows(finelog.address)
     if metric_rows == 0:
         raise RuntimeError(f"{FINELOG_ROOT} trained but wrote no metric rows to Finelog")
