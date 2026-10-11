@@ -10,7 +10,9 @@ from pathlib import Path
 
 import pytest
 from click.testing import CliRunner
+from poorin.execution.artifact import ArtifactRecord, write_record
 from poorin.execution.lazy import OUT, apply, run
+from poorin.execution.step_status import STATUS_SUCCESS, StatusFile
 from poorin.experiment.runs import main
 from rigging.provenance import Provenance, save_snapshot
 
@@ -147,6 +149,25 @@ def test_show_does_not_pass_a_recorded_commit_to_git_as_an_option(checkout, pref
     result = CliRunner().invoke(main, ["show", "data/toy@2026.07.16"])
     assert result.exit_code == 0, result.output
     assert not pwned.exists()
+
+
+def test_show_says_a_failed_build_wrote_no_record(checkout, prefix):
+    with pytest.raises(RuntimeError):
+        run(apply("data/broken", _fail, version="2026.07.16", out=OUT), provenance=Provenance.capture())
+    result = CliRunner().invoke(main, ["show", "data/broken@2026.07.16"])
+    assert result.exit_code == 0, result.output
+    assert result.output.splitlines()[0].endswith("failed")
+    assert "the build failed before writing its record" in result.output
+
+
+def test_show_says_an_output_without_provenance_predates_it(checkout, prefix):
+    output = prefix / "data" / "legacy" / "2026.01.01"
+    write_record(ArtifactRecord(name="data/legacy", version="2026.01.01", output_path=str(output)))
+    StatusFile(str(output), worker_id="test").write_status(STATUS_SUCCESS)
+    result = CliRunner().invoke(main, ["show", "data/legacy@2026.01.01"])
+    assert result.exit_code == 0, result.output
+    assert result.output.splitlines()[0].endswith("built")
+    assert "the output predates code provenance" in result.output
 
 
 def test_show_rejects_an_unknown_run(checkout, prefix):

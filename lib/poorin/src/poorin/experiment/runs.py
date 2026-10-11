@@ -17,6 +17,7 @@ import shlex
 from collections.abc import Iterator
 from dataclasses import dataclass
 from datetime import datetime
+from enum import StrEnum
 from pathlib import PurePosixPath
 
 import click
@@ -37,6 +38,22 @@ SHOW_INDENT = " " * 15
 NO_CODE = "-"
 
 
+class RunState(StrEnum):
+    BUILT = "built"
+    STARTED = "started"
+    FAILED = "failed"
+
+
+# What `show` says in its Code line for an output whose record is missing, by the output's state.
+NO_RECORD_REASONS = {
+    RunState.STARTED: "not recorded yet: the record is written when the build finishes",
+    RunState.FAILED: "not recorded: the build failed before writing its record",
+    RunState.BUILT: "not recorded: the output has no record",
+}
+# ... and for a record written before provenance existed, or a legacy sidecar.
+NO_PROVENANCE_REASON = "not recorded: the output predates code provenance"
+
+
 @dataclass(frozen=True)
 class Run:
     """One output under the prefix."""
@@ -44,20 +61,19 @@ class Run:
     label: str
     """``name@version``."""
     path: str
-    state: str
-    """``built``, ``started``, or ``failed``."""
+    state: RunState
     record: ArtifactRecord | None
     """``None`` until the build finishes."""
     when: datetime
 
 
-def _state(output_path: str) -> str:
+def _state(output_path: str) -> RunState:
     status = StatusFile(output_path, worker_id="runs").status
     if status == STATUS_SUCCESS:
-        return "built"
+        return RunState.BUILT
     if status in (STATUS_FAILED, STATUS_DEP_FAILED):
-        return "failed"
-    return "started"
+        return RunState.FAILED
+    return RunState.STARTED
 
 
 def _naive_local(moment: datetime) -> datetime:
@@ -176,7 +192,8 @@ def describe(run: Run) -> list[str]:
     """Everything the record and Git say about one run's code."""
     lines = [f"{run.label}   {run.state}"]
     if run.record is None or run.record.provenance is None:
-        lines.append("  Code         not recorded yet: the record is written when the build finishes")
+        reason = NO_RECORD_REASONS[run.state] if run.record is None else NO_PROVENANCE_REASON
+        lines.append(f"  Code         {reason}")
         return lines
     provenance = _with_subject(run.record.provenance)
     lines.append(f"  Built        {_time(provenance.created_at)} by {provenance.built_by or 'unknown'}")
