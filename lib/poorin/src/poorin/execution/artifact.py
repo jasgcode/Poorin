@@ -188,7 +188,8 @@ CALVER_RE = re.compile(r"^\d{4}\.\d{2}\.\d{2}(\.\d+)?$")
 
 
 def is_mutable_version(version: str) -> bool:
-    """A ``dev`` version is mutable: the drift check is skipped and it always rebuilds."""
+    """A ``dev`` version is mutable: it always rebuilds. Its output still records its recipe, so the
+    drift check still applies."""
     return version == "dev" or version.endswith("-dev")
 
 
