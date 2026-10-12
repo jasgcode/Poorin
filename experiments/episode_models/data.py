@@ -27,7 +27,8 @@ from poorin.episodes.schema import FieldKind
 from poorin.execution.artifact import Artifact
 from poorin.execution.lazy import OUT, ArtifactStep, apply
 
-BATCH_AXES = ("replica_dcn", "data")
+# Data parallel only: parameters are replicated and the batch is split over ``data``.
+BATCH_AXES = ("data",)
 ACTION_STATS_FILENAME = "action_stats.json"
 LOW_PERCENTILE = 1.0
 HIGH_PERCENTILE = 99.0
@@ -231,6 +232,12 @@ def eval_batches(examples: grain.MapDataset, *, batch_size: int, count: int) -> 
     if not len(batched):
         raise ValueError(f"the held-out split has {len(examples)} clips, fewer clips than one batch of {batch_size}")
     return [cast(dict[str, np.ndarray], batched[i]) for i in range(min(count, len(batched)))]
+
+
+def data_mesh() -> Mesh:
+    """Every device on one ``data`` axis, with automatic sharding: JAX propagates the batch's
+    sharding through reshapes such as patching, which explicit sharding refuses to infer."""
+    return Mesh(np.array(jax.devices()), BATCH_AXES)
 
 
 def to_batch(arrays: Mapping[str, np.ndarray], mesh: Mesh) -> EpisodeBatch:
