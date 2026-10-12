@@ -1847,6 +1847,40 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
 
 ---
 
+### D113. Episode model templates: a WAM, a world model, and a VLA on one training loop
+
+- **When:** 2026-10-11. **Status:** Adopted. Spec: `specs/2026-10-11-episode-model-templates-design.md`;
+  plan: `plans/2026-10-11-episode-model-templates.md`.
+- **Decision:** Sub-project 4 starts with three thin templates under `experiments/episode_models/`:
+  `wam/` denoises future frames and actions together, `world_model/` and `vla/` are its model with
+  the action stream or the future frames removed. All three use flow matching (rectified-flow
+  path, logit-normal times, one flow time per stream), train from scratch on 128 px frames as
+  16x16 patches, and share one training loop, data path, objective module, and FLOP count. A
+  family owns its `model.py` and `launch.py`. Pretrained components are ported into grug-style
+  modules and loaded from safetensors rather than run through a Flax bridge; this amends D13, whose
+  bridge is not built. The held-out loss is the mean over a fixed grid of eight flow times with a
+  fixed noise key, on an episode-level split by a stable hash of the episode id.
+- **Why:** The owner, 2026-10-11, wants all three families thin before any goes deep, so the
+  contract sub-project 5 sweeps (size knobs, FLOPs, one held-out loss) is settled first, and asked
+  for templates that are modular, reproducible, and flexible. Flow matching is what Dreamer 4, π0,
+  and UWM use, and one objective shares its sampler and evaluation. A ported module scales with the
+  size knob and keeps parameter names the owner chooses for sub-project 8; a bridged Flax module is
+  a fixed block that tracks the NNX API.
+- **Rulings while designing:** The templates live outside `experiments/grug/`, whose contract tests
+  require a language model in every variant directory. The training loop is shared rather than
+  copied per family, because the owner asked for modular templates; the model file stays the
+  copyable unit. The trunk copies grug base's block as it is, with a ReLU MLP four times the hidden
+  width; the design conversation called it SwiGLU, which grug base does not use. Grug's
+  `AttentionMask` cannot express a block-causal mask, so the templates pass a dense mask and run
+  reference attention. Action percentiles are an artifact step versioned with its dataset.
+- **Alternatives:** Copy grug base's training loop into each family; one template with a family
+  setting; per-family objectives (MSE frames, L1 actions); discrete tokens for every family; a
+  pretrained SigLIP encoder for the VLA through the Flax bridge.
+- **Cost if wrong:** A family that needs its own loop forks `train.py` into its directory. The
+  dense mask costs memory quadratic in sequence length once clips grow.
+
+---
+
 ## Deferred
 
 Known gaps left open on purpose. Each names where it gets resolved.
