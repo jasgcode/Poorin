@@ -205,6 +205,17 @@ class TimeEmbedding(eqx.Module):
         return self.w_out(jax.nn.silu(self.w_in(features)))
 
 
+def num_patches(frame_shape: tuple[int, int, int], patch: int) -> int:
+    height, width, _ = frame_shape
+    if height % patch or width % patch:
+        raise ValueError(f"frames of {height}x{width} do not divide into patches of patch_size {patch}")
+    return (height // patch) * (width // patch)
+
+
+def patch_dim(frame_shape: tuple[int, int, int], patch: int) -> int:
+    return patch * patch * frame_shape[2]
+
+
 def patchify(frames: Float[Array, "B T H W C"], patch: int) -> Float[Array, "B T N P"]:
     return rearrange(frames, "b t (h p) (w q) c -> b t (h w) (p q c)", p=patch, q=patch)
 

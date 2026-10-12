@@ -28,6 +28,11 @@ def velocity_target(data: Array, noise: Array) -> Array:
     return data - noise
 
 
+def velocity_loss(prediction: Array, target: Array) -> Float[Array, ""]:
+    """Mean squared velocity error, in float32 whatever the compute dtype."""
+    return jnp.mean((prediction.astype(jnp.float32) - target.astype(jnp.float32)) ** 2)
+
+
 def sample_times(key: PRNGKeyArray, batch_size: int) -> Float[Array, "B"]:
     """Logit-normal flow times, which weight the middle of the path (as in SD3)."""
     return jax.nn.sigmoid(LOGIT_NORMAL_SCALE * jax.random.normal(key, (batch_size,)))
