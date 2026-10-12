@@ -60,7 +60,11 @@ class WamConfig:
     def init(self, dims: EpisodeDims, clip: ClipConfig, *, key: PRNGKeyArray) -> "Wam":
         if dims.action_dim is None:
             raise ValueError("the WAM predicts actions, so its dataset needs an action field")
-        patches, pixels, d = num_patches(dims.frame_shape, self.patch_size), patch_dim(dims.frame_shape, self.patch_size), self.hidden_dim
+        patches, pixels, d = (
+            num_patches(dims.frame_shape, self.patch_size),
+            patch_dim(dims.frame_shape, self.patch_size),
+            self.hidden_dim,
+        )
         keys = jax.random.split(key, 9)
         return Wam(
             patch_embed=Linear.init(pixels, d, key=keys[0]),
@@ -117,9 +121,9 @@ class Wam(eqx.Module):
         self,
         patches: Float[Array, "B T N P"],
         actions: Float[Array, "B T A"],
-        task: Int[Array, "B"] | None,
-        t_video: Float[Array, "B"],
-        t_action: Float[Array, "B"],
+        task: Int[Array, " B"] | None,
+        t_video: Float[Array, " B"],
+        t_action: Float[Array, " B"],
     ) -> tuple[Float[Array, "B H N P"], Float[Array, "B H A"]]:
         """Velocities of the future steps, from clean history steps and noisy future ones."""
         batch, steps, n, _ = patches.shape
@@ -146,15 +150,19 @@ class Wam(eqx.Module):
         return patchify(to_unit(batch.frames, dtype), self.patch_size), batch.actions.astype(dtype)
 
     def stream_losses(
-        self, batch: EpisodeBatch, key: PRNGKeyArray, times: dict[str, Float[Array, "B"]]
+        self, batch: EpisodeBatch, key: PRNGKeyArray, times: dict[str, Float[Array, " B"]]
     ) -> dict[str, Float[Array, ""]]:
         patches, actions = self._inputs(batch)
         c = self.history
         video_key, action_key = jax.random.split(key)
         video_noise = jax.random.normal(video_key, patches[:, c:].shape, patches.dtype)
         action_noise = jax.random.normal(action_key, actions[:, c:].shape, actions.dtype)
-        noisy_patches = jnp.concatenate([patches[:, :c], interpolate(patches[:, c:], video_noise, times["video"])], axis=1)
-        noisy_actions = jnp.concatenate([actions[:, :c], interpolate(actions[:, c:], action_noise, times["action"])], axis=1)
+        noisy_patches = jnp.concatenate(
+            [patches[:, :c], interpolate(patches[:, c:], video_noise, times["video"])], axis=1
+        )
+        noisy_actions = jnp.concatenate(
+            [actions[:, :c], interpolate(actions[:, c:], action_noise, times["action"])], axis=1
+        )
         v_frames, v_actions = self._predict(noisy_patches, noisy_actions, batch.task, times["video"], times["action"])
         return {
             "video": velocity_loss(v_frames, velocity_target(patches[:, c:], video_noise)),
@@ -171,7 +179,7 @@ class Wam(eqx.Module):
             jax.random.normal(action_key, actions[:, c:].shape, actions.dtype),
         )
 
-        def velocity(future: tuple[Array, Array], t: Float[Array, "B"]) -> tuple[Array, Array]:
+        def velocity(future: tuple[Array, Array], t: Float[Array, " B"]) -> tuple[Array, Array]:
             future_patches, future_actions = future
             return self._predict(
                 jnp.concatenate([patches[:, :c], future_patches], axis=1),

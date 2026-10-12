@@ -22,7 +22,9 @@ def offline_vpt(monkeypatch):
     """VPT's real handle reads its episode index from the network; this one has VPT's fields."""
     handle = episodes("examples/vpt-10", sources=["0:16"], reader=READER, schema=SCHEMA, num_shards=1, version=VERSION)
     monkeypatch.setitem(
-        sources.SOURCES, "vpt-10", EpisodeSource(lambda: handle, video_field="video", action_field="action", task_key=None)
+        sources.SOURCES,
+        "vpt-10",
+        EpisodeSource(lambda: handle, video_field="video", action_field="action", task_key=None),
     )
 
 

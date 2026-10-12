@@ -110,4 +110,6 @@ def test_the_vla_ignores_future_frames():
     times = {"action": jnp.full((BATCH,), 0.4)}
     losses = model.stream_losses(batch, jax.random.key(3), times)
     future_changed = dataclasses.replace(batch, frames=batch.frames.at[:, clip.history :].set(0))
-    np.testing.assert_array_equal(losses["action"], model.stream_losses(future_changed, jax.random.key(3), times)["action"])
+    np.testing.assert_array_equal(
+        losses["action"], model.stream_losses(future_changed, jax.random.key(3), times)["action"]
+    )

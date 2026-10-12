@@ -19,7 +19,7 @@ LOGIT_NORMAL_SCALE = 1.0
 EVAL_TIME_COUNT = 8
 
 
-def interpolate(data: Array, noise: Array, t: Float[Array, "B"]) -> Array:
+def interpolate(data: Array, noise: Array, t: Float[Array, " B"]) -> Array:
     t = t.reshape(t.shape + (1,) * (data.ndim - t.ndim)).astype(data.dtype)
     return t * data + (1 - t) * noise
 
@@ -33,7 +33,7 @@ def velocity_loss(prediction: Array, target: Array) -> Float[Array, ""]:
     return jnp.mean((prediction.astype(jnp.float32) - target.astype(jnp.float32)) ** 2)
 
 
-def sample_times(key: PRNGKeyArray, batch_size: int) -> Float[Array, "B"]:
+def sample_times(key: PRNGKeyArray, batch_size: int) -> Float[Array, " B"]:
     """Logit-normal flow times, which weight the middle of the path (as in SD3)."""
     return jax.nn.sigmoid(LOGIT_NORMAL_SCALE * jax.random.normal(key, (batch_size,)))
 
@@ -43,7 +43,7 @@ def eval_times() -> np.ndarray:
     return (np.arange(EVAL_TIME_COUNT) + 0.5) / EVAL_TIME_COUNT
 
 
-def euler_sample(velocity: Callable[[Any, Float[Array, "B"]], Any], noise: Any, num_steps: int) -> Any:
+def euler_sample(velocity: Callable[[Any, Float[Array, " B"]], Any], noise: Any, num_steps: int) -> Any:
     """Integrate ``velocity(x, t)`` over the pytree ``x`` from ``t = 0`` (``noise``) to ``t = 1`` in
     ``num_steps`` equal Euler steps."""
     dt = 1.0 / num_steps

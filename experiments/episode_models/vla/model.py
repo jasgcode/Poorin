@@ -56,7 +56,11 @@ class VlaConfig:
     def init(self, dims: EpisodeDims, clip: ClipConfig, *, key: PRNGKeyArray) -> "Vla":
         if dims.action_dim is None:
             raise ValueError("the VLA predicts actions, so its dataset needs an action field")
-        patches, pixels, d = num_patches(dims.frame_shape, self.patch_size), patch_dim(dims.frame_shape, self.patch_size), self.hidden_dim
+        patches, pixels, d = (
+            num_patches(dims.frame_shape, self.patch_size),
+            patch_dim(dims.frame_shape, self.patch_size),
+            self.hidden_dim,
+        )
         keys = jax.random.split(key, 7)
         return Vla(
             patch_embed=Linear.init(pixels, d, key=keys[0]),
@@ -71,7 +75,11 @@ class VlaConfig:
         )
 
     def tokens_per_example(self, clip: ClipConfig, dims: EpisodeDims) -> int:
-        return int(dims.num_tasks is not None) + clip.history * num_patches(dims.frame_shape, self.patch_size) + clip.horizon
+        return (
+            int(dims.num_tasks is not None)
+            + clip.history * num_patches(dims.frame_shape, self.patch_size)
+            + clip.horizon
+        )
 
     def flops_per_example(self, clip: ClipConfig, dims: EpisodeDims) -> float:
         """Forward FLOPs: the trunk, patch embeddings for history steps, action embeddings and the head
@@ -116,8 +124,8 @@ class Vla(eqx.Module):
         self,
         history_patches: Float[Array, "B C N P"],
         actions: Float[Array, "B H A"],
-        task: Int[Array, "B"] | None,
-        t_action: Float[Array, "B"],
+        task: Int[Array, " B"] | None,
+        t_action: Float[Array, " B"],
     ) -> Float[Array, "B H A"]:
         """Velocities of the action chunk, from clean history frames and noisy future actions."""
         batch, _, n, _ = history_patches.shape
@@ -141,7 +149,7 @@ class Vla(eqx.Module):
         return history, batch.actions[:, self.history :].astype(dtype)
 
     def stream_losses(
-        self, batch: EpisodeBatch, key: PRNGKeyArray, times: dict[str, Float[Array, "B"]]
+        self, batch: EpisodeBatch, key: PRNGKeyArray, times: dict[str, Float[Array, " B"]]
     ) -> dict[str, Float[Array, ""]]:
         history, actions = self._inputs(batch)
         noise = jax.random.normal(key, actions.shape, actions.dtype)
@@ -153,7 +161,7 @@ class Vla(eqx.Module):
         history, actions = self._inputs(batch)
         noise = jax.random.normal(key, actions.shape, actions.dtype)
 
-        def velocity(future: Array, t: Float[Array, "B"]) -> Array:
+        def velocity(future: Array, t: Float[Array, " B"]) -> Array:
             return self._predict(history, future, batch.task, t)
 
         return {"action": euler_sample(velocity, noise, num_steps)}

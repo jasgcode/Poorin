@@ -65,7 +65,7 @@ TRAIN_FLOPS_PER_FORWARD = 3
 
 class EpisodeModel(Protocol):
     def stream_losses(
-        self, batch: EpisodeBatch, key: PRNGKeyArray, times: dict[str, Float[Array, "B"]]
+        self, batch: EpisodeBatch, key: PRNGKeyArray, times: dict[str, Float[Array, " B"]]
     ) -> dict[str, Float[Array, ""]]: ...
 
 
@@ -172,7 +172,10 @@ def _make_evaluate(mp: jmp.Policy, streams: Sequence[str], weights: Mapping[str,
             for i, batch in enumerate(batches)
         ]
         means = {s: float(np.mean([float(result[s]) for result in per_batch])) for s in streams}
-        return {"eval/loss": sum(weights[s] * means[s] for s in streams), **{f"eval/{s}_loss": means[s] for s in streams}}
+        return {
+            "eval/loss": sum(weights[s] * means[s] for s in streams),
+            **{f"eval/{s}_loss": means[s] for s in streams},
+        }
 
     return evaluate
 
@@ -227,7 +230,9 @@ def _train_locally(run: EpisodeTrainingRun) -> None:
             }
         )
 
-        held_out = [to_batch(b, mesh) for b in eval_batches(eval_examples, batch_size=train.batch_size, count=train.eval_batches)]
+        held_out = [
+            to_batch(b, mesh) for b in eval_batches(eval_examples, batch_size=train.batch_size, count=train.eval_batches)
+        ]
         train_step = _make_train_step(optimizer, mp, streams, weights)
         evaluate = _make_evaluate(mp, streams, weights)
 
@@ -265,7 +270,10 @@ def _train_locally(run: EpisodeTrainingRun) -> None:
             last_loss, last_duration = metrics["train/loss"], time.perf_counter() - started
             state_callbacks.run(state, loss=last_loss, step_duration=last_duration)
             levanter.tracker.log(
-                {**{k: v for k, v in metrics.items() if k != "train/loss"}, "throughput/loading_time": batches.this_load_time},
+                {
+                    **{k: v for k, v in metrics.items() if k != "train/loss"},
+                    "throughput/loading_time": batches.this_load_time,
+                },
                 step=step,
             )
             done = step + 1

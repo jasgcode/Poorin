@@ -54,7 +54,11 @@ class WorldModelConfig:
         return {"video": 1.0}
 
     def init(self, dims: EpisodeDims, clip: ClipConfig, *, key: PRNGKeyArray) -> "WorldModel":
-        patches, pixels, d = num_patches(dims.frame_shape, self.patch_size), patch_dim(dims.frame_shape, self.patch_size), self.hidden_dim
+        patches, pixels, d = (
+            num_patches(dims.frame_shape, self.patch_size),
+            patch_dim(dims.frame_shape, self.patch_size),
+            self.hidden_dim,
+        )
         keys = jax.random.split(key, 5)
         return WorldModel(
             patch_embed=Linear.init(pixels, d, key=keys[0]),
@@ -91,7 +95,7 @@ class WorldModel(eqx.Module):
     patch_size: int = eqx.field(static=True)
     history: int = eqx.field(static=True)
 
-    def _predict(self, patches: Float[Array, "B T N P"], t_video: Float[Array, "B"]) -> Float[Array, "B H N P"]:
+    def _predict(self, patches: Float[Array, "B T N P"], t_video: Float[Array, " B"]) -> Float[Array, "B H N P"]:
         """Velocities of the future frames, from clean history frames and noisy future ones."""
         batch, steps, n, _ = patches.shape
         future = (jnp.arange(steps) >= self.history)[None, :, None]
@@ -106,7 +110,7 @@ class WorldModel(eqx.Module):
         return patchify(to_unit(batch.frames, self.patch_embed.weight.dtype), self.patch_size)
 
     def stream_losses(
-        self, batch: EpisodeBatch, key: PRNGKeyArray, times: dict[str, Float[Array, "B"]]
+        self, batch: EpisodeBatch, key: PRNGKeyArray, times: dict[str, Float[Array, " B"]]
     ) -> dict[str, Float[Array, ""]]:
         patches = self._patches(batch)
         c = self.history
@@ -120,7 +124,7 @@ class WorldModel(eqx.Module):
         c = self.history
         noise = jax.random.normal(key, patches[:, c:].shape, patches.dtype)
 
-        def velocity(future: Array, t: Float[Array, "B"]) -> Array:
+        def velocity(future: Array, t: Float[Array, " B"]) -> Array:
             return self._predict(jnp.concatenate([patches[:, :c], future], axis=1), t)
 
         future = euler_sample(velocity, noise, num_steps)

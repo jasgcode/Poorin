@@ -24,7 +24,9 @@ class EpisodeSource:
 
 
 SOURCES: dict[str, EpisodeSource] = {
-    "libero-spatial": EpisodeSource(libero_spatial, video_field="agentview", action_field="action", task_key="instruction"),
+    "libero-spatial": EpisodeSource(
+        libero_spatial, video_field="agentview", action_field="action", task_key="instruction"
+    ),
     "vpt-10": EpisodeSource(vpt_subset, video_field="video", action_field="action", task_key=None),
     "ssv2-500": EpisodeSource(ssv2_subset, video_field="video", action_field=None, task_key=None),
 }

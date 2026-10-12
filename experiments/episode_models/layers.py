@@ -78,7 +78,7 @@ class RMSNorm(eqx.Module):
         return (x * self.weight.astype(jnp.float32)).astype(dtype)
 
 
-def rotary(x: Float[Array, "B S H K"], positions: Int[Array, "S"]) -> Float[Array, "B S H K"]:
+def rotary(x: Float[Array, "B S H K"], positions: Int[Array, " S"]) -> Float[Array, "B S H K"]:
     """Rotary embedding at explicit positions, in grug's split-half convention. Tokens that share a
     position (the patches of one frame) get the same rotation."""
     half = x.shape[-1] // 2
@@ -115,7 +115,7 @@ class Attention(eqx.Module):
         )
 
     def __call__(
-        self, x: Float[Array, "B S D"], positions: Int[Array, "S"], mask: Bool[Array, "S S"]
+        self, x: Float[Array, "B S D"], positions: Int[Array, " S"], mask: Bool[Array, "S S"]
     ) -> Float[Array, "B S D"]:
         batch, seq, _ = x.shape
 
@@ -161,7 +161,7 @@ class Block(eqx.Module):
         )
 
     def __call__(
-        self, x: Float[Array, "B S D"], positions: Int[Array, "S"], mask: Bool[Array, "S S"]
+        self, x: Float[Array, "B S D"], positions: Int[Array, " S"], mask: Bool[Array, "S S"]
     ) -> Float[Array, "B S D"]:
         x = x + self.attention(self.attention_norm(x), positions, mask)
         return x + self.mlp(self.mlp_norm(x))
@@ -177,7 +177,7 @@ class Trunk(eqx.Module):
         return Trunk(blocks=tuple(Block.init(config, key=k) for k in keys), final_norm=RMSNorm.init(config.hidden_dim))
 
     def __call__(
-        self, x: Float[Array, "B S D"], positions: Int[Array, "S"], mask: Bool[Array, "S S"]
+        self, x: Float[Array, "B S D"], positions: Int[Array, " S"], mask: Bool[Array, "S S"]
     ) -> Float[Array, "B S D"]:
         for block in self.blocks:
             x = block(x, positions, mask)
@@ -197,7 +197,7 @@ class TimeEmbedding(eqx.Module):
             w_in=Linear.init(TIME_FEATURES, hidden_dim, key=k_in), w_out=Linear.init(hidden_dim, hidden_dim, key=k_out)
         )
 
-    def __call__(self, t: Float[Array, "B"]) -> Float[Array, "B D"]:
+    def __call__(self, t: Float[Array, " B"]) -> Float[Array, "B D"]:
         half = TIME_FEATURES // 2
         freqs = jnp.exp(-jnp.log(10_000.0) * jnp.arange(half, dtype=jnp.float32) / half)
         args = TIME_SCALE * t.astype(jnp.float32)[:, None] * freqs[None, :]
