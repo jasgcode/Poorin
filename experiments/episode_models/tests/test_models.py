@@ -75,11 +75,34 @@ def test_a_later_future_frame_changes_no_earlier_prediction():
     model = config.init(dims, clip, key=jax.random.key(0))
     patches = patchify(to_unit(batch.frames, jnp.float32), 8)
     t = jnp.full((BATCH,), 0.3)
-    frames, actions = model._predict(patches, batch.actions, batch.task, t, t)
-    changed_frames, changed_actions = model._predict(patches.at[:, -1].add(1.0), batch.actions, batch.task, t, t)
+    frames, actions = model._predict(patches, batch.actions[:, :-1], batch.task, t, t)
+    changed_frames, changed_actions = model._predict(patches.at[:, -1].add(1.0), batch.actions[:, :-1], batch.task, t, t)
     np.testing.assert_allclose(frames[:, 0], changed_frames[:, 0], rtol=1e-5, atol=1e-5)
     np.testing.assert_allclose(actions[:, 0], changed_actions[:, 0], rtol=1e-5, atol=1e-5)
     assert not np.allclose(frames[:, 1], changed_frames[:, 1])
+
+
+def test_the_wam_at_pure_action_noise_predicts_frames_without_the_next_action():
+    config, dims, clip, batch = tiny_setup("wam")
+    model = config.init(dims, clip, key=jax.random.key(0))
+    times = {"video": jnp.full((BATCH,), 0.4), "action": jnp.zeros((BATCH,))}
+    changed = dataclasses.replace(batch, actions=batch.actions.at[:, clip.history - 1].add(1.0))
+    np.testing.assert_array_equal(
+        model.stream_losses(batch, jax.random.key(3), times)["video"],
+        model.stream_losses(changed, jax.random.key(3), times)["video"],
+    )
+
+
+def test_the_wam_never_reads_the_action_after_the_last_frame():
+    config, dims, clip, batch = tiny_setup("wam")
+    model = config.init(dims, clip, key=jax.random.key(0))
+    times = {"video": jnp.full((BATCH,), 0.4), "action": jnp.full((BATCH,), 0.4)}
+    changed = dataclasses.replace(batch, actions=batch.actions.at[:, -1].add(1.0))
+    jax.tree.map(
+        np.testing.assert_array_equal,
+        model.stream_losses(batch, jax.random.key(3), times),
+        model.stream_losses(changed, jax.random.key(3), times),
+    )
 
 
 def test_the_world_models_later_frames_change_no_earlier_prediction():
@@ -101,7 +124,22 @@ def test_the_vlas_actions_see_every_history_frame_and_each_other():
     actions = np.flatnonzero(blocks == blocks.max())
     assert len(actions) == clip.horizon
     assert mask[actions].all()
-    assert positions[actions].tolist() == [clip.history + 1, clip.history + 2]
+    # Frame t sits at position t + 1; the action taken after observing it shares its position.
+    assert positions[actions].tolist() == [clip.history, clip.history + 1]
+
+
+def test_the_vlas_chunk_starts_with_the_action_for_the_last_history_frame():
+    config, dims, clip, batch = tiny_setup("vla")
+    model = config.init(dims, clip, key=jax.random.key(0))
+    times = {"action": jnp.full((BATCH,), 0.4)}
+    loss = model.stream_losses(batch, jax.random.key(3), times)["action"]
+
+    def loss_with_action_changed(step):
+        changed = dataclasses.replace(batch, actions=batch.actions.at[:, step].add(1.0))
+        return model.stream_losses(changed, jax.random.key(3), times)["action"]
+
+    assert loss_with_action_changed(clip.history - 1) != loss
+    np.testing.assert_array_equal(loss_with_action_changed(clip.history + clip.horizon - 1), loss)
 
 
 def test_the_vla_ignores_future_frames():

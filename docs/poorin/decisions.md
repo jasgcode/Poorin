@@ -1886,6 +1886,11 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
   threads and 500 batches per loader process: with 20 workers, host memory reached 40 GB in 40
   seconds and was still rising. It now reads with 2 threads and 2 batches per process, and 20
   workers held flat at about 0.9 GB each. The dataset smoke and throughput scripts share the reader.
+  The VLA's and the WAM's predicted actions start with the action taken after the last history
+  frame, at that frame's rotary position. The plan started them one step later: the VLA never
+  learned the first action it executes, and the WAM took that action as clean history, so even at
+  pure action noise its frames saw the next action. The WAM's last timestep now has no action
+  token, and neither model reads a clip's last action.
 - **Alternatives:** Copy grug base's training loop into each family; one template with a family
   setting; per-family objectives (MSE frames, L1 actions); discrete tokens for every family; a
   pretrained SigLIP encoder for the VLA through the Flax bridge.

@@ -5,8 +5,9 @@
 chunk of future actions conditioned on clean history frames and a task.
 
 History frames are blocks by timestep, as in the WAM. The action chunk is one block after them, so
-every action token sees all history and every other action, as in pi0's action expert; each action
-keeps its own timestep as its rotary position. The VLA reads no past actions.
+every action token sees all history and every other action, as in pi0's action expert. The chunk
+starts with the action taken after the last history frame, and each action shares its frame's
+rotary position. The VLA reads no past actions.
 """
 
 from dataclasses import dataclass
@@ -109,10 +110,10 @@ class Vla(eqx.Module):
 
     def layout(self, patches: int, horizon: int) -> tuple[np.ndarray, np.ndarray]:
         """Each token's (rotary position, mask block): the task token (if any) at 0, history frame
-        ``t`` (from 1) at ``t``, and the action for future step ``t`` at position ``t`` in one shared
-        block after the history."""
+        ``t`` (from 1) at ``t``, and the action taken after frame ``t`` at position ``t``, in one
+        shared block after the history."""
         frames = np.repeat(np.arange(1, self.history + 1), patches)
-        action_positions = np.arange(self.history + 1, self.history + horizon + 1)
+        action_positions = np.arange(self.history, self.history + horizon)
         action_blocks = np.full(horizon, self.history + 1)
         lead = np.zeros(int(self.task_embed is not None), dtype=np.int64)
         return (
@@ -127,7 +128,7 @@ class Vla(eqx.Module):
         task: Int[Array, " B"] | None,
         t_action: Float[Array, " B"],
     ) -> Float[Array, "B H A"]:
-        """Velocities of the action chunk, from clean history frames and noisy future actions."""
+        """Velocities of the action chunk, from clean history frames and noisy actions."""
         batch, _, n, _ = history_patches.shape
         horizon = actions.shape[1]
         frames = (self.patch_embed(history_patches) + self.patch_position).reshape(batch, self.history * n, -1)
@@ -146,7 +147,8 @@ class Vla(eqx.Module):
             raise ValueError("the VLA needs actions in its batch")
         dtype = self.patch_embed.weight.dtype
         history = patchify(to_unit(batch.frames[:, : self.history], dtype), self.patch_size)
-        return history, batch.actions[:, self.history :].astype(dtype)
+        # The actions taken after frames history - 1 through length - 2; the clip's last action is unused.
+        return history, batch.actions[:, self.history - 1 : -1].astype(dtype)
 
     def stream_losses(
         self, batch: EpisodeBatch, key: PRNGKeyArray, times: dict[str, Float[Array, " B"]]
