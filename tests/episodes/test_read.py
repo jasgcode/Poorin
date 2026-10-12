@@ -130,3 +130,14 @@ def test_a_dataset_with_no_clip_this_long_is_refused(tmp_path):
     dataset = build(tmp_path, "ds", ["a:12,b:7"])
     with pytest.raises(ValueError, match=r"no clip.*13 steps.*longest episode has 12"):
         clip_dataset(dataset, clip=ClipSpec(length=7, stride=1, skip=2), fields=["action"])
+
+
+def test_rows_restrict_clips_to_those_episodes(tmp_path):
+    dataset = build(tmp_path, "ds", ["a:12,b:7", "c:20"])
+    clip = ClipSpec(length=4, stride=4, skip=1)
+    every = clip_dataset(dataset, clip=clip, fields=["action"], metadata=["task"])
+    only_c = clip_dataset(dataset, clip=clip, fields=["action"], metadata=["task"], rows=[2])
+
+    assert {str(every[i]["task"]) for i in range(len(every))} == {"task a", "task b", "task c"}
+    assert len(only_c) == 5  # 20 steps, clips of 4 every 4 steps
+    assert {str(only_c[i]["task"]) for i in range(len(only_c))} == {"task c"}

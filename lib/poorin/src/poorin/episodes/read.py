@@ -68,12 +68,15 @@ def read_record(dataset: EpisodeDataset, shard: int, record: int) -> dict[str, b
 class _ClipSource:
     """A Grain source of clip locations: (shard, record, episode length, start, episode row)."""
 
-    def __init__(self, dataset: EpisodeDataset, clip: ClipSpec):
+    def __init__(self, dataset: EpisodeDataset, clip: ClipSpec, rows: Sequence[int] | None):
         index = dataset.index
-        self._rows, self._starts = clip_starts(index["length"].to_numpy(), clip)
+        selected = np.arange(len(index)) if rows is None else np.asarray(rows, dtype=np.int64)
+        lengths = index["length"].to_numpy()
+        positions, self._starts = clip_starts(lengths[selected], clip)
+        self._rows = selected[positions]
         self._shards = index["shard"].to_numpy()
         self._records = index["record"].to_numpy()
-        self._lengths = index["length"].to_numpy()
+        self._lengths = lengths
 
     def __len__(self) -> int:
         return len(self._rows)
@@ -117,15 +120,23 @@ class _ClipReader:
 
 
 def clip_dataset(
-    dataset: EpisodeDataset, *, clip: ClipSpec, fields: Sequence[str], metadata: Sequence[str] = ()
+    dataset: EpisodeDataset,
+    *,
+    clip: ClipSpec,
+    fields: Sequence[str],
+    metadata: Sequence[str] = (),
+    rows: Sequence[int] | None = None,
 ) -> grain.MapDataset:
     """Every clip of ``dataset``, in index order, as ``{field: [clip.length, *shape]}`` plus the
-    requested per-episode ``metadata`` values. Only ``fields`` are decoded."""
-    source = _ClipSource(dataset, clip)
+    requested per-episode ``metadata`` values. Only ``fields`` are decoded. ``rows`` (positions in
+    ``dataset.index``) restricts the clips to those episodes, for a held-out split."""
+    source = _ClipSource(dataset, clip, rows)
     if not len(source):
-        lengths = dataset.index["length"]
+        lengths = dataset.index["length"].to_numpy()
+        if rows is not None:
+            lengths = lengths[np.asarray(rows, dtype=np.int64)]
         longest = int(lengths.max()) if len(lengths) else 0
-        raise ValueError(f"no clip of {clip.span} steps fits in this dataset: its longest episode has {longest}")
+        raise ValueError(f"no clip of {clip.span} steps fits in these episodes: the longest episode has {longest}")
     return grain.MapDataset.source(source).map(_ClipReader(dataset, clip, fields, metadata))
 
 
