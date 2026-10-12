@@ -27,6 +27,11 @@ from poorin.episodes.schema import DatasetSchema
 
 # Numeric dtype kinds placed on the mesh: bool, signed, unsigned, float. Text stays on the host.
 DEVICE_DTYPE_KINDS = "biuf"
+# Each loader process decodes batches in this many threads and buffers at most this many. Grain's
+# defaults (16 threads, 500 elements) buffer up to 500 whole batches per process, which took 20
+# workers to 40 GB of host memory in 40 seconds (D113).
+WORKER_THREADS = 2
+WORKER_PREFETCH_BATCHES = 2
 
 
 @dataclass(frozen=True)
@@ -149,7 +154,8 @@ def batch_iterator(clips: grain.MapDataset, *, batch_size: int, start_step: int,
     # app never parses flags; Grain's defaults apply.
     if not flags.FLAGS.is_parsed():
         flags.FLAGS.mark_as_parsed()
-    return batched[start_step:].to_iter_dataset().mp_prefetch(options)
+    read_options = grain.ReadOptions(num_threads=WORKER_THREADS, prefetch_buffer_size=WORKER_PREFETCH_BATCHES)
+    return batched[start_step:].to_iter_dataset(read_options).mp_prefetch(options)
 
 
 def to_mesh(batch: Mapping[str, np.ndarray], mesh: Mesh, axes: tuple[str, ...]) -> dict[str, jax.Array | np.ndarray]:

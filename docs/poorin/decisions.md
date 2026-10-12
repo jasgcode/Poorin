@@ -1882,6 +1882,10 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
   history and future is part of the model. The WAM counts four time embeddings per example (each
   stream's flow time and its clean time). The action stats file is written with plain `open`,
   since episode datasets are local. `clip_dataset` gained `rows=` for the held-out split.
+  The acceptance runs found that `batch_iterator` (D110) left Grain's read-ahead at its defaults, 16
+  threads and 500 batches per loader process: with 20 workers, host memory reached 40 GB in 40
+  seconds and was still rising. It now reads with 2 threads and 2 batches per process, and 20
+  workers held flat at about 0.9 GB each. The dataset smoke and throughput scripts share the reader.
 - **Alternatives:** Copy grug base's training loop into each family; one template with a family
   setting; per-family objectives (MSE frames, L1 actions); discrete tokens for every family; a
   pretrained SigLIP encoder for the VLA through the Flax bridge.
