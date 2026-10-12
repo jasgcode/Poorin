@@ -30,6 +30,8 @@ modules = [
     # Workbench: episode data for video world models, VLAs, and WAMs, and the examples that test it
     "poorin.episodes.*",
     "experiments.datasets.episodes.*",
+    # Flow-matching templates for video world models, VLAs, and WAMs (D113)
+    "experiments.episode_models.*",
     # Workbench: evaluation
     "levanter.main.eval_lm",
     "levanter.eval_harness",

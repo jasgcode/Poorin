@@ -501,6 +501,23 @@ for a stated user:
 | `experiments.datasets.episodes.throughput` | Measures clips per second from an episode dataset against the number of decoding workers | `experiments.datasets.episodes.throughput` |
 | `experiments.datasets.episodes.vpt` | Example: Minecraft VPT contractor episodes, video with keyboard and mouse actions | `experiments.datasets.episodes.vpt` |
 | `experiments.datasets.fineweb_edu` | The FineWeb-Edu 10M pretokenized dataset at a pinned Hub revision, shared by the tutorial and grug | R1 |
+| `experiments.episode_models` | Package marker; docstring names the three flow-matching templates for episode data | package |
+| `experiments.episode_models.data` | Episode datasets as model batches: clip and split config, episode-level held-out split, action percentiles, task indices, Grain iterators | `experiments.episode_models.data` |
+| `experiments.episode_models.flops` | Analytic forward FLOPs of the episode models' parts: trunk per token, linear maps, time embeddings | `experiments.episode_models.flops` |
+| `experiments.episode_models.flow` | Flow matching on the rectified-flow path: interpolation, velocity target and loss, logit-normal times, the evaluation grid, Euler sampling | `experiments.episode_models.flow` |
+| `experiments.episode_models.launch` | Builds a family's trial as a lazy checkpoint artifact: the shared launch config, the dataset and action-stats dependencies, Levanter's trainer config | `experiments.episode_models.launch` |
+| `experiments.episode_models.layers` | Grug base's transformer block without sharding, rotary embedding at explicit positions, the block mask, frame patching, the flow-time embedding | `experiments.episode_models.layers` |
+| `experiments.episode_models.sources` | The example episode datasets a launcher names with `--dataset`, and the fields each template reads | `experiments.episode_models.sources` |
+| `experiments.episode_models.train` | The training loop the episode models share: model protocols, sampled flow times, the fixed-grid held-out loss, checkpoint and resume, Fray dispatch | `experiments.episode_models.train` |
+| `experiments.episode_models.vla` | Package marker | package |
+| `experiments.episode_models.vla.launch` | VLA trial launcher on the experiment CLI, LIBERO-Spatial by default | `experiments.episode_models.vla.launch` |
+| `experiments.episode_models.vla.model` | VLA: denoises an action chunk from clean history frames and a task | `experiments.episode_models.vla.model` |
+| `experiments.episode_models.wam` | Package marker | package |
+| `experiments.episode_models.wam.launch` | WAM trial launcher on the experiment CLI, LIBERO-Spatial by default | `experiments.episode_models.wam.launch` |
+| `experiments.episode_models.wam.model` | World action model: denoises future frames and actions together, each at its own flow time | `experiments.episode_models.wam.model` |
+| `experiments.episode_models.world_model` | Package marker | package |
+| `experiments.episode_models.world_model.launch` | Video world model trial launcher on the experiment CLI, SSv2 by default | `experiments.episode_models.world_model.launch` |
+| `experiments.episode_models.world_model.model` | Video world model: denoises future frames from clean history frames | `experiments.episode_models.world_model.model` |
 | `experiments.evals` | Package marker | package |
 | `experiments.evals.task_configs` | Named lm-eval task lists (`EvalTaskConfig`) by suite: core, MMLU, leaderboard, multilingual | `experiments.evals.task_configs` |
 | `experiments.grug` | Package marker | R2 |

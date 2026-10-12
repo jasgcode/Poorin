@@ -1873,6 +1873,15 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
   width; the design conversation called it SwiGLU, which grug base does not use. Grug's
   `AttentionMask` cannot express a block-causal mask, so the templates pass a dense mask and run
   reference attention. Action percentiles are an artifact step versioned with its dataset.
+- **Rulings while building:** The loop runs data-parallel on an automatic `("data",)` mesh, not
+  grug's explicit compact mesh: explicit sharding refuses the patch reshape of a batch-sharded
+  array, and replicated parameters need no annotations. One `EpisodeLaunchConfig` serves every
+  family with its `model` field typed by the config protocol; `--set` decodes a leaf by the runtime
+  object's field types, so `model.hidden_dim` works, while replacing the whole model does not. A
+  model's `init` takes the clip config as well as the dataset's sizes, because the split between
+  history and future is part of the model. The WAM counts four time embeddings per example (each
+  stream's flow time and its clean time). The action stats file is written with plain `open`,
+  since episode datasets are local. `clip_dataset` gained `rows=` for the held-out split.
 - **Alternatives:** Copy grug base's training loop into each family; one template with a family
   setting; per-family objectives (MSE frames, L1 actions); discrete tokens for every family; a
   pretrained SigLIP encoder for the VLA through the Flax bridge.
