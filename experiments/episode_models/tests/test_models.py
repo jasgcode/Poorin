@@ -9,10 +9,12 @@ import numpy as np
 import pytest
 
 from experiments.episode_models.data import ClipConfig, EpisodeBatch, EpisodeDims
-from experiments.episode_models.layers import patchify, to_unit
+from experiments.episode_models.layers import block_mask, patchify, to_unit
+from experiments.episode_models.vla.model import VlaConfig
 from experiments.episode_models.wam.model import WamConfig
+from experiments.episode_models.world_model.model import WorldModelConfig
 
-CONFIGS = {"wam": WamConfig}
+CONFIGS = {"wam": WamConfig, "world_model": WorldModelConfig, "vla": VlaConfig}
 CLIP = ClipConfig(history=2, horizon=2, stride=1, skip=1)
 BATCH = 2
 
@@ -78,3 +80,34 @@ def test_a_later_future_frame_changes_no_earlier_prediction():
     np.testing.assert_allclose(frames[:, 0], changed_frames[:, 0], rtol=1e-5, atol=1e-5)
     np.testing.assert_allclose(actions[:, 0], changed_actions[:, 0], rtol=1e-5, atol=1e-5)
     assert not np.allclose(frames[:, 1], changed_frames[:, 1])
+
+
+def test_the_world_models_later_frames_change_no_earlier_prediction():
+    config, dims, clip, batch = tiny_setup("world_model")
+    model = config.init(dims, clip, key=jax.random.key(0))
+    patches = patchify(to_unit(batch.frames, jnp.float32), 8)
+    t = jnp.full((BATCH,), 0.3)
+    frames = model._predict(patches, t)
+    changed = model._predict(patches.at[:, -1].add(1.0), t)
+    np.testing.assert_allclose(frames[:, 0], changed[:, 0], rtol=1e-5, atol=1e-5)
+    assert not np.allclose(frames[:, 1], changed[:, 1])
+
+
+def test_the_vlas_actions_see_every_history_frame_and_each_other():
+    config, dims, clip, _ = tiny_setup("vla")
+    model = config.init(dims, clip, key=jax.random.key(0))
+    positions, blocks = model.layout(patches=4, horizon=clip.horizon)
+    mask = block_mask(blocks)
+    actions = np.flatnonzero(blocks == blocks.max())
+    assert len(actions) == clip.horizon
+    assert mask[actions].all()
+    assert positions[actions].tolist() == [clip.history + 1, clip.history + 2]
+
+
+def test_the_vla_ignores_future_frames():
+    config, dims, clip, batch = tiny_setup("vla")
+    model = config.init(dims, clip, key=jax.random.key(0))
+    times = {"action": jnp.full((BATCH,), 0.4)}
+    losses = model.stream_losses(batch, jax.random.key(3), times)
+    future_changed = dataclasses.replace(batch, frames=batch.frames.at[:, clip.history :].set(0))
+    np.testing.assert_array_equal(losses["action"], model.stream_losses(future_changed, jax.random.key(3), times)["action"])
