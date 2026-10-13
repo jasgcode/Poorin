@@ -41,11 +41,17 @@ four parts:
 - `model`: the family's config. `hidden_dim` and `num_layers` are the size knobs; `head_dim` is
   64, so `hidden_dim` is a multiple of 64. `patch_size` must divide the frame size.
 - `data`: the source's fields (`video_field`, `action_field`, `task_key`), the clip
-  (`history`, `horizon`, `stride`, `skip`), `eval_percent`, and `num_workers`.
-- `train`: `steps`, `batch_size`, `seed`, precision (`mp`), `optimizer`, `steps_per_eval`,
-  `eval_batches`, `eval_batch_size`, `checkpoint_every`.
-- `run`: the output path, run id, GPU, tracker, and dataset paths, taken from the step context.
-  They are not part of the trial's identity, and `--set` refuses them.
+  (`history`, `horizon`, `stride`, `skip`), `eval_percent`, and `seed`, which shuffles the
+  training clips.
+- `train`: `steps`, `batch_size`, `seed` (initialization and noise), precision (`mp`),
+  `optimizer`, `steps_per_eval`, `eval_batches`, `eval_batch_size`.
+- `run`: the output path, run id, GPU, tracker, and dataset paths, taken from the step context,
+  and the execution choices set in `launch.py`: loader workers (`NUM_WORKERS`), log cadence
+  (`LOG_EVERY`), and the permanent-checkpoint interval (`CHECKPOINT_EVERY`). None of them changes
+  the trial's identity, and `--set` refuses them.
+
+A config that cannot run fails when it is built, and a run stops with `FloatingPointError` at the
+first step whose training loss, or the first evaluation whose held-out loss, is not finite.
 
 ## What every run logs
 

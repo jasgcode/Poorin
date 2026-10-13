@@ -46,6 +46,7 @@ def eval_times() -> np.ndarray:
 def euler_sample(velocity: Callable[[Any, Float[Array, " B"]], Any], noise: Any, num_steps: int) -> Any:
     """Integrate ``velocity(x, t)`` over the pytree ``x`` from ``t = 0`` (``noise``) to ``t = 1`` in
     ``num_steps`` equal Euler steps."""
+    assert num_steps >= 1, num_steps
     dt = 1.0 / num_steps
     batch_size = jax.tree.leaves(noise)[0].shape[0]
 

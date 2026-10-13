@@ -169,6 +169,7 @@ class Wam(eqx.Module):
     def _inputs(self, batch: EpisodeBatch) -> tuple[Array, Array]:
         if batch.actions is None:
             raise ValueError("the WAM needs actions in its batch")
+        assert batch.actions.shape[1] == batch.frames.shape[1] > self.history, (batch.actions.shape, batch.frames.shape)
         # The clip's last action follows its last frame, so its result is past the clip.
         return patchify(to_unit(batch.frames, jnp.float32), self.patch_size), batch.actions[:, :-1]
 

@@ -34,7 +34,7 @@ def tiny(tmp_path_factory) -> tuple[str, str]:
     """The tiny dataset's path and its action stats' path, built once for the module."""
     root = tmp_path_factory.mktemp("data")
     dataset = build_tiny(root)
-    compute_action_stats(dataset.path, "action", str(root / "stats"))
+    compute_action_stats(dataset.path, "action", 1.0, 99.0, str(root / "stats"))
     return dataset.path, str(root / "stats")
 
 
@@ -56,14 +56,13 @@ def json_records() -> Iterator[tuple[str, StringIO]]:
 def tiny_run(run_dir: Path, family: str, steps: int, tiny: tuple[str, str], logger_name: str) -> EpisodeTrainingRun:
     dataset_path, stats_path = tiny
     config = FAMILIES[family](hidden_dim=64, num_layers=1, patch_size=8)
-    reads_actions = "action" in config.streams or family == "wam"
+    reads_actions = config.needs_actions
     data = EpisodeDataConfig(
         video_field="video",
         action_field="action" if reads_actions else None,
         task_key="instruction" if config.conditions_on_task else None,
         clip=ClipConfig(history=2, horizon=2, stride=2, skip=1),
         eval_percent=50,
-        num_workers=0,
     )
     train = EpisodeTrainConfig(
         steps=steps,
@@ -74,7 +73,6 @@ def tiny_run(run_dir: Path, family: str, steps: int, tiny: tuple[str, str], logg
         steps_per_eval=steps,
         eval_batches=1,
         eval_batch_size=2,
-        checkpoint_every=1000,
     )
     trainer = TrainerConfig(
         id=f"test-{family}",
@@ -94,6 +92,8 @@ def tiny_run(run_dir: Path, family: str, steps: int, tiny: tuple[str, str], logg
         train=train,
         trainer=trainer,
         resources=ResourceConfig.with_cpu(),
+        num_workers=0,
+        log_every=1,
     )
 
 
@@ -152,3 +152,17 @@ def test_the_held_out_loss_is_the_same_on_every_evaluation(tmp_path, tiny):
     records = [json.loads(line) for line in stream.getvalue().splitlines() if line.strip()]
     evals = [r["metrics"]["eval/loss"] for r in records if r["event"] == "log" and "eval/loss" in r["metrics"]]
     assert len(evals) == 2 and evals[0] == evals[1]
+
+
+def test_relaunching_a_finished_run_logs_no_training_loss(tmp_path, tiny):
+    train_tiny(tmp_path, "world_model", steps=2, tiny=tiny)
+    assert losses_by_step(train_tiny(tmp_path, "world_model", steps=2, tiny=tiny)) == {}
+
+
+def test_a_diverging_run_stops_at_the_first_non_finite_loss(tmp_path, tiny):
+    diverging = AdamConfig(learning_rate=float("nan"), lr_schedule="constant", warmup=0.0)
+    with json_records() as (name, _):
+        run = tiny_run(tmp_path, "world_model", steps=3, tiny=tiny, logger_name=name)
+        run = dataclasses.replace(run, train=dataclasses.replace(run.train, optimizer=diverging))
+        with pytest.raises(FloatingPointError, match="step 1"):
+            run_episode_training(run)

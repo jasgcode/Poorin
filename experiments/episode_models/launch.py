@@ -38,8 +38,14 @@ from experiments.episode_models.train import (
     run_episode_training,
 )
 
-# One local RTX 5090. A run-arg, not part of the trial's identity.
+# Execution choices: runtime args, so changing one never changes a trial's identity.
+# One local RTX 5090.
 TRAIN_RESOURCES = ResourceConfig.with_gpu("RTX5090", count=1, cpu=16, disk="128G", ram="96G")
+# Each loader process holds about 0.9 GB with poorin.episodes.read's bounded read-ahead.
+NUM_WORKERS = 16
+LOG_EVERY = 1
+# Steps between permanent checkpoints; time-based temporary ones come every interval.
+CHECKPOINT_EVERY = 500
 TEMPORARY_CHECKPOINT_INTERVAL = timedelta(minutes=10)
 
 
@@ -48,7 +54,9 @@ TEMPORARY_CHECKPOINT_INTERVAL = timedelta(minutes=10)
 @no_type_check
 @dataclass(frozen=True)
 class EpisodeRunConfig:
-    """Where and how a trial runs: every field comes from the step context, so none bears identity."""
+    """Where and how a trial runs, all from the step context. The dataset and stats paths enter the
+    trial's identity only as their dependencies' labels; the other fields never do, and ``--set``
+    refuses all of them."""
 
     output_path: str
     run_id: str
@@ -57,6 +65,9 @@ class EpisodeRunConfig:
     finelog_url: str | None
     dataset_path: str
     action_stats_path: str | None
+    num_workers: int
+    log_every: int
+    checkpoint_every: int
 
 
 @no_type_check
@@ -78,7 +89,7 @@ def _trackers(launch: EpisodeLaunchConfig) -> tuple[TrackerConfig, ...]:
 
 def build_training_run(launch: EpisodeLaunchConfig) -> EpisodeTrainingRun:
     """Map a launch config onto the training loop's run: Levanter's trainer config with checkpoints
-    under the trial's output path, a permanent one every ``train.checkpoint_every`` steps."""
+    under the trial's output path, a permanent one every ``run.checkpoint_every`` steps."""
     trainer = TrainerConfig(
         id=launch.run.run_id,
         seed=launch.train.seed,
@@ -89,7 +100,7 @@ def build_training_run(launch: EpisodeLaunchConfig) -> EpisodeTrainingRun:
         require_accelerator=True,
         checkpointer=resolve_checkpointer_output_path(
             CheckpointerConfig(
-                save_interval=TEMPORARY_CHECKPOINT_INTERVAL, keep=[dict(every=launch.train.checkpoint_every)]
+                save_interval=TEMPORARY_CHECKPOINT_INTERVAL, keep=[dict(every=launch.run.checkpoint_every)]
             ),
             launch.run.output_path,
         ),
@@ -102,6 +113,8 @@ def build_training_run(launch: EpisodeLaunchConfig) -> EpisodeTrainingRun:
         train=launch.train,
         trainer=trainer,
         resources=launch.run.resources,
+        num_workers=launch.run.num_workers,
+        log_every=launch.run.log_every,
     )
 
 
@@ -148,6 +161,9 @@ def episode_trial(
             finelog_url=ctx.runtime_arg("finelog_url"),
             dataset_path=ctx.artifact_path(dataset_handle),
             action_stats_path=ctx.artifact_path(stats_handle) if stats_handle is not None else None,
+            num_workers=ctx.runtime_arg("num_workers"),
+            log_every=ctx.runtime_arg("log_every"),
+            checkpoint_every=ctx.runtime_arg("checkpoint_every"),
         )
         return overrides.apply(ctx, EpisodeLaunchConfig(model=model, data=data, train=train, run=run))
 
@@ -163,5 +179,8 @@ def episode_trial(
             "finelog_url": finelog_url,
             "run_id": run_id,
             "tracker": WandbConfig(project="poorin", tags=["episode", family], group=f"episode-{family}", name=None),
+            "num_workers": NUM_WORKERS,
+            "log_every": LOG_EVERY,
+            "checkpoint_every": CHECKPOINT_EVERY,
         },
     )

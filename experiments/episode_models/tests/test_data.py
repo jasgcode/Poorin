@@ -53,21 +53,19 @@ def test_normalization_maps_the_percentiles_to_the_unit_interval():
 
 def test_a_constant_action_dimension_normalizes_to_finite_values(tmp_path):
     dataset = build_tiny(tmp_path)
-    compute_action_stats(dataset.path, "action", str(tmp_path / "stats"))
-    stats = read_action_stats(str(tmp_path / "stats"))
+    compute_action_stats(dataset.path, "action", 1.0, 99.0, str(tmp_path / "stats"))
+    stats = read_action_stats(str(tmp_path / "stats"), "action")
     assert stats.low[2] == stats.high[2] == 0.5
     assert np.isfinite(normalize_actions(np.ones((4, 3), np.float32), stats)).all()
 
 
 def test_examples_carry_frames_normalized_actions_and_task_indices(tmp_path):
     dataset = build_tiny(tmp_path)
-    compute_action_stats(dataset.path, "action", str(tmp_path / "stats"))
-    config = EpisodeDataConfig(
-        video_field="video", action_field="action", task_key="instruction", clip=SHORT_CLIP, num_workers=0
-    )
+    compute_action_stats(dataset.path, "action", 1.0, 99.0, str(tmp_path / "stats"))
+    config = EpisodeDataConfig(video_field="video", action_field="action", task_key="instruction", clip=SHORT_CLIP)
     tasks = task_vocabulary(dataset.index, "instruction")
     rows = np.arange(len(dataset.index))
-    examples = example_dataset(dataset, config, rows, read_action_stats(str(tmp_path / "stats")), tasks)
+    examples = example_dataset(dataset, config, rows, read_action_stats(str(tmp_path / "stats"), "action"), tasks)
     first, last = examples[0], examples[len(examples) - 1]
     assert first["frames"].shape == (4, 16, 16, 3) and first["frames"].dtype == np.uint8
     assert first["actions"].shape == (4, 3) and np.abs(first["actions"]).max() <= 1
@@ -86,9 +84,7 @@ def test_dims_refuse_a_field_the_dataset_lacks(tmp_path):
 
 def test_eval_batches_spread_over_the_whole_held_out_split(tmp_path):
     dataset = build_tiny(tmp_path)
-    config = EpisodeDataConfig(
-        video_field="video", action_field=None, task_key="instruction", clip=SHORT_CLIP, num_workers=0
-    )
+    config = EpisodeDataConfig(video_field="video", action_field=None, task_key="instruction", clip=SHORT_CLIP)
     tasks = task_vocabulary(dataset.index, "instruction")
     examples = example_dataset(dataset, config, np.arange(len(dataset.index)), None, tasks)
     (batch,) = eval_batches(examples, batch_size=2, count=1)
@@ -98,7 +94,14 @@ def test_eval_batches_spread_over_the_whole_held_out_split(tmp_path):
 
 def test_eval_batches_refuse_a_split_smaller_than_they_need(tmp_path):
     dataset = build_tiny(tmp_path, episodes=2)
-    config = EpisodeDataConfig(video_field="video", action_field=None, task_key=None, clip=SHORT_CLIP, num_workers=0)
+    config = EpisodeDataConfig(video_field="video", action_field=None, task_key=None, clip=SHORT_CLIP)
     examples = example_dataset(dataset, config, np.array([0]), None, None)
     with pytest.raises(ValueError, match="need 64"):
         eval_batches(examples, batch_size=32, count=2)
+
+
+def test_examples_refuse_a_task_key_without_a_task_vocabulary(tmp_path):
+    dataset = build_tiny(tmp_path, episodes=2)
+    config = EpisodeDataConfig(video_field="video", action_field=None, task_key="instruction", clip=SHORT_CLIP)
+    with pytest.raises(ValueError, match="instruction"):
+        example_dataset(dataset, config, np.array([0]), None, None)

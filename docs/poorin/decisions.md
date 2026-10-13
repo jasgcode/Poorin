@@ -1899,6 +1899,29 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
   LIBERO-Spatial those first 128 clips came from about 5 of 25 held-out episodes and 2 of 10 tasks,
   and changing the training batch size changed the eval set, which a batch-size sweep's y-axis
   cannot allow.
+- **Rulings from the branch review:** Loader workers, log cadence, and the permanent-checkpoint
+  interval are runtime args, as grug base's `log_every` is, so changing one never forks a trial;
+  they are constants in `launch.py` that `--set` cannot reach. The data seed is `data.seed`, as the
+  spec has it, apart from `train.seed`, which seeds initialization and noise. The action-stats
+  step takes its percentiles as arguments, so they enter its identity, and a stats file is refused
+  for any field but its own. Failures are loud: configs validate when built, a run's data, stats,
+  and model must agree on actions and tasks, and a non-finite training or held-out loss raises
+  `FloatingPointError` at the step it appears. A relaunch of a finished run logs no training loss
+  instead of a forced 0.0. The review's bf16-softmax finding does not hold: reference attention
+  computes its logits and softmax in float32. The tests stay in `experiments/episode_models/tests/`
+  rather than the spec's `tests/episode_models/`, so a family's directory and its tests travel
+  together.
+- **Smoke OOM on 2026-10-12, no patch:** A 60-step world-model smoke run failed with
+  `RESOURCE_EXHAUSTED` allocating 4.02 GiB in `jit_train_step`. Another project's vLLM server held
+  30.9 of the 5090's 32.6 GB at the time. The same configuration had trained 2,000 steps two hours
+  earlier, before that server started. The failure surfaced at the first step, at the
+  non-finite-loss check's `float(loss)` (the first host sync of a jitted step), ran once without
+  retry, and named the cause. The exclusive-training lock (D98) serializes Poorin's own runs only;
+  it cannot see another process's GPU memory, and a free-memory precheck would only race the
+  other process, so the remedy is to stop the other server before training. With about 950 MiB
+  free, no JAX process could even create a CUDA context (`CUDA_ERROR_OUT_OF_MEMORY` at startup), so
+  the review fixes merged on the CPU checks (imports, ty, lint, tests that train all three
+  families and resume one); the GPU training roots and the metrics row wait until the GPU is free.
 - **Alternatives:** Copy grug base's training loop into each family; one template with a family
   setting; per-family objectives (MSE frames, L1 actions); discrete tokens for every family; a
   pretrained SigLIP encoder for the VLA through the Flax bridge.
@@ -1955,3 +1978,4 @@ Known gaps left open on purpose. Each names where it gets resolved.
 | `test_fa4_cute_attention.py` fails 21 tests on the GPU on both 3.12 and 3.13: the CuTe DSL reports a free-variable mismatch in the segmented forward launcher, likely because the tests' jaxtyping import hook wraps it; R2 trains with FlashAttention 4 and passes | D111 | Open |
 | Python 3.14 waits on draccus parsing union-typed fields on 3.14 (marin-community/draccus#69) | D111 | Open |
 | Long episodes read at about 300 to 430 clips/s whatever the worker count (VPT, 6,000 steps): profile the read path; keyframe-aligned records per long episode would change the format | D110 | Open |
+| The episode templates' action percentiles are computed over every episode, held-out ones included; computing them on training episodes only would put the split in the stats step's identity | D113 review | Open |

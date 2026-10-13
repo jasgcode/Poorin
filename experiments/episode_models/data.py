@@ -11,7 +11,7 @@ happens here, so the training loop draws all noise from its own key.
 import hashlib
 import json
 import os
-from collections.abc import Iterator, Mapping, Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import cast
 
@@ -48,6 +48,8 @@ class ClipConfig:
     def __post_init__(self) -> None:
         if self.history < 1 or self.horizon < 1:
             raise ValueError(f"a clip needs at least one history and one future step, not {self}")
+        if self.stride < 1 or self.skip < 1:
+            raise ValueError(f"a clip's stride and skip must be at least 1, not {self}")
 
     @property
     def length(self) -> int:
@@ -67,7 +69,12 @@ class EpisodeDataConfig:
     """The episode metadata key holding its instruction; None for a family without task conditioning."""
     clip: ClipConfig = ClipConfig()
     eval_percent: int = 5
-    num_workers: int = 16
+    seed: int = 0
+    """Shuffles the training clips; the model's initialization and noise come from ``train.seed``."""
+
+    def __post_init__(self) -> None:
+        if not 0 < self.eval_percent < 100:
+            raise ValueError(f"eval_percent must be between 0 and 100 exclusive, not {self.eval_percent}")
 
 
 @dataclass(frozen=True)
@@ -138,8 +145,12 @@ class ActionStats:
     high: np.ndarray
 
 
-def compute_action_stats(dataset_path: str, field: str, output_path: str) -> None:
-    """Write the 1st and 99th percentiles of each dimension of ``field`` over every step of the dataset."""
+def compute_action_stats(
+    dataset_path: str, field: str, low_percentile: float, high_percentile: float, output_path: str
+) -> None:
+    """Write the ``low_percentile`` and ``high_percentile`` of each dimension of ``field`` over every
+    step of the dataset."""
+    assert 0 <= low_percentile < high_percentile <= 100, (low_percentile, high_percentile)
     dataset = EpisodeDataset.raw_load(dataset_path)
     spec, step_rate = dataset.schema.fields[field], dataset.schema.step_rate
     values = []
@@ -147,10 +158,12 @@ def compute_action_stats(dataset_path: str, field: str, output_path: str) -> Non
         data = read_record(dataset, int(row.shard), int(row.record))[field]
         values.append(decode_field(spec, step_rate, data, int(row.length), range(int(row.length))))
     steps = np.concatenate(values).astype(np.float64)
+    if not np.isfinite(steps).all():
+        raise ValueError(f"{field} has non-finite values in {dataset_path}")
     stats = {
         "field": field,
-        "low": np.percentile(steps, LOW_PERCENTILE, axis=0).tolist(),
-        "high": np.percentile(steps, HIGH_PERCENTILE, axis=0).tolist(),
+        "low": np.percentile(steps, low_percentile, axis=0).tolist(),
+        "high": np.percentile(steps, high_percentile, axis=0).tolist(),
     }
     # Episode datasets are local (ArrayRecord opens local paths only), and so are their stats.
     os.makedirs(output_path, exist_ok=True)
@@ -158,27 +171,32 @@ def compute_action_stats(dataset_path: str, field: str, output_path: str) -> Non
         json.dump(stats, f)
 
 
-def read_action_stats(path: str) -> ActionStats:
+def read_action_stats(path: str, field: str) -> ActionStats:
     with open(os.path.join(path, ACTION_STATS_FILENAME)) as f:
         stats = json.load(f)
+    if stats["field"] != field:
+        raise ValueError(f"the action stats at {path} are for {stats['field']!r}, not {field!r}")
     return ActionStats(low=np.asarray(stats["low"]), high=np.asarray(stats["high"]))
 
 
 def action_stats(dataset: ArtifactStep[EpisodeDataset], field: str) -> ArtifactStep[Artifact]:
     """The percentiles of one action field, versioned with its dataset, so each dataset version
-    computes them once."""
+    computes them once. The percentiles are arguments, so changing them changes the step's identity."""
     return apply(
         f"episode-stats/{dataset.name}/{field}",
         compute_action_stats,
         version=dataset.version,
         dataset_path=dataset,
         field=field,
+        low_percentile=LOW_PERCENTILE,
+        high_percentile=HIGH_PERCENTILE,
         output_path=OUT,
     )
 
 
 def normalize_actions(actions: np.ndarray, stats: ActionStats) -> np.ndarray:
     """Map each dimension's percentiles to -1 and 1, then clip. A dimension that never varies maps to 0."""
+    assert actions.shape[-1] == stats.low.shape[0], (actions.shape, stats.low.shape)
     span = stats.high - stats.low
     varies = span > 0
     scaled = np.where(varies, 2 * (actions - stats.low) / np.where(varies, span, 1) - 1, 0)
@@ -190,17 +208,19 @@ class _ToExample:
     Picklable for Grain's worker processes."""
 
     def __init__(self, config: EpisodeDataConfig, stats: ActionStats | None, tasks: Sequence[str] | None):
+        if (config.action_field is None) != (stats is None):
+            raise ValueError(f"action field {config.action_field!r} needs action stats exactly when it is set")
+        if (config.task_key is None) != (tasks is None):
+            raise ValueError(f"task key {config.task_key!r} needs a task vocabulary exactly when it is set")
         self._config = config
         self._stats = stats
         self._task_index = {task: i for i, task in enumerate(tasks)} if tasks is not None else None
 
     def __call__(self, clip: Mapping[str, np.ndarray]) -> dict[str, np.ndarray]:
         example = {"frames": clip[self._config.video_field]}
-        if self._config.action_field is not None:
-            if self._stats is None:
-                raise ValueError("actions are read, so their stats are required")
+        if self._stats is not None:
             example["actions"] = normalize_actions(clip[self._config.action_field], self._stats)
-        if self._config.task_key is not None and self._task_index is not None:
+        if self._task_index is not None:
             example["task"] = np.asarray(self._task_index[str(clip[self._config.task_key])], dtype=np.int32)
         return example
 
@@ -221,7 +241,9 @@ def example_dataset(
 
 def train_batches(
     examples: grain.MapDataset, *, batch_size: int, seed: int, start_step: int, num_workers: int
-) -> Iterator[dict[str, np.ndarray]]:
+) -> grain.DatasetIterator:
+    """The shuffled, repeated training batches from ``start_step``. Close the iterator to stop its
+    loader processes."""
     shuffled = examples.shuffle(seed=seed).repeat(None)
     return iter(batch_iterator(shuffled, batch_size=batch_size, start_step=start_step, num_workers=num_workers))
 

@@ -109,6 +109,7 @@ class WorldModel(eqx.Module):
         return self.frame_head(hidden.reshape(batch, steps, n, -1)[:, self.history :])
 
     def _patches(self, batch: EpisodeBatch) -> Array:
+        assert batch.frames.shape[1] > self.history, batch.frames.shape
         return patchify(to_unit(batch.frames, jnp.float32), self.patch_size)
 
     def stream_losses(

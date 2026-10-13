@@ -10,6 +10,7 @@ the held-out loss on a fixed time grid, checkpoints, and resumes. It follows gru
 checkpoint restore, and grug's Fray dispatch.
 """
 
+import contextlib
 import dataclasses
 import functools
 import logging
@@ -104,14 +105,17 @@ class EpisodeTrainConfig:
     eval_batches: int = 4
     eval_batch_size: int = 32
     """Separate from ``batch_size``, so a batch-size sweep evaluates every trial on the same clips."""
-    checkpoint_every: int = 500
-    """Steps between permanent checkpoints; time-based temporary ones come from the checkpointer."""
-    log_every: int = 1
+
+    def __post_init__(self) -> None:
+        for name in ("steps", "batch_size", "steps_per_eval", "eval_batches", "eval_batch_size"):
+            if getattr(self, name) < 1:
+                raise ValueError(f"train.{name} must be at least 1, not {getattr(self, name)}")
 
 
 @dataclass(frozen=True)
 class EpisodeTrainingRun:
-    """Everything one training run reads. Launchers build it; tests build it directly."""
+    """Everything one training run reads. Launchers build it; tests build it directly.
+    ``num_workers`` and ``log_every`` are execution choices that never change the result."""
 
     model: EpisodeModelConfig
     dataset_path: str
@@ -120,6 +124,20 @@ class EpisodeTrainingRun:
     train: EpisodeTrainConfig
     trainer: TrainerConfig
     resources: ResourceConfig
+    num_workers: int
+    """Grain loader processes; 0 loads in the training process."""
+    log_every: int
+
+    def __post_init__(self) -> None:
+        if (self.data.action_field is None) != (self.action_stats_path is None):
+            raise ValueError("a run reads action stats exactly when its data has an action field")
+        if self.model.needs_actions != (self.data.action_field is not None):
+            raise ValueError(
+                f"the model's needs_actions is {self.model.needs_actions}, but data.action_field is "
+                f"{self.data.action_field!r}"
+            )
+        if self.num_workers < 0 or self.log_every < 1:
+            raise ValueError(f"num_workers must be at least 0 and log_every at least 1, not {self}")
 
 
 # A JAX pytree: JAX rebuilds it with stand-in leaves, so its constructor is exempt from the tests'
@@ -174,6 +192,8 @@ def _make_evaluate(mp: jmp.Policy, streams: Sequence[str], weights: Mapping[str,
             for i, batch in enumerate(batches)
         ]
         means = {s: float(np.mean([float(result[s]) for result in per_batch])) for s in streams}
+        if not all(np.isfinite(list(means.values()))):
+            raise FloatingPointError(f"the held-out loss is not finite: {means}")
         return {
             "eval/loss": sum(weights[s] * means[s] for s in streams),
             **{f"eval/{s}_loss": means[s] for s in streams},
@@ -187,12 +207,14 @@ def _train_locally(run: EpisodeTrainingRun) -> None:
     trainer.initialize()
     levanter.tracker.log_configuration(run)
     run_id = trainer.id
-    if run_id is None:
-        raise ValueError("trainer.id was not initialized")
+    assert run_id is not None, "run_episode_training refuses a run without trainer.id"
 
     dataset = EpisodeDataset.raw_load(run.dataset_path)
     dims = dataset_dims(dataset, run.data)
-    stats = read_action_stats(run.action_stats_path) if run.action_stats_path is not None else None
+    stats = None
+    if run.data.action_field is not None:
+        assert run.action_stats_path is not None
+        stats = read_action_stats(run.action_stats_path, run.data.action_field)
     tasks = task_vocabulary(dataset.index, run.data.task_key) if run.data.task_key is not None else None
     train_rows, eval_rows = split_rows(dataset.index, run.data.eval_percent)
     train_examples = example_dataset(dataset, run.data, train_rows, stats, tasks)
@@ -245,7 +267,7 @@ def _train_locally(run: EpisodeTrainingRun) -> None:
             eval_model_getter=lambda s: s.params,
             opt_state_getter=lambda s: s.opt_state,
         )
-        log_every = max(1, train.log_every)
+        log_every = run.log_every
         state_callbacks.add_hook(
             callbacks.log_performance_stats(tokens_per_example, train.batch_size, train_flops_per_example),
             every=log_every,
@@ -253,42 +275,43 @@ def _train_locally(run: EpisodeTrainingRun) -> None:
         state_callbacks.add_hook(callbacks.pbar_logger(total=train.steps), every=log_every)
         state_callbacks.add_hook(callbacks.log_step_info(train.steps), every=log_every)
 
-        batches = LoadingTimeTrackerIterator(
-            train_batches(
-                train_examples,
-                batch_size=train.batch_size,
-                seed=train.seed,
-                start_step=int(state.step),
-                num_workers=run.data.num_workers,
-            )
+        loader = train_batches(
+            train_examples,
+            batch_size=train.batch_size,
+            seed=run.data.seed,
+            start_step=int(state.step),
+            num_workers=run.num_workers,
         )
-        last_loss: float | jax.Array = 0.0
-        last_duration = 0.0
-        while int(state.step) < train.steps:
-            batch = to_batch(next(batches), mesh)
-            step = int(state.step)
-            started = time.perf_counter()
-            state, metrics = train_step(state, batch, jax.random.fold_in(noise_key, step))
-            jax.block_until_ready(metrics["train/loss"])
-            last_loss, last_duration = metrics["train/loss"], time.perf_counter() - started
-            state_callbacks.run(state, loss=last_loss, step_duration=last_duration)
-            levanter.tracker.log(
-                {
-                    **{k: v for k, v in metrics.items() if k != "train/loss"},
-                    "throughput/loading_time": batches.this_load_time,
-                },
-                step=step,
-            )
-            done = step + 1
-            if done % train.steps_per_eval == 0 or done == train.steps:
-                levanter.tracker.log(evaluate(state.params, held_out), step=step)
-            if checkpointer is not None:
+        # A relaunch of a finished run trains no step, so it has no loss to report.
+        last: tuple[jax.Array, float] | None = None
+        with contextlib.closing(loader):
+            batches = LoadingTimeTrackerIterator(loader)
+            while int(state.step) < train.steps:
+                batch = to_batch(next(batches), mesh)
+                step = int(state.step)
+                started = time.perf_counter()
+                state, metrics = train_step(state, batch, jax.random.fold_in(noise_key, step))
+                loss = metrics["train/loss"]
+                if not np.isfinite(float(loss)):
+                    raise FloatingPointError(f"train/loss is {float(loss)} at step {step}: {metrics}")
+                last = loss, time.perf_counter() - started
+                state_callbacks.run(state, loss=last[0], step_duration=last[1])
+                levanter.tracker.log(
+                    {
+                        **{k: v for k, v in metrics.items() if k != "train/loss"},
+                        "throughput/loading_time": batches.this_load_time,
+                    },
+                    step=step,
+                )
+                done = step + 1
+                if done % train.steps_per_eval == 0 or done == train.steps:
+                    levanter.tracker.log(evaluate(state.params, held_out), step=step)
                 checkpointer.on_step(tree=state, step=done)
 
-        state_callbacks.run(state, loss=last_loss, step_duration=last_duration, force=True)
-        if checkpointer is not None:
-            checkpointer.on_step(tree=state, step=int(state.step), force=True)
-            checkpointer.wait_until_finished()
+        if last is not None:
+            state_callbacks.run(state, loss=last[0], step_duration=last[1], force=True)
+        checkpointer.on_step(tree=state, step=int(state.step), force=True)
+        checkpointer.wait_until_finished()
 
     levanter.tracker.current_tracker().finish()
 

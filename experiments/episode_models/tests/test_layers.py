@@ -4,7 +4,6 @@
 import jax
 import jax.numpy as jnp
 import numpy as np
-import pytest
 from levanter.grug.attention import RotaryConfig, apply_rotary_embedding
 
 from experiments.episode_models.layers import Trunk, TrunkConfig, block_mask, patchify, rotary, unpatchify
@@ -49,8 +48,3 @@ def test_a_trunk_token_is_unaffected_by_later_blocks():
     changed = trunk(x.at[:, 3].set(7.0), jnp.asarray(blocks), mask)
     np.testing.assert_allclose(out[:, :3], changed[:, :3], rtol=1e-5, atol=1e-5)
     assert not np.allclose(out[:, 3], changed[:, 3])
-
-
-def test_hidden_dim_must_be_a_multiple_of_the_head_dim():
-    with pytest.raises(ValueError, match="multiple of 64"):
-        TrunkConfig(hidden_dim=100, num_layers=1)

@@ -148,6 +148,7 @@ class Vla(eqx.Module):
     def _inputs(self, batch: EpisodeBatch) -> tuple[Array, Array]:
         if batch.actions is None:
             raise ValueError("the VLA needs actions in its batch")
+        assert batch.actions.shape[1] == batch.frames.shape[1] > self.history, (batch.actions.shape, batch.frames.shape)
         history = patchify(to_unit(batch.frames[:, : self.history], jnp.float32), self.patch_size)
         # The actions taken after frames history - 1 through length - 2; the clip's last action is unused.
         return history, batch.actions[:, self.history - 1 : -1]
