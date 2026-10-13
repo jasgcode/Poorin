@@ -3,8 +3,10 @@
 
 import dataclasses
 
+import equinox as eqx
 import jax
 import jax.numpy as jnp
+import jmp
 import numpy as np
 import pytest
 
@@ -16,6 +18,8 @@ from experiments.episode_models.world_model.model import WorldModelConfig
 
 CONFIGS = {"wam": WamConfig, "world_model": WorldModelConfig, "vla": VlaConfig}
 CLIP = ClipConfig(history=2, horizon=2, stride=1, skip=1)
+HEADS = {"wam": ("frame_head", "action_head"), "world_model": ("frame_head",), "vla": ("action_head",)}
+MIXED = jmp.get_policy("params=float32,compute=bfloat16,output=bfloat16")
 BATCH = 2
 
 
@@ -62,6 +66,32 @@ def test_the_sampler_returns_the_future_of_each_stream(family):
     if "action" in out:
         assert out["action"].shape == (BATCH, clip.horizon, 3)
     jax.tree.map(np.testing.assert_array_equal, out, again)
+
+
+def with_zero_heads(family, model):
+    """A model whose predicted velocity is exactly zero, so its loss and samples depend only on the
+    data and the noise."""
+    heads = [getattr(model, name) for name in HEADS[family]]
+    return eqx.tree_at(
+        lambda m: [getattr(m, name) for name in HEADS[family]], model, [jax.tree.map(jnp.zeros_like, h) for h in heads]
+    )
+
+
+def test_mixed_precision_leaves_the_flow_path_in_float32(family):
+    config, dims, clip, batch = tiny_setup(family)
+    model = with_zero_heads(family, config.init(dims, clip, key=jax.random.key(0)))
+    mixed = MIXED.cast_to_compute(model)
+    times = {s: jnp.full((BATCH,), 0.4) for s in config.streams}
+    jax.tree.map(
+        np.testing.assert_array_equal,
+        model.stream_losses(batch, jax.random.key(3), times),
+        mixed.stream_losses(batch, jax.random.key(3), times),
+    )
+    jax.tree.map(
+        np.testing.assert_array_equal,
+        model.sample(batch, jax.random.key(2), num_steps=2),
+        mixed.sample(batch, jax.random.key(2), num_steps=2),
+    )
 
 
 def test_init_refuses_frames_the_patch_does_not_divide(family):

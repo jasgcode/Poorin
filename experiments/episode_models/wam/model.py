@@ -138,6 +138,9 @@ class Wam(eqx.Module):
     ) -> tuple[Float[Array, "B H N P"], Float[Array, "B H A"]]:
         """Velocities of the future frames and actions, from clean history and noisy future ones.
         ``actions`` holds one action per step but the last (``S = T - 1``)."""
+        # Noise, the noisy path, and targets stay in float32; only the model's input is cast.
+        dtype = self.patch_embed.weight.dtype
+        patches, actions = patches.astype(dtype), actions.astype(dtype)
         batch, steps, n, _ = patches.shape
         paired = (steps - 1) * (n + 1)
         clean = jnp.ones((batch,), jnp.float32)
@@ -166,9 +169,8 @@ class Wam(eqx.Module):
     def _inputs(self, batch: EpisodeBatch) -> tuple[Array, Array]:
         if batch.actions is None:
             raise ValueError("the WAM needs actions in its batch")
-        dtype = self.patch_embed.weight.dtype
         # The clip's last action follows its last frame, so its result is past the clip.
-        return patchify(to_unit(batch.frames, dtype), self.patch_size), batch.actions[:, :-1].astype(dtype)
+        return patchify(to_unit(batch.frames, jnp.float32), self.patch_size), batch.actions[:, :-1]
 
     def stream_losses(
         self, batch: EpisodeBatch, key: PRNGKeyArray, times: dict[str, Float[Array, " B"]]

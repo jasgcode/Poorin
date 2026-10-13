@@ -129,6 +129,9 @@ class Vla(eqx.Module):
         t_action: Float[Array, " B"],
     ) -> Float[Array, "B H A"]:
         """Velocities of the action chunk, from clean history frames and noisy actions."""
+        # Noise, the noisy path, and targets stay in float32; only the model's input is cast.
+        dtype = self.patch_embed.weight.dtype
+        history_patches, actions = history_patches.astype(dtype), actions.astype(dtype)
         batch, _, n, _ = history_patches.shape
         horizon = actions.shape[1]
         frames = (self.patch_embed(history_patches) + self.patch_position).reshape(batch, self.history * n, -1)
@@ -145,10 +148,9 @@ class Vla(eqx.Module):
     def _inputs(self, batch: EpisodeBatch) -> tuple[Array, Array]:
         if batch.actions is None:
             raise ValueError("the VLA needs actions in its batch")
-        dtype = self.patch_embed.weight.dtype
-        history = patchify(to_unit(batch.frames[:, : self.history], dtype), self.patch_size)
+        history = patchify(to_unit(batch.frames[:, : self.history], jnp.float32), self.patch_size)
         # The actions taken after frames history - 1 through length - 2; the clip's last action is unused.
-        return history, batch.actions[:, self.history - 1 : -1].astype(dtype)
+        return history, batch.actions[:, self.history - 1 : -1]
 
     def stream_losses(
         self, batch: EpisodeBatch, key: PRNGKeyArray, times: dict[str, Float[Array, " B"]]

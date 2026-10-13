@@ -97,6 +97,8 @@ class WorldModel(eqx.Module):
 
     def _predict(self, patches: Float[Array, "B T N P"], t_video: Float[Array, " B"]) -> Float[Array, "B H N P"]:
         """Velocities of the future frames, from clean history frames and noisy future ones."""
+        # Noise, the noisy path, and targets stay in float32; only the model's input is cast.
+        patches = patches.astype(self.patch_embed.weight.dtype)
         batch, steps, n, _ = patches.shape
         future = (jnp.arange(steps) >= self.history)[None, :, None]
         clean = jnp.ones((batch,), jnp.float32)
@@ -107,7 +109,7 @@ class WorldModel(eqx.Module):
         return self.frame_head(hidden.reshape(batch, steps, n, -1)[:, self.history :])
 
     def _patches(self, batch: EpisodeBatch) -> Array:
-        return patchify(to_unit(batch.frames, self.patch_embed.weight.dtype), self.patch_size)
+        return patchify(to_unit(batch.frames, jnp.float32), self.patch_size)
 
     def stream_losses(
         self, batch: EpisodeBatch, key: PRNGKeyArray, times: dict[str, Float[Array, " B"]]

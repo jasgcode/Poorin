@@ -1891,6 +1891,9 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
   learned the first action it executes, and the WAM took that action as clean history, so even at
   pure action noise its frames saw the next action. The WAM's last timestep now has no action
   token, and neither model reads a clip's last action.
+  The models build the flow path in float32 and cast only the network's input to the compute dtype.
+  Under bf16 compute they had drawn noise in bf16, which takes 128 distinct values and never exceeds
+  2.89 in magnitude, and formed the target and normalized actions (steps of about 0.004) in bf16.
 - **Alternatives:** Copy grug base's training loop into each family; one template with a family
   setting; per-family objectives (MSE frames, L1 actions); discrete tokens for every family; a
   pretrained SigLIP encoder for the VLA through the Flax bridge.
