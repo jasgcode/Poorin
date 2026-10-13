@@ -102,6 +102,8 @@ class EpisodeTrainConfig:
     )
     steps_per_eval: int = 250
     eval_batches: int = 4
+    eval_batch_size: int = 32
+    """Separate from ``batch_size``, so a batch-size sweep evaluates every trial on the same clips."""
     checkpoint_every: int = 500
     """Steps between permanent checkpoints; time-based temporary ones come from the checkpointer."""
     log_every: int = 1
@@ -231,7 +233,8 @@ def _train_locally(run: EpisodeTrainingRun) -> None:
         )
 
         held_out = [
-            to_batch(b, mesh) for b in eval_batches(eval_examples, batch_size=train.batch_size, count=train.eval_batches)
+            to_batch(b, mesh)
+            for b in eval_batches(eval_examples, batch_size=train.eval_batch_size, count=train.eval_batches)
         ]
         train_step = _make_train_step(optimizer, mp, streams, weights)
         evaluate = _make_evaluate(mp, streams, weights)

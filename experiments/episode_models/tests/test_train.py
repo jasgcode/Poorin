@@ -73,6 +73,7 @@ def tiny_run(run_dir: Path, family: str, steps: int, tiny: tuple[str, str], logg
         optimizer=AdamConfig(learning_rate=1e-3, lr_schedule="constant", warmup=0.0, weight_decay=0.0),
         steps_per_eval=steps,
         eval_batches=1,
+        eval_batch_size=2,
         checkpoint_every=1000,
     )
     trainer = TrainerConfig(

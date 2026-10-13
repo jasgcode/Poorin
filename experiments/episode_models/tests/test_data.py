@@ -84,9 +84,21 @@ def test_dims_refuse_a_field_the_dataset_lacks(tmp_path):
         dataset_dims(dataset, config)
 
 
-def test_eval_batches_refuse_a_split_smaller_than_a_batch(tmp_path):
+def test_eval_batches_spread_over_the_whole_held_out_split(tmp_path):
+    dataset = build_tiny(tmp_path)
+    config = EpisodeDataConfig(
+        video_field="video", action_field=None, task_key="instruction", clip=SHORT_CLIP, num_workers=0
+    )
+    tasks = task_vocabulary(dataset.index, "instruction")
+    examples = example_dataset(dataset, config, np.arange(len(dataset.index)), None, tasks)
+    (batch,) = eval_batches(examples, batch_size=2, count=1)
+    # The split's first clip is from "pour" episode e0 and its last from "stack" episode e9.
+    assert batch["task"].tolist() == [0, 1]
+
+
+def test_eval_batches_refuse_a_split_smaller_than_they_need(tmp_path):
     dataset = build_tiny(tmp_path, episodes=2)
     config = EpisodeDataConfig(video_field="video", action_field=None, task_key=None, clip=SHORT_CLIP, num_workers=0)
     examples = example_dataset(dataset, config, np.array([0]), None, None)
-    with pytest.raises(ValueError, match="fewer clips than one batch"):
-        eval_batches(examples, batch_size=64, count=1)
+    with pytest.raises(ValueError, match="need 64"):
+        eval_batches(examples, batch_size=32, count=2)

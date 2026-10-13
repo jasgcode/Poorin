@@ -227,11 +227,16 @@ def train_batches(
 
 
 def eval_batches(examples: grain.MapDataset, *, batch_size: int, count: int) -> list[dict[str, np.ndarray]]:
-    """The first ``count`` batches of the held-out clips in index order: the same clips every evaluation."""
-    batched = examples.batch(batch_size, drop_remainder=True)
-    if not len(batched):
-        raise ValueError(f"the held-out split has {len(examples)} clips, fewer clips than one batch of {batch_size}")
-    return [cast(dict[str, np.ndarray], batched[i]) for i in range(min(count, len(batched)))]
+    """``count`` batches of held-out clips spread evenly over the split in index order, so every
+    held-out episode contributes in proportion to its length: the same clips every evaluation."""
+    wanted = batch_size * count
+    if len(examples) < wanted:
+        raise ValueError(f"the held-out split has {len(examples)} clips; {count} batches of {batch_size} need {wanted}")
+    picked = [cast(dict[str, np.ndarray], examples[int(i)]) for i in np.linspace(0, len(examples) - 1, wanted).round()]
+    return [
+        {name: np.stack([clip[name] for clip in picked[start : start + batch_size]]) for name in picked[0]}
+        for start in range(0, wanted, batch_size)
+    ]
 
 
 def data_mesh() -> Mesh:

@@ -43,7 +43,7 @@ four parts:
 - `data`: the source's fields (`video_field`, `action_field`, `task_key`), the clip
   (`history`, `horizon`, `stride`, `skip`), `eval_percent`, and `num_workers`.
 - `train`: `steps`, `batch_size`, `seed`, precision (`mp`), `optimizer`, `steps_per_eval`,
-  `eval_batches`, `checkpoint_every`.
+  `eval_batches`, `eval_batch_size`, `checkpoint_every`.
 - `run`: the output path, run id, GPU, tracker, and dataset paths, taken from the step context.
   They are not part of the trial's identity, and `--set` refuses them.
 
@@ -56,7 +56,8 @@ The metrics a scaling sweep reads are the same in every family:
   against XLA's cost analysis in the tests
 - `eval/loss` and `eval/<stream>_loss`: the held-out loss, each stream's flow-matching loss averaged
   over eight fixed flow times with noise from a fixed key, on episodes held out by a hash of their
-  id. It is deterministic for given parameters.
+  id. Its `eval_batches * eval_batch_size` clips are spread evenly over the held-out split and do
+  not depend on the training batch size. It is deterministic for given parameters.
 - `train/loss`, `train/<stream>_loss`, and Levanter's throughput and MFU
 
 ## Reproducibility
