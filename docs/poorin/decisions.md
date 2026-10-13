@@ -1921,7 +1921,7 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
   other process, so the remedy is to stop the other server before training. With about 950 MiB
   free, no JAX process could even create a CUDA context (`CUDA_ERROR_OUT_OF_MEMORY` at startup), so
   the review fixes merged on the CPU checks (imports, ty, lint, tests that train all three
-  families and resume one); the GPU training roots and the metrics row wait until the GPU is free.
+  families and resume one). The GPU training roots passed on 2026-10-13 once the server stopped.
 - **Alternatives:** Copy grug base's training loop into each family; one template with a family
   setting; per-family objectives (MSE frames, L1 actions); discrete tokens for every family; a
   pretrained SigLIP encoder for the VLA through the Flax bridge.
