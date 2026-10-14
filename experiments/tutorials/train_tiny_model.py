@@ -34,6 +34,7 @@ from poorin.processing.tokenize.tokenize import TokenizedCache
 from poorin.training.training import LevanterCheckpoint
 
 from experiments.datasets.fineweb_edu import fineweb_edu_10m_dataset
+from experiments.datasets.wikitext import wikitext2_dataset
 from experiments.llama import llama_150m, llama_nano
 from experiments.marin_tokenizer import marin_tokenizer
 
@@ -47,18 +48,20 @@ DEVICES = {
 # Raw HuggingFace text datasets tokenized inline (a small sample for a quick run).
 RAW_SOURCES = {
     "tinystories": "roneneldan/TinyStories",
-    "wikitext": "dlwh/wikitext_2_detokenized",
 }
 
 
 def dataset(name: str) -> ArtifactStep[TokenizedCache]:
     """The named tutorial dataset as a tokenized handle.
 
-    ``fineweb-edu`` is a prebuilt Levanter cache (downloaded, not re-tokenized); the others
-    tokenize a 1000-document sample of a raw HuggingFace text dataset inline.
+    ``fineweb-edu`` is a prebuilt Levanter cache (downloaded, not re-tokenized); ``wikitext`` is
+    WikiText-2 (:mod:`experiments.datasets.wikitext`), which grug base also holds out; ``tinystories``
+    tokenizes a 1000-document sample of a raw HuggingFace text dataset inline.
     """
     if name == "fineweb-edu":
         return fineweb_edu_10m_dataset()
+    if name == "wikitext":
+        return wikitext2_dataset()
     return tokenized(name, tokenizer=marin_tokenizer, source=RAW_SOURCES[name], sample_count=1000, version="2026.06.28")
 
 

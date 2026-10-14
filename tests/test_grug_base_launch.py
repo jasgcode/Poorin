@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import dataclasses
+import json
 
 from fray.types import ResourceConfig
 from levanter.data.text.datasets import LmDataConfig
@@ -73,3 +74,12 @@ def test_a_set_reaches_grugs_config_and_names_the_trial():
     trial = grug_base_trial(version="2026.10.09", overrides=Overrides((Override.parse("steps=200"),)))
     assert trial.name == "grug/base-trial/steps=200"
     assert '"steps": 200' in trial.fingerprint_payload()
+
+
+def test_the_trial_holds_out_wikitext_and_evaluates_at_its_last_step():
+    trial = grug_base_trial(version="2026.10.13", overrides=Overrides())
+    assert "wikitext" in {dep.name for dep in trial.deps}
+    config = json.loads(trial.fingerprint_payload())
+    assert config["data"]["train_weights"]["wikitext"] == 0.0
+    assert config["eval_batch_size"] == 16
+    assert trial.artifact_type.suites().keys() == {"held-out"}

@@ -146,27 +146,27 @@ def build_train_loader(
     )
 
 
-def build_tagged_evaluator(
+def tagged_evaluator(
     *,
     data_config: LmDataConfig,
     max_seq_len: int,
     mesh: Mesh,
-    eval_cfg: GrugEvalConfig,
+    batch_size: int,
+    batch_pspec: P,
+    max_examples_per_dataset: int | None,
+    compute_bpb: bool,
 ) -> TaggedEvaluator[LmExample | GrugLmExample, Transformer] | None:
+    """The evaluator over every validation set of ``data_config``; training and post-hoc evaluation share it."""
     pos = Axis("position", max_seq_len)
     tagged_eval_sets = data_config.tagged_eval_sets(pos)
     if len(tagged_eval_sets) == 0:
         logger.warning("No evaluation datasets provided.")
         return None
 
-    max_examples_per_dataset = None
-    if eval_cfg.max_eval_batches is not None:
-        max_examples_per_dataset = eval_cfg.max_eval_batches * eval_cfg.eval_batch_size
-
-    tokenizer = data_config.the_tokenizer if eval_cfg.compute_bpb else None
-    batch_axis_resource = eval_cfg.eval_batch_pspec[0]
+    tokenizer = data_config.the_tokenizer if compute_bpb else None
+    batch_axis_resource = batch_pspec[0]
     eval_axis_mapping = {"batch": batch_axis_resource}
-    eval_batch = Axis("batch", eval_cfg.eval_batch_size)
+    eval_batch = Axis("batch", batch_size)
     eval_array_sharding = NamedSharding(mesh, P(batch_axis_resource, None))
 
     def eval_loss_fn(model: Transformer, batch: LmExample | GrugLmExample) -> tuple[jax.Array, jax.Array, jax.Array]:
@@ -192,6 +192,25 @@ def build_tagged_evaluator(
         device_mesh=mesh,
         axis_mapping=eval_axis_mapping,
         max_examples_per_dataset=max_examples_per_dataset,
+    )
+
+
+def build_tagged_evaluator(
+    *,
+    data_config: LmDataConfig,
+    max_seq_len: int,
+    mesh: Mesh,
+    eval_cfg: GrugEvalConfig,
+) -> TaggedEvaluator[LmExample | GrugLmExample, Transformer] | None:
+    max_examples = None if eval_cfg.max_eval_batches is None else eval_cfg.max_eval_batches * eval_cfg.eval_batch_size
+    return tagged_evaluator(
+        data_config=data_config,
+        max_seq_len=max_seq_len,
+        mesh=mesh,
+        batch_size=eval_cfg.eval_batch_size,
+        batch_pspec=eval_cfg.eval_batch_pspec,
+        max_examples_per_dataset=max_examples,
+        compute_bpb=eval_cfg.compute_bpb,
     )
 
 

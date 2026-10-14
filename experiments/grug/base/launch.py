@@ -3,8 +3,9 @@
 
 """grug-base trial run, authored as a lazy artifact.
 
-The run is a function that returns a typed :class:`Checkpoint` handle addressed by an
-explicit ``name@version``. The model, optimizer, data mixture, token budget, and evals
+The run is a function that returns a typed
+:class:`~experiments.grug.base.evaluation.GrugCheckpoint` handle addressed by an explicit
+``name@version``. The model, optimizer, data mixture, token budget, and evals
 are stated inline; the output path is ``ctx.output_path`` and the GPU is a run-arg, so neither
 bears on the artifact's identity.
 
@@ -41,9 +42,11 @@ from poorin.experiment.cli import build_options
 from poorin.experiment.data import mixture
 from poorin.experiment.namespacing import user_namespaced_name
 from poorin.experiment.overrides import Overrides
-from poorin.training.training import LevanterCheckpoint, resolve_checkpointer_output_path
+from poorin.training.training import resolve_checkpointer_output_path
 
 from experiments.datasets.fineweb_edu import fineweb_edu_10m_dataset
+from experiments.datasets.wikitext import wikitext2_dataset
+from experiments.grug.base.evaluation import GrugCheckpoint
 from experiments.grug.base.model import GrugModelConfig
 from experiments.grug.base.train import GrugEvalConfig, GrugRunConfig, GrugTrainerConfig, run_grug
 
@@ -52,6 +55,7 @@ from experiments.grug.base.train import GrugEvalConfig, GrugRunConfig, GrugTrain
 _TRAIN_RESOURCES = ResourceConfig.with_gpu("RTX5090", count=1, cpu=16, disk="128G", ram="96G")
 
 _TRAIN_DATA = fineweb_edu_10m_dataset()
+_HELD_OUT_DATA = wikitext2_dataset()
 
 GRUG_130M_MODEL = GrugModelConfig(
     vocab_size=128_256,
@@ -190,7 +194,7 @@ def run_grug_base_trial(config: GrugBaseLaunchConfig) -> None:
 
 def grug_base_trial(
     *, overrides: Overrides, version: str | None = None, finelog_url: str | None = None
-) -> ArtifactStep[LevanterCheckpoint]:
+) -> ArtifactStep[GrugCheckpoint]:
     """The base grug trial on 10M FineWeb-Edu tokens, on one local GPU, as a lazy checkpoint.
 
     ``overrides`` (from ``--set`` and ``--sweep``) apply to the ``GrugBaseLaunchConfig``; they enter
@@ -207,7 +211,7 @@ def grug_base_trial(
             ctx,
             GrugBaseLaunchConfig(
                 model=_LOCAL_MODEL,
-                data=mixture(ctx, train),
+                data=mixture(ctx, train, validation=(_HELD_OUT_DATA,)),
                 output_path=ctx.output_path,
                 run_id=ctx.runtime_arg("run_id"),
                 resources=ctx.runtime_arg("train_resources"),
@@ -230,17 +234,19 @@ def grug_base_trial(
                 z_loss_weight=1e-4,
                 ema_beta=None,
                 log_every=ctx.runtime_arg("log_every"),
-                eval_batch_size=None,
+                # One evaluation, at the final step: the loop forces its callbacks there, and steps_per_eval
+                # (1000) is past the trial's 50 steps. 8 batches of 16 score 128 held-out sequences.
+                eval_batch_size=16,
             ),
         )
 
     return ArtifactStep(
         name=user_namespaced_name(overrides.named(base_name), version),
         version=version,
-        artifact_type=LevanterCheckpoint,
+        artifact_type=GrugCheckpoint,
         run=run_grug_base_trial,
         build_config=build_config,
-        deps=tuple(train),
+        deps=(*train, _HELD_OUT_DATA),
         runtime_args={
             "train_resources": _TRAIN_RESOURCES,
             "finelog_url": finelog_url,
@@ -254,7 +260,7 @@ def grug_base_trial(
 @click.command()
 @click.option("--finelog-url", default=None, help="Finelog server that receives the run's metrics.")
 @build_options
-def main(finelog_url: str | None, overrides: Overrides) -> ArtifactStep[LevanterCheckpoint]:
+def main(finelog_url: str | None, overrides: Overrides) -> ArtifactStep[GrugCheckpoint]:
     return grug_base_trial(finelog_url=finelog_url, overrides=overrides)
 
 

@@ -324,7 +324,7 @@ def test_grug_variant_initial_state_only_stores_ema_when_enabled(variant: str):
 
 
 @contextlib.contextmanager
-def _json_tracker_logger() -> Iterator[tuple[str, StringIO]]:
+def json_tracker_logger() -> Iterator[tuple[str, StringIO]]:
     """A fresh logger for ``JsonLoggerConfig``, and the stream its records land in."""
     logger_name = f"test_grug_json_tracker_{uuid.uuid4().hex}"
     stream = StringIO()
@@ -339,11 +339,11 @@ def _json_tracker_logger() -> Iterator[tuple[str, StringIO]]:
         logger.removeHandler(handler)
 
 
-def _json_tracker_records(stream: StringIO) -> list[dict]:
+def json_tracker_records(stream: StringIO) -> list[dict]:
     return [json.loads(line) for line in stream.getvalue().splitlines() if line.strip()]
 
 
-def _tiny_grug_base_run_config(run_dir: Path, *, run_id: str, logger_name: str):
+def tiny_grug_base_run_config(run_dir: Path, *, run_id: str, logger_name: str):
     """A one-step grug base run on CPU over in-memory data, tracked by a JSON logger."""
     train_module = importlib.import_module("experiments.grug.base.train")
     model_module = importlib.import_module("experiments.grug.base.model")
@@ -399,11 +399,11 @@ def _tiny_grug_base_run_config(run_dir: Path, *, run_id: str, logger_name: str):
 
 def test_grug_base_run_emits_expected_metrics_with_json_tracker(tmp_path: Path):
     train_module = importlib.import_module("experiments.grug.base.train")
-    with _json_tracker_logger() as (logger_name, stream):
-        run_cfg = _tiny_grug_base_run_config(tmp_path / "base", run_id="test-grug-base-metrics", logger_name=logger_name)
+    with json_tracker_logger() as (logger_name, stream):
+        run_cfg = tiny_grug_base_run_config(tmp_path / "base", run_id="test-grug-base-metrics", logger_name=logger_name)
         train_module.run_grug(run_cfg)
 
-    records = _json_tracker_records(stream)
+    records = json_tracker_records(stream)
     finish_records = [record for record in records if record.get("event") == "finish"]
     assert len(finish_records) == 1
     summary = finish_records[0]["summary"]
@@ -433,9 +433,9 @@ def test_grug_runs_started_together_each_log_to_their_own_tracker(tmp_path: Path
     train_module = importlib.import_module("experiments.grug.base.train")
     run_ids = ["test-grug-together-a", "test-grug-together-b"]
     with contextlib.ExitStack() as stack:
-        loggers = [stack.enter_context(_json_tracker_logger()) for _ in run_ids]
+        loggers = [stack.enter_context(json_tracker_logger()) for _ in run_ids]
         configs = [
-            _tiny_grug_base_run_config(tmp_path / run_id, run_id=run_id, logger_name=logger_name)
+            tiny_grug_base_run_config(tmp_path / run_id, run_id=run_id, logger_name=logger_name)
             for run_id, (logger_name, _) in zip(run_ids, loggers, strict=True)
         ]
         with ThreadPoolExecutor(max_workers=len(configs)) as pool:
@@ -444,7 +444,7 @@ def test_grug_runs_started_together_each_log_to_their_own_tracker(tmp_path: Path
                 future.result()
 
     for run_id, (_, stream) in zip(run_ids, loggers, strict=True):
-        records = _json_tracker_records(stream)
+        records = json_tracker_records(stream)
         logged_configs = [r["hparams"] for r in records if r["event"] == "hparams" and "trainer" in r["hparams"]]
         assert [config["trainer"]["trainer"]["id"] for config in logged_configs] == [run_id]
         assert [r["event"] for r in records if r["event"] == "finish"] == ["finish"]

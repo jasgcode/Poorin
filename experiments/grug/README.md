@@ -12,8 +12,9 @@
 
 - Start in `base/launch.py` for normal run edits.
 - `GrugBaseLaunchConfig` is the user-facing knob surface (model/data/optimizer/trainer/eval/run metadata).
-- `grug_base_trial(...)` returns a typed `ArtifactStep[LevanterCheckpoint]` handle addressed by `name@version`; its recipe's
-  `build_config` is what the fingerprint is computed from.
+- `grug_base_trial(...)` returns a typed `ArtifactStep[GrugCheckpoint]` handle addressed by `name@version`; its recipe's
+  `build_config` is what the fingerprint is computed from. The trial holds out WikiText-2's validation split and evaluates
+  it once, at its final step; `base/evaluation.py`'s `held-out` suite recomputes that evaluation from a checkpoint.
 - `ctx.output_path` (inside `build_config`) resolves to the current step's output root.
 - `run_grug(...)` in `base/train.py` is the runtime entry point the step's `run` function (`run_grug_base_trial`) calls.
 - `P` in train/model code is the usual JAX alias for `PartitionSpec`; see the JAX explicit sharding tutorial: [Explicit Sharding (JAX)](https://docs.jax.dev/en/latest/notebooks/explicit-sharding.html).

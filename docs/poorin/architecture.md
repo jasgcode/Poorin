@@ -505,6 +505,7 @@ for a stated user:
 | `experiments.datasets.episodes.throughput` | Measures clips per second from an episode dataset against the number of decoding workers | `experiments.datasets.episodes.throughput` |
 | `experiments.datasets.episodes.vpt` | Example: Minecraft VPT contractor episodes, video with keyboard and mouse actions | `experiments.datasets.episodes.vpt` |
 | `experiments.datasets.fineweb_edu` | The FineWeb-Edu 10M pretokenized dataset at a pinned Hub revision, shared by the tutorial and grug | R1 |
+| `experiments.datasets.wikitext` | WikiText-2 tokenized with the Marin tokenizer: the tutorial's data and grug base's held-out set | R1 |
 | `experiments.episode_models` | Package marker; docstring names the three flow-matching templates for episode data | package |
 | `experiments.episode_models.data` | Episode datasets as model batches: clip and split config, episode-level held-out split, action percentiles, task indices, Grain iterators | `experiments.episode_models.data` |
 | `experiments.episode_models.evaluation` | The episode runs' checkpoint type and the held-out loss suite, which reproduces the loss training logged (D114) | `experiments.episode_models.evaluation` |
@@ -527,6 +528,7 @@ for a stated user:
 | `experiments.evals.task_configs` | Named lm-eval task lists (`EvalTaskConfig`) by suite: core, MMLU, leaderboard, multilingual | `experiments.evals.task_configs` |
 | `experiments.grug` | Package marker | R2 |
 | `experiments.grug.base` | Package marker | R2 |
+| `experiments.grug.base.evaluation` | Grug base runs' checkpoint type and the held-out loss suite, which reproduces the evaluation training logged (D114) | R2 |
 | `experiments.grug.base.launch` | grug-base trial run as a lazy checkpoint artifact on one RTX 5090 | R2 |
 | `experiments.grug.base.model` | Grug Llama-style transformer: config, attention, MLP, RMSNorm, blocks | R2 |
 | `experiments.grug.base.train` | Grug training loop: configs, data loader, train step, evals, Fray dispatch | R2 |
