@@ -53,6 +53,12 @@ class ToyCheckpoint(Artifact):
         return {Score.name: Score}
 
 
+class OtherCheckpoint(Artifact):
+    @classmethod
+    def suites(cls):
+        return {Score.name: Score}
+
+
 def _train(out: str) -> None:
     for step in (1, 2):
         os.makedirs(os.path.join(out, "checkpoints", f"step-{step}"))
@@ -209,10 +215,49 @@ def test_migrate_names_the_checkpoint_type_and_drops_a_moved_field(prefix):
     assert planned.exit_code == 0, planned.output
 
 
-def test_migrate_refuses_a_run_that_records_another_type(prefix):
+def _migrate(*args: str):
+    return CliRunner().invoke(runs_main, ["migrate", *args])
+
+
+def _train_old():
+    old = apply(f"users/{username_segment()}/toy/old", _train, version=DEV, artifact_type=LevanterCheckpoint, out=OUT)
+    run(old)
+    return old
+
+
+def test_migrate_refuses_a_run_that_records_another_checkpoint_type(prefix):
     train_toy()
-    result = CliRunner().invoke(runs_main, ["migrate", "toy/run@60b9", "--to", "poorin.evaluation.contract.EvalResult"])
+    result = _migrate("toy/run@60b9", "--to", f"{OtherCheckpoint.__module__}.OtherCheckpoint")
     assert result.exit_code != 0
+    assert "only a run recording" in result.output
+    assert read_record(finished_run("toy/run@60b9").path()).result_type.endswith(".ToyCheckpoint")
+
+
+def test_migrate_refuses_to_drop_a_field_the_record_does_not_hold(prefix):
+    old = _train_old()
+    toy_type = f"{ToyCheckpoint.__module__}.ToyCheckpoint"
+    result = _migrate("toy/old@60b9", "--to", toy_type, "--drop", "no.such.field")
+    assert result.exit_code != 0
+    assert "no config field 'no.such.field'" in result.output
+    assert read_record(old.path()).result_type == f"{LevanterCheckpoint.__module__}.LevanterCheckpoint"
+
+
+def test_migrate_refuses_a_checkpoint_type_that_cannot_be_imported(prefix):
+    _train_old()
+    result = _migrate("toy/old@60b9", "--to", "no.such.Module")
+    assert result.exit_code != 0
+    assert "'no.such.Module'" in result.output
+    assert "Traceback" not in result.output
+
+
+def test_migrate_keeps_the_fingerprint_the_run_was_built_with(prefix):
+    old = _train_old()
+    before = read_record(old.path())
+    result = _migrate("toy/old@60b9", "--to", f"{ToyCheckpoint.__module__}.ToyCheckpoint")
+    assert result.exit_code == 0, result.output
+    after = read_record(old.path())
+    assert after.result_type != before.result_type
+    assert (after.fingerprint, after.fingerprint_payload) == (before.fingerprint, before.fingerprint_payload)
 
 
 def test_a_rerun_of_a_built_matrix_builds_nothing(checkout, prefix):
