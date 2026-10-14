@@ -56,12 +56,12 @@ def check_drift(step: StepSpec) -> None:
 def step_is_built(step: StepSpec) -> bool:
     """True when the runner will serve ``step`` from cache rather than rebuild it.
 
-    A non-mutable step whose output already has a ``SUCCESS`` status. This is the
-    same condition the launcher uses to skip a step, evaluated here at scheduling
-    time so an already-built node's dependencies are pruned from the schedule
-    instead of rebuilt; the launcher re-checks authoritatively before serving the
-    node. A mutable (``dev``) artifact rebuilds unless it is pinned, so it is never pruned.
-    A pinned dev run is served as is, never rebuilt.
+    A step that never rebuilds (a non-``dev`` version, or a pinned step) whose output
+    already has a ``SUCCESS`` status. This is the same condition the launcher uses to
+    skip a step, evaluated here at scheduling time so an already-built node's
+    dependencies are pruned from the schedule instead of rebuilt; the launcher
+    re-checks authoritatively before serving the node. An unpinned ``dev`` artifact
+    always rebuilds, so it is never pruned.
     """
     return not step.rebuilds and read_status(step.output_path) == STATUS_SUCCESS
 

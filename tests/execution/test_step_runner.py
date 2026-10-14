@@ -340,7 +340,7 @@ def test_runner_prune_keeps_unbuilt_sibling_branch(tmp_path: Path):
 
 
 def test_runner_does_not_prune_dev_node(tmp_path: Path):
-    """A mutable (dev) artifact at SUCCESS always rebuilds, so its deps are not pruned."""
+    """An unpinned mutable (dev) artifact at SUCCESS always rebuilds, so its deps are not pruned."""
     executed: list[str] = []
     dep = _spec(tmp_path, "dep", _recording("dep", executed))
     dev = _spec(tmp_path, "dev", _recording("dev", executed), deps=[dep], version="dev")

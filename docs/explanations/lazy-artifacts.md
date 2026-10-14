@@ -132,7 +132,8 @@ guarantees is materialized first. `run`/`resolve` are the driver-level entry poi
 
 1. **Cache check** — if the output records a different recipe, the run is refused (see
    [Recipe drift](#recipe-drift)). If the output path's `.executor_status` reads `SUCCESS`,
-   skip. A `dev` version is mutable and rebuilds, unless it is pinned: a pinned dev run is served as is, never rebuilt. A step that failed earlier runs again.
+   skip. An unpinned `dev` version is mutable and always rebuilds; a pinned dev run is served as
+   is, never rebuilt. A step that failed earlier runs again.
 2. **Lock** — prevents concurrent processes from building the same step twice.
 
 The standard `main` block in a Poorin experiment wraps `build` in the shared command-line
@@ -186,10 +187,11 @@ The output's record then carries the new fingerprint and keeps the old one in `a
 so later runs are clean; a started build resumes under the new recipe. Naming an artifact
 whose recipe did not change is an error.
 
-A `dev` version string (e.g. `"dev"` or `"mylabel-dev"`) is never served from cache: it
-rebuilds, unless it is pinned (a pinned dev run is served as is, never rebuilt). Its output still records its recipe, so rerunning the same `dev` version
-with a changed recipe is refused. The command line gives each `--version dev` invocation a
-fresh suffixed version, so only `--resume` reuses one.
+An unpinned `dev` version string (e.g. `"dev"` or `"mylabel-dev"`) is never served from
+cache: it always rebuilds. A pinned dev run is served as is, never rebuilt. A dev output still
+records its recipe, so rerunning the same `dev` version with a changed recipe is refused. The
+command line gives each `--version dev` invocation a fresh suffixed version, so only `--resume`
+reuses one.
 
 Pinned artifacts (`override_path`) are not checked, because they point at existing data.
 
