@@ -130,3 +130,4 @@ date,phase,step,first_party_lines,reachable_lines,reachable_modules,r1_imported_
 2026-10-11,D113,Document the episode model templates,118687,117762,408,6593,3.02,60.7,27.8,8183598006
 2026-10-12,D113,Fix the branch review's findings,118760,117835,408,6593,3.3,64.8,31.3,8183598006
 2026-10-13,D113,episode template review nits,118828,117903,408,6593,2.96,60.2,27.6,8183598006
+2026-10-13,D114,evaluation artifacts,119809,118884,415,6596,2.98,60.4,47.3,8188454422

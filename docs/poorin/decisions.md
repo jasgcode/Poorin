@@ -1989,6 +1989,37 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
   - `eval_results` returns results that share (run, step, suite) when a sweep varied the suite's
     fields or a dev evaluation was repeated; telling them apart (the evaluation's version or the
     suite's fields on the result) is left to sub-project 5, the first consumer.
+- **Acceptance (2026-10-13, RTX 5090, `fdce8e1f2`):** `runs migrate --to
+  experiments.episode_models.evaluation.EpisodeCheckpoint --drop data.num_workers` rewrote D113's
+  three acceptance runs; their earlier records are kept beside them as `.artifact.json.pre-d114`.
+  The `held-out` suite at step 2000 (version `2026.10.13`) reproduced each run's logged step-2000
+  values bit for bit:
+
+  | Run | Metric | Logged | Post hoc |
+  |---|---|---|---|
+  | `wam-libero-spatial@…60b9-dev` | `eval/loss` | 0.7413473017513752 | 0.7413473017513752 |
+  | | `eval/video_loss` | 0.5623967796564102 | 0.5623967796564102 |
+  | | `eval/action_loss` | 0.17895052209496498 | 0.17895052209496498 |
+  | `world-model-ssv2-500@…f777-dev` | `eval/loss`, `eval/video_loss` | 0.5798135548830032 | 0.5798135548830032 |
+  | `vla-libero-spatial@…3ddf-dev` | `eval/loss`, `eval/action_loss` | 0.222284447401762 | 0.222284447401762 |
+
+  The three evaluations took 29 s in one process. A 50-step grug base trial,
+  `accept-20261013-204533-aa82-dev`, built WikiText-2's validation split (1,000 documents, 94,214
+  tokens) and logged `eval/loss` 7.892777919769287 and `eval/bpb` 2.6092114448547363 at step 50.
+  The post-hoc evaluation of `step-50` with `suite.max_sequences=128` and `suite.weights=current`
+  scored 92 sequences, the whole split, and returned the same two values. The WAM-by-VLA matrix over
+  `--steps all` built six cells, steps 500 to 1500, in 40 s. Its second plan showed all eight cells
+  `built`, and the two step-2000 cells kept their first build time. The post-hoc `eval/loss` falls
+  from 0.881 to 0.741 for the WAM and from 0.395 to 0.222 for the VLA between steps 500 and 2000.
+  The run records hold only the final summary, so the earlier steps have no logged value to
+  compare. `prune_check` passed, and R2's warm wall time rose from 27.6 s to 47.3 s with the
+  step-50 evaluation.
+  Grug's evaluation is slow when caches are cold. In the trial, the evaluation at step 50 took
+  462 s: 218 s to autotune the fused cross-entropy's block sizes for the evaluation's shape (8
+  candidates, choosing `v_block_size=32`) and about 240 s to compile the evaluation step. The
+  post-hoc evaluation found the autotune entry but compiled the step again for 238 s. Only
+  `TrainerConfig` turns on JAX's persistent compilation cache (`levanter.compile_cache`), so an
+  evaluation process does not read the executable that training cached.
 - **Alternatives:** An `--eval` option on the launchers that evaluates after training; Marin's
   `EvalRunRecord` outside the artifact graph; one generic loader per model kind in `poorin` instead
   of a loader per template; decoding the whole recorded launch config.
