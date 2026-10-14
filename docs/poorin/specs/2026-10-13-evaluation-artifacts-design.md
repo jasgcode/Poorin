@@ -253,7 +253,7 @@ each set at `max_eval_batches * eval_batch_size` sequences, so reproducing a run
 split, and its trial disabled evaluation. The trial gains WikiText-2's validation split as a
 mixture validation component (weight 0) through `experiments.datasets.wikitext`, the same artifact
 the tutorial builds, and evaluates once, at its final step (`eval_batch_size = 16`,
-`max_eval_batches = 8`, 128 sequences of 1,024 tokens). The training loop forces its eval
+`max_eval_batches = 8`, up to 128 sequences of 1,024 tokens; the split has 92, all scored). The training loop forces its eval
 callback on the last step, so no interval changes.
 
 Both suites raise `FloatingPointError` on a non-finite loss.

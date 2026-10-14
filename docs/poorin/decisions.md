@@ -2007,7 +2007,9 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
   `accept-20261013-204533-aa82-dev`, built WikiText-2's validation split (1,000 documents, 94,214
   tokens) and logged `eval/loss` 7.892777919769287 and `eval/bpb` 2.6092114448547363 at step 50.
   The post-hoc evaluation of `step-50` with `suite.max_sequences=128` and `suite.weights=current`
-  scored 92 sequences, the whole split, and returned the same two values. The WAM-by-VLA matrix over
+  scored 92 sequences, the whole split, and returned the same two values. `max_sequences=128` was
+  redundant: the cap does not bind on 92 sequences, so this acceptance did not exercise a binding
+  cap. The unit test with `max_sequences=1` does. The WAM-by-VLA matrix over
   `--steps all` built six cells, steps 500 to 1500, in 40 s. Its second plan showed all eight cells
   `built`, and the two step-2000 cells kept their first build time. The post-hoc `eval/loss` falls
   from 0.881 to 0.741 for the WAM and from 0.395 to 0.222 for the VLA between steps 500 and 2000.
@@ -2017,7 +2019,8 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
   Grug's evaluation is slow when caches are cold. In the trial, the evaluation at step 50 took
   462 s: 218 s to autotune the fused cross-entropy's block sizes for the evaluation's shape (8
   candidates, choosing `v_block_size=32`) and about 240 s to compile the evaluation step. The
-  post-hoc evaluation found the autotune entry but compiled the step again for 238 s. Only
+  post-hoc evaluation logged an autotune cache hit for `v_block_size=32` but compiled the step again
+  for 238 s. Only
   `TrainerConfig` turns on JAX's persistent compilation cache (`levanter.compile_cache`), so an
   evaluation process does not read the executable that training cached.
 - **Alternatives:** An `--eval` option on the launchers that evaluates after training; Marin's

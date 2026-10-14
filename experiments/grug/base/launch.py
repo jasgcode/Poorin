@@ -235,7 +235,8 @@ def grug_base_trial(
                 ema_beta=None,
                 log_every=ctx.runtime_arg("log_every"),
                 # One evaluation, at the final step: the loop forces its callbacks there, and steps_per_eval
-                # (1000) is past the trial's 50 steps. 8 batches of 16 score 128 held-out sequences.
+                # (1000) is past the trial's 50 steps. It scores WikiText-2's whole validation split, 92
+                # sequences in 6 batches of 16 (the last padded); 128 (8 batches of 16) is only the cap.
                 eval_batch_size=16,
             ),
         )

@@ -116,9 +116,10 @@ the run logged. This holds for a run that kept training's default evaluation bat
 settings from the run's record.
 
 Grug scores the whole validation set by default, and training caps each set at
-`max_eval_batches * eval_batch_size` sequences. To reproduce a grug base trial's logged value, which
-is 8 batches of 16, pass `--set suite.max_sequences=128`. The base trial evaluates on WikiText-2's
-validation split once, at its final step. Grug reports the keys training logs without the timing
+`max_eval_batches * eval_batch_size` sequences. The default reproduces a grug base trial's logged
+value: the trial evaluates once, at its final step, on WikiText-2's validation split, whose 92
+sequences fall under its cap of 128 (8 batches of 16). Pass `--set suite.max_sequences=...` with the
+run's cap only for a validation set larger than that cap. Grug reports the keys training logs without the timing
 keys: `eval/loss`, `eval/bpb`, and `eval/<set>/loss` and `eval/<set>/bpb` per validation set, with
 `eval/macro_*` when there are several sets. EMA weights report under `eval/ema/`.
 
