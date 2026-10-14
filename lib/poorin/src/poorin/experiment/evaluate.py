@@ -18,6 +18,7 @@ import re
 from dataclasses import dataclass
 from typing import Any, no_type_check
 
+import click
 from rigging.filesystem.cluster_config import poorin_prefix
 
 from poorin.evaluation.contract import (
@@ -25,12 +26,14 @@ from poorin.evaluation.contract import (
     EvalRuntime,
     Suite,
     artifact_class,
+    checkpoint_steps,
     finished_run_at,
     offered_suites,
 )
-from poorin.execution.artifact import result_type_name
+from poorin.execution.artifact import read_record, result_type_name
 from poorin.execution.build_context import resolve_version
 from poorin.execution.lazy import ArtifactStep, StepContext
+from poorin.experiment.cli import build_options
 from poorin.experiment.namespacing import user_namespaced_name
 from poorin.experiment.overrides import Overrides
 from poorin.experiment.run_refs import RunRefError, collect_runs, resolve_run
@@ -147,3 +150,74 @@ def eval_results(prefix: str, *, run: str | None = None, suite: str | None = Non
         if r.record is not None and r.record.result_type == wanted
     ]
     return [r for r in results if (run is None or r.run == run) and (suite is None or r.suite == suite)]
+
+
+STEPS_ALL = "all"
+
+
+def _steps(text: str, label: str, available: list[int]) -> list[int]:
+    if text == STEPS_ALL:
+        if not available:
+            raise click.UsageError(f"{label} has no permanent checkpoints")
+        return available
+    try:
+        wanted = [int(part) for part in text.split(",")]
+    except ValueError as e:
+        raise click.BadParameter(f"{text!r} is not comma-separated steps or 'all'", param_hint="--steps") from e
+    missing = [step for step in wanted if step not in available]
+    if missing:
+        raise click.UsageError(
+            f"{label} has no permanent checkpoint at step {missing}; its checkpoints are at steps {available}"
+        )
+    return wanted
+
+
+def evaluation_matrix(
+    refs: tuple[str, ...], *, suite_name: str, steps: str, batch_size: int | None, overrides: Overrides
+) -> list[ArtifactStep[EvalResult]]:
+    """One evaluation per run, step, and the trial's suite settings; refuses before anything runs."""
+    cells = []
+    for ref in refs:
+        try:
+            run = finished_run(ref)
+            suites = offered_suites(run.label, run.artifact_type)
+        except ValueError as e:
+            raise click.UsageError(str(e)) from e
+        if suite_name not in suites:
+            raise click.UsageError(
+                f"{run.label}'s checkpoint type offers the suites {sorted(suites)}, not {suite_name!r}"
+            )
+        record = read_record(run.path())
+        trained_at = (
+            record.provenance.label if record is not None and record.provenance is not None else "unrecorded code"
+        )
+        click.echo(f"{run.label} trained at {trained_at}")
+        for step in _steps(steps, run.label, checkpoint_steps(run.path())):
+            cells.append(
+                evaluate(Checkpoint(run, step), suites[suite_name](), overrides=overrides, batch_size=batch_size)
+            )
+    return cells
+
+
+@click.command()
+@click.argument("refs", nargs=-1, required=True, metavar="RUN@REF...")
+@click.option("--suite", "suite_name", required=True, help="The suite, by the name the run's checkpoint type gives it.")
+@click.option(
+    "--steps", required=True, help="Checkpoint steps, comma-separated, or 'all' for every permanent checkpoint."
+)
+@click.option(
+    "--batch-size",
+    type=click.IntRange(min=1),
+    default=None,
+    help="Device batch size, for a suite whose result does not depend on it.",
+)
+@build_options
+def main(
+    refs: tuple[str, ...], suite_name: str, steps: str, batch_size: int | None, overrides: Overrides
+) -> list[ArtifactStep[EvalResult]]:
+    """Evaluate finished runs' checkpoints with one suite: print the plan, or build it with --run."""
+    return evaluation_matrix(refs, suite_name=suite_name, steps=steps, batch_size=batch_size, overrides=overrides)
+
+
+if __name__ == "__main__":
+    main()

@@ -4,16 +4,22 @@
 """Evaluation handles over finished runs (poorin.experiment.evaluate)."""
 
 import os
+import subprocess
 from dataclasses import dataclass
+from pathlib import Path
 from typing import ClassVar
 
 import pytest
+from click.testing import CliRunner
 from poorin.evaluation.contract import EvalResult, EvalRuntime, FinishedRun
-from poorin.execution.artifact import Artifact
+from poorin.execution.artifact import Artifact, read_record
 from poorin.execution.lazy import OUT, apply, run
 from poorin.execution.step_status import STATUS_RUNNING, StatusFile
 from poorin.experiment.evaluate import Checkpoint, eval_results, evaluate, finished_run
+from poorin.experiment.evaluate import main as evaluate_main
 from poorin.experiment.run_refs import RunRefError
+from poorin.experiment.runs import main as runs_main
+from poorin.training.training import LevanterCheckpoint
 from rigging.provenance import username_segment
 
 DEV = "accept-20261012-201822-60b9-dev"
@@ -113,3 +119,107 @@ def test_a_suite_the_checkpoint_type_does_not_offer_is_refused(prefix):
     train_toy()
     with pytest.raises(ValueError, match=r"offers the suites \['score'\]"):
         evaluate(Checkpoint(finished_run("toy/run@60b9"), 2), Unoffered(), version="2026.10.13")
+
+
+CALENDAR = ["--version", "2026.10.13"]
+
+
+def _git(checkout: Path, *args: str) -> str:
+    return subprocess.run(["git", *args], cwd=checkout, check=True, capture_output=True, text=True).stdout.strip()
+
+
+@pytest.fixture
+def checkout(tmp_path, monkeypatch) -> Path:
+    path = tmp_path / "checkout"
+    path.mkdir()
+    _git(path, "init", "-b", "main")
+    _git(path, "config", "user.email", "t@example.com")
+    _git(path, "config", "user.name", "tester")
+    (path / "model.py").write_text("v1\n")
+    _git(path, "add", "model.py")
+    _git(path, "commit", "-m", "Add the model")
+    monkeypatch.chdir(path)
+    return path
+
+
+def _invoke(*args: str):
+    return CliRunner().invoke(evaluate_main, list(args), catch_exceptions=False)
+
+
+def test_the_plan_has_one_evaluation_per_permanent_checkpoint(prefix):
+    train_toy()
+    result = _invoke("toy/run@60b9", "--suite", "score", "--steps", "all", *CALENDAR)
+    assert result.exit_code == 0, result.output
+    for step in (1, 2):
+        assert f"eval/toy/run/{DEV}/score/step-{step}@2026.10.13" in result.output
+
+
+def test_a_set_reaches_the_suite_and_names_the_evaluation(prefix):
+    train_toy()
+    result = _invoke("toy/run@60b9", "--suite", "score", "--steps", "2", "--set", "suite.scale=3", *CALENDAR)
+    assert result.exit_code == 0, result.output
+    assert f"eval/toy/run/{DEV}/score/suite.scale=3/step-2@2026.10.13" in result.output
+
+
+def test_a_set_outside_the_suite_is_refused(prefix):
+    train_toy()
+    result = _invoke("toy/run@60b9", "--suite", "score", "--steps", "2", "--set", "step=1", *CALENDAR)
+    assert result.exit_code != 0
+    assert "has no field 'step'" in result.output
+
+
+def test_a_step_without_a_checkpoint_is_refused_listing_the_steps(prefix):
+    train_toy()
+    result = _invoke("toy/run@60b9", "--suite", "score", "--steps", "1,3", *CALENDAR)
+    assert result.exit_code != 0
+    assert "step [3]" in result.output and "[1, 2]" in result.output
+
+
+def test_a_suite_the_run_does_not_offer_is_refused_listing_its_suites(prefix):
+    train_toy()
+    result = _invoke("toy/run@60b9", "--suite", "lm-eval", "--steps", "2", *CALENDAR)
+    assert result.exit_code != 0
+    assert "['score']" in result.output
+
+
+def test_an_unknown_or_unfinished_run_is_refused(prefix):
+    result = _invoke("toy/run@60b9", "--suite", "score", "--steps", "2", *CALENDAR)
+    assert result.exit_code != 0
+    assert "no finished run toy/run@60b9" in result.output
+
+
+def test_a_run_trained_before_evaluation_artifacts_is_refused_naming_the_migration(prefix):
+    old = apply(f"users/{username_segment()}/toy/old", _train, version=DEV, artifact_type=LevanterCheckpoint, out=OUT)
+    run(old)
+    result = _invoke("toy/old@60b9", "--suite", "score", "--steps", "2", *CALENDAR)
+    assert result.exit_code != 0
+    assert "runs migrate" in result.output
+
+
+def test_migrate_names_the_checkpoint_type_and_drops_a_moved_field(prefix):
+    old = apply(f"users/{username_segment()}/toy/old", _train, version=DEV, artifact_type=LevanterCheckpoint, out=OUT)
+    run(old)
+    toy_type = f"{ToyCheckpoint.__module__}.ToyCheckpoint"
+    result = CliRunner().invoke(runs_main, ["migrate", "toy/old@60b9", "--to", toy_type, "--drop", "out"])
+    assert result.exit_code == 0, result.output
+    record = read_record(old.path())
+    assert record.result_type == toy_type
+    assert "out" not in record.config
+    planned = _invoke("toy/old@60b9", "--suite", "score", "--steps", "2", *CALENDAR)
+    assert planned.exit_code == 0, planned.output
+
+
+def test_migrate_refuses_a_run_that_records_another_type(prefix):
+    train_toy()
+    result = CliRunner().invoke(runs_main, ["migrate", "toy/run@60b9", "--to", "poorin.evaluation.contract.EvalResult"])
+    assert result.exit_code != 0
+
+
+def test_a_rerun_of_a_built_matrix_builds_nothing(checkout, prefix):
+    train_toy()
+    args = ("toy/run@60b9", "--suite", "score", "--steps", "all", *CALENDAR)
+    built = _invoke(*args, "--run")
+    assert built.exit_code == 0, built.output
+    plan = _invoke(*args)
+    lines = [line for line in plan.output.splitlines() if "eval/toy/run" in line]
+    assert len(lines) == 2 and all(line.split()[0] == "built" for line in lines)

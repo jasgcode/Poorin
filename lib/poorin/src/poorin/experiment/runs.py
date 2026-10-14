@@ -12,8 +12,10 @@ repository, adds what a record does not hold: how far its branch has moved since
 counts, and the subject of a commit recorded before subjects were.
 """
 
+import copy
 import dataclasses
 import shlex
+from collections.abc import Sequence
 from datetime import datetime
 from pathlib import PurePosixPath
 
@@ -22,7 +24,8 @@ from rigging.filesystem.cluster_config import poorin_prefix
 from rigging.filesystem.factory import url_to_fs
 from rigging.provenance import Provenance, read_git
 
-from poorin.execution.artifact import read_record
+from poorin.evaluation.contract import artifact_class, offered_suites
+from poorin.execution.artifact import ArtifactRecord, read_record, write_record
 from poorin.execution.step_status import STATUS_FILENAME
 from poorin.experiment.code_check import SHOWN_HASH_LENGTH
 from poorin.experiment.run_refs import Run, RunRefError, RunState, collect_runs, resolve_run, run_state
@@ -188,6 +191,58 @@ def show(target: str, prefix: str | None) -> None:
     relative = PurePosixPath(path)
     label = f"{relative.parent.name}@{relative.name}"
     click.echo("\n".join(describe(Run(label, path, run_state(path), record, datetime.now()))))
+
+
+# What a training run recorded before its template named a checkpoint type (D114).
+LEVANTER_CHECKPOINT = "poorin.training.training.LevanterCheckpoint"
+
+
+def migrated(record: ArtifactRecord, checkpoint_type: str, dropped: Sequence[str]) -> ArtifactRecord:
+    """``record`` naming ``checkpoint_type``, without the config fields at the dotted paths ``dropped``.
+
+    The fingerprint and its payload stay as recorded: they describe what ran.
+    """
+    label = f"{record.name}@{record.version}"
+    if record.result_type not in (LEVANTER_CHECKPOINT, checkpoint_type):
+        raise ValueError(f"{label} records {record.result_type}; only a run recording {LEVANTER_CHECKPOINT} migrates")
+    config = copy.deepcopy(record.config or {})
+    for path in dropped:
+        *parents, leaf = path.split(".")
+        node = config
+        for key in parents:
+            node = node.get(key) if isinstance(node, dict) else None
+        if not isinstance(node, dict) or leaf not in node:
+            raise ValueError(f"{label} records no config field {path!r}")
+        del node[leaf]
+    return record.model_copy(update={"result_type": checkpoint_type, "config": config})
+
+
+@main.command()
+@click.argument("target")
+@click.option("--to", "checkpoint_type", required=True, metavar="MODULE.CLASS", help="The template's checkpoint type.")
+@click.option(
+    "--drop",
+    "dropped",
+    multiple=True,
+    metavar="PATH",
+    help="A recorded config field the code moved out of the recipe. Repeatable.",
+)
+@click.option("--prefix", default=None, help="Read this prefix instead of POORIN_PREFIX.")
+def migrate(target: str, checkpoint_type: str, dropped: tuple[str, ...], prefix: str | None) -> None:
+    """Name the checkpoint type of a run trained before evaluation artifacts (D114), once."""
+    try:
+        cls = artifact_class(checkpoint_type)
+    except (ImportError, AttributeError, TypeError) as e:
+        raise click.ClickException(f"--to {checkpoint_type!r} is not an Artifact class: {e}") from e
+    try:
+        found = resolve_run(prefix or poorin_prefix(), target, finished_only=True)
+        offered_suites(found.label, cls)
+        if found.record is None:
+            raise ValueError(f"{found.label} has no record")
+        write_record(migrated(found.record, checkpoint_type, dropped))
+    except ValueError as e:
+        raise click.ClickException(str(e)) from e
+    click.echo(f"{found.label} now records {checkpoint_type}" + (f", without {', '.join(dropped)}" if dropped else ""))
 
 
 if __name__ == "__main__":
