@@ -27,6 +27,9 @@ class Clip:
 class Score:
     name: ClassVar[str] = "score"
 
+    def check(self, run, runtime):
+        raise AssertionError("not called")
+
     def evaluate(self, run, step, output_path, runtime):
         raise AssertionError("not called")
 
@@ -57,7 +60,7 @@ def test_a_record_field_the_code_dropped_names_the_migration():
         config={"data": {"__class__": "Clip", "history": 2, "num_workers": 16}},
     )
     finished = FinishedRun("toy/run@2026.10.13", "/runs/toy", record)
-    with pytest.raises(ValueError, match=r"runs migrate toy/run@2026\.10\.13 .*--drop data\.FIELD"):
+    with pytest.raises(ValueError, match=r"runs migrate toy/run@2026\.10\.13 .*--drop data\.num_workers$"):
         recorded(finished, "data", Clip)
 
 

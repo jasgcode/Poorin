@@ -3,6 +3,7 @@
 
 """Grug base's held-out loss suite reproduces the evaluation training logged."""
 
+import dataclasses
 import json
 from pathlib import Path
 
@@ -30,10 +31,11 @@ RUN_ID = "test-grug-eval"
 F32 = "params=float32,compute=float32,output=float32"
 
 
-def _train(tmp_path: Path) -> tuple[train_module.GrugRunConfig, dict[str, float], str]:
+def _train(tmp_path: Path, *, ema_beta: float | None = None) -> tuple[train_module.GrugRunConfig, dict[str, float], str]:
     """A one-step tiny grug run; its config, the evaluation it logged, and its last checkpoint."""
     with json_tracker_logger() as (logger_name, stream):
         config = tiny_grug_base_run_config(tmp_path / "run", run_id=RUN_ID, logger_name=logger_name)
+        config = dataclasses.replace(config, trainer=dataclasses.replace(config.trainer, ema_beta=ema_beta))
         train_module.run_grug(config)
     *_, logged = [
         r["metrics"] for r in json_tracker_records(stream) if r["event"] == "log" and "eval/loss" in r["metrics"]
@@ -50,6 +52,16 @@ def test_the_held_out_loss_of_a_checkpoint_reproduces_the_logged_one(tmp_path):
     expected = {k: v for k, v in logged.items() if not k.endswith(("loading_time", "total_time"))}
     assert metrics == pytest.approx(expected, rel=1e-5)
     assert examples == 1
+
+
+def test_a_suite_built_with_the_string_ema_scores_the_ema_weights(tmp_path):
+    config, _, checkpoint = _train(tmp_path, ema_beta=0.5)
+    recorded = RecordedGrugRun(model=config.model, data=config.data, mp=F32, ema=True, eval_batch_size=None)
+    suite = HeldOutLoss(max_sequences=1)
+    # What HeldOutLoss(weights="ema") holds outside the tests, whose type-check hook refuses the str.
+    object.__setattr__(suite, "weights", "ema")
+    metrics, _ = held_out_metrics(recorded, checkpoint, suite, batch_size=1, compute_bpb=False)
+    assert metrics and all(key.startswith("eval/ema/") for key in metrics)
 
 
 def test_the_held_out_loss_does_not_depend_on_the_device_batch_size(tmp_path):

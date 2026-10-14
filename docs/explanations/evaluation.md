@@ -88,7 +88,10 @@ uv run --no-sync python -m poorin.experiment.evaluate episode/wam-libero-spatial
 - A calendar `--version` refuses uncommitted code. A pinned run is never rebuilt, so a calendar
   evaluation of a dev run is allowed.
 - The command refuses, before anything runs: an unknown or ambiguous reference, an unfinished run,
-  a suite the run's checkpoint type does not offer, and a run whose checkpoint type offers no suites.
+  a suite the run's checkpoint type does not offer, a run whose checkpoint type offers no suites,
+  and a run the suite cannot evaluate. The last covers a recorded field the code has since dropped,
+  named in the `runs migrate ... --drop` that fixes it, and a runtime the suite refuses, such as
+  the episode suite's `--batch-size`.
 
 ### The `held-out` suites
 

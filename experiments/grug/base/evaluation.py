@@ -75,7 +75,7 @@ def held_out_metrics(
     run: RecordedGrugRun, checkpoint: str, suite: "HeldOutLoss", *, batch_size: int, compute_bpb: bool
 ) -> tuple[dict[str, float], int]:
     """The loss and bpb of the weights at ``checkpoint`` on each validation set, and the sequences scored."""
-    ema = suite.weights is Weights.EMA and run.ema
+    ema = suite.weights == Weights.EMA and run.ema
     prefix = f"{TRAINING_EVAL.prefix}/ema" if ema else TRAINING_EVAL.prefix
     weights_field = "ema_params" if ema else "params"
     mp = jmp.get_policy(run.mp)
@@ -113,6 +113,9 @@ class HeldOutLoss:
     ``max_eval_batches * eval_batch_size``, so reproducing a run passes that cap."""
     weights: Weights = Weights.EMA
     """``ema`` falls back to the current weights for a run that kept no EMA."""
+
+    def check(self, run: FinishedRun, runtime: EvalRuntime) -> None:
+        recorded_grug_run(run)
 
     def evaluate(self, run: FinishedRun, step: int, output_path: str, runtime: EvalRuntime) -> EvalResult:
         recorded_run = recorded_grug_run(run)

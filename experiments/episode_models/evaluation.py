@@ -108,14 +108,20 @@ class HeldOutLoss:
         if self.flow_times < 1:
             raise ValueError(f"flow_times must be at least 1, not {self.flow_times}")
 
+    def check(self, run: FinishedRun, runtime: EvalRuntime) -> None:
+        self._checked_run(run, runtime)
+
     def evaluate(self, run: FinishedRun, step: int, output_path: str, runtime: EvalRuntime) -> EvalResult:
+        metrics = held_out_metrics(self._checked_run(run, runtime), checkpoint_path(run, step), self)
+        return EvalResult(run=run.label, step=step, suite=self.name, metrics=metrics, examples=self.clips)
+
+    def _checked_run(self, run: FinishedRun, runtime: EvalRuntime) -> RecordedEpisodeRun:
         if runtime.batch_size is not None:
             raise ValueError(
                 "the episode held-out loss draws its noise per batch, so its batch size is part of the "
                 "recipe: pass --set suite.batch_size=N, not --batch-size"
             )
-        metrics = held_out_metrics(recorded_episode_run(run), checkpoint_path(run, step), self)
-        return EvalResult(run=run.label, step=step, suite=self.name, metrics=metrics, examples=self.clips)
+        return recorded_episode_run(run)
 
 
 class EpisodeCheckpoint(Artifact):

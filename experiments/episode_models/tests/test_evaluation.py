@@ -100,11 +100,11 @@ def test_the_suite_reads_the_run_from_its_record(tmp_path, tiny):
 def test_a_record_with_a_field_the_code_dropped_names_the_migration(tmp_path, tiny):
     run = tiny_run(tmp_path, "wam", STEPS, tiny, "unused")
     finished = _finished(run, tmp_path, stale_data_field=True)
-    with pytest.raises(ValueError, match=r"--drop data\.FIELD"):
-        TINY_SUITE.evaluate(finished, STEPS, str(tmp_path / "eval"), EvalRuntime(None))
+    with pytest.raises(ValueError, match=r"--drop data\.num_workers$"):
+        TINY_SUITE.check(finished, EvalRuntime(None))
 
 
 def test_the_suite_refuses_a_device_batch_size(tmp_path, tiny):
     run = tiny_run(tmp_path, "wam", STEPS, tiny, "unused")
     with pytest.raises(ValueError, match=r"suite\.batch_size"):
-        TINY_SUITE.evaluate(_finished(run, tmp_path), STEPS, str(tmp_path / "eval"), EvalRuntime(8))
+        TINY_SUITE.check(_finished(run, tmp_path), EvalRuntime(8))

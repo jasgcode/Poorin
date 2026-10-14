@@ -33,6 +33,9 @@ class Score:
     name: ClassVar[str] = "score"
     scale: float = 1.0
 
+    def check(self, run: FinishedRun, runtime: EvalRuntime) -> None:
+        pass
+
     def evaluate(self, run: FinishedRun, step: int, output_path: str, runtime: EvalRuntime) -> EvalResult:
         return EvalResult(
             run=run.label, step=step, suite=self.name, metrics={"eval/loss": self.scale * step}, examples=1
@@ -43,8 +46,24 @@ class Score:
 class Unoffered:
     name: ClassVar[str] = "unoffered"
 
+    def check(self, run, runtime):
+        raise AssertionError("not offered")
+
     def evaluate(self, run, step, output_path, runtime):
         raise AssertionError("not offered")
+
+
+@dataclass(frozen=True)
+class Stale:
+    """A toy suite that cannot read the run's recipe."""
+
+    name: ClassVar[str] = "stale"
+
+    def check(self, run, runtime):
+        raise ValueError(f"{run.label} records a stale field; drop it with --drop data.num_workers")
+
+    def evaluate(self, run, step, output_path, runtime):
+        raise AssertionError("refused when the plan is built")
 
 
 class ToyCheckpoint(Artifact):
@@ -59,14 +78,20 @@ class OtherCheckpoint(Artifact):
         return {Score.name: Score}
 
 
+class StaleCheckpoint(Artifact):
+    @classmethod
+    def suites(cls):
+        return {Stale.name: Stale}
+
+
 def _train(out: str) -> None:
     for step in (1, 2):
         os.makedirs(os.path.join(out, "checkpoints", f"step-{step}"))
 
 
-def train_toy(version: str = DEV) -> str:
+def train_toy(version: str = DEV, artifact_type: type[Artifact] = ToyCheckpoint) -> str:
     """A finished dev run of the toy template in the user's namespace; its full label."""
-    handle = apply(f"users/{username_segment()}/toy/run", _train, version=version, artifact_type=ToyCheckpoint, out=OUT)
+    handle = apply(f"users/{username_segment()}/toy/run", _train, version=version, artifact_type=artifact_type, out=OUT)
     run(handle)
     return handle.label
 
@@ -188,6 +213,15 @@ def test_a_suite_the_run_does_not_offer_is_refused_listing_its_suites(prefix):
     assert "['score']" in result.output
 
 
+def test_a_run_the_suite_cannot_evaluate_is_refused_before_anything_runs(prefix):
+    train_toy(artifact_type=StaleCheckpoint)
+    result = _invoke("toy/run@60b9", "--suite", "stale", "--steps", "all", *CALENDAR)
+    assert result.exit_code != 0
+    assert "--drop data.num_workers" in result.output
+    assert "eval/toy/run" not in result.output
+    assert eval_results(str(prefix)) == []
+
+
 def test_an_unknown_or_unfinished_run_is_refused(prefix):
     result = _invoke("toy/run@60b9", "--suite", "score", "--steps", "2", *CALENDAR)
     assert result.exit_code != 0
@@ -247,6 +281,14 @@ def test_migrate_refuses_a_checkpoint_type_that_cannot_be_imported(prefix):
     result = _migrate("toy/old@60b9", "--to", "no.such.Module")
     assert result.exit_code != 0
     assert "'no.such.Module'" in result.output
+    assert "Traceback" not in result.output
+
+
+def test_migrate_refuses_a_checkpoint_type_without_a_module(prefix):
+    _train_old()
+    result = _migrate("toy/old@60b9", "--to", "Foo")
+    assert result.exit_code != 0
+    assert "'Foo'" in result.output
     assert "Traceback" not in result.output
 
 

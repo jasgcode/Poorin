@@ -21,7 +21,8 @@ from draccus.utils import DecodingError, ParsingError
 from rigging.filesystem.factory import url_to_fs
 
 from poorin.execution.artifact import Artifact, ArtifactRecord, JSONValue, read_record, result_type_name
-from poorin.execution.recorded_config import decode_recorded
+from poorin.execution.fingerprint import CLASS_KEY
+from poorin.execution.recorded_config import decode_recorded, field_types
 from poorin.training.training import DEFAULT_CHECKPOINTS_PATH
 
 T = TypeVar("T")
@@ -67,6 +68,9 @@ class Suite(Protocol):
     """A frozen dataclass whose fields are an evaluation's recipe: changing one is a new evaluation."""
 
     name: ClassVar[str]
+
+    def check(self, run: FinishedRun, runtime: EvalRuntime) -> None:
+        """Raise ValueError if this suite cannot evaluate the run: an undecodable recipe or a runtime it refuses."""
 
     def evaluate(self, run: FinishedRun, step: int, output_path: str, runtime: EvalRuntime) -> EvalResult: ...
 
@@ -138,11 +142,19 @@ def recorded_value(run: FinishedRun, path: str) -> JSONValue:
 
 def recorded(run: FinishedRun, path: str, cls: type[T]) -> T:
     """The value at the dotted ``path`` of the run's recorded config, decoded as ``cls``."""
+    value = recorded_value(run, path)
     try:
-        return decode_recorded(cls, recorded_value(run, path))
+        return decode_recorded(cls, value)
     except (DecodingError, ParsingError) as e:
         command = MIGRATE_COMMAND.format(label=run.label, checkpoint_type=run.record.result_type)
         raise ValueError(
             f"{run.label}: its recorded {path} does not decode as {cls.__name__}: {e}. A field the current "
-            f"code moved out of the recipe is dropped once with: {command} --drop {path}.FIELD"
+            f"code moved out of the recipe is dropped once with: {command} {_drop_options(path, value, cls)}"
         ) from e
+
+
+def _drop_options(path: str, value: Any, cls: type) -> str:
+    """``--drop`` for each recorded field at ``path`` that ``cls`` lacks; a placeholder when the mismatch is deeper."""
+    fields = field_types(cls)
+    unknown = [key for key in value if key != CLASS_KEY and key not in fields] if isinstance(value, dict) else []
+    return " ".join(f"--drop {path}.{key}" for key in unknown or ["FIELD"])

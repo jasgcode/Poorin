@@ -30,7 +30,7 @@ from poorin.evaluation.contract import (
     finished_run_at,
     offered_suites,
 )
-from poorin.execution.artifact import read_record, result_type_name
+from poorin.execution.artifact import result_type_name
 from poorin.execution.build_context import resolve_version
 from poorin.execution.lazy import ArtifactStep, StepContext
 from poorin.experiment.cli import build_options
@@ -187,15 +187,16 @@ def evaluation_matrix(
             raise click.UsageError(
                 f"{run.label}'s checkpoint type offers the suites {sorted(suites)}, not {suite_name!r}"
             )
-        record = read_record(run.path())
-        trained_at = (
-            record.provenance.label if record is not None and record.provenance is not None else "unrecorded code"
-        )
-        click.echo(f"{run.label} trained at {trained_at}")
+        suite = suites[suite_name]()
+        finished = finished_run_at(run.path())
+        try:
+            suite.check(finished, EvalRuntime(batch_size))
+        except ValueError as e:
+            raise click.UsageError(str(e)) from e
+        provenance = finished.record.provenance
+        click.echo(f"{run.label} trained at {provenance.label if provenance is not None else 'unrecorded code'}")
         for step in _steps(steps, run.label, checkpoint_steps(run.path())):
-            cells.append(
-                evaluate(Checkpoint(run, step), suites[suite_name](), overrides=overrides, batch_size=batch_size)
-            )
+            cells.append(evaluate(Checkpoint(run, step), suite, overrides=overrides, batch_size=batch_size))
     return cells
 
 

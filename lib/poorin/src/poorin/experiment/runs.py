@@ -1,12 +1,13 @@
 # Copyright The Marin Authors
 # SPDX-License-Identifier: Apache-2.0
 
-"""List the runs under the prefix and show the code behind one (D107).
+"""List the runs under the prefix, show the code behind one (D107), and migrate one's record (D114).
 
     uv run --no-sync python -m poorin.experiment.runs list [FILTER] [--limit N]
     uv run --no-sync python -m poorin.experiment.runs show NAME@REF | PATH
+    uv run --no-sync python -m poorin.experiment.runs migrate NAME@REF --to MODULE.CLASS [--drop PATH ...]
 
-Both read what the runner writes beside each output, the record (``.artifact.json``) and the
+``list`` and ``show`` read what the runner writes beside each output, the record (``.artifact.json``) and the
 status file, so they need neither W&B nor the experiment's code. Git, when the commit is in this
 repository, adds what a record does not hold: how far its branch has moved since, a snapshot's line
 counts, and the subject of a commit recorded before subjects were.
@@ -232,7 +233,7 @@ def migrate(target: str, checkpoint_type: str, dropped: tuple[str, ...], prefix:
     """Name the checkpoint type of a run trained before evaluation artifacts (D114), once."""
     try:
         cls = artifact_class(checkpoint_type)
-    except (ImportError, AttributeError, TypeError) as e:
+    except (ImportError, AttributeError, TypeError, ValueError) as e:
         raise click.ClickException(f"--to {checkpoint_type!r} is not an Artifact class: {e}") from e
     try:
         found = resolve_run(prefix or poorin_prefix(), target, finished_only=True)

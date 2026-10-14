@@ -1973,7 +1973,8 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
   - A label that is exactly four hex characters (`beef`) resolves as a token: resolution tries an
     exact version, then a token, then `latest`, then a label.
   - `runs migrate` turns an unimportable or non-class `--to` (`ImportError`, `AttributeError`,
-    `TypeError`) into a CLI error naming the value.
+    `TypeError`, and the `ValueError` of a `--to` without a module) into a CLI error naming the
+    value.
   - `GrugCheckpoint` is marked `@no_type_check`: the tests' beartype hook on `experiments.grug`
     rejects its `type[Suite]` return annotation, since `Suite` is not a runtime-checkable protocol.
   - Grug's `examples` count is the length of the evaluator's capped `DomainTaggedDataset`, so it
@@ -1983,6 +1984,11 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
     record.
   - The README simplification and the removed-from-Marin reference page landed as their own
     commit on this branch, before the plan's tasks.
+  - Suites gained `check(run, runtime)`, called when the plan is built, so a stale recorded field
+    or a refused runtime is refused before anything runs, naming the exact `--drop` field.
+  - `eval_results` returns results that share (run, step, suite) when a sweep varied the suite's
+    fields or a dev evaluation was repeated; telling them apart (the evaluation's version or the
+    suite's fields on the result) is left to sub-project 5, the first consumer.
 - **Alternatives:** An `--eval` option on the launchers that evaluates after training; Marin's
   `EvalRunRecord` outside the artifact graph; one generic loader per model kind in `poorin` instead
   of a loader per template; decoding the whole recorded launch config.
