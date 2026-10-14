@@ -284,6 +284,7 @@ for a stated user:
 | `poorin.episodes.schema` | Episode schema: field kinds, per-field encodings, one step rate per dataset, episode validation | R1 |
 | `poorin.episodes.video_files` | Decodes a video file to frames at a dataset's size and step rate, for source readers | `poorin.episodes.video_files` |
 | `poorin.evaluation` | Package marker | R1 |
+| `poorin.evaluation.contract` | The evaluation contract: suites, evaluable checkpoint types, finished runs, the `EvalResult` artifact (D114) | `poorin.experiment.evaluate` |
 | `poorin.evaluation.endpoint` | OpenAI-compatible endpoint and tokenizer types for a served model under evaluation | `poorin.evaluation.lm_eval` |
 | `poorin.evaluation.eval_measurements` | Converts eval run records into statistics-engine measurements; owns harness output shapes | `poorin.evaluation.eval_measurements` |
 | `poorin.evaluation.eval_stats` | Eval statistics: measurements, coverage, Wilson and attrition-widened intervals, cohort selection | `poorin.evaluation.eval_stats` |
