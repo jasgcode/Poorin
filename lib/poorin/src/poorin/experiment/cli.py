@@ -23,7 +23,7 @@ This module makes that a one-liner while wiring up the deferred-version machiner
 ``--version`` is required — there is no silent ``dev`` default, because a deferred *dataset* at a
 mutable version rebuilds its (often multi-TB) cache on every run and, unlike a training checkpoint,
 is not namespaced per user. To iterate, pass ``--version dev``: each invocation gets a fresh,
-suffixed version, and ``--resume <version>`` continues an earlier one.
+suffixed version, and ``--resume <version or token>`` continues an earlier one.
 
 Before ``--run`` builds, the code is checked (:mod:`poorin.experiment.code_check`): a calendar-
 versioned artifact builds only from committed code, and a run that builds only ``dev`` artifacts
@@ -81,6 +81,7 @@ from poorin.execution.lazy import ArtifactStep, graph_handles, lower_all, run
 from poorin.execution.step_runner import DEFAULT_MAX_CONCURRENT, steps_to_build
 from poorin.experiment.code_check import SHOWN_HASH_LENGTH, CodeVerdict, check_code, code_line, plan_lines, refusal
 from poorin.experiment.overrides import Override, OverrideError, Overrides
+from poorin.experiment.run_refs import RunRefError, resume_version
 
 BuildResult = ArtifactStep | Mapping[str, ArtifactStep] | list[ArtifactStep] | tuple[ArtifactStep, ...]
 BuildRunner = Callable[[list[ArtifactStep], int, frozenset[str]], None]
@@ -98,9 +99,15 @@ def _version_callback(ctx: click.Context, param: click.Parameter, value: str | N
 
 
 def _resume_callback(ctx: click.Context, param: click.Parameter, value: str | None) -> str | None:
-    """Accept only a mutable version: calendar versions are stable and need no resume."""
+    """Accept a dev version, or the token of one (``60b9``): calendar versions need no resume."""
+    if value is None:
+        return None
+    try:
+        value = resume_version(poorin_prefix(), value)
+    except RunRefError as e:
+        raise click.BadParameter(str(e), ctx=ctx, param=param) from e
     value = _version_callback(ctx, param, value)
-    if value is not None and not is_mutable_version(value):
+    if not is_mutable_version(value):
         raise click.BadParameter(
             f"{value!r} is a calendar version; --resume continues a '-dev' run", ctx=ctx, param=param
         )
@@ -237,7 +244,7 @@ def build_options_with_runner(fn: Callable[..., BuildResult], runner: BuildRunne
         default=None,
         callback=_resume_callback,
         metavar="VERSION",
-        help="Continue an earlier dev run by reusing its exact version, as printed when it started.",
+        help="Continue an earlier dev run by its version, as printed when it started, or the 4-hex token in it.",
     )
     @click.option(
         "--version-of",

@@ -178,4 +178,11 @@ def test_show_says_an_output_without_provenance_predates_it(checkout, prefix):
 def test_show_rejects_an_unknown_run(checkout, prefix):
     result = CliRunner().invoke(main, ["show", "data/nothing@2026.07.16"])
     assert result.exit_code != 0
-    assert "no run at" in result.output
+    assert "no run data/nothing@2026.07.16" in result.output
+
+
+def test_show_takes_a_short_reference(checkout, prefix):
+    _build("data/thing", Provenance.capture(), version="probe-20261012-090000-a1b2-dev")
+    result = CliRunner().invoke(main, ["show", "data/thing@a1b2"])
+    assert result.exit_code == 0, result.output
+    assert result.output.startswith("data/thing@probe-20261012-090000-a1b2-dev")

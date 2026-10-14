@@ -4,7 +4,7 @@
 """List the runs under the prefix and show the code behind one (D107).
 
     uv run --no-sync python -m poorin.experiment.runs list [FILTER] [--limit N]
-    uv run --no-sync python -m poorin.experiment.runs show NAME@VERSION | PATH
+    uv run --no-sync python -m poorin.experiment.runs show NAME@REF | PATH
 
 Both read what the runner writes beside each output, the record (``.artifact.json``) and the
 status file, so they need neither W&B nor the experiment's code. Git, when the commit is in this
@@ -14,10 +14,7 @@ counts, and the subject of a commit recorded before subjects were.
 
 import dataclasses
 import shlex
-from collections.abc import Iterator
-from dataclasses import dataclass
 from datetime import datetime
-from enum import StrEnum
 from pathlib import PurePosixPath
 
 import click
@@ -25,22 +22,15 @@ from rigging.filesystem.cluster_config import poorin_prefix
 from rigging.filesystem.factory import url_to_fs
 from rigging.provenance import Provenance, read_git
 
-from poorin.execution.artifact import ArtifactRecord, artifact_path, read_record
-from poorin.execution.step_status import STATUS_FAILED, STATUS_FILENAME, STATUS_SUCCESS, read_status
+from poorin.execution.artifact import read_record
+from poorin.execution.step_status import STATUS_FILENAME
 from poorin.experiment.code_check import SHOWN_HASH_LENGTH
+from poorin.experiment.run_refs import Run, RunRefError, RunState, collect_runs, resolve_run, run_state
 
-# Prefix directories that hold scratch space, not artifacts.
-SCRATCH_DIRS = frozenset({"tmp"})
 DEFAULT_LIMIT = 30
 # Continuation lines of `show` start under its values.
 SHOW_INDENT = " " * 15
 NO_CODE = "-"
-
-
-class RunState(StrEnum):
-    BUILT = "built"
-    STARTED = "started"
-    FAILED = "failed"
 
 
 # What `show` says in its Code line for an output whose record is missing, by the output's state.
@@ -51,62 +41,6 @@ NO_RECORD_REASONS = {
 }
 # ... and for a record written before provenance existed, or a legacy sidecar.
 NO_PROVENANCE_REASON = "not recorded: the output predates code provenance"
-
-
-@dataclass(frozen=True)
-class Run:
-    """One output under the prefix."""
-
-    label: str
-    """``name@version``."""
-    path: str
-    state: RunState
-    record: ArtifactRecord | None
-    """``None`` until the build finishes."""
-    when: datetime
-
-
-def _state(output_path: str) -> RunState:
-    status = read_status(output_path)
-    if status == STATUS_SUCCESS:
-        return RunState.BUILT
-    if status == STATUS_FAILED:
-        return RunState.FAILED
-    return RunState.STARTED
-
-
-def _naive_local(moment: datetime) -> datetime:
-    return moment.astimezone().replace(tzinfo=None) if moment.tzinfo is not None else moment
-
-
-def _output_dirs(fs, directory: str, top: bool) -> Iterator[str]:
-    """Directories under ``directory`` that hold an output; an output holds no other output."""
-    entries = fs.ls(directory, detail=True)
-    if any(PurePosixPath(entry["name"]).name == STATUS_FILENAME for entry in entries):
-        yield directory
-        return
-    for entry in entries:
-        name = PurePosixPath(entry["name"]).name
-        if entry["type"] == "directory" and not (top and name in SCRATCH_DIRS):
-            yield from _output_dirs(fs, entry["name"], top=False)
-
-
-def collect_runs(prefix: str) -> list[Run]:
-    """Every output under ``prefix``, newest first."""
-    fs, root = url_to_fs(prefix)
-    if not fs.exists(root):
-        return []
-    runs = []
-    for directory in _output_dirs(fs, root, top=True):
-        relative = PurePosixPath(directory).relative_to(PurePosixPath(root))
-        path = f"{prefix.rstrip('/')}/{relative}"
-        record = read_record(path)
-        created = record.provenance.created_at if record is not None and record.provenance is not None else ""
-        when = (
-            datetime.fromisoformat(created) if created else _naive_local(fs.modified(f"{directory}/{STATUS_FILENAME}"))
-        )
-        runs.append(Run(f"{relative.parent}@{relative.name}", path, _state(path), record, when))
-    return sorted(runs, key=lambda r: r.when, reverse=True)
 
 
 def _commit(rev: str) -> str:
@@ -235,19 +169,25 @@ def list_runs(name_filter: str, limit: int, prefix: str | None) -> None:
 @click.argument("target")
 @click.option("--prefix", default=None, help="Read this prefix instead of POORIN_PREFIX.")
 def show(target: str, prefix: str | None) -> None:
-    """Everything about one run's code. TARGET is NAME@VERSION or the output's path."""
+    """Everything about one run's code.
+
+    TARGET is NAME@REF (a version, a token, a label, or latest) or the output's path.
+    """
     if "@" in target:
-        name, _, version = target.rpartition("@")
-        path = artifact_path(prefix or poorin_prefix(), name, version)
-    else:
-        path = target.rstrip("/")
+        try:
+            found = resolve_run(prefix or poorin_prefix(), target, finished_only=False)
+        except RunRefError as e:
+            raise click.ClickException(str(e)) from e
+        click.echo("\n".join(describe(found)))
+        return
+    path = target.rstrip("/")
     record = read_record(path)
     fs, stripped = url_to_fs(path)
     if record is None and not fs.exists(f"{stripped}/{STATUS_FILENAME}"):
         raise click.ClickException(f"no run at {path}")
     relative = PurePosixPath(path)
-    label = target if "@" in target else f"{relative.parent.name}@{relative.name}"
-    click.echo("\n".join(describe(Run(label, path, _state(path), record, datetime.now()))))
+    label = f"{relative.parent.name}@{relative.name}"
+    click.echo("\n".join(describe(Run(label, path, run_state(path), record, datetime.now()))))
 
 
 if __name__ == "__main__":

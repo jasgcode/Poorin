@@ -131,6 +131,16 @@ def test_resume_continues_the_version_an_earlier_run_printed(runner, tmp_path, m
     assert _resolved_model_version(resumed.output) == version
 
 
+def test_resume_takes_the_token_of_an_earlier_run(runner, tmp_path, monkeypatch):
+    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
+    started = runner.invoke(experiment_main(_build_two), ["--version", "dev", "--run"])
+    (version,) = re.findall(r"--resume (\S+)\)", started.output)
+    token = version.removesuffix("-dev").rpartition("-")[2]
+    resumed = runner.invoke(experiment_main(_build_two), ["--resume", token])
+    assert resumed.exit_code == 0, resumed.output
+    assert _resolved_model_version(resumed.output) == version
+
+
 @pytest.mark.parametrize("mode", [[], ["--run"]])
 def test_resume_with_nothing_to_resume_is_rejected(runner, tmp_path, monkeypatch, mode):
     monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))

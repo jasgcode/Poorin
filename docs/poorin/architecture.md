@@ -312,6 +312,7 @@ for a stated user:
 | `poorin.experiment.data` | Lazy dataset builders: tokenized, pretokenized, mixture, and episode handles | R1 |
 | `poorin.experiment.namespacing` | Prefixes mutable training artifact names with the user to avoid path collisions | R2 |
 | `poorin.experiment.overrides` | Typed dotted-path config overrides from --set and --sweep, decoded by draccus | R1 |
+| `poorin.experiment.run_refs` | The runs under the prefix, and short references (`NAME@60b9`, `@accept`, `@latest`) to one (D114) | `poorin.experiment.runs` |
 | `poorin.experiment.runs` | Lists the runs under the prefix and shows the code behind one | `poorin.experiment.runs` |
 | `poorin.experiment.train` | `train_lm`: assembles a Levanter LM training step with mesh, checkpointer, evals | R1 |
 | `poorin.processing` | Package marker | R1 |

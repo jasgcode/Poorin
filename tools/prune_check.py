@@ -45,7 +45,7 @@ from pathlib import Path
 from finelog.client import LogClient
 from finelog.embedded import require_embedded_server
 from levanter.tracker.finelog_metrics import LEVANTER_METRICS_NAMESPACE
-from poorin.experiment.runs import collect_runs
+from poorin.experiment.run_refs import collect_runs
 from rigging.provenance import delete_snapshot_ref, snapshot_commits
 
 from tools import affected_tests
