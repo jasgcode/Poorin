@@ -38,9 +38,10 @@ def sample_times(key: PRNGKeyArray, batch_size: int) -> Float[Array, " B"]:
     return jax.nn.sigmoid(LOGIT_NORMAL_SCALE * jax.random.normal(key, (batch_size,)))
 
 
-def eval_times() -> np.ndarray:
-    """The grid a held-out loss averages over: the midpoints of eight equal intervals of [0, 1]."""
-    return (np.arange(EVAL_TIME_COUNT) + 0.5) / EVAL_TIME_COUNT
+def eval_times(count: int) -> np.ndarray:
+    """The grid a held-out loss averages over: the midpoints of ``count`` equal intervals of [0, 1]."""
+    assert count >= 1, count
+    return (np.arange(count) + 0.5) / count
 
 
 def euler_sample(velocity: Callable[[Any, Float[Array, " B"]], Any], noise: Any, num_steps: int) -> Any:

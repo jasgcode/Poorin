@@ -27,9 +27,10 @@ from poorin.execution.build_context import resolve_version
 from poorin.execution.lazy import ArtifactStep, StepContext
 from poorin.experiment.namespacing import user_namespaced_name
 from poorin.experiment.overrides import Overrides
-from poorin.training.training import LevanterCheckpoint, resolve_checkpointer_output_path
+from poorin.training.training import resolve_checkpointer_output_path
 
 from experiments.episode_models.data import EpisodeDataConfig, action_stats
+from experiments.episode_models.evaluation import EpisodeCheckpoint
 from experiments.episode_models.sources import SOURCES
 from experiments.episode_models.train import (
     EpisodeModelConfig,
@@ -131,7 +132,7 @@ def episode_trial(
     overrides: Overrides,
     version: str | None,
     finelog_url: str | None,
-) -> ArtifactStep[LevanterCheckpoint]:
+) -> ArtifactStep[EpisodeCheckpoint]:
     """A family's trial on the example dataset named ``dataset`` (a key of ``SOURCES``)."""
     if dataset not in SOURCES:
         raise ValueError(f"unknown dataset {dataset!r}; the sources are {sorted(SOURCES)}")
@@ -170,7 +171,7 @@ def episode_trial(
     return ArtifactStep(
         name=user_namespaced_name(overrides.named(base_name), version),
         version=version,
-        artifact_type=LevanterCheckpoint,
+        artifact_type=EpisodeCheckpoint,
         run=run_episode_trial,
         build_config=build_config,
         deps=deps,

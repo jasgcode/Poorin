@@ -5,7 +5,14 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-from experiments.episode_models.flow import euler_sample, eval_times, interpolate, sample_times, velocity_target
+from experiments.episode_models.flow import (
+    EVAL_TIME_COUNT,
+    euler_sample,
+    eval_times,
+    interpolate,
+    sample_times,
+    velocity_target,
+)
 
 
 def test_the_path_runs_from_noise_to_data():
@@ -29,4 +36,4 @@ def test_sampled_times_lie_inside_the_unit_interval_and_eval_times_are_fixed():
     t = sample_times(jax.random.key(0), 4096)
     assert float(t.min()) > 0 and float(t.max()) < 1
     assert abs(float(jnp.median(t)) - 0.5) < 0.03
-    np.testing.assert_allclose(eval_times(), (np.arange(8) + 0.5) / 8)
+    np.testing.assert_allclose(eval_times(EVAL_TIME_COUNT), (np.arange(8) + 0.5) / 8)

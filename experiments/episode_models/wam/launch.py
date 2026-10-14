@@ -15,8 +15,8 @@ import click
 from poorin.execution.lazy import ArtifactStep
 from poorin.experiment.cli import build_options
 from poorin.experiment.overrides import Overrides
-from poorin.training.training import LevanterCheckpoint
 
+from experiments.episode_models.evaluation import EpisodeCheckpoint
 from experiments.episode_models.launch import episode_trial
 from experiments.episode_models.sources import SOURCES
 from experiments.episode_models.train import EpisodeTrainConfig
@@ -27,7 +27,7 @@ DEFAULT_DATASET = "libero-spatial"
 
 def wam_trial(
     *, dataset: str, overrides: Overrides, version: str | None = None, finelog_url: str | None = None
-) -> ArtifactStep[LevanterCheckpoint]:
+) -> ArtifactStep[EpisodeCheckpoint]:
     return episode_trial(
         family="wam",
         model=WamConfig(),
@@ -43,7 +43,7 @@ def wam_trial(
 @click.option("--dataset", type=click.Choice(sorted(SOURCES)), default=DEFAULT_DATASET, show_default=True)
 @click.option("--finelog-url", default=None, help="Finelog server that receives the run's metrics.")
 @build_options
-def main(dataset: str, finelog_url: str | None, overrides: Overrides) -> ArtifactStep[LevanterCheckpoint]:
+def main(dataset: str, finelog_url: str | None, overrides: Overrides) -> ArtifactStep[EpisodeCheckpoint]:
     return wam_trial(dataset=dataset, overrides=overrides, finelog_url=finelog_url)
 
 

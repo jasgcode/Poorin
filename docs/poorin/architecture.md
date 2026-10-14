@@ -507,6 +507,7 @@ for a stated user:
 | `experiments.datasets.fineweb_edu` | The FineWeb-Edu 10M pretokenized dataset at a pinned Hub revision, shared by the tutorial and grug | R1 |
 | `experiments.episode_models` | Package marker; docstring names the three flow-matching templates for episode data | package |
 | `experiments.episode_models.data` | Episode datasets as model batches: clip and split config, episode-level held-out split, action percentiles, task indices, Grain iterators | `experiments.episode_models.data` |
+| `experiments.episode_models.evaluation` | The episode runs' checkpoint type and the held-out loss suite, which reproduces the loss training logged (D114) | `experiments.episode_models.evaluation` |
 | `experiments.episode_models.flops` | Analytic forward FLOPs of the episode models' parts: trunk per token, linear maps, time embeddings | `experiments.episode_models.flops` |
 | `experiments.episode_models.flow` | Flow matching on the rectified-flow path: interpolation, velocity target and loss, logit-normal times, the evaluation grid, Euler sampling | `experiments.episode_models.flow` |
 | `experiments.episode_models.launch` | Builds a family's trial as a lazy checkpoint artifact: the shared launch config, the dataset and action-stats dependencies, Levanter's trainer config | `experiments.episode_models.launch` |

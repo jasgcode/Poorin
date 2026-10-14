@@ -19,23 +19,13 @@ from levanter.optim.config import AdamConfig
 from levanter.tracker.json_logger import JsonLoggerConfig
 from levanter.trainer import TrainerConfig
 
-from experiments.episode_models.data import ClipConfig, EpisodeDataConfig, compute_action_stats
-from experiments.episode_models.tests.tiny_dataset import build_tiny
+from experiments.episode_models.data import ClipConfig, EpisodeDataConfig
 from experiments.episode_models.train import EpisodeTrainConfig, EpisodeTrainingRun, run_episode_training
 from experiments.episode_models.vla.model import VlaConfig
 from experiments.episode_models.wam.model import WamConfig
 from experiments.episode_models.world_model.model import WorldModelConfig
 
 FAMILIES = {"wam": WamConfig, "world_model": WorldModelConfig, "vla": VlaConfig}
-
-
-@pytest.fixture(scope="module")
-def tiny(tmp_path_factory) -> tuple[str, str]:
-    """The tiny dataset's path and its action stats' path, built once for the module."""
-    root = tmp_path_factory.mktemp("data")
-    dataset = build_tiny(root)
-    compute_action_stats(dataset.path, "action", 1.0, 99.0, str(root / "stats"))
-    return dataset.path, str(root / "stats")
 
 
 @contextlib.contextmanager

@@ -19,6 +19,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any, Protocol, no_type_check
 
+import grain
 import jax
 import jax.numpy as jnp
 import jmp
@@ -52,7 +53,7 @@ from experiments.episode_models.data import (
     to_batch,
     train_batches,
 )
-from experiments.episode_models.flow import eval_times, sample_times
+from experiments.episode_models.flow import EVAL_TIME_COUNT, eval_times, sample_times
 from experiments.grug.checkpointing import restore_grug_state_from_checkpoint
 from experiments.grug.dispatch import dispatch_grug_training_run
 
@@ -152,6 +153,30 @@ class EpisodeTrainState:
     ema_params: None
 
 
+@dataclass(frozen=True)
+class EpisodeExamples:
+    """A dataset's sizes and its training and held-out clips, as model examples."""
+
+    dims: EpisodeDims
+    train: grain.MapDataset
+    held_out: grain.MapDataset
+
+
+def load_examples(dataset_path: str, action_stats_path: str | None, data: EpisodeDataConfig) -> EpisodeExamples:
+    dataset = EpisodeDataset.raw_load(dataset_path)
+    stats = None
+    if data.action_field is not None:
+        assert action_stats_path is not None
+        stats = read_action_stats(action_stats_path, data.action_field)
+    tasks = task_vocabulary(dataset.index, data.task_key) if data.task_key is not None else None
+    train_rows, eval_rows = split_rows(dataset.index, data.eval_percent)
+    return EpisodeExamples(
+        dims=dataset_dims(dataset, data),
+        train=example_dataset(dataset, data, train_rows, stats, tasks),
+        held_out=example_dataset(dataset, data, eval_rows, stats, tasks),
+    )
+
+
 def _make_train_step(
     optimizer: optax.GradientTransformation, mp: jmp.Policy, streams: Sequence[str], weights: Mapping[str, float]
 ):
@@ -174,10 +199,10 @@ def _make_train_step(
     return train_step
 
 
-def _make_evaluate(mp: jmp.Policy, streams: Sequence[str], weights: Mapping[str, float]):
-    """The held-out loss: each stream's loss averaged over the fixed time grid and the held-out
-    batches, with noise from a fixed key. Deterministic for given parameters."""
-    grid = jnp.asarray(eval_times(), jnp.float32)
+def held_out_loss(mp: jmp.Policy, streams: Sequence[str], weights: Mapping[str, float], *, flow_times: int, seed: int):
+    """The held-out loss: each stream's loss averaged over a grid of ``flow_times`` flow times and the
+    held-out batches, with noise from the key ``seed``. Deterministic for given parameters."""
+    grid = jnp.asarray(eval_times(flow_times), jnp.float32)
 
     @jax.jit
     def evaluate_batch(params, batch: EpisodeBatch, key: PRNGKeyArray) -> dict[str, Array]:
@@ -188,8 +213,7 @@ def _make_evaluate(mp: jmp.Policy, streams: Sequence[str], weights: Mapping[str,
 
     def evaluate(params, batches: Sequence[EpisodeBatch]) -> dict[str, float]:
         per_batch = [
-            evaluate_batch(params, batch, jax.random.fold_in(jax.random.key(EVAL_SEED), i))
-            for i, batch in enumerate(batches)
+            evaluate_batch(params, batch, jax.random.fold_in(jax.random.key(seed), i)) for i, batch in enumerate(batches)
         ]
         means = {s: float(np.mean([float(result[s]) for result in per_batch])) for s in streams}
         if not all(np.isfinite(list(means.values()))):
@@ -209,24 +233,15 @@ def _train_locally(run: EpisodeTrainingRun) -> None:
     run_id = trainer.id
     assert run_id is not None, "run_episode_training refuses a run without trainer.id"
 
-    dataset = EpisodeDataset.raw_load(run.dataset_path)
-    dims = dataset_dims(dataset, run.data)
-    stats = None
-    if run.data.action_field is not None:
-        assert run.action_stats_path is not None
-        stats = read_action_stats(run.action_stats_path, run.data.action_field)
-    tasks = task_vocabulary(dataset.index, run.data.task_key) if run.data.task_key is not None else None
-    train_rows, eval_rows = split_rows(dataset.index, run.data.eval_percent)
-    train_examples = example_dataset(dataset, run.data, train_rows, stats, tasks)
-    eval_examples = example_dataset(dataset, run.data, eval_rows, stats, tasks)
+    examples = load_examples(run.dataset_path, run.action_stats_path, run.data)
 
     model_config, train = run.model, run.train
     streams, weights = model_config.streams, model_config.stream_weights
     optimizer = train.optimizer.build(train.steps)
     mp = jmp.get_policy(train.mp)
     model_key, noise_key = jax.random.split(jax.random.key(train.seed))
-    tokens_per_example = model_config.tokens_per_example(run.data.clip, dims)
-    train_flops_per_example = TRAIN_FLOPS_PER_FORWARD * model_config.flops_per_example(run.data.clip, dims)
+    tokens_per_example = model_config.tokens_per_example(run.data.clip, examples.dims)
+    train_flops_per_example = TRAIN_FLOPS_PER_FORWARD * model_config.flops_per_example(run.data.clip, examples.dims)
 
     mesh = data_mesh()
     checkpointer = trainer.checkpointer.create(run_id)
@@ -234,7 +249,7 @@ def _train_locally(run: EpisodeTrainingRun) -> None:
 
         @jax.jit
         def init_state(key: PRNGKeyArray) -> EpisodeTrainState:
-            params = mp.cast_to_param(model_config.init(dims, run.data.clip, key=key))
+            params = mp.cast_to_param(model_config.init(examples.dims, run.data.clip, key=key))
             return EpisodeTrainState(
                 step=jnp.array(0, jnp.int32), params=params, opt_state=optimizer.init(params), ema_params=None
             )
@@ -256,10 +271,10 @@ def _train_locally(run: EpisodeTrainingRun) -> None:
 
         held_out = [
             to_batch(b, mesh)
-            for b in eval_batches(eval_examples, batch_size=train.eval_batch_size, count=train.eval_batches)
+            for b in eval_batches(examples.held_out, batch_size=train.eval_batch_size, count=train.eval_batches)
         ]
         train_step = _make_train_step(optimizer, mp, streams, weights)
-        evaluate = _make_evaluate(mp, streams, weights)
+        evaluate = held_out_loss(mp, streams, weights, flow_times=EVAL_TIME_COUNT, seed=EVAL_SEED)
 
         state_callbacks = StateCallbackRunner[EpisodeTrainState](
             step_getter=lambda s: s.step,
@@ -276,7 +291,7 @@ def _train_locally(run: EpisodeTrainingRun) -> None:
         state_callbacks.add_hook(callbacks.log_step_info(train.steps), every=log_every)
 
         loader = train_batches(
-            train_examples,
+            examples.train,
             batch_size=train.batch_size,
             seed=run.data.seed,
             start_step=int(state.step),
