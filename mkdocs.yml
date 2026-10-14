@@ -82,6 +82,7 @@ nav:
       - Training Configuration: references/train-config.md
       - HBM Optimization: references/hbm-optimization.md
       - Browsing Buckets with fsutil: references/fsutil.md
+      - Removed from Marin: references/removed-from-marin.md
 
 markdown_extensions:
   - markdown.extensions.footnotes
