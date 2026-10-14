@@ -10,7 +10,7 @@ from typing import TypeVar
 from fray.current_client import current_client
 from fray.types import Entrypoint, JobRequest, ResourceConfig, create_environment
 from poorin.training.run_environment import extras_for_resources
-from poorin.training.training import exclusive_training, resolve_training_env
+from poorin.training.training import exclusive_accelerator, resolve_training_env
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +35,7 @@ def _forwarded_env_vars() -> dict[str, str]:
 
 
 def _train_exclusively(local_entrypoint: Callable[[ConfigT], None], run_id: str, config: ConfigT) -> None:
-    with exclusive_training(run_id):
+    with exclusive_accelerator(f"Training {run_id}"):
         local_entrypoint(config)
 
 

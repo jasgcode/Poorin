@@ -35,8 +35,8 @@ logger = logging.getLogger(__name__)
 _CHECKPOINTS_SUBDIR = "checkpoints"
 # The final-metrics file a run mirrors next to its output via the WandB ``replicate_path``.
 _TRACKER_METRICS_FILE = "tracker_metrics.jsonl"
-# Held by the one training running in this process; see ``exclusive_training``.
-_TRAINING_LOCK = threading.Lock()
+# Held by the one training or evaluation using the accelerator in this process; see ``exclusive_accelerator``.
+_ACCELERATOR_LOCK = threading.Lock()
 
 
 class TrainMetrics(BaseModel):
@@ -487,18 +487,20 @@ def _apply_env_to_process(env: dict[str, str]) -> None:
 
 
 @contextlib.contextmanager
-def exclusive_training(run_id: str) -> Iterator[None]:
-    """Run a training only while no other training runs in this process; wait for one that does.
+def exclusive_accelerator(label: str) -> Iterator[None]:
+    """Use the accelerator only while no other training or evaluation does in this process; wait for one that does.
 
     Fray's ``LocalClient`` runs each job as a thread of this process, so a sweep's trials, or any
     graph with several training steps, can start training at once. Levanter's tracker belongs to the
     process, and a second ``wandb.init`` returns the W&B run the process already has open. Two
     trainings running at once would log into one W&B run, the first to finish would finish the
-    other's tracker, and ``tracker_metrics.jsonl`` could be written into the wrong output.
+    other's tracker, and ``tracker_metrics.jsonl`` could be written into the wrong output. Two
+    evaluations, or an evaluation and a training, would also share one GPU's memory. Memory held by
+    other programs is outside the lock and fails loudly (D113).
     """
-    if _TRAINING_LOCK.locked():
-        logger.info("Training %s waits for the training running in this process to finish", run_id)
-    with _TRAINING_LOCK:
+    if _ACCELERATOR_LOCK.locked():
+        logger.info("%s waits for the accelerator, which another step in this process is using", label)
+    with _ACCELERATOR_LOCK:
         yield
 
 
@@ -528,7 +530,7 @@ def run_levanter_train_lm(config: TrainLmOnPodConfig):
         config.resources.device,
     )
 
-    with exclusive_training(train_config.trainer.id):
+    with exclusive_accelerator(f"Training {train_config.trainer.id}"):
         _apply_env_to_process(env)
         importlib.import_module("levanter.main.train_lm").main(train_config)
 
@@ -536,7 +538,7 @@ def run_levanter_train_lm(config: TrainLmOnPodConfig):
 def run_levanter_train_dpo(config: TrainDpoOnPodConfig):
     """Run the Levanter DPO training main function in the current process."""
     config, train_config, env = _prepare_training_run(config)
-    with exclusive_training(train_config.trainer.id):
+    with exclusive_accelerator(f"Training {train_config.trainer.id}"):
         _apply_env_to_process(env)
         importlib.import_module("levanter.main.train_dpo").main(train_config)
 

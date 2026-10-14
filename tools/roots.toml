@@ -43,6 +43,7 @@ modules = [
     "poorin.evaluation.metric_selection",
     "poorin.evaluation.trace_labeled_eval",
     "poorin.evaluation.rollouts",
+    "poorin.experiment.evaluate",
     "experiments.evals.task_configs",
     # Workbench: scaling laws and the Delphi recipe
     "poorin.scaling_laws",

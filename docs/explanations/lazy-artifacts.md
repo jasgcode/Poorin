@@ -271,7 +271,8 @@ fingerprint, but the run never sees it: `hf_save_path`, `trainer.checkpointer.ba
 Trainings in one process run one at a time, at any `--max-concurrent`. Fray's local client runs
 each job as a thread of the process, and Levanter's tracker and the W&B run belong to the process,
 so a training that would start while another runs waits for it to finish
-(`poorin.training.training.exclusive_training`). Other steps, such as tokenization, still run up
+(`poorin.training.training.exclusive_accelerator`). Evaluations hold the same lock, so an
+evaluation and a training, or two evaluations, also run one at a time. Other steps, such as tokenization, still run up
 to `--max-concurrent` at once. Trainings also run one at a time in a sweep built in Python and passed to `run`, and in any
 graph with several training steps.
 

@@ -310,6 +310,7 @@ for a stated user:
 | `poorin.experiment.cli` | Click options (`--version`, `--version-of`, `--set`, `--sweep`, `--run`) that plan or build an experiment graph | R1 |
 | `poorin.experiment.code_check` | Whether `--run` may build from the working tree's code, and the plan's `Code:` lines | R1 |
 | `poorin.experiment.data` | Lazy dataset builders: tokenized, pretokenized, mixture, and episode handles | R1 |
+| `poorin.experiment.evaluate` | Evaluations as artifacts: handles over pinned finished runs, `eval_results`, and the run-by-step command (D114) | `poorin.experiment.evaluate` |
 | `poorin.experiment.namespacing` | Prefixes mutable training artifact names with the user to avoid path collisions | R2 |
 | `poorin.experiment.overrides` | Typed dotted-path config overrides from --set and --sweep, decoded by draccus | R1 |
 | `poorin.experiment.run_refs` | The runs under the prefix, and short references (`NAME@60b9`, `@accept`, `@latest`) to one (D114) | `poorin.experiment.runs` |
