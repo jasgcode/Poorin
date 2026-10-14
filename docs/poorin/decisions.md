@@ -1930,6 +1930,54 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
 
 ---
 
+### D114. Evaluations are artifacts: a contract, short run references, and held-out loss suites
+
+- **When:** 2026-10-13. **Status:** Adopted. Spec: `specs/2026-10-13-evaluation-artifacts-design.md`;
+  plan: `plans/2026-10-13-evaluation-artifacts.md`.
+- **Decision:** An evaluation is an artifact step. Its inputs are a finished run, referenced by a
+  pinned handle, and one of the run's permanent checkpoint steps. Its recipe is a suite, a frozen
+  dataclass whose fields are what is measured. Its output is an `EvalResult` record with the
+  metrics. `poorin.evaluation.contract` defines `EvaluableCheckpoint` (a template's checkpoint type
+  names its suites), `Suite`, `FinishedRun`, and `EvalResult`. `python -m poorin.experiment.evaluate`
+  runs a matrix of runs, steps, and suite settings through the experiment CLI. Runs are named by
+  short references (`NAME@60b9`, `NAME@accept`, `NAME@latest`) wherever a run is typed. This round
+  implements one suite per family, a post-hoc held-out loss, for the episode templates and grug
+  base, each declaring its checkpoint type (`EpisodeCheckpoint`, `GrugCheckpoint`). The process
+  lock becomes `exclusive_accelerator`, held by evaluations as well as trainings.
+- **Why:** The owner, 2026-10-13, asked whether the experiment workflow generalizes to evaluations,
+  and wants the contract to serve both scaling sweeps (sub-project 5) and downstream benchmarks.
+  An evaluation inside training puts the evaluation's settings in the training identity; records
+  outside the artifact graph, as Marin's fleet evaluation kept them, lose caching, drift refusal,
+  and code provenance. As artifacts, a checkpoint-by-suite matrix rebuilds only its missing cells.
+  The owner asked for short references so nobody types `20261012-201822-60b9`, and for grug in
+  the first round so the contract is shown to span both families.
+- **Rulings while designing:** A calendar evaluation of a pinned dev run is allowed: a pin never
+  rebuilds. `--resume` takes a full version or a token, since a label or `latest` needs a `NAME`.
+  The episode suite's batch size is a recipe field, because its noise is drawn per batch; grug's is
+  a runtime arg. Only the suite's fields take `--set`, and an override joins the suite's name
+  segment. The model-kind interfaces (`LanguageModel`, `Policy`, `WorldModel`) are fixed in the
+  spec with no code.
+- **Rulings while planning:** Grug base's FineWeb-Edu cache has no validation split and its trial
+  disabled evaluation, so the trial gains WikiText-2's validation split (`experiments.datasets.
+  wikitext`, the artifact the tutorial already builds) and evaluates at its final step. A run's
+  recipe is read back with `poorin.execution.recorded_config.decode_recorded`, which walks the
+  target's field types to turn the record's `__class__` labels into draccus's choice key; a
+  template decodes only the parts it needs, because draccus cannot decode fray's
+  `ResourceConfig.regions`. The step runner rebuilt every dev version, a pinned one included;
+  `StepSpec.rebuilds` is now false for a pin, so evaluating a dev run never touches it. Neither
+  suite reads loader workers, so `EvalRuntime` holds only the device batch size. The migration is
+  `runs migrate NAME@REF --to TYPE [--drop PATH]`: D113's acceptance runs trained at `a25be99ae`,
+  before `e2dddfa87` moved `num_workers` out of `EpisodeDataConfig`, so their records need the
+  field dropped once. `eval_times` takes its count, so a suite's `flow_times` reaches the grid.
+- **Alternatives:** An `--eval` option on the launchers that evaluates after training; Marin's
+  `EvalRunRecord` outside the artifact graph; one generic loader per model kind in `poorin` instead
+  of a loader per template; decoding the whole recorded launch config.
+- **Cost if wrong:** A suite that needs state outside a run's record and checkpoint (a reference
+  model, a simulator) widens `FinishedRun`. Model code that changes numerics breaks reproduction
+  of older checkpoints silently unless a reproduction test covers that template.
+
+---
+
 ## Deferred
 
 Known gaps left open on purpose. Each names where it gets resolved.
