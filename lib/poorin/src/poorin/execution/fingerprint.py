@@ -50,7 +50,7 @@ def register_fingerprint(tp: type, encode: Callable[[Any], object]) -> None:
     _REGISTRY[tp] = encode
 
 
-def _class_label(cls: type) -> str:
+def class_label(cls: type) -> str:
     """A dataclass's class in a fingerprint: its draccus choice name when it is a registered choice
     (``adam``, ``grug_muon``), else its class name. The module is left out, so moving a class does
     not change fingerprints."""
@@ -86,7 +86,7 @@ class _FingerprintEncoder(json.JSONEncoder):
     def default(self, o):
         if dataclasses.is_dataclass(o) and not isinstance(o, type):
             # Shallow, so each nested dataclass reaches this method and records its own class.
-            return {CLASS_KEY: _class_label(type(o)), **{f.name: getattr(o, f.name) for f in dataclasses.fields(o)}}
+            return {CLASS_KEY: class_label(type(o)), **{f.name: getattr(o, f.name) for f in dataclasses.fields(o)}}
         if isinstance(o, Enum):
             return o.value
         if isinstance(o, timedelta):

@@ -13,7 +13,6 @@ configs.
 
 import dataclasses
 import difflib
-import inspect
 import itertools
 import re
 from dataclasses import dataclass, field
@@ -27,6 +26,7 @@ from draccus.utils import ParsingError
 
 from poorin.execution.fingerprint import canonical_json, fingerprint_hash
 from poorin.execution.lazy import StepContext
+from poorin.execution.recorded_config import field_types
 
 T = TypeVar("T")
 
@@ -136,21 +136,6 @@ class Overrides:
         return base if not self.items else f"{base}-{self.digest}"
 
 
-def _field_types(cls: type) -> dict[str, Any]:
-    """The evaluated annotation of each field of ``cls`` and its bases.
-
-    ``typing.get_type_hints`` returns nothing for a class marked ``@no_type_check``, as grug's launch
-    config is (so the tests' beartype hook accepts the placeholders a fingerprint puts in its fields).
-    Decoding still needs the annotations, so this reads each class's own. Only an annotation written
-    whole as a string is evaluated: ``Annotated`` is not unwrapped, and a string forward reference
-    nested inside a generic (``list["Foo"]``) is not resolved.
-    """
-    types: dict[str, Any] = {}
-    for base in reversed(cls.__mro__):
-        types.update(inspect.get_annotations(base, eval_str=True))
-    return types
-
-
 def _replace_at(ctx: StepContext, obj: Any, item: Override, path: tuple[str, ...]) -> Any:
     """``obj`` with ``item``'s value at ``path`` (the rest of ``item.path`` below ``obj``)."""
     full = ".".join(item.path)
@@ -169,7 +154,7 @@ def _replace_at(ctx: StepContext, obj: Any, item: Override, path: tuple[str, ...
         )
     if rest:
         return dataclasses.replace(obj, **{head: _replace_at(ctx, current, item, tuple(rest))})
-    field_type = _field_types(type(obj))[head]
+    field_type = field_types(type(obj))[head]
     try:
         value = draccus.decode(field_type, parse_string(item.text))
     except (yaml.YAMLError, ParsingError) as e:

@@ -300,6 +300,7 @@ for a stated user:
 | `poorin.execution.cache_state` | An artifact's state at its output path (built, started, drifted) for the plan and the drift check | R1 |
 | `poorin.execution.fingerprint` | Canonical JSON encoding and hashing of step configs for drift detection | R1 |
 | `poorin.execution.lazy` | Lazy artifact steps: `name@version` handles, step context, lowering to the step runner, graph walk | R1 |
+| `poorin.execution.recorded_config` | Reads a recorded config value back into its dataclass, choices included (D114) | R1 |
 | `poorin.execution.remote` | `@remote` decorator that submits a step function as a Fray job | R1 |
 | `poorin.execution.step_runner` | DAG scheduler running `StepSpec`s with caching, drift checks, locking, status writes | R1 |
 | `poorin.execution.step_spec` | `StepSpec` dataclass: a lowered artifact's name, version, output path, fingerprint, deps, function | R1 |
