@@ -10,7 +10,7 @@ Poorin's experiment framework: the layer that makes runs reproducible.
 - `poorin.processing` and `poorin.datakit`: download, normalize, tokenize, deduplicate, and
   decontaminate datasets, run on Zephyr.
 - `poorin.training`: run IDs, output paths, and dispatch of Levanter's training mains.
-- `poorin.evaluation`: the lm-eval harness integration, evaluation records, and statistics.
+- `poorin.evaluation`: the evaluation contract (suites, checkpoint types, `EvalResult`), the lm-eval harness integration, evaluation records, and statistics.
 - `poorin.scaling_laws`: isoflop analysis, fits, and plots.
 - `poorin.profiling`: ingest and summarize xprof traces (the `profile-training` skill).
 

@@ -1969,6 +1969,20 @@ Plan: `plans/2026-10-07-pass2-edge-cuts.md`.
   `runs migrate NAME@REF --to TYPE [--drop PATH]`: D113's acceptance runs trained at `a25be99ae`,
   before `e2dddfa87` moved `num_workers` out of `EpisodeDataConfig`, so their records need the
   field dropped once. `eval_times` takes its count, so a suite's `flow_times` reaches the grid.
+- **Rulings while implementing:**
+  - A label that is exactly four hex characters (`beef`) resolves as a token: resolution tries an
+    exact version, then a token, then `latest`, then a label.
+  - `runs migrate` turns an unimportable or non-class `--to` (`ImportError`, `AttributeError`,
+    `TypeError`) into a CLI error naming the value.
+  - `GrugCheckpoint` is marked `@no_type_check`: the tests' beartype hook on `experiments.grug`
+    rejects its `type[Suite]` return annotation, since `Suite` is not a runtime-checkable protocol.
+  - Grug's `examples` count is the length of the evaluator's capped `DomainTaggedDataset`, so it
+    counts sequences actually scored.
+  - The episode suite reproduces the logged loss for a run that kept training's default
+    evaluation batches; it does not read `train.eval_batches`/`train.eval_batch_size` from the
+    record.
+  - The README simplification and the removed-from-Marin reference page landed as their own
+    commit on this branch, before the plan's tasks.
 - **Alternatives:** An `--eval` option on the launchers that evaluates after training; Marin's
   `EvalRunRecord` outside the artifact graph; one generic loader per model kind in `poorin` instead
   of a loader per template; decoding the whole recorded launch config.

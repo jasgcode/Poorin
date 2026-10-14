@@ -51,6 +51,10 @@ uv run --no-sync python experiments/grug/base/launch.py --version dev \
 
 # Train the world-action model on LIBERO-Spatial
 uv run --no-sync python experiments/episode_models/wam/launch.py --version dev --run
+
+# Score every checkpoint of a finished run on its held-out loss
+uv run --no-sync python -m poorin.experiment.evaluate episode/wam-libero-spatial@latest \
+    --suite held-out --steps all --version dev --run
 ```
 
 ## Read next
