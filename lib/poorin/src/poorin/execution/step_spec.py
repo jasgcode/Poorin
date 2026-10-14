@@ -38,8 +38,8 @@ class StepSpec:
 
     @property
     def rebuilds(self) -> bool:
-        """A ``dev`` version always rebuilds, over a finished output too."""
-        return is_mutable_version(self.version)
+        """A ``dev`` version always rebuilds, over a finished output too; a pin never does."""
+        return is_mutable_version(self.version) and not self.pinned
 
     @cached_property
     def dep_paths(self) -> list[str]:

@@ -10,6 +10,7 @@ output path — end-to-end through the real ``StepRunner``, plus the ``apply`` s
 
 import os
 from dataclasses import dataclass, replace
+from pathlib import Path
 
 import pytest
 from fray.types import ResourceConfig
@@ -511,3 +512,51 @@ def test_apply_rejects_unbindable_inputs():
 
     with pytest.raises(TypeError):
         apply("x/y", f, version="2026.06.28", a=1, b=2)
+
+
+DEV_RUN = "accept-20261012-201822-60b9-dev"
+
+
+def _train(out: str) -> None:
+    os.makedirs(out, exist_ok=True)
+    with open(os.path.join(out, "weights"), "w") as f:
+        f.write("trained")
+
+
+def _never_built() -> None:
+    raise AssertionError("a pinned run is never built")
+
+
+def _score(run_dir: str) -> Artifact:
+    with open(os.path.join(run_dir, "weights")) as f:
+        assert f.read() == "trained"
+    return Artifact()
+
+
+def test_a_calendar_step_may_depend_on_a_pinned_dev_run(tmp_path, monkeypatch):
+    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
+    trained = apply("toy/run", _train, version=DEV_RUN, out=OUT)
+    run(trained)
+    pinned = apply("toy/run", _never_built, version=DEV_RUN, pin=trained.path())
+    run(apply("eval/toy", _score, version="2026.10.13", run_dir=pinned))
+
+
+def test_a_calendar_step_refuses_an_unpinned_dev_dependency():
+    trained = apply("toy/run", _train, version=DEV_RUN, out=OUT)
+    with pytest.raises(ValueError, match="mutable"):
+        apply("eval/toy", _score, version="2026.10.13", run_dir=trained)
+
+
+def test_evaluating_a_pinned_dev_run_leaves_it_untouched(tmp_path, monkeypatch):
+    monkeypatch.setenv("POORIN_PREFIX", str(tmp_path))
+    trained = apply("toy/run", _train, version=DEV_RUN, out=OUT)
+    run(trained)
+    status_file = Path(trained.path()) / ".executor_status"
+
+    def snapshot():
+        return read_record(trained.path()), status_file.read_text(), status_file.stat().st_mtime_ns
+
+    before = snapshot()
+    pinned = apply("toy/run", _never_built, version=DEV_RUN, pin=trained.path())
+    run(apply("eval/toy", _score, version="2026.10.13", run_dir=pinned))
+    assert snapshot() == before

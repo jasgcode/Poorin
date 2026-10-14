@@ -209,7 +209,8 @@ class ArtifactStep(Generic[T]):
         validate_version(self.version)
         if not is_mutable_version(self.version):
             for dep in self.deps:
-                if is_mutable_version(dep.version):
+                # A pin references existing data and never rebuilds, so a fixed parent may cite one.
+                if is_mutable_version(dep.version) and dep.override_path is None:
                     raise ValueError(
                         f"{self.label} is a fixed version but depends on mutable "
                         f"{dep.label}; a mutable dep would rebuild while the fixed parent "
